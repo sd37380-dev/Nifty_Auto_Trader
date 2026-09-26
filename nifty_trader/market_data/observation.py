@@ -19,12 +19,17 @@ from nifty_trader.market_data.models import (
     MarketSessionStatus,
     ObservationEvent,
 )
+from nifty_trader.observation.models import (
+    MultiSourceComparisonResult,
+    SensibullObservation,
+    SensibullStatus,
+)
 
 
 class MarketObservation(BaseModel):
     """
     Consolidated perceptual record containing multi-timeframe numerical candles,
-    browser observation, and cross-check telemetry.
+    browser observation, Sensibull option-chain data, and multi-source cross-check telemetry.
     STRICTLY NON-TRADING: Omits buy/sell/target/stop loss fields.
     """
     observation_id: str = Field(default_factory=lambda: f"obs_{uuid.uuid4().hex[:8]}")
@@ -34,9 +39,11 @@ class MarketObservation(BaseModel):
     one_hour_candles: List[Candle] = Field(default_factory=list)
     fifteen_minute_candles: List[Candle] = Field(default_factory=list)
     browser_observation: Optional[BrowserObservation] = None
+    sensibull_observation: Optional[SensibullObservation] = None
     data_quality: DataQuality = DataQuality.VALID
     source_status: Dict[str, Any] = Field(default_factory=dict)
     cross_check: Optional[CrossCheckResult] = None
+    multi_source_cross_check: Optional[MultiSourceComparisonResult] = None
 
     @property
     def latest_1h(self) -> Optional[Candle]:
@@ -76,6 +83,36 @@ class MarketObservation(BaseModel):
         if not self.cross_check or self.cross_check.discrepancy_pct is None:
             return 0.0
         return self.cross_check.discrepancy_pct
+
+    @property
+    def pcr_summary(self) -> str:
+        if not self.sensibull_observation:
+            return "Sensibull not observed."
+        if self.sensibull_observation.status == SensibullStatus.AUTHENTICATION_REQUIRED:
+            return "Sensibull: Authentication required (unobserved)."
+        if self.sensibull_observation.pcr is not None:
+            mp_str = f" | Max Pain: {self.sensibull_observation.max_pain_information:.0f}" if self.sensibull_observation.max_pain_information else ""
+            iv_str = f" | ATM IV: {self.sensibull_observation.iv_information.get('atm_iv')}%" if self.sensibull_observation.iv_information.get('atm_iv') else ""
+            return f"PCR: {self.sensibull_observation.pcr:.2f}{mp_str}{iv_str}"
+        return f"Sensibull Status: {self.sensibull_observation.status.value}"
+
+    @property
+    def sensibull_summary(self) -> str:
+        if not self.sensibull_observation:
+            return "Sensibull derivatives option-chain observation was not performed."
+        s = self.sensibull_observation
+        if s.status == SensibullStatus.AUTHENTICATION_REQUIRED:
+            return "Sensibull option chain could not be viewed: user broker login required."
+        if s.status == SensibullStatus.OBSERVED:
+            strikes_cnt = len(s.strike_information)
+            pcr_val = f"{s.pcr:.2f}" if s.pcr is not None else "N/A"
+            mp_val = f"{s.max_pain_information:.0f}" if s.max_pain_information is not None else "N/A"
+            spot_val = f"{s.spot_reference:.2f}" if s.spot_reference is not None else "N/A"
+            return (
+                f"Sensibull Option Chain Observed: Spot Ref={spot_val}, PCR={pcr_val}, "
+                f"Max Pain={mp_val}, {strikes_cnt} strike(s) visible."
+            )
+        return f"Sensibull observation incomplete: {s.status.value}."
 
 
 class AgentObservationContext(BaseModel):

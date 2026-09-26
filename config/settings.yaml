@@ -28,6 +28,23 @@ market_data:
   sync_count_1h: 100
   sync_count_15m: 100
 
+market_observation:
+  sources:
+    tradingview:
+      enabled: true
+    sensibull:
+      enabled: true
+      url: "https://web.sensibull.com/option-chain?tradingsymbol=NIFTY"
+      max_retries: 2
+      timeout_seconds: 30
+    numerical:
+      enabled: true
+  planner:
+    automatic_observation: true
+  cross_check:
+    match_tolerance_pct: 0.5
+    minor_tolerance_pct: 1.5
+
 # Configurable safety-policy constraints
 risk:
   max_risk_per_trade: 0.01   # Max 1.0% account equity risked on single trade

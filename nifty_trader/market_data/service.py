@@ -2,7 +2,8 @@
 Market Observation Service.
 
 Coordinates numerical market data feeds, SQLite cache synchronization,
-candle clocks, browser visual perception cross-checking, and event generation.
+candle clocks, browser visual perception cross-checking, Sensibull option-chain
+perception, and event generation.
 """
 
 from datetime import datetime, timedelta, timezone
@@ -29,6 +30,14 @@ from nifty_trader.market_data.observation import (
     MarketObservation,
 )
 from nifty_trader.market_data.session import MarketSessionManager
+from nifty_trader.observation.cross_check import MultiSourceCrossChecker
+from nifty_trader.observation.models import (
+    MultiSourceComparisonResult,
+    SensibullObservation,
+    SensibullStatus,
+)
+from nifty_trader.observation.planner import ObservationPlan, ObservationPlanner
+from nifty_trader.observation.sources.sensibull import SensibullObservationSource
 
 logger = logging.getLogger(__name__)
 
@@ -48,6 +57,9 @@ class MarketObservationService:
         browser_agent: Optional[BrowserAgent] = None,
         session_manager: Optional[MarketSessionManager] = None,
         clock: Optional[CandleClock] = None,
+        planner: Optional[ObservationPlanner] = None,
+        sensibull_source: Optional[SensibullObservationSource] = None,
+        multi_cross_checker: Optional[MultiSourceCrossChecker] = None,
     ):
         self.provider = provider
         self.cache = cache or MarketDataCache()
@@ -57,6 +69,9 @@ class MarketObservationService:
         self.browser_agent = browser_agent
         self.session_manager = session_manager or MarketSessionManager()
         self.clock = clock or CandleClock()
+        self.sensibull_source = sensibull_source or (SensibullObservationSource(browser_agent=browser_agent) if browser_agent else None)
+        self.planner = planner or ObservationPlanner()
+        self.multi_cross_checker = multi_cross_checker or MultiSourceCrossChecker()
 
         self._last_observation: Optional[MarketObservation] = None
         self._last_15m_ts: Optional[datetime] = None
@@ -73,9 +88,16 @@ class MarketObservationService:
         symbol: str = "NIFTY",
         timeframe: Optional[Timeframe] = None,
         perform_cross_check: bool = False,
+        include_sensibull: bool = False,
+        sources: Optional[List[str]] = None,
     ) -> MarketObservation:
         """Convenience alias for get_market_observation."""
-        return await self.get_market_observation(symbol=symbol, include_browser=perform_cross_check)
+        return await self.get_market_observation(
+            symbol=symbol,
+            include_browser=perform_cross_check,
+            include_sensibull=include_sensibull,
+            sources=sources,
+        )
 
     async def sync_market_data(self, symbol: str = "NIFTY") -> Dict[str, int]:
         """
@@ -128,10 +150,13 @@ class MarketObservationService:
         self,
         symbol: str = "NIFTY",
         include_browser: bool = False,
+        include_sensibull: bool = False,
+        sources: Optional[List[str]] = None,
     ) -> MarketObservation:
         """
         Gathers cached numerical candles, checks exchange session state,
-        retrieves visual browser observation if requested, and runs cross-check.
+        retrieves visual browser observation (TradingView) and derivatives sentiment (Sensibull)
+        coordinated via ObservationPlanner, and runs multi-source cross-check.
         """
         session_status = await self.provider.get_market_status()
 
@@ -149,7 +174,7 @@ class MarketObservationService:
         h1_candles = self.cache.get_candles(symbol=symbol, timeframe=Timeframe.H1, limit=30, only_closed=True)
         m15_candles = self.cache.get_candles(symbol=symbol, timeframe=Timeframe.M15, limit=50, only_closed=True)
 
-        # Assess data quality
+        # Assess data quality baseline
         quality = DataQuality.VALID
         if not h1_candles or not m15_candles:
             quality = DataQuality.PARTIAL if (h1_candles or m15_candles) else DataQuality.UNAVAILABLE
@@ -160,17 +185,54 @@ class MarketObservationService:
             if session_status == MarketSessionStatus.OPEN and (now_utc - latest_candle.timestamp) > timedelta(minutes=45):
                 quality = DataQuality.STALE
 
-        # Visual observation (if browser agent is attached and requested)
+        # Determine observation plan
+        active_instructions = self.instruction_mgr.get_active_instructions()
+        plan = self.planner.plan_observation(
+            instructions=active_instructions,
+            source_overrides=sources,
+        )
+
+        # Check source execution flags (CLI or explicit call overrides config)
+        should_observe_tv = include_browser or ("tradingview" in sources if sources else False)
+        should_observe_sensibull = include_sensibull or ("sensibull" in sources if sources else False)
+
+        # If no explicit source flags were given, follow planner directives from instructions
+        if not sources and not include_browser and not include_sensibull:
+            if any("sensibull" in t.lower() or "option chain" in t.lower() for t in plan.triggers):
+                should_observe_sensibull = True
+            if any("tradingview" in t.lower() for t in plan.triggers):
+                should_observe_tv = True
+
+        # 1. TradingView Visual Observation
         browser_obs: Optional[BrowserObservation] = None
-        if include_browser and self.browser_agent:
+        if should_observe_tv and self.browser_agent:
             try:
                 browser_obs = await self.browser_agent.inspect_tradingview_nifty()
             except Exception as e:
                 logger.warning("Could not obtain TradingView observation: %s", e)
 
-        # Cross-check visual vs numerical close
+        # 2. Sensibull Derivatives Observation
+        sensibull_obs: Optional[SensibullObservation] = None
+        if should_observe_sensibull and self.sensibull_source:
+            try:
+                res = await self.sensibull_source.observe(symbol=symbol)
+                sensibull_obs = SensibullObservation(**res.data)
+            except Exception as e:
+                logger.warning("Could not obtain Sensibull observation: %s", e)
+                sensibull_obs = SensibullObservation(
+                    status=SensibullStatus.ERROR,
+                    errors=[str(e)],
+                )
+
+        # 3. Cross-Check Verification
         numerical_ref = m15_candles[-1] if m15_candles else (h1_candles[-1] if h1_candles else None)
         cross_res = self.cross_checker.cross_check(browser_obs=browser_obs, numerical_candle=numerical_ref)
+
+        multi_cross_res = self.multi_cross_checker.compare_sources(
+            numerical_candle=numerical_ref,
+            sensibull_obs=sensibull_obs,
+            tradingview_obs=browser_obs,
+        )
 
         if not cross_res.is_aligned and cross_res.status == "MISMATCH":
             quality = DataQuality.INVALID
@@ -187,14 +249,18 @@ class MarketObservationService:
             one_hour_candles=h1_candles,
             fifteen_minute_candles=m15_candles,
             browser_observation=browser_obs,
+            sensibull_observation=sensibull_obs,
             data_quality=quality,
             source_status={
                 "provider": self.provider.__class__.__name__,
                 "cached_1h_count": len(h1_candles),
                 "cached_15m_count": len(m15_candles),
                 "cache_total": self.cache.get_candle_count(symbol, Timeframe.H1) + self.cache.get_candle_count(symbol, Timeframe.M15),
+                "tradingview_observed": browser_obs is not None,
+                "sensibull_status": sensibull_obs.status.value if sensibull_obs else "NOT_REQUESTED",
             },
             cross_check=cross_res,
+            multi_source_cross_check=multi_cross_res,
         )
 
         return observation
@@ -236,6 +302,18 @@ class MarketObservationService:
             # Check data quality change
             if prev.data_quality != observation.data_quality:
                 changes.append(f"DATA_QUALITY_CHANGE: {prev.data_quality.value} -> {observation.data_quality.value}")
+
+            # Check Sensibull observation change
+            if observation.sensibull_observation:
+                curr_s = observation.sensibull_observation
+                if prev.sensibull_observation is None:
+                    changes.append(f"SENSIBULL_INCORPORATED: Option chain observed (Status: {curr_s.status.value})")
+                else:
+                    prev_s = prev.sensibull_observation
+                    if prev_s.status != curr_s.status:
+                        changes.append(f"SENSIBULL_STATUS_CHANGE: {prev_s.status.value} -> {curr_s.status.value}")
+                    elif prev_s.pcr != curr_s.pcr and curr_s.pcr is not None:
+                        changes.append(f"SENSIBULL_PCR_SHIFT: {prev_s.pcr} -> {curr_s.pcr}")
 
         # Check active instructions changes
         current_inst_ids = {i.instruction_id for i in active_instructions}

@@ -320,31 +320,90 @@ async def cmd_market_sync(runtime: NiftyTraderRuntime) -> None:
         sys.exit(1)
 
 
+async def cmd_sensibull_test(runtime: NiftyTraderRuntime) -> None:
+    """Tests Sensibull option chain navigation and perception extraction."""
+    console.print(Panel.fit(
+        "[bold green]Sensibull Observation Test[/bold green]\n"
+        "[dim]Option Chain, PCR & Derivatives Sentiment Inspection[/dim]",
+        border_style="green",
+    ))
+    console.print("[cyan]Launching browser and interrogating Sensibull...[/cyan]")
+    try:
+        await runtime.browser.start()
+        res = await runtime.test_sensibull_observation()
+
+        table = Table(title="[bold green]Sensibull Observation Result[/bold green]")
+        table.add_column("Field", style="cyan", no_wrap=True)
+        table.add_column("Value", style="white")
+
+        data = res.data
+        status = res.status
+        st_color = "green" if status == "OBSERVED" else ("yellow" if status == "AUTHENTICATION_REQUIRED" else "red")
+        table.add_row("Status", f"[{st_color}]{status}[/{st_color}]")
+        table.add_row("Spot Reference", str(data.get("spot_reference") or "N/A"))
+        table.add_row("PCR (Put-Call Ratio)", str(data.get("pcr") if data.get("pcr") is not None else "N/A"))
+        table.add_row("Max Pain Strike", str(data.get("max_pain_information") or "N/A"))
+        table.add_row("ATM IV", str(data.get("iv_information", {}).get("atm_iv") or "N/A"))
+        strikes = data.get("strike_information", [])
+        table.add_row("Visible Strikes", f"{len(strikes)} strike(s) identified")
+        table.add_row("Screenshot", str(data.get("screenshot_reference") or "None"))
+
+        if res.warnings:
+            table.add_row("Warnings", "\n".join(f"[yellow]{w}[/yellow]" for w in res.warnings))
+        if res.errors:
+            table.add_row("Errors", "\n".join(f"[red]{e}[/red]" for e in res.errors))
+
+        console.print(table)
+        await runtime.browser.stop()
+        console.print("[bold green][OK] Sensibull observation test completed.[/bold green]")
+    except Exception as e:
+        console.print(f"[bold red][ERROR] Sensibull test failed:[/bold red] {e}")
+        try:
+            await runtime.browser.stop()
+        except Exception:
+            pass
+        sys.exit(1)
+
+
 async def cmd_market_observe(
     runtime: NiftyTraderRuntime,
     multimodal: bool = False,
     cross_check: bool = True,
+    sources: Optional[str] = None,
 ) -> None:
-    """Performs full market observation and objective perception reasoning (strictly non-trading)."""
-    console.print("[bold yellow]Collecting market observation (1H + 15M)...[/bold yellow]")
+    """Performs full market observation across multi-source perception channels (strictly non-trading)."""
+    source_list = [s.strip().lower() for s in sources.split(",")] if sources else None
+    sources_desc = f"Sources: {', '.join(source_list)}" if source_list else "Default observation sources"
+    console.print(f"[bold yellow]Collecting market observation (1H + 15M, {sources_desc})...[/bold yellow]")
     try:
         # Sync latest data first to ensure observation has fresh data
         await runtime.sync_market_data()
 
         screenshot_bytes: Optional[bytes] = None
-        if multimodal:
-            console.print("[cyan]Capturing visual chart state from TradingView...[/cyan]")
+        needs_browser = (
+            multimodal
+            or (source_list and ("sensibull" in source_list or "tradingview" in source_list))
+        )
+
+        if needs_browser:
             await runtime.browser.start()
-            try:
+
+        try:
+            if multimodal:
+                console.print("[cyan]Capturing visual chart state from TradingView...[/cyan]")
                 obs_browser = await runtime.browser.inspect_tradingview_nifty()
                 if obs_browser.screenshot_path and Path(obs_browser.screenshot_path).exists():
                     screenshot_bytes = Path(obs_browser.screenshot_path).read_bytes()
-            finally:
+
+            obs = await runtime.get_market_observation(
+                cross_check=cross_check,
+                sources=source_list,
+            )
+        finally:
+            if needs_browser:
                 await runtime.browser.stop()
 
-        obs = await runtime.get_market_observation(cross_check=cross_check)
-
-        table = Table(title="[bold green]NIFTY Market Observation[/bold green]")
+        table = Table(title="[bold green]NIFTY Multi-Source Market Observation[/bold green]")
         table.add_column("Component", style="cyan", no_wrap=True)
         table.add_column("Details", style="white")
 
@@ -353,8 +412,17 @@ async def cmd_market_observe(
         table.add_row("Data Quality", obs.data_quality.value)
         table.add_row("1H Context Summary", obs.h1_summary)
         table.add_row("15M Tactical Summary", obs.m15_summary)
+        table.add_row("Sensibull Derivatives", f"{obs.sensibull_summary} ({obs.pcr_summary})")
+
         match_str = "[green]MATCH[/green]" if obs.cross_check_match else "[yellow]MISMATCH/SKIPPED[/yellow]"
-        table.add_row("Cross-Check", f"{match_str} (discrepancy: {obs.cross_check_discrepancy_pct:.2f}%)")
+        table.add_row("TradingView Cross-Check", f"{match_str} (discrepancy: {obs.cross_check_discrepancy_pct:.2f}%)")
+
+        if obs.multi_source_cross_check:
+            mc = obs.multi_source_cross_check
+            s_diff_str = f"{mc.sensibull_vs_numerical_diff} pts ({mc.sensibull_vs_numerical_pct}%)" if mc.sensibull_vs_numerical_diff is not None else "N/A"
+            s_color = "green" if mc.sensibull_vs_numerical_status == "MATCH" else ("yellow" if mc.sensibull_vs_numerical_status == "MINOR_DIFFERENCE" else "red")
+            table.add_row("Sensibull vs Numerical", f"[{s_color}]{mc.sensibull_vs_numerical_status}[/{s_color}] ({s_diff_str})")
+
         active_instructions = runtime.instruction_manager.get_active_instructions()
         active_instr_str = "\n".join(f"[{i.priority.value}] {i.text}" for i in active_instructions) if active_instructions else "None"
         table.add_row("Active Instructions", active_instr_str)
@@ -477,6 +545,10 @@ def main() -> None:
     obs_parser = subparsers.add_parser("market-observe", help="Gather full market observation and run objective perception analysis")
     obs_parser.add_argument("--multimodal", action="store_true", help="Capture TradingView screenshot for multimodal chart analysis")
     obs_parser.add_argument("--no-cross-check", action="store_true", help="Skip browser vs numerical price cross-check")
+    obs_parser.add_argument("--sources", help="Comma-separated observation sources (e.g. tradingview,sensibull,numerical)")
+
+    # Package 3.1 Sensibull Browser Observation Test
+    subparsers.add_parser("sensibull-test", help="Test Sensibull option chain browser navigation and extraction")
 
     inst_parser = subparsers.add_parser("instruction", help="Submit manual agent steering instruction")
     inst_parser.add_argument("text", help="Instruction text for agent observation")
@@ -499,6 +571,8 @@ def main() -> None:
         asyncio.run(cmd_browser_test(runtime))
     elif args.command == "browser-open":
         asyncio.run(cmd_browser_open(runtime, args.url, run_multimodal=args.multimodal))
+    elif args.command == "sensibull-test":
+        asyncio.run(cmd_sensibull_test(runtime))
     elif args.command == "upstream":
         asyncio.run(cmd_upstream(runtime, args.action))
     elif args.command == "features":
@@ -508,7 +582,12 @@ def main() -> None:
     elif args.command == "market-sync":
         asyncio.run(cmd_market_sync(runtime))
     elif args.command == "market-observe":
-        asyncio.run(cmd_market_observe(runtime, multimodal=args.multimodal, cross_check=not args.no_cross_check))
+        asyncio.run(cmd_market_observe(
+            runtime,
+            multimodal=args.multimodal,
+            cross_check=not args.no_cross_check,
+            sources=args.sources,
+        ))
     elif args.command == "instruction":
         asyncio.run(cmd_instruction(runtime, text=args.text, priority=args.priority, expires_in_hours=args.expires_in_hours))
     elif args.command == "instruction-list":

@@ -40,6 +40,14 @@ features:
     dependencies: []
     module: "nifty_trader.market_data"
 
+  sensibull_observation:
+    name: "sensibull_observation"
+    description: "Pluggable browser-based option chain, PCR, and derivatives market sentiment observation"
+    version: "1.0.0"
+    status: "ENABLED"
+    dependencies: ["browser", "market_data"]
+    module: "nifty_trader.observation"
+
   strategy_engine:
     name: "strategy_engine"
     description: "Rule-based discretionary trading setup detector"

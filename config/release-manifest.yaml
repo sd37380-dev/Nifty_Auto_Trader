@@ -16,6 +16,7 @@ components:
   model_router_version: "1.0.0"
   browser_version: "1.0.0"
   market_data_version: "1.0.0"
+  sensibull_observation_version: "1.0.0"
   strategy_version: "UNINSTALLED"
   risk_engine_version: "UNINSTALLED"
   paper_broker_version: "UNINSTALLED"

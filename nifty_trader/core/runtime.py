@@ -35,8 +35,19 @@ from nifty_trader.market_data.models import Timeframe
 from nifty_trader.market_data.observation import MarketObservation, MarketPerceptionOutput
 from nifty_trader.market_data.providers.mock import MockMarketDataProvider
 from nifty_trader.market_data.providers.yahoo import YahooFinanceProvider
-from nifty_trader.market_data.service import MarketObservationService
 from nifty_trader.market_data.session import MarketSessionManager
+from nifty_trader.observation.cross_check import MultiSourceCrossChecker
+from nifty_trader.observation.models import (
+    MultiSourceComparisonResult,
+    ObservationSourceType,
+    SensibullObservation,
+    SensibullStatus,
+    SourceObservationResult,
+)
+from nifty_trader.observation.planner import ObservationPlan, ObservationPlanner
+from nifty_trader.observation.sources.numerical import NumericalMarketDataSource
+from nifty_trader.observation.sources.sensibull import SensibullObservationSource
+from nifty_trader.observation.sources.tradingview import TradingViewObservationSource
 
 logger = logging.getLogger("nifty_trader.runtime")
 
@@ -136,6 +147,46 @@ class NiftyTraderRuntime:
         event_bus = EventBus()
         cross_checker = MarketCrossChecker(tolerance_pct=market_cfg.get("cross_check_tolerance_pct", 0.5))
 
+        # Initialize Package 3.1 Observation Sources & Planner
+        obs_cfg = self.settings.get("market_observation", {})
+        sources_cfg = obs_cfg.get("sources", {})
+        sensi_cfg = sources_cfg.get("sensibull", {})
+        tv_cfg = sources_cfg.get("tradingview", {})
+        cross_cfg = obs_cfg.get("cross_check", {})
+
+        self.sensibull_source = SensibullObservationSource(
+            browser_agent=self.browser,
+            target_url=sensi_cfg.get("url"),
+            max_retries=sensi_cfg.get("max_retries", 2),
+            timeout_seconds=sensi_cfg.get("timeout_seconds", 30.0),
+            enabled=sensi_cfg.get("enabled", True),
+        )
+        self.tradingview_source = TradingViewObservationSource(
+            browser_agent=self.browser,
+            enabled=tv_cfg.get("enabled", True),
+        )
+        self.numerical_source = NumericalMarketDataSource(
+            provider=provider,
+            cache=cache,
+            enabled=sources_cfg.get("numerical", {}).get("enabled", True),
+        )
+
+        self.planner = ObservationPlanner(
+            tradingview_enabled=tv_cfg.get("enabled", True),
+            sensibull_enabled=sensi_cfg.get("enabled", True),
+            numerical_enabled=sources_cfg.get("numerical", {}).get("enabled", True),
+            automatic_observation=obs_cfg.get("planner", {}).get("automatic_observation", True),
+        )
+        self.planner.register_source(self.numerical_source)
+        self.planner.register_source(self.tradingview_source)
+        self.planner.register_source(self.sensibull_source)
+
+        self.multi_cross_checker = MultiSourceCrossChecker(
+            match_tolerance_pct=cross_cfg.get("match_tolerance_pct", 0.5),
+            minor_tolerance_pct=cross_cfg.get("minor_tolerance_pct", 1.5),
+        )
+
+        from nifty_trader.market_data.service import MarketObservationService
         self.market_service = MarketObservationService(
             provider=provider,
             cache=cache,
@@ -145,6 +196,9 @@ class NiftyTraderRuntime:
             cross_checker=cross_checker,
             browser_agent=self.browser,
             instruction_manager=self.instruction_manager,
+            planner=self.planner,
+            sensibull_source=self.sensibull_source,
+            multi_cross_checker=self.multi_cross_checker,
         )
 
         logger.info("NiftyTraderRuntime initialized in state: %s", self.state.value)
@@ -284,9 +338,22 @@ class NiftyTraderRuntime:
         self,
         timeframe: Optional[Timeframe] = None,
         cross_check: bool = True,
+        include_sensibull: bool = False,
+        sources: Optional[list[str]] = None,
     ) -> MarketObservation:
-        """Collects full market observation across 1H and 15M with optional browser cross-check."""
-        return await self.market_service.observe_market(timeframe=timeframe, perform_cross_check=cross_check)
+        """Collects market observation across sources (numerical, TradingView, Sensibull)."""
+        return await self.market_service.observe_market(
+            timeframe=timeframe,
+            perform_cross_check=cross_check,
+            include_sensibull=include_sensibull,
+            sources=sources,
+        )
+
+    async def test_sensibull_observation(self) -> SourceObservationResult:
+        """Executes a test observation on Sensibull option chain via browser."""
+        if not self.sensibull_source:
+            raise RuntimeError("Sensibull observation source is not configured.")
+        return await self.sensibull_source.observe()
 
     async def analyze_market_perception(
         self,
@@ -295,7 +362,8 @@ class NiftyTraderRuntime:
     ) -> MarketPerceptionOutput:
         """
         Sends the synthesized MarketObservation (1H context, 15M tactical state,
-        cross-check status, and active instructions) to Gemini for objective perception analysis.
+        Sensibull derivatives data, cross-check status, and active instructions)
+        to Gemini for objective perception analysis.
 
         STRICT SAFETY ENFORCEMENT:
         Prohibits trading advice, order placement, or position recommendations.
@@ -303,13 +371,17 @@ class NiftyTraderRuntime:
         system_instruction = (
             "You are an objective market perception engine for NIFTY Autonomous Trader. "
             "Your role is strictly to observe, understand, and describe market state, structural levels, "
-            "regime classification, and active operator instructions. "
+            "regime classification, derivatives option chain context, and active operator instructions. "
             "CRITICAL INVARIANT: You are STRICTLY FORBIDDEN from generating trade recommendations, "
             "buy/sell orders, price targets, entry/exit points, or position-sizing commands. "
             "You only provide disciplined situational awareness adhering strictly to the requested schema."
         )
 
         active_instr = self.instruction_manager.format_instructions_for_prompt()
+        sensi_info = observation.sensibull_summary
+        if observation.sensibull_observation and observation.sensibull_observation.pcr is not None:
+            sensi_info += f" ({observation.pcr_summary})"
+
         prompt = (
             f"Symbol: {observation.symbol}\n"
             f"Timestamp (IST): {observation.timestamp_ist.strftime('%Y-%m-%d %H:%M:%S IST')}\n"
@@ -317,6 +389,7 @@ class NiftyTraderRuntime:
             f"Data Quality: {observation.data_quality.value}\n"
             f"1H Structural Context:\n{observation.h1_summary}\n\n"
             f"15M Tactical State:\n{observation.m15_summary}\n\n"
+            f"Sensibull Option Chain Context:\n{sensi_info}\n\n"
             f"Cross-Check Match: {observation.cross_check_match} (discrepancy: {observation.cross_check_discrepancy_pct}%)\n"
             f"Active Instructions:\n{active_instr}\n\n"
             f"Analyze the market condition objectively and populate the perception output schema."
