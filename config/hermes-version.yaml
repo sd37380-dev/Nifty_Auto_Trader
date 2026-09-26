@@ -1,0 +1,37 @@
+# ==============================================================================
+# Upstream Hermes Version & Integration Manifest
+# Tracks the official upstream Hermes repository dependency and verification status
+# ==============================================================================
+
+upstream:
+  name: "hermes-agent"
+  repository: "https://github.com/NousResearch/hermes-agent.git"
+  tracked_branch: "main"
+  local_source_path: "D:\\AI_Trading\\hermes-agent"
+  
+  # The verified baseline commit upon which the NIFTY trader architecture is validated
+  baseline_commit: "d0288be5b3330d2442e3907185b8e9d0958297bb"
+  
+  # Current verified commit in integration
+  last_verified_commit: "d0288be5b3330d2442e3907185b8e9d0958297bb"
+  last_verified_date: "2026-09-26"
+  verification_status: "VERIFIED"
+  
+  # Semantic integration adapter version
+  integration_version: "0.1.0"
+
+compatibility:
+  min_python: "3.11"
+  verified_python: "3.13.11"
+  adapter_layer: "nifty_trader.hermes.adapter"
+  required_domains:
+    - "browser"
+    - "model_routing"
+    - "tool_dispatch"
+    - "session_management"
+  
+safety_invariants:
+  immutable_trading_rules: true
+  prevent_auto_order_execution: true
+  preserve_user_memory_on_update: true
+  isolated_browser_profile: true

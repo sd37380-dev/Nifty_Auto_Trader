@@ -17,6 +17,12 @@ from nifty_trader.browser.hermes_adapter import HermesBrowserAdapter
 from nifty_trader.browser.models import BrowserObservation
 from nifty_trader.browser.screenshot import ScreenshotManager
 from nifty_trader.core.state import MarketObservationOutput, TradingState
+from nifty_trader.features.manifest import ReleaseManifestManager
+from nifty_trader.features.registry import FeatureRegistry
+from nifty_trader.hermes.adapter import HermesIntegrationAdapter
+from nifty_trader.hermes.compatibility import HermesCompatibilityChecker
+from nifty_trader.hermes.updater import HermesUpdateInspector
+from nifty_trader.hermes.version import HermesVersionManager
 from nifty_trader.router.base import TaskTier
 from nifty_trader.router.router import ModelRouter
 
@@ -83,6 +89,16 @@ class NiftyTraderRuntime:
             max_dom_elements=extraction_cfg.get("max_dom_elements", 200),
         )
 
+        # Initialize Hermes Integration & Version Management
+        self.hermes_version = HermesVersionManager(self.config_dir / "hermes-version.yaml")
+        self.hermes_adapter = HermesIntegrationAdapter(self.hermes_version)
+        self.hermes_checker = HermesCompatibilityChecker(self.hermes_version, self.hermes_adapter)
+        self.hermes_updater = HermesUpdateInspector(self.hermes_version)
+
+        # Initialize Feature Extension Registry & Release Manifest
+        self.features = FeatureRegistry(self.config_dir / "features.yaml")
+        self.manifest = ReleaseManifestManager(self.config_dir / "release-manifest.yaml")
+
         logger.info("NiftyTraderRuntime initialized in state: %s", self.state.value)
 
     def _load_environment(self, env_file: Optional[Path]) -> None:
@@ -111,11 +127,19 @@ class NiftyTraderRuntime:
         except Exception:
             browser_state = {"status": "STOPPED", "url": "none"}
 
+        hermes_integrity = self.hermes_version.verify_baseline_integrity()
+
         return {
             "app": self.settings.get("app", {}).get("name", "NIFTY Autonomous Trader"),
             "version": self.settings.get("app", {}).get("version", "0.1.0"),
             "mode": self.settings.get("app", {}).get("mode", "RESEARCH"),
             "state": self.state.value,
+            "hermes": {
+                "commit": hermes_integrity.get("current_commit", "UNKNOWN"),
+                "baseline": hermes_integrity.get("baseline_commit", "UNKNOWN"),
+                "status": hermes_integrity.get("status", "UNKNOWN"),
+            },
+            "features_summary": self.features.get_status_summary(),
             "providers": provider_health,
             "browser": browser_state,
             "risk_policies": self.settings.get("risk", {}),

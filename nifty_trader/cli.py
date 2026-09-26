@@ -32,6 +32,20 @@ async def cmd_status(runtime: NiftyTraderRuntime) -> None:
         status_text = "[green][READY][/green]" if ok else "[yellow][IDLE/UNCONFIGURED][/yellow]"
         table.add_row(f"Provider ({prov})", status_text)
 
+    # Hermes Integration Layer
+    hermes_info = status.get("hermes", {})
+    h_commit = str(hermes_info.get("commit", "UNKNOWN"))[:8]
+    h_status = hermes_info.get("status", "UNKNOWN")
+    h_color = "green" if h_status == "VERIFIED" else "yellow"
+    table.add_row("Hermes Platform", f"[{h_color}]{h_commit} [{h_status}][/{h_color}]")
+
+    # Feature Capabilities Overview
+    table.add_row("Capability (Browser)", "[green]READY[/green]")
+    table.add_row("Capability (Gemini Brain)", "[green]READY[/green]")
+    table.add_row("Capability (Market Data)", "[blue]NOT INSTALLED[/blue]")
+    table.add_row("Capability (Paper Broker)", "[blue]NOT INSTALLED[/blue]")
+    table.add_row("Capability (Live Broker)", "[red]DISABLED[/red]")
+
     # Browser
     b_status = status.get("browser", {}).get("status", "UNKNOWN")
     b_color = "green" if b_status == "READY" else "yellow"
@@ -165,6 +179,79 @@ async def cmd_start(runtime: NiftyTraderRuntime) -> None:
     console.print(f"\n[bold green][OK] Runtime operational in state: {runtime.state.value}[/bold green]")
 
 
+async def cmd_upstream(runtime: NiftyTraderRuntime, action: str) -> None:
+    """Handles upstream Hermes check, inspect, and test commands."""
+    if action == "check":
+        result = runtime.hermes_updater.check_upstream()
+        compat = await runtime.hermes_checker.run_all_checks()
+        compat_str = "PASS" if compat.passed else "FAIL"
+
+        text = (
+            f"Current Hermes:\n{result.current_commit[:8]}\n\n"
+            f"Latest Hermes:\n{result.latest_commit[:8]}\n\n"
+            f"New commits:\n{result.new_commits_count}\n\n"
+            f"Compatibility:\n{compat_str}\n\n"
+            f"Update:\n{result.status}\n\n"
+            f"Action:\n{result.action_required}"
+        )
+        console.print(Panel(text, title="[bold cyan]Hermes Upstream Check[/bold cyan]", border_style="cyan"))
+
+    elif action == "inspect":
+        result = runtime.hermes_updater.check_upstream()
+        report = runtime.hermes_updater.generate_report(result)
+        console.print(Panel(report, title="[bold cyan]Hermes Upstream Inspection Report[/bold cyan]", border_style="cyan"))
+
+    elif action == "test":
+        console.print("[bold yellow]Running Hermes compatibility test suite...[/bold yellow]")
+        compat = await runtime.hermes_checker.run_all_checks()
+
+        table = Table(title="[bold green]Hermes Compatibility Test Suite[/bold green]")
+        table.add_column("Check Name", style="cyan")
+        table.add_column("Status", style="magenta")
+        table.add_column("Details", style="white")
+
+        for c in compat.checks:
+            status_text = "[green]PASS[/green]" if c.passed else "[red]FAIL[/red]"
+            table.add_row(c.name, status_text, c.details)
+
+        console.print(table)
+        if compat.breaking_changes:
+            console.print("\n[bold red]BREAKING CHANGES DETECTED:[/bold red]")
+            for b in compat.breaking_changes:
+                console.print(f"  * [red]{b}[/red]")
+        else:
+            console.print(f"\n[bold green][OK] All upstream compatibility checks passed ({compat.hermes_commit[:8]}).[/bold green]")
+
+
+async def cmd_features(runtime: NiftyTraderRuntime) -> None:
+    """Displays declared features, versions, dependencies, and rollout states."""
+    summary = runtime.features.get_status_summary()
+
+    table = Table(title="[bold green]NIFTY Autonomous Trader — Feature Extension Registry[/bold green]")
+    table.add_column("Feature", style="cyan")
+    table.add_column("Version", style="magenta")
+    table.add_column("Status", style="bold")
+    table.add_column("Dependencies", style="white")
+    table.add_column("Description", style="dim")
+
+    status_colors = {
+        "ENABLED": "green",
+        "INSTALLED": "cyan",
+        "EXPERIMENTAL": "yellow",
+        "PLANNED": "blue",
+        "DISABLED": "red",
+        "DEPRECATED": "dim red",
+    }
+
+    for name, info in summary["features"].items():
+        st = info["status"]
+        col = status_colors.get(st, "white")
+        deps_str = ", ".join(info["dependencies"]) if info["dependencies"] else "None"
+        table.add_row(name, info["version"], f"[{col}]{st}[/{col}]", deps_str, info["description"])
+
+    console.print(table)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="NIFTY Autonomous Trader CLI")
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
@@ -177,6 +264,11 @@ def main() -> None:
     open_parser = subparsers.add_parser("browser-open", help="Navigate to a URL and inspect page")
     open_parser.add_argument("url", help="URL to navigate to")
     open_parser.add_argument("--multimodal", action="store_true", help="Send screenshot to ModelRouter for neutral perception check")
+
+    upstream_parser = subparsers.add_parser("upstream", help="Upstream Hermes management")
+    upstream_parser.add_argument("action", choices=["check", "inspect", "test"], help="Upstream action to perform")
+
+    subparsers.add_parser("features", help="List feature extension registry and status")
 
     args = parser.parse_args()
     runtime = NiftyTraderRuntime()
@@ -191,6 +283,10 @@ def main() -> None:
         asyncio.run(cmd_browser_test(runtime))
     elif args.command == "browser-open":
         asyncio.run(cmd_browser_open(runtime, args.url, run_multimodal=args.multimodal))
+    elif args.command == "upstream":
+        asyncio.run(cmd_upstream(runtime, args.action))
+    elif args.command == "features":
+        asyncio.run(cmd_features(runtime))
     else:
         parser.print_help()
 

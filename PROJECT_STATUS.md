@@ -1,8 +1,8 @@
 # NIFTY AUTONOMOUS TRADER — PROJECT STATUS
 
 **Project:** NIFTY Autonomous Trader (Hermes-Based Autonomous Trading Software)  
-**Current Phase:** PACKAGE 2 — Computer & Browser Automation Agent  
-**Status:** PACKAGE 2 COMPLETE & LOCKED ✅  
+**Current Phase:** PRE-PACKAGE 3 — Hermes Upstream Hardening & Feature Extension Framework  
+**Status:** PRE-PACKAGE 3 COMPLETE & LOCKED ✅  
 **Date:** 2026-09-26  
 
 ---
@@ -14,6 +14,7 @@
 | **Phase 0** | **Audit, Architecture & Baseline Validation** | **PHASE 0 — LOCKED ✅** |
 | **Package 1** | **Hermes Build & Model Router** | **PACKAGE 1 — COMPLETE & LOCKED ✅** |
 | **Package 2** | **Computer & Browser Automation Agent** | **PACKAGE 2 — COMPLETE & LOCKED ✅** |
+| **Pre-Pkg 3** | **Hermes Upstream Hardening & Extension Framework** | **PRE-PACKAGE 3 — LOCKED ✅** |
 | **Package 3** | Market Perception Engine (1H + 15M) | Ready for Planning 📋 |
 | **Package 4** | Gemini & Multi-Model Trading Brain | Planned |
 | **Package 5** | Autonomous Observation & Waiting Engine | Planned |
@@ -34,22 +35,26 @@
 
 ---
 
-## Package 2 Verification Milestone Achieved
+## Pre-Package 3 Architecture Hardening Milestone Achieved
 
-1. **Native Chrome CDP Integration:**
-   - Spawns local Google Chrome (`C:\Program Files\Google\Chrome\Application\chrome.exe`) with isolated user profile (`data/browser/chrome_profile`).
-   - Direct asynchronous WebSocket communication with zero Node.js/Playwright dependencies.
-2. **Robust Browser Agent & Session Engine:**
-   - Implemented `HermesBrowserAdapter` and high-level `BrowserAgent` supporting navigation, scrolling, clicking, text extraction, DOM mapping, and screenshot capture.
-   - Standardized screenshot naming (`{timestamp}_{source}_{session}.png`) with retention pruning.
-3. **Strict Security Boundaries:**
-   - Blocks dangerous URL schemes (`file://`, `javascript:`, `data:`).
-   - Defuses prompt-injection strings (`[UNTRUSTED_CONTENT_DEFUSED: INJECTION_BLOCKED]`).
-   - Explicit untrusted data labeling protocol before sending observations to LLMs.
-4. **End-to-End Multimodal Verification:**
-   - Navigated to real-world TradingView NIFTY 50 page.
-   - Captured full chart screenshot and passed image to Gemini via `ModelRouter`.
-   - Verified strictly neutral visual and layout description with **zero trade decisions, zero buy/sell signals, and zero execution code**.
-5. **Testing Verification:**
-   - All 15 unit tests passed in 4.16s (`pytest tests/`).
-   - Live CLI tests (`browser-test`, `browser-open --multimodal`) verified operational.
+1. **Hermes Integration & Version Management (`nifty_trader/hermes/`):**
+   - Tracked upstream repository (`https://github.com/NousResearch/hermes-agent.git`) with verified baseline commit `d0288be5b3330d2442e3907185b8e9d0958297bb`.
+   - Manifest configuration in `config/hermes-version.yaml`.
+   - Abstract interfaces (`HermesAgentAdapter`, `HermesToolAdapter`, `HermesMemoryAdapter`) decoupling trading logic from Hermes internal implementation changes.
+2. **Upstream Update & Inspection Pipeline:**
+   - Implemented `HermesUpdateInspector` and `HermesCompatibilityChecker`.
+   - Added CLI commands: `nifty-trader upstream check`, `nifty-trader upstream inspect`, `nifty-trader upstream test`.
+   - Strict 14-step update workflow and branch isolation strategy documented in `docs/HERMES_UPDATE_STRATEGY.md`.
+3. **Future Feature Extension Framework (`nifty_trader/features/`):**
+   - Declared feature contracts with `FeatureModule`, `FeatureCapability`, and `FeatureStatus` (`PLANNED`, `INSTALLED`, `ENABLED`, `DISABLED`, `EXPERIMENTAL`, `DEPRECATED`).
+   - Central registry `FeatureRegistry` in `config/features.yaml` enforcing topological dependency graph resolution (e.g. strategy cannot start without market data).
+   - CLI command `nifty-trader features` for operational visibility.
+4. **Data & Memory Preservation Invariants:**
+   - Built `ConfigMigrationManager` for sequential config schema upgrades.
+   - Built `DatabaseMigrationManager` with strict table preservation whitelist, actively rejecting any SQL script that attempts to DROP or TRUNCATE `trade_history`, `paper_positions`, `experience_journal`, or `post_mortems`.
+5. **Release Manifest & Governance:**
+   - Manifest schema in `config/release-manifest.yaml` recording component versions.
+   - Historical tracking table in `docs/HERMES_COMPATIBILITY_MATRIX.md`.
+   - Complete architectural extension rules codified in `docs/ARCHITECTURE_EXTENSION_RULES.md`.
+6. **Testing Verification:**
+   - All 27 unit tests passed in 6.85s (`pytest tests/`).

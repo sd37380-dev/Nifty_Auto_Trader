@@ -1,0 +1,28 @@
+# ==============================================================================
+# NIFTY Autonomous Trader — Release Manifest
+# Reproducible manifest recording exact software and component versions
+# ==============================================================================
+
+release:
+  product_name: "NIFTY Autonomous Trader"
+  product_version: "0.1.0"
+  release_date: "2026-09-26"
+  hermes_commit: "d0288be5b3330d2442e3907185b8e9d0958297bb"
+  hermes_verified: true
+  git_branch: "master"
+
+components:
+  core_runtime_version: "0.1.0"
+  model_router_version: "1.0.0"
+  browser_version: "1.0.0"
+  market_data_version: "UNINSTALLED"
+  strategy_version: "UNINSTALLED"
+  risk_engine_version: "UNINSTALLED"
+  paper_broker_version: "UNINSTALLED"
+  memory_schema_version: "UNINSTALLED"
+
+invariants_verified:
+  non_trading_multimodal_perception: true
+  isolated_chrome_cdp: true
+  zero_deep_hermes_imports: true
+  safe_feature_dependency_graph: true

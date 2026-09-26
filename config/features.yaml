@@ -1,0 +1,89 @@
+# ==============================================================================
+# NIFTY Autonomous Trader — Feature Extension Registry
+# Defines all modular feature extensions, their lifecycle status, and dependencies
+# ==============================================================================
+
+schema_version: "1.0.0"
+
+features:
+  # Installed & Verified Features (Packages 1 & 2)
+  model_router:
+    name: "model_router"
+    description: "Multi-tier LLM router with Gemini, OpenRouter, and fallback circuits"
+    version: "1.0.0"
+    status: "ENABLED"
+    dependencies: []
+    module: "nifty_trader.router"
+
+  gemini_brain:
+    name: "gemini_brain"
+    description: "Gemini provider for multimodal visual and market perception"
+    version: "1.0.0"
+    status: "ENABLED"
+    dependencies: ["model_router"]
+    module: "nifty_trader.router.providers.gemini"
+
+  browser:
+    name: "browser"
+    description: "Chrome CDP browser automation for web/chart observation"
+    version: "1.0.0"
+    status: "ENABLED"
+    dependencies: ["model_router"]
+    module: "nifty_trader.browser"
+
+  # Planned Future Extensions (Package 3 onwards — Currently disabled/uninstalled)
+  market_data:
+    name: "market_data"
+    description: "Multi-timeframe 1H + 15M candle ingestion and numerical data pipeline"
+    version: "0.1.0"
+    status: "PLANNED"
+    dependencies: []
+    module: "nifty_trader.market_data"
+
+  strategy_engine:
+    name: "strategy_engine"
+    description: "Rule-based discretionary trading setup detector"
+    version: "0.1.0"
+    status: "PLANNED"
+    dependencies: ["market_data", "gemini_brain"]
+    module: "nifty_trader.strategy"
+
+  risk_engine:
+    name: "risk_engine"
+    description: "Deterministic capital and position risk evaluation"
+    version: "0.1.0"
+    status: "PLANNED"
+    dependencies: ["strategy_engine"]
+    module: "nifty_trader.risk"
+
+  paper_broker:
+    name: "paper_broker"
+    description: "Simulated order execution and position accounting ledger"
+    version: "0.1.0"
+    status: "PLANNED"
+    dependencies: ["risk_engine"]
+    module: "nifty_trader.broker.paper"
+
+  memory_journal:
+    name: "memory_journal"
+    description: "Trade memory store, experience journal, and post-mortem analysis"
+    version: "0.1.0"
+    status: "PLANNED"
+    dependencies: ["paper_broker"]
+    module: "nifty_trader.memory"
+
+  strategy_lab:
+    name: "strategy_lab"
+    description: "Strategy learning laboratory, backtesting, and version governance"
+    version: "0.1.0"
+    status: "PLANNED"
+    dependencies: ["memory_journal"]
+    module: "nifty_trader.lab"
+
+  live_broker:
+    name: "live_broker"
+    description: "Optional real-money live brokerage connector"
+    version: "0.1.0"
+    status: "DISABLED"
+    dependencies: ["paper_broker", "risk_engine"]
+    module: "nifty_trader.broker.live"
