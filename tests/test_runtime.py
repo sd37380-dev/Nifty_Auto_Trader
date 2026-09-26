@@ -56,3 +56,18 @@ async def test_market_observation_output_schema():
     sample["action"] = "NO_TRADE"
     parsed_no_trade = MarketObservationOutput.model_validate(sample)
     assert parsed_no_trade.action == MarketAction.NO_TRADE
+
+
+@pytest.mark.asyncio
+async def test_runtime_unified_observation_contract():
+    """Verify runtime produces valid canonical UnifiedMarketObservation."""
+    runtime = NiftyTraderRuntime()
+    unified = await runtime.get_unified_market_observation(cross_check=False)
+
+    assert unified.schema_version == "1.0"
+    assert unified.observation_id.startswith("umo_")
+    assert unified.instrument == "NIFTY"
+    assert isinstance(unified.numerical.candles_1h, list)
+    assert isinstance(unified.numerical.candles_15m, list)
+    assert isinstance(unified.source_status, dict)
+    assert isinstance(unified.evidence, list)

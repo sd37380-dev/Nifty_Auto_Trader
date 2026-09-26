@@ -345,3 +345,36 @@ class MarketObservationService:
         """Collects observation and compiles agent observation context."""
         obs = await self.get_market_observation(symbol=symbol, include_browser=include_browser)
         return self.compile_observation_context(obs, force_change=force_change)
+
+    async def get_unified_market_observation(
+        self,
+        symbol: str = "NIFTY",
+        include_browser: bool = False,
+        include_sensibull: bool = False,
+        sources: Optional[List[str]] = None,
+    ):
+        """
+        Collects multi-source perceptions and builds the canonical UnifiedMarketObservation
+        contract consumed by Package 4.
+        """
+        from nifty_trader.contracts.builder import UnifiedObservationBuilder
+
+        obs = await self.get_market_observation(
+            symbol=symbol,
+            include_browser=include_browser,
+            include_sensibull=include_sensibull,
+            sources=sources,
+        )
+        active_instructions = self.instruction_mgr.get_active_instructions()
+
+        builder = UnifiedObservationBuilder(cross_checker=self.multi_cross_checker)
+        return builder.build(
+            symbol=symbol,
+            session_status=obs.market_status,
+            h1_candles=obs.one_hour_candles,
+            m15_candles=obs.fifteen_minute_candles,
+            tradingview_obs=obs.browser_observation,
+            sensibull_obs=obs.sensibull_observation,
+            instructions=active_instructions,
+            multi_cross_result=obs.multi_source_cross_check,
+        )

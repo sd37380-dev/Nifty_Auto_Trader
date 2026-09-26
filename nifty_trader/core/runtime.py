@@ -404,6 +404,75 @@ class NiftyTraderRuntime:
             image_mime_type="image/png" if image_bytes else None,
         )
 
+    async def get_unified_market_observation(
+        self,
+        symbol: str = "NIFTY",
+        cross_check: bool = True,
+        include_sensibull: bool = False,
+        sources: Optional[list[str]] = None,
+    ):
+        """Assembles canonical UnifiedMarketObservation contract for Package 4 consumption."""
+        return await self.market_service.get_unified_market_observation(
+            symbol=symbol,
+            include_browser=cross_check,
+            include_sensibull=include_sensibull,
+            sources=sources,
+        )
+
+    async def analyze_unified_observation(
+        self,
+        unified_obs,
+        image_bytes: Optional[bytes] = None,
+    ) -> MarketPerceptionOutput:
+        """
+        Sends the canonical UnifiedMarketObservation to Gemini for objective perception analysis.
+        Package 4 boundary: receives only the canonical contract.
+        """
+        system_instruction = (
+            "You are an objective market perception engine for NIFTY Autonomous Trader. "
+            "You analyze canonical multi-source market observations (numerical candles, "
+            "TradingView visuals, Sensibull option chain metrics, and operator instructions). "
+            "CRITICAL INVARIANT: You are STRICTLY FORBIDDEN from generating trade recommendations, "
+            "buy/sell orders, price targets, entry/exit points, or position-sizing commands. "
+            "You only provide disciplined situational awareness adhering strictly to the requested schema."
+        )
+
+        c1h = unified_obs.numerical.latest_1h
+        c15m = unified_obs.numerical.latest_15m
+        h1_str = f"Close: {c1h.close:.2f} (O:{c1h.open:.2f}, H:{c1h.high:.2f}, L:{c1h.low:.2f}) at {c1h.timestamp_ist.strftime('%Y-%m-%d %H:%M IST')}" if c1h else "N/A"
+        m15_str = f"Close: {c15m.close:.2f} (O:{c15m.open:.2f}, H:{c15m.high:.2f}, L:{c15m.low:.2f}) at {c15m.timestamp_ist.strftime('%Y-%m-%d %H:%M IST')}" if c15m else "N/A"
+
+        active_instr = "\n".join(f"[{i.priority}] {i.text}" for i in unified_obs.manual_instruction_context) or "None"
+
+        sensi_info = "Not observed"
+        if unified_obs.visual.sensibull:
+            s = unified_obs.visual.sensibull
+            pcr_val = f"{s.pcr:.2f}" if s.pcr is not None else "N/A"
+            mp_val = f"{s.max_pain:.0f}" if s.max_pain is not None else "N/A"
+            sensi_info = f"Status={s.status.value}, PCR={pcr_val}, Max Pain={mp_val}"
+
+        prompt = (
+            f"Schema Version: {unified_obs.schema_version}\n"
+            f"Observation ID: {unified_obs.observation_id}\n"
+            f"Symbol: {unified_obs.instrument}\n"
+            f"Observed At (IST): {unified_obs.observed_at_ist.strftime('%Y-%m-%d %H:%M:%S IST')}\n"
+            f"Session Status: {unified_obs.session}\n"
+            f"1H Structural Context:\n{h1_str}\n\n"
+            f"15M Tactical State:\n{m15_str}\n\n"
+            f"Sensibull Option Chain Context:\n{sensi_info}\n\n"
+            f"Active Instructions:\n{active_instr}\n\n"
+            f"Analyze the market condition objectively and populate the perception output schema."
+        )
+
+        return await self.router.route_structured(
+            task_tier=TaskTier.MARKET_ANALYSIS,
+            prompt=prompt,
+            response_model=MarketPerceptionOutput,
+            system_instruction=system_instruction,
+            image_bytes=image_bytes,
+            image_mime_type="image/png" if image_bytes else None,
+        )
+
     def submit_instruction(
         self,
         text: str,
