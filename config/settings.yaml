@@ -20,6 +20,14 @@ market:
     intraday_square_off: "15:15"
     close: "15:30"
 
+market_data:
+  provider: "yahoo"
+  symbol: "NIFTY"
+  cache_db: "data/market/market_cache.db"
+  cross_check_tolerance_pct: 0.5
+  sync_count_1h: 100
+  sync_count_15m: 100
+
 # Configurable safety-policy constraints
 risk:
   max_risk_per_trade: 0.01   # Max 1.0% account equity risked on single trade

@@ -25,6 +25,18 @@ from nifty_trader.hermes.updater import HermesUpdateInspector
 from nifty_trader.hermes.version import HermesVersionManager
 from nifty_trader.router.base import TaskTier
 from nifty_trader.router.router import ModelRouter
+from nifty_trader.instruction.manager import InstructionManager
+from nifty_trader.instruction.models import AgentInstruction, InstructionPriority, InstructionStatus
+from nifty_trader.market_data.cache import MarketDataCache
+from nifty_trader.market_data.clock import CandleClock
+from nifty_trader.market_data.cross_check import MarketCrossChecker
+from nifty_trader.market_data.events import EventBus
+from nifty_trader.market_data.models import Timeframe
+from nifty_trader.market_data.observation import MarketObservation, MarketPerceptionOutput
+from nifty_trader.market_data.providers.mock import MockMarketDataProvider
+from nifty_trader.market_data.providers.yahoo import YahooFinanceProvider
+from nifty_trader.market_data.service import MarketObservationService
+from nifty_trader.market_data.session import MarketSessionManager
 
 logger = logging.getLogger("nifty_trader.runtime")
 
@@ -99,6 +111,42 @@ class NiftyTraderRuntime:
         self.features = FeatureRegistry(self.config_dir / "features.yaml")
         self.manifest = ReleaseManifestManager(self.config_dir / "release-manifest.yaml")
 
+        # Initialize Instruction Subsystem (Operator Steering)
+        agent_dir = self.root_dir / "data" / "agent"
+        agent_dir.mkdir(parents=True, exist_ok=True)
+        instructions_db = agent_dir / "instructions.db"
+        self.instruction_manager = InstructionManager(db_path=instructions_db)
+
+        # Initialize Market Data Subsystem
+        market_dir = self.root_dir / "data" / "market"
+        market_dir.mkdir(parents=True, exist_ok=True)
+        market_cfg = self.settings.get("market_data", {})
+        provider_name = market_cfg.get("provider", "yahoo").lower()
+        symbol = market_cfg.get("symbol", "^NSEI")
+
+        if provider_name == "yahoo":
+            provider = YahooFinanceProvider(timeout_seconds=market_cfg.get("timeout_seconds", 10.0))
+        else:
+            provider = MockMarketDataProvider()
+
+        cache_path = self.root_dir / market_cfg.get("cache_db_path", "data/market/market_cache.db")
+        cache = MarketDataCache(db_path=cache_path)
+        session_mgr = MarketSessionManager()
+        clock = CandleClock()
+        event_bus = EventBus()
+        cross_checker = MarketCrossChecker(tolerance_pct=market_cfg.get("cross_check_tolerance_pct", 0.5))
+
+        self.market_service = MarketObservationService(
+            provider=provider,
+            cache=cache,
+            session_manager=session_mgr,
+            clock=clock,
+            event_bus=event_bus,
+            cross_checker=cross_checker,
+            browser_agent=self.browser,
+            instruction_manager=self.instruction_manager,
+        )
+
         logger.info("NiftyTraderRuntime initialized in state: %s", self.state.value)
 
     def _load_environment(self, env_file: Optional[Path]) -> None:
@@ -128,6 +176,8 @@ class NiftyTraderRuntime:
             browser_state = {"status": "STOPPED", "url": "none"}
 
         hermes_integrity = self.hermes_version.verify_baseline_integrity()
+        cache_stats = self.market_service.cache.get_stats()
+        session_status = self.market_service.session_manager.get_session_status()
 
         return {
             "app": self.settings.get("app", {}).get("name", "NIFTY Autonomous Trader"),
@@ -142,6 +192,16 @@ class NiftyTraderRuntime:
             "features_summary": self.features.get_status_summary(),
             "providers": provider_health,
             "browser": browser_state,
+            "market_data": {
+                "provider": self.market_service.provider.name,
+                "session": session_status.value,
+                "cache_1h_count": cache_stats.get(Timeframe.H1, 0),
+                "cache_15m_count": cache_stats.get(Timeframe.M15, 0),
+            },
+            "instructions": {
+                "active_count": len(self.instruction_manager.get_active_instructions()),
+                "total_count": len(self.instruction_manager.list_instructions()),
+            },
             "risk_policies": self.settings.get("risk", {}),
         }
 
@@ -215,3 +275,80 @@ class NiftyTraderRuntime:
         # Transition to initial observation state
         self.state = TradingState.OBSERVE_1H
         logger.info("Runtime transitioned to state: %s", self.state.value)
+
+    async def sync_market_data(self) -> Dict[str, Any]:
+        """Runs incremental synchronization for 1H and 15M candles."""
+        return await self.market_service.sync_data()
+
+    async def get_market_observation(
+        self,
+        timeframe: Optional[Timeframe] = None,
+        cross_check: bool = True,
+    ) -> MarketObservation:
+        """Collects full market observation across 1H and 15M with optional browser cross-check."""
+        return await self.market_service.observe_market(timeframe=timeframe, perform_cross_check=cross_check)
+
+    async def analyze_market_perception(
+        self,
+        observation: MarketObservation,
+        image_bytes: Optional[bytes] = None,
+    ) -> MarketPerceptionOutput:
+        """
+        Sends the synthesized MarketObservation (1H context, 15M tactical state,
+        cross-check status, and active instructions) to Gemini for objective perception analysis.
+
+        STRICT SAFETY ENFORCEMENT:
+        Prohibits trading advice, order placement, or position recommendations.
+        """
+        system_instruction = (
+            "You are an objective market perception engine for NIFTY Autonomous Trader. "
+            "Your role is strictly to observe, understand, and describe market state, structural levels, "
+            "regime classification, and active operator instructions. "
+            "CRITICAL INVARIANT: You are STRICTLY FORBIDDEN from generating trade recommendations, "
+            "buy/sell orders, price targets, entry/exit points, or position-sizing commands. "
+            "You only provide disciplined situational awareness adhering strictly to the requested schema."
+        )
+
+        active_instr = self.instruction_manager.format_instructions_for_prompt()
+        prompt = (
+            f"Symbol: {observation.symbol}\n"
+            f"Timestamp (IST): {observation.timestamp_ist.strftime('%Y-%m-%d %H:%M:%S IST')}\n"
+            f"Session Status: {observation.market_status.value}\n"
+            f"Data Quality: {observation.data_quality.value}\n"
+            f"1H Structural Context:\n{observation.h1_summary}\n\n"
+            f"15M Tactical State:\n{observation.m15_summary}\n\n"
+            f"Cross-Check Match: {observation.cross_check_match} (discrepancy: {observation.cross_check_discrepancy_pct}%)\n"
+            f"Active Instructions:\n{active_instr}\n\n"
+            f"Analyze the market condition objectively and populate the perception output schema."
+        )
+
+        return await self.router.route_structured(
+            task_tier=TaskTier.MARKET_ANALYSIS,
+            prompt=prompt,
+            response_model=MarketPerceptionOutput,
+            system_instruction=system_instruction,
+            image_bytes=image_bytes,
+            image_mime_type="image/png" if image_bytes else None,
+        )
+
+    def submit_instruction(
+        self,
+        text: str,
+        priority: InstructionPriority = InstructionPriority.NORMAL,
+        expires_in_hours: Optional[float] = 4.0,
+        created_by: str = "human_operator",
+    ) -> AgentInstruction:
+        """Submits an instruction into the manual agent steering system."""
+        return self.instruction_manager.submit_instruction(
+            text=text,
+            priority=priority,
+            expires_in_hours=expires_in_hours,
+            created_by=created_by,
+        )
+
+    def list_instructions(
+        self,
+        status: Optional[InstructionStatus] = None,
+    ) -> list[AgentInstruction]:
+        """Lists stored agent instructions filtered by status."""
+        return self.instruction_manager.list_instructions(status=status)

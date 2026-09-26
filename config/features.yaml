@@ -35,8 +35,8 @@ features:
   market_data:
     name: "market_data"
     description: "Multi-timeframe 1H + 15M candle ingestion and numerical data pipeline"
-    version: "0.1.0"
-    status: "PLANNED"
+    version: "1.0.0"
+    status: "ENABLED"
     dependencies: []
     module: "nifty_trader.market_data"
 

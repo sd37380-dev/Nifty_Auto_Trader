@@ -15,7 +15,7 @@ components:
   core_runtime_version: "0.1.0"
   model_router_version: "1.0.0"
   browser_version: "1.0.0"
-  market_data_version: "UNINSTALLED"
+  market_data_version: "1.0.0"
   strategy_version: "UNINSTALLED"
   risk_engine_version: "UNINSTALLED"
   paper_broker_version: "UNINSTALLED"

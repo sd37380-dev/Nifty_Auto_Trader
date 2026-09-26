@@ -11,3 +11,8 @@ build/
 data/browser/chrome_profile/
 data/browser/screenshots/*.png
 !data/browser/screenshots/.gitkeep
+*.db
+*.sqlite
+*.sqlite3
+data/market/*.db
+data/agent/*.db

@@ -6,7 +6,7 @@
 routing:
   fast_observe:
     provider: gemini
-    model: gemini-2.5-flash
+    model: gemini-3.5-flash-lite
     temperature: 0.1
     fallback:
       provider: openrouter
@@ -14,7 +14,7 @@ routing:
 
   market_analysis:
     provider: gemini
-    model: gemini-2.5-flash
+    model: gemini-3.5-flash-lite
     temperature: 0.2
     fallback:
       provider: openrouter
@@ -22,7 +22,7 @@ routing:
 
   setup_confirmation:
     provider: gemini
-    model: gemini-2.5-flash
+    model: gemini-3.5-flash-lite
     temperature: 0.1
     fallback:
       provider: openrouter
@@ -30,7 +30,7 @@ routing:
 
   research:
     provider: gemini
-    model: gemini-2.5-flash
+    model: gemini-3.5-flash-lite
     temperature: 0.3
     fallback:
       provider: openrouter
@@ -38,7 +38,7 @@ routing:
 
   post_mortem:
     provider: gemini
-    model: gemini-2.5-flash
+    model: gemini-3.5-flash-lite
     temperature: 0.2
     fallback:
       provider: openrouter
@@ -46,7 +46,7 @@ routing:
 
   strategy_improvement:
     provider: gemini
-    model: gemini-2.5-flash
+    model: gemini-3.5-flash-lite
     temperature: 0.3
     fallback:
       provider: openrouter
@@ -55,7 +55,7 @@ routing:
 providers:
   gemini:
     api_key_env: GEMINI_API_KEY
-    default_model: gemini-2.5-flash
+    default_model: gemini-3.5-flash-lite
 
   openrouter:
     api_key_env: OPENROUTER_API_KEY

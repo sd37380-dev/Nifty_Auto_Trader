@@ -64,7 +64,7 @@ def test_feature_registry_loading():
     assert "live_broker" in declarations
 
     assert declarations["browser"].status == FeatureStatus.ENABLED
-    assert declarations["market_data"].status == FeatureStatus.PLANNED
+    assert declarations["market_data"].status == FeatureStatus.ENABLED
     assert declarations["live_broker"].status == FeatureStatus.DISABLED
 
 
@@ -75,11 +75,11 @@ def test_feature_dependency_validation():
     # Browser depends on model_router (both enabled) -> OK
     assert registry.can_start_feature("browser") is True
 
-    # strategy_engine depends on market_data (which is PLANNED, not ENABLED) -> Cannot start
-    errors = registry.validate_dependencies("strategy_engine")
+    # risk_engine depends on strategy_engine (which is PLANNED, not ENABLED) -> Cannot start
+    errors = registry.validate_dependencies("risk_engine")
     assert len(errors) > 0
-    assert any("market_data" in err for err in errors)
-    assert registry.can_start_feature("strategy_engine") is False
+    assert any("strategy_engine" in err for err in errors)
+    assert registry.can_start_feature("risk_engine") is False
 
 
 def test_feature_topological_sort():
@@ -144,4 +144,5 @@ def test_release_manifest_generation():
     assert manifest.hermes_verified is True
     assert manifest.components.model_router_version == "1.0.0"
     assert manifest.components.browser_version == "1.0.0"
-    assert manifest.components.market_data_version == "UNINSTALLED"
+    assert manifest.components.market_data_version == "1.0.0"
+    assert manifest.components.strategy_version == "UNINSTALLED"

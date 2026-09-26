@@ -4,12 +4,16 @@ Command-Line Interface (CLI) for NIFTY Autonomous Trader.
 
 import argparse
 import asyncio
+from pathlib import Path
 import sys
+from typing import Optional
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
 from nifty_trader.core.runtime import NiftyTraderRuntime
+from nifty_trader.instruction.models import InstructionPriority, InstructionStatus
+from nifty_trader.market_data.models import MarketSessionStatus, Timeframe
 
 console = Console()
 
@@ -42,9 +46,19 @@ async def cmd_status(runtime: NiftyTraderRuntime) -> None:
     # Feature Capabilities Overview
     table.add_row("Capability (Browser)", "[green]READY[/green]")
     table.add_row("Capability (Gemini Brain)", "[green]READY[/green]")
-    table.add_row("Capability (Market Data)", "[blue]NOT INSTALLED[/blue]")
+    md_info = status.get("market_data", {})
+    md_prov = md_info.get("provider", "NONE")
+    table.add_row("Capability (Market Data)", f"[green]READY (v1.0.0, {md_prov})[/green]")
     table.add_row("Capability (Paper Broker)", "[blue]NOT INSTALLED[/blue]")
     table.add_row("Capability (Live Broker)", "[red]DISABLED[/red]")
+
+    # Market Session and Cache
+    sess = md_info.get("session", "UNKNOWN")
+    sess_col = "green" if sess == "OPEN" else "yellow"
+    table.add_row("Market Session", f"[{sess_col}]{sess}[/{sess_col}]")
+    table.add_row("Cached Candles (1H / 15M)", f"{md_info.get('cache_1h_count', 0)} / {md_info.get('cache_15m_count', 0)}")
+    inst_info = status.get("instructions", {})
+    table.add_row("Active Operator Instructions", str(inst_info.get("active_count", 0)))
 
     # Browser
     b_status = status.get("browser", {}).get("status", "UNKNOWN")
@@ -252,6 +266,192 @@ async def cmd_features(runtime: NiftyTraderRuntime) -> None:
     console.print(table)
 
 
+async def cmd_market_status(runtime: NiftyTraderRuntime) -> None:
+    """Displays detailed session state, candle cache counts, latest candles, and clock boundaries."""
+    session_status = runtime.market_service.session_manager.get_current_session_status()
+    h1_candles = runtime.market_service.cache.get_candles(symbol="NIFTY", timeframe=Timeframe.H1, limit=1)
+    m15_candles = runtime.market_service.cache.get_candles(symbol="NIFTY", timeframe=Timeframe.M15, limit=1)
+    cache_stats = runtime.market_service.cache.get_stats("NIFTY")
+    active_instructions = runtime.instruction_manager.get_active_instructions()
+
+    table = Table(title="[bold green]NIFTY Autonomous Trader — Market Perception Status[/bold green]")
+    table.add_column("Attribute", style="cyan", no_wrap=True)
+    table.add_column("Value", style="white")
+
+    table.add_row("Symbol", "NIFTY 50 (^NSEI)")
+    sess_color = "green" if session_status == MarketSessionStatus.OPEN else "yellow"
+    table.add_row("Session State", f"[{sess_color}]{session_status.value}[/{sess_color}]")
+    table.add_row("Exchange Hours", "09:15 - 15:30 IST (Mon-Fri)")
+    table.add_row("Cached 1H Candles", str(cache_stats.get(Timeframe.H1, 0)))
+    table.add_row("Cached 15M Candles", str(cache_stats.get(Timeframe.M15, 0)))
+
+    if h1_candles:
+        c = h1_candles[-1]
+        table.add_row("Latest 1H Candle", f"{c.timestamp_ist.strftime('%Y-%m-%d %H:%M IST')} | O:{c.open:.2f} H:{c.high:.2f} L:{c.low:.2f} C:{c.close:.2f}")
+    else:
+        table.add_row("Latest 1H Candle", "[dim]No cached candles. Run 'market-sync'.[/dim]")
+
+    if m15_candles:
+        c = m15_candles[-1]
+        table.add_row("Latest 15M Candle", f"{c.timestamp_ist.strftime('%Y-%m-%d %H:%M IST')} | O:{c.open:.2f} H:{c.high:.2f} L:{c.low:.2f} C:{c.close:.2f}")
+    else:
+        table.add_row("Latest 15M Candle", "[dim]No cached candles. Run 'market-sync'.[/dim]")
+
+    table.add_row("Active Instructions", str(len(active_instructions)))
+    console.print(table)
+
+
+async def cmd_market_sync(runtime: NiftyTraderRuntime) -> None:
+    """Synchronizes latest 1H and 15M candles from market data provider to local SQLite cache."""
+    console.print(f"[bold yellow]Synchronizing market data from {runtime.market_service.provider.name}...[/bold yellow]")
+    try:
+        results = await runtime.sync_market_data()
+        table = Table(title="[bold green]Market Data Synchronization Results[/bold green]")
+        table.add_column("Timeframe", style="cyan")
+        table.add_column("Candles Processed/Stored", style="magenta")
+
+        for tf, count in results.items():
+            table.add_row(tf.upper(), str(count))
+
+        console.print(table)
+        console.print("[bold green][OK] Market data synchronization complete.[/bold green]")
+    except Exception as e:
+        console.print(f"[bold red][ERROR] Sync failed:[/bold red] {e}")
+        sys.exit(1)
+
+
+async def cmd_market_observe(
+    runtime: NiftyTraderRuntime,
+    multimodal: bool = False,
+    cross_check: bool = True,
+) -> None:
+    """Performs full market observation and objective perception reasoning (strictly non-trading)."""
+    console.print("[bold yellow]Collecting market observation (1H + 15M)...[/bold yellow]")
+    try:
+        # Sync latest data first to ensure observation has fresh data
+        await runtime.sync_market_data()
+
+        screenshot_bytes: Optional[bytes] = None
+        if multimodal:
+            console.print("[cyan]Capturing visual chart state from TradingView...[/cyan]")
+            await runtime.browser.start()
+            try:
+                obs_browser = await runtime.browser.inspect_tradingview_nifty()
+                if obs_browser.screenshot_path and Path(obs_browser.screenshot_path).exists():
+                    screenshot_bytes = Path(obs_browser.screenshot_path).read_bytes()
+            finally:
+                await runtime.browser.stop()
+
+        obs = await runtime.get_market_observation(cross_check=cross_check)
+
+        table = Table(title="[bold green]NIFTY Market Observation[/bold green]")
+        table.add_column("Component", style="cyan", no_wrap=True)
+        table.add_column("Details", style="white")
+
+        table.add_row("Timestamp (IST)", obs.timestamp_ist.strftime("%Y-%m-%d %H:%M:%S IST"))
+        table.add_row("Session Status", obs.market_status.value)
+        table.add_row("Data Quality", obs.data_quality.value)
+        table.add_row("1H Context Summary", obs.h1_summary)
+        table.add_row("15M Tactical Summary", obs.m15_summary)
+        match_str = "[green]MATCH[/green]" if obs.cross_check_match else "[yellow]MISMATCH/SKIPPED[/yellow]"
+        table.add_row("Cross-Check", f"{match_str} (discrepancy: {obs.cross_check_discrepancy_pct:.2f}%)")
+        active_instructions = runtime.instruction_manager.get_active_instructions()
+        active_instr_str = "\n".join(f"[{i.priority.value}] {i.text}" for i in active_instructions) if active_instructions else "None"
+        table.add_row("Active Instructions", active_instr_str)
+
+        console.print(table)
+
+        # Submit to Gemini for objective perception analysis
+        console.print("\n[bold yellow]Submitting observation to Gemini for objective perception analysis...[/bold yellow]")
+        perception = await runtime.analyze_market_perception(obs, image_bytes=screenshot_bytes)
+
+        levels_str = ", ".join(f"{lvl:.2f}" for lvl in perception.notable_levels) if perception.notable_levels else "None"
+        changes_str = "\n".join(f"  * {p}" for p in perception.recent_changes) if perception.recent_changes else "  * None noted"
+        uncertain_str = "\n".join(f"  * {u}" for u in perception.uncertainties) if perception.uncertainties else "  * None noted"
+
+        panel_text = (
+            f"[bold cyan]Regime Classification:[/bold cyan] {perception.market_regime_description}\n\n"
+            f"[bold cyan]1H Structural State:[/bold cyan] {perception.one_hour_structure_description}\n\n"
+            f"[bold cyan]15M Tactical State:[/bold cyan] {perception.fifteen_minute_structure_description}\n\n"
+            f"[bold cyan]Key Structural Levels:[/bold cyan] {levels_str}\n\n"
+            f"[bold cyan]Data Integrity Status:[/bold cyan] {perception.data_quality_assessment}\n\n"
+            f"[bold cyan]Recent Changes:[/bold cyan]\n{changes_str}\n\n"
+            f"[bold cyan]Uncertainties:[/bold cyan]\n{uncertain_str}\n\n"
+            f"[bold cyan]Observation Summary:[/bold cyan]\n{perception.observation_summary}"
+        )
+        console.print(Panel(panel_text, title="[bold green]Objective Market Perception (Zero Trading Recommendations)[/bold green]", border_style="green"))
+        console.print("[bold green][OK] Observation and perception analysis complete.[/bold green]")
+    except Exception as e:
+        console.print(f"[bold red][ERROR] Observation failed:[/bold red] {e}")
+        sys.exit(1)
+
+
+async def cmd_instruction(
+    runtime: NiftyTraderRuntime,
+    text: str,
+    priority: str = "NORMAL",
+    expires_in_hours: Optional[float] = 4.0,
+) -> None:
+    """Submits a human operator steering instruction with safety boundary validation."""
+    pri_enum = InstructionPriority(priority.upper()) if priority.upper() in [p.value for p in InstructionPriority] else InstructionPriority.NORMAL
+    console.print(f"[bold yellow]Submitting operator instruction:[/bold yellow] \"{text}\" (Priority: {pri_enum.value})")
+
+    inst = runtime.submit_instruction(
+        text=text,
+        priority=pri_enum,
+        expires_in_hours=expires_in_hours,
+        created_by="human_operator",
+    )
+
+    table = Table(title="[bold green]Operator Instruction Status[/bold green]")
+    table.add_column("Field", style="cyan", no_wrap=True)
+    table.add_column("Value", style="white")
+
+    table.add_row("Instruction ID", inst.instruction_id)
+    table.add_row("Text", inst.text)
+    table.add_row("Priority", inst.priority.value)
+
+    if inst.status == InstructionStatus.REJECTED:
+        table.add_row("Status", "[bold red]REJECTED (SAFETY VIOLATION)[/bold red]")
+        table.add_row("Reason", f"[red]{inst.agent_response}[/red]")
+    else:
+        table.add_row("Status", "[bold green]ACCEPTED[/bold green]")
+        exp_str = inst.expires_at.strftime("%Y-%m-%d %H:%M UTC") if inst.expires_at else "No expiration"
+        table.add_row("Expires At", exp_str)
+
+    console.print(table)
+
+
+async def cmd_instruction_list(runtime: NiftyTraderRuntime, status_filter: Optional[str] = None) -> None:
+    """Lists operator instructions from the persistent SQLite store."""
+    st_enum = InstructionStatus(status_filter.upper()) if status_filter and status_filter.upper() in [s.value for s in InstructionStatus] else None
+    instructions = runtime.list_instructions(status=st_enum)
+
+    table = Table(title="[bold green]Operator Instruction History[/bold green]")
+    table.add_column("ID", style="dim", no_wrap=True)
+    table.add_column("Priority", style="cyan")
+    table.add_column("Status", style="bold")
+    table.add_column("Text", style="white")
+    table.add_column("Expires", style="yellow")
+    table.add_column("Response / Notes", style="dim")
+
+    status_colors = {
+        InstructionStatus.PENDING: "yellow",
+        InstructionStatus.ACTIVE: "green",
+        InstructionStatus.COMPLETED: "blue",
+        InstructionStatus.REJECTED: "red",
+        InstructionStatus.EXPIRED: "dim white",
+    }
+
+    for inst in instructions:
+        col = status_colors.get(inst.status, "white")
+        exp_str = inst.expires_at.strftime("%H:%M UTC") if inst.expires_at else "None"
+        resp_str = inst.agent_response or ""
+        table.add_row(inst.instruction_id[:8], inst.priority.value, f"[{col}]{inst.status.value}[/{col}]", inst.text[:50], exp_str, resp_str[:40])
+
+    console.print(table)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="NIFTY Autonomous Trader CLI")
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
@@ -270,6 +470,22 @@ def main() -> None:
 
     subparsers.add_parser("features", help="List feature extension registry and status")
 
+    # Package 3 Market Observation & Instruction CLI Commands
+    subparsers.add_parser("market-status", help="Show market session, candle cache, and perception status")
+    subparsers.add_parser("market-sync", help="Synchronize 1H and 15M candles from provider to SQLite cache")
+
+    obs_parser = subparsers.add_parser("market-observe", help="Gather full market observation and run objective perception analysis")
+    obs_parser.add_argument("--multimodal", action="store_true", help="Capture TradingView screenshot for multimodal chart analysis")
+    obs_parser.add_argument("--no-cross-check", action="store_true", help="Skip browser vs numerical price cross-check")
+
+    inst_parser = subparsers.add_parser("instruction", help="Submit manual agent steering instruction")
+    inst_parser.add_argument("text", help="Instruction text for agent observation")
+    inst_parser.add_argument("--priority", default="NORMAL", choices=["NORMAL", "HIGH", "URGENT"], help="Instruction priority")
+    inst_parser.add_argument("--expires-in-hours", type=float, default=4.0, help="Hours before instruction expires")
+
+    inst_list_parser = subparsers.add_parser("instruction-list", help="List stored manual agent instructions")
+    inst_list_parser.add_argument("--status", choices=["PENDING", "ACTIVE", "COMPLETED", "REJECTED", "EXPIRED"], help="Filter by status")
+
     args = parser.parse_args()
     runtime = NiftyTraderRuntime()
 
@@ -287,6 +503,16 @@ def main() -> None:
         asyncio.run(cmd_upstream(runtime, args.action))
     elif args.command == "features":
         asyncio.run(cmd_features(runtime))
+    elif args.command == "market-status":
+        asyncio.run(cmd_market_status(runtime))
+    elif args.command == "market-sync":
+        asyncio.run(cmd_market_sync(runtime))
+    elif args.command == "market-observe":
+        asyncio.run(cmd_market_observe(runtime, multimodal=args.multimodal, cross_check=not args.no_cross_check))
+    elif args.command == "instruction":
+        asyncio.run(cmd_instruction(runtime, text=args.text, priority=args.priority, expires_in_hours=args.expires_in_hours))
+    elif args.command == "instruction-list":
+        asyncio.run(cmd_instruction_list(runtime, status_filter=args.status))
     else:
         parser.print_help()
 
