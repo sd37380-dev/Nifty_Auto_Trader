@@ -16,6 +16,9 @@ from nifty_trader.browser.browser_agent import BrowserAgent
 from nifty_trader.browser.hermes_adapter import HermesBrowserAdapter
 from nifty_trader.browser.models import BrowserObservation
 from nifty_trader.browser.screenshot import ScreenshotManager
+from nifty_trader.brain.contracts import BrainReasoningOutput
+from nifty_trader.brain.engine import TradingBrainEngine
+from nifty_trader.contracts.models import UnifiedMarketObservation
 from nifty_trader.core.state import MarketObservationOutput, TradingState
 from nifty_trader.features.manifest import ReleaseManifestManager
 from nifty_trader.features.registry import FeatureRegistry
@@ -199,6 +202,16 @@ class NiftyTraderRuntime:
             planner=self.planner,
             sensibull_source=self.sensibull_source,
             multi_cross_checker=self.multi_cross_checker,
+        )
+
+        # Initialize Package 4 Trading Brain Engine
+        brain_dir = self.root_dir / "data" / "brain"
+        brain_dir.mkdir(parents=True, exist_ok=True)
+        from nifty_trader.brain.storage import BrainStorage
+        brain_storage = BrainStorage(db_path=brain_dir / "reasoning_history.db")
+        self.brain = TradingBrainEngine(
+            router=self.router,
+            storage=brain_storage,
         )
 
         logger.info("NiftyTraderRuntime initialized in state: %s", self.state.value)
@@ -494,3 +507,17 @@ class NiftyTraderRuntime:
     ) -> list[AgentInstruction]:
         """Lists stored agent instructions filtered by status."""
         return self.instruction_manager.list_instructions(status=status)
+
+    async def reason_market(
+        self,
+        unified_obs: Optional[UnifiedMarketObservation] = None,
+        image_bytes: Optional[bytes] = None,
+    ) -> BrainReasoningOutput:
+        """
+        Executes Package 4 Trading Brain cognitive reasoning on canonical UnifiedMarketObservation.
+        If unified_obs is not provided, gathers a fresh observation first.
+        """
+        if unified_obs is None:
+            unified_obs = await self.get_unified_market_observation()
+        return await self.brain.reason(observation=unified_obs, image_bytes=image_bytes)
+

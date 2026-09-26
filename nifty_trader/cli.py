@@ -11,6 +11,7 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
+from nifty_trader.brain.contracts import CandidateDirection, SetupState
 from nifty_trader.core.runtime import NiftyTraderRuntime
 from nifty_trader.instruction.models import InstructionPriority, InstructionStatus
 from nifty_trader.market_data.models import MarketSessionStatus, Timeframe
@@ -520,6 +521,161 @@ async def cmd_instruction_list(runtime: NiftyTraderRuntime, status_filter: Optio
     console.print(table)
 
 
+async def cmd_brain_analyze(
+    runtime: NiftyTraderRuntime,
+    cross_check: bool = True,
+    include_sensibull: bool = False,
+    sources: Optional[str] = None,
+    multimodal: bool = False,
+) -> None:
+    """Executes Package 4 Trading Brain cognitive reasoning on canonical market observations."""
+    console.print("[bold yellow]Initiating Trading Brain cognitive reasoning cycle...[/bold yellow]")
+
+    source_list = [s.strip() for s in sources.split(",")] if sources else None
+    needs_browser = (cross_check or include_sensibull or (source_list and any(s in ["tradingview", "sensibull"] for s in source_list)))
+
+    screenshot_bytes = None
+    try:
+        if needs_browser:
+            console.print("[dim]Starting browser subsystem for observation capture...[/dim]")
+            await runtime.browser.start()
+            if multimodal:
+                screenshot_bytes = await runtime.browser.provider.capture_screenshot()
+
+        # Step 1: Canonical Unified Observation
+        console.print("[dim]Compiling canonical UnifiedMarketObservation...[/dim]")
+        unified_obs = await runtime.get_unified_market_observation(
+            cross_check=cross_check,
+            include_sensibull=include_sensibull,
+            sources=source_list,
+        )
+    finally:
+        if needs_browser:
+            await runtime.browser.stop()
+
+    # Step 2: Brain Cognitive Reasoning
+    console.print("[bold yellow]Engaging TradingBrainEngine with ModelRouter...[/bold yellow]")
+    brain_output = await runtime.reason_market(unified_obs=unified_obs, image_bytes=screenshot_bytes)
+
+    # State colors
+    state_colors = {
+        SetupState.NO_TRADE: "red",
+        SetupState.WAIT: "yellow",
+        SetupState.WATCH: "cyan",
+        SetupState.DEVELOPING: "magenta",
+        SetupState.CANDIDATE: "green",
+    }
+    scol = state_colors.get(brain_output.current_state, "white")
+
+    # Display Top Table
+    table = Table(title="[bold green]Package 4 Trading Brain — Synthesis & Decision[/bold green]")
+    table.add_column("Dimension", style="cyan", no_wrap=True)
+    table.add_column("Assessment", style="white")
+
+    table.add_row("Brain Run ID", brain_output.brain_run_id)
+    table.add_row("Observation ID", brain_output.observation_id)
+    table.add_row("Instrument / Time", f"{brain_output.instrument} @ {brain_output.timestamp.strftime('%Y-%m-%d %H:%M:%S UTC')}")
+    table.add_row("Market Regime", f"[bold]{brain_output.regime.value}[/bold] (Confidence: {brain_output.regime_confidence:.2f})")
+    table.add_row("Current State", f"[bold {scol}]{brain_output.current_state.value}[/bold {scol}]")
+    table.add_row("State Rationale", brain_output.state_rationale)
+    table.add_row("Next Observation Needed", brain_output.next_observation_needed)
+    table.add_row("Bounded Confidence", f"{brain_output.confidence.value:.2f} (Basis: {', '.join(brain_output.confidence.basis) or 'Standard'})")
+    console.print(table)
+
+    # Scenarios Table
+    if brain_output.scenarios:
+        scen_table = Table(title="[bold cyan]Evaluated Market Scenarios[/bold cyan]")
+        scen_table.add_column("Scenario ID", style="dim", no_wrap=True)
+        scen_table.add_column("Description", style="white")
+        scen_table.add_column("Confidence", style="magenta")
+        scen_table.add_column("Confirm / Invalidate", style="yellow")
+        for sc in brain_output.scenarios:
+            conf_str = "; ".join(sc.confirmation_conditions) or "None"
+            inv_str = "; ".join(sc.invalidation_conditions) or "None"
+            scen_table.add_row(
+                sc.scenario_id,
+                sc.description,
+                f"{sc.confidence:.2f}",
+                f"Confirm: {conf_str}\nInvalid: {inv_str}",
+            )
+        console.print(scen_table)
+
+    # Candidate Thesis Panel (if any)
+    if brain_output.candidate_thesis:
+        cand = brain_output.candidate_thesis
+        dcol = "green" if cand.direction == CandidateDirection.LONG else ("red" if cand.direction == CandidateDirection.SHORT else "yellow")
+        cand_text = (
+            f"[bold cyan]Directional Bias:[/bold cyan] [{dcol}]{cand.direction.value}[/{dcol}]\n"
+            f"[bold cyan]Thesis:[/bold cyan] {cand.thesis}\n"
+            f"[bold cyan]Market Context:[/bold cyan] {cand.market_context}\n"
+            f"[bold cyan]Setup Conditions:[/bold cyan] {', '.join(cand.setup_conditions) or 'None'}\n"
+            f"[bold cyan]Confirmation Conditions:[/bold cyan] {', '.join(cand.confirmation_conditions) or 'None'}\n"
+            f"[bold cyan]Invalidation Conditions:[/bold cyan] {', '.join(cand.invalidation_conditions) or 'None'}\n"
+            f"[bold cyan]Supporting Observations:[/bold cyan] {', '.join(cand.observations_supporting) or 'None'}\n"
+            f"[bold cyan]Counter Observations:[/bold cyan] {', '.join(cand.observations_against) or 'None'}\n"
+            f"[bold yellow]Downstream Info Required:[/bold yellow] {', '.join(cand.required_downstream_information)}\n"
+            f"[bold red]STRICT INVARIANT:[/bold red] Conceptual thesis only. Non-executable. Zero broker parameters."
+        )
+        console.print(Panel(cand_text, title="[bold green]Draft Trade Candidate Thesis (Non-Executable)[/bold green]", border_style="green"))
+
+    # Observation Requests (if any)
+    if brain_output.observation_requests:
+        obs_req_table = Table(title="[bold yellow]Observation Requests for Next Cycle[/bold yellow]")
+        obs_req_table.add_column("Req ID", style="dim")
+        obs_req_table.add_column("Source", style="cyan")
+        obs_req_table.add_column("Reason", style="white")
+        obs_req_table.add_column("Requested Information", style="yellow")
+        for r in brain_output.observation_requests:
+            obs_req_table.add_row(r.request_id, r.source, r.reason, r.requested_information)
+        console.print(obs_req_table)
+
+    # Auditable Executive Summary Panel
+    console.print(Panel(brain_output.auditable_summary, title="[bold green]Auditable Executive Reasoning Summary[/bold green]", border_style="green"))
+    console.print("[bold green][OK] Brain reasoning cycle complete. Persisted to SQLite history.[/bold green]")
+
+
+async def cmd_brain_history(
+    runtime: NiftyTraderRuntime,
+    limit: int = 10,
+    state: Optional[str] = None,
+) -> None:
+    """Lists persisted reasoning runs from SQLite storage."""
+    state_enum = SetupState(state.upper()) if state and state.upper() in [s.value for s in SetupState] else None
+    runs = runtime.brain.get_history(limit=limit, state=state_enum)
+
+    table = Table(title="[bold green]Brain Reasoning History (SQLite Audit Trail)[/bold green]")
+    table.add_column("Run ID", style="dim", no_wrap=True)
+    table.add_column("Timestamp (UTC)", style="white")
+    table.add_column("State", style="bold")
+    table.add_column("Regime", style="cyan")
+    table.add_column("Confidence", style="magenta")
+    table.add_column("Direction", style="yellow")
+    table.add_column("Summary", style="dim white")
+
+    state_colors = {
+        SetupState.NO_TRADE: "red",
+        SetupState.WAIT: "yellow",
+        SetupState.WATCH: "cyan",
+        SetupState.DEVELOPING: "magenta",
+        SetupState.CANDIDATE: "green",
+    }
+
+    for r in runs:
+        scol = state_colors.get(r.current_state, "white")
+        cand_dir = r.candidate_thesis.direction.value if r.candidate_thesis else "NONE"
+        table.add_row(
+            r.brain_run_id[:12],
+            r.timestamp.strftime("%Y-%m-%d %H:%M"),
+            f"[{scol}]{r.current_state.value}[/{scol}]",
+            r.regime.value,
+            f"{r.confidence.value:.2f}",
+            cand_dir,
+            r.auditable_summary[:60] + "...",
+        )
+
+    console.print(table)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="NIFTY Autonomous Trader CLI")
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
@@ -558,6 +714,17 @@ def main() -> None:
     inst_list_parser = subparsers.add_parser("instruction-list", help="List stored manual agent instructions")
     inst_list_parser.add_argument("--status", choices=["PENDING", "ACTIVE", "COMPLETED", "REJECTED", "EXPIRED"], help="Filter by status")
 
+    # Package 4 Trading Brain & Market Reasoning CLI Commands
+    brain_parser = subparsers.add_parser("brain-analyze", help="Run full market observation and execute Trading Brain reasoning")
+    brain_parser.add_argument("--multimodal", action="store_true", help="Capture screenshot for visual reasoning")
+    brain_parser.add_argument("--no-cross-check", action="store_true", help="Skip browser cross-check during observation")
+    brain_parser.add_argument("--include-sensibull", action="store_true", help="Include Sensibull option chain in observation")
+    brain_parser.add_argument("--sources", help="Comma-separated observation sources (e.g. numerical,sensibull,tradingview)")
+
+    history_parser = subparsers.add_parser("brain-history", help="List persisted brain reasoning runs from SQLite history")
+    history_parser.add_argument("--limit", type=int, default=10, help="Number of records to show")
+    history_parser.add_argument("--state", choices=["NO_TRADE", "WAIT", "WATCH", "DEVELOPING", "CANDIDATE"], help="Filter by setup state")
+
     args = parser.parse_args()
     runtime = NiftyTraderRuntime()
 
@@ -592,6 +759,20 @@ def main() -> None:
         asyncio.run(cmd_instruction(runtime, text=args.text, priority=args.priority, expires_in_hours=args.expires_in_hours))
     elif args.command == "instruction-list":
         asyncio.run(cmd_instruction_list(runtime, status_filter=args.status))
+    elif args.command == "brain-analyze":
+        asyncio.run(cmd_brain_analyze(
+            runtime,
+            cross_check=not args.no_cross_check,
+            include_sensibull=args.include_sensibull,
+            sources=args.sources,
+            multimodal=args.multimodal,
+        ))
+    elif args.command == "brain-history":
+        asyncio.run(cmd_brain_history(
+            runtime,
+            limit=args.limit,
+            state=args.state,
+        ))
     else:
         parser.print_help()
 

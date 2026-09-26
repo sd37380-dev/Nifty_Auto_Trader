@@ -48,6 +48,14 @@ features:
     dependencies: ["browser", "market_data"]
     module: "nifty_trader.observation"
 
+  trading_brain:
+    name: "trading_brain"
+    description: "Multi-source cognitive reasoning, market regime analysis, scenarios, hypotheses, and candidate thesis engine"
+    version: "1.0.0"
+    status: "ENABLED"
+    dependencies: ["market_data", "gemini_brain"]
+    module: "nifty_trader.brain"
+
   strategy_engine:
     name: "strategy_engine"
     description: "Rule-based discretionary trading setup detector"
