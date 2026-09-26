@@ -1,0 +1,42 @@
+# ==============================================================================
+# NIFTY Autonomous Trader — General & Risk Policy Configuration
+# ==============================================================================
+# NOTE: The risk settings below are configurable safety-policy constraints.
+# They are not hardcoded trading rules; the AI brain is always free to conclude
+# "NO_TRADE" even when a technically valid setup exists.
+
+app:
+  name: "NIFTY Autonomous Trader"
+  version: "0.1.0"
+  mode: "RESEARCH" # "RESEARCH", "PAPER", or "LIVE" (disabled in early phases)
+
+market:
+  symbol: "NIFTY"
+  timeframes:
+    context: "1h"
+    setup: "15m"
+  timezone: "Asia/Kolkata"
+  trading_hours:
+    pre_market: "08:45"
+    open: "09:15"
+    last_entry: "14:30"
+    intraday_square_off: "15:15"
+    close: "15:30"
+
+# Configurable safety-policy constraints
+risk:
+  max_risk_per_trade: 0.01   # Max 1.0% account equity risked on single trade
+  max_daily_loss: 5000       # Hard stop if cumulative session loss reaches ₹5,000
+  max_trades_per_day: 3      # Max 3 trades allowed per trading session
+  minimum_rr: 2.0            # Minimum 1:2.0 Risk-to-Reward ratio for proposed trade plans
+  max_concurrent_positions: 1
+
+browser:
+  headless: true
+  executable_path: "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
+  navigation_timeout_ms: 30000
+
+logging:
+  level: "INFO"
+  log_dir: "logs"
+  retention_days: 30

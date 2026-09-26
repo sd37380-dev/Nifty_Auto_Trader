@@ -1,0 +1,73 @@
+# ==============================================================================
+# NIFTY Autonomous Trader — Model Router Configuration
+# ==============================================================================
+# Defines task tiers, primary AI model assignments, and automatic fallback chains.
+
+routing:
+  fast_observe:
+    provider: gemini
+    model: gemini-2.5-flash
+    temperature: 0.1
+    fallback:
+      provider: openrouter
+      model: google/gemini-2.5-flash
+
+  market_analysis:
+    provider: gemini
+    model: gemini-2.5-flash
+    temperature: 0.2
+    fallback:
+      provider: openrouter
+      model: anthropic/claude-3.5-sonnet
+
+  setup_confirmation:
+    provider: gemini
+    model: gemini-2.5-flash
+    temperature: 0.1
+    fallback:
+      provider: openrouter
+      model: anthropic/claude-3.7-sonnet
+
+  research:
+    provider: gemini
+    model: gemini-2.5-flash
+    temperature: 0.3
+    fallback:
+      provider: openrouter
+      model: perplexity/sonar
+
+  post_mortem:
+    provider: gemini
+    model: gemini-2.5-flash
+    temperature: 0.2
+    fallback:
+      provider: openrouter
+      model: deepseek/deepseek-r1
+
+  strategy_improvement:
+    provider: gemini
+    model: gemini-2.5-flash
+    temperature: 0.3
+    fallback:
+      provider: openrouter
+      model: anthropic/claude-3.7-sonnet
+
+providers:
+  gemini:
+    api_key_env: GEMINI_API_KEY
+    default_model: gemini-2.5-flash
+
+  openrouter:
+    api_key_env: OPENROUTER_API_KEY
+    default_model: anthropic/claude-3.5-sonnet
+
+  openai:
+    api_key_env: OPENAI_API_KEY
+    default_model: gpt-4o
+
+  anthropic:
+    api_key_env: ANTHROPIC_API_KEY
+    default_model: claude-3-5-sonnet-20241022
+
+settings:
+  cooldown_seconds: 60.0

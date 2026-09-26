@@ -1,8 +1,8 @@
 # NIFTY AUTONOMOUS TRADER — PROJECT STATUS
 
 **Project:** NIFTY Autonomous Trader (Hermes-Based Autonomous Trading Software)  
-**Current Phase:** Phase 0: AUDIT / PLANNING  
-**Status:** NOT IMPLEMENTED  
+**Current Phase:** PACKAGE 1 — Hermes Build + Model Router  
+**Status:** IN PROGRESS  
 **Updated:** 2026-09-26  
 
 ---
@@ -11,9 +11,8 @@
 
 | Package / Phase | Description | Status |
 |---|---|---|
-| **Phase 0** | **Audit, Architecture & Baseline Validation** | **AUDIT & ARCHITECTURE COMPLETE (Awaiting Approval)** |
-| **Package 0** | Hermes Fork & Product Repository Setup | Planned |
-| **Package 1** | Clean Hermes Build & Model Router | Planned |
+| **Phase 0** | **Audit, Architecture & Baseline Validation** | **PHASE 0 — LOCKED ✅** |
+| **Package 1** | **Hermes Build & Model Router** | **IN PROGRESS 🚀** |
 | **Package 2** | Computer & Browser Automation Agent | Planned |
 | **Package 3** | Market Perception Engine (1H + 15M) | Planned |
 | **Package 4** | Gemini & Multi-Model Trading Brain | Planned |
@@ -35,10 +34,22 @@
 
 ---
 
-## Non-Negotiable Operational Principles
+## Package 1 Scope & Boundary
 
-1. **Independent Software**: Does not touch, alter, or depend upon `C:\Users\Administrator\AppData\Local\hermes\`.
-2. **Deterministic Risk Over AI**: AI models propose; deterministic mathematical risk rules enforce hard boundaries.
-3. **Patience & Waiting**: Default state is `WAIT`. Never force trades on every candle.
-4. **Controlled Learning**: Live strategy modifications can only be enacted following systematic post-mortems, backtesting, paper validation, and human sign-off.
-5. **Multi-Timeframe**: Strictly governed by 1H (Context/Regime) and 15M (Setup/Execution).
+### Objectives for Package 1:
+1. Official Hermes Source → Verified clean baseline.
+2. Independent Build → Isolated dedicated virtual environment (`D:\AI_Trading\nifty-autonomous-trader\venv`).
+3. Nifty Autonomous Trader Runtime → Standalone runtime and CLI launcher.
+4. ModelRouter → Decoupled multi-provider abstraction supporting task-based routing.
+5. Gemini Provider → Primary native vision & structured reasoning adapter.
+6. Future Providers → Pluggable adapters for OpenRouter, OpenAI, Anthropic, Local models.
+7. Verification → Executable test proving `nifty-trader start` connects to ModelRouter, queries Gemini, and receives valid structured reasoning.
+
+### Strict Scope Exclusion (Deferred to Later Packages):
+- ❌ NO NIFTY market data engine (belongs to Package 3).
+- ❌ NO 1H/15M candle engine (belongs to Package 3).
+- ❌ NO trading strategy / entry signals (belongs to Package 6).
+- ❌ NO risk calculations (belongs to Package 7).
+- ❌ NO paper broker (belongs to Package 8).
+- ❌ NO autonomous trading loop (belongs to Package 5).
+- ❌ NO live broker integration (belongs to Package 19).
