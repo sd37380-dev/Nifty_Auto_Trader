@@ -1,9 +1,6 @@
 # ==============================================================================
-# NIFTY Autonomous Trader — General & Risk Policy Configuration
+# NIFTY Autonomous Trader — General, Risk & Browser Configuration
 # ==============================================================================
-# NOTE: The risk settings below are configurable safety-policy constraints.
-# They are not hardcoded trading rules; the AI brain is always free to conclude
-# "NO_TRADE" even when a technically valid setup exists.
 
 app:
   name: "NIFTY Autonomous Trader"
@@ -32,9 +29,24 @@ risk:
   max_concurrent_positions: 1
 
 browser:
+  provider: hermes
+  chrome_path: "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
   headless: true
-  executable_path: "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
-  navigation_timeout_ms: 30000
+  remote_port: 9225
+  navigation_timeout_seconds: 30
+  element_timeout_seconds: 10
+  max_action_retries: 2
+  restart_on_disconnect: true
+
+  screenshots:
+    enabled: true
+    directory: "data/browser/screenshots"
+    retention_days: 7
+
+  extraction:
+    max_visible_text_chars: 12000
+    max_dom_elements: 300
+    max_links: 100
 
 logging:
   level: "INFO"
