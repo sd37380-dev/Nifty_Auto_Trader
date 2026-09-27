@@ -41,38 +41,70 @@ def build_reasoning_prompt(context: Dict[str, Any], prompt_version: str = DEFAUL
     """
     Constructs the model-neutral market reasoning prompt from compiled context.
     """
-    return f"""### CANONICAL OBSERVATION INPUT [Prompt Version: {prompt_version}]
-Observation ID: {context['observation_id']}
-Instrument: {context['instrument']}
-Session State: {context['session']}
-Timestamp (IST): {context['observed_at_ist']}
+    prompt_parts = [
+        f"### CANONICAL OBSERVATION INPUT [Prompt Version: {prompt_version}]",
+        f"Observation ID: {context['observation_id']}",
+        f"Instrument: {context['instrument']}",
+        f"Session State: {context['session']}",
+        f"Timestamp (IST): {context['observed_at_ist']}",
+    ]
 
-### 1. BROADER 1H STRUCTURAL CONTEXT
-{context['h1_context']}
+    if context.get("previous_brain_state"):
+        prompt_parts.extend([
+            "",
+            "### PRIOR COGNITIVE REASONING STATE & CONTINUITY",
+            context["previous_brain_state"],
+            "NOTE: Continue the ongoing reasoning thesis. Re-evaluate active hypotheses against fresh observations.",
+        ])
 
-### 2. TACTICAL 15M MARKET STATE
-{context['m15_tactical']}
+    if context.get("requested_focus"):
+        prompt_parts.extend([
+            "",
+            "### REQUESTED OBSERVATION FOCUS",
+            context["requested_focus"],
+        ])
 
-### 3. DERIVATIVES SENTIMENT (SENSIBULL)
-{context['sensibull_derivatives']}
+    prompt_parts.extend([
+        "",
+        "### 1. BROADER 1H STRUCTURAL CONTEXT",
+        context["h1_context"],
+        "",
+        "### 2. TACTICAL 15M MARKET STATE",
+        context["m15_tactical"],
+        "",
+        "### 3. DERIVATIVES SENTIMENT (SENSIBULL)",
+        context["sensibull_derivatives"],
+        "",
+        "### 4. VISUAL CHART PERCEPTION (TRADINGVIEW)",
+        context["tradingview_visual"],
+        "",
+        "### 5. CROSS-SOURCE ALIGNMENT & SOURCE STATUS",
+        "Cross-Source Validation:",
+        context["cross_source_validation"],
+        "",
+        "Source Freshness & Completeness:",
+        context["source_status"],
+        "",
+        "### 6. HUMAN OPERATOR GUIDANCE (CONTEXTUAL)",
+        context["operator_instructions"],
+    ])
 
-### 4. VISUAL CHART PERCEPTION (TRADINGVIEW)
-{context['tradingview_visual']}
+    if context.get("memory_context"):
+        prompt_parts.extend([
+            "",
+            "### 6A. HISTORICAL CONTEXTUAL EXPERIENCE (DESCRIPTIVE ONLY - NOT TRADING RULES)",
+            context["memory_context"],
+        ])
 
-### 5. CROSS-SOURCE ALIGNMENT & SOURCE STATUS
-Cross-Source Validation:
-{context['cross_source_validation']}
-
-Source Freshness & Completeness:
-{context['source_status']}
-
-### 6. HUMAN OPERATOR GUIDANCE (CONTEXTUAL)
-{context['operator_instructions']}
-
-### 7. VERIFIABLE EVIDENCE CATALOG
-{context['evidence_catalog']}
-
-### 8. COGNITIVE REASONING TASK
+    prompt_parts.extend([
+        "",
+        "### 7. VERIFIABLE EVIDENCE CATALOG",
+        context["evidence_catalog"],
+        "",
+        "### 8. COGNITIVE REASONING TASK",
+    ])
+    header_block = "\n".join(prompt_parts)
+    return f"""{header_block}
 Analyze the synthesized market observation above:
 1. Provide MarketContext: regime (e.g. RANGING, TRENDING_UP, TRENDING_DOWN, TRANSITIONING), regime confidence, structure types, summary, key levels, and evidence.
 2. Provide separate TimeframeAssessments for "1H" and "15M" with structures, directional context, and evidence.

@@ -1,8 +1,8 @@
 # NIFTY AUTONOMOUS TRADER — PROJECT STATUS
 
 **Project:** NIFTY Autonomous Trader (Hermes-Based Autonomous Trading Software)  
-**Current Phase:** PACKAGE 5 — Autonomous Observation & Waiting Engine  
-**Status:** PACKAGE 5 COMPLETE & LOCKED ✅  
+**Current Phase:** STAGE 6 — Hermes–Brain Collaborative Trading Orchestration  
+**Status:** STAGE 6 COMPLETE & LOCKED ✅  
 **Date:** 2026-09-27  
 
 ---
@@ -19,8 +19,8 @@
 | **Package 3.1** | **Sensibull Observation Extension (Multi-Source Perception)** | **PACKAGE 3.1 — COMPLETE & LOCKED ✅** |
 | **Package 4** | **Trading Brain & Market Reasoning Engine** | **PACKAGE 4 — COMPLETE & LOCKED ✅** |
 | **Package 5** | **Autonomous Observation & Waiting Engine** | **PACKAGE 5 — COMPLETE & LOCKED ✅** |
-| **Package 6** | Strategy Discovery & Setup Detection | Planned |
-| **Package 7** | Deterministic Risk Engine | Planned |
+| **Stage 6** | **Hermes–Brain Collaborative Trading Orchestration** | **STAGE 6 — COMPLETE & LOCKED ✅** |
+| **Package 6 / 7** | Deterministic Risk Engine | Planned |
 | **Package 8** | Simulated Paper Broker & Order Accounting | Planned |
 | **Package 9** | Position Monitoring & Dynamic Trailing | Planned |
 | **Package 10** | Trader Experience Memory Store | Planned |
@@ -80,3 +80,17 @@
 
 9. **Verification & Testing:**
    - 67 of 67 unit tests passing in 7.96s (`pytest tests/ -v`).
+
+---
+
+## Stage 6 Milestones Achieved (Hermes–Brain Collaborative Orchestration)
+
+1. **Zero Hard-Coded Strategy Engines**: Replaced rigid EMA/VWAP rules with collaborative autonomous reasoning between Hermes (Operator) and the AI Trading Brain (Gemini via ModelRouter).
+2. **Context Security & Prompt Injection Defense (`nifty_trader/brain/context/context_validator.py`)**: Strict neutralization of malicious instructions and prompt injection attempts; tags untrusted browser data with `<untrusted_web_data>`.
+3. **10-Tier Context Ranking & Budgeting (`nifty_trader/brain/context/context_selector.py`)**: Prioritizes urgent safety instructions, 15M tactical structure, 1H context, active hypotheses, and pending observation requests within bounded token limits.
+4. **Hermes Context Memory Store (`nifty_trader/brain/context/context_memory.py`)**: Thread-safe SQLite store with explicit non-rule disclaimers preventing memory from being mistaken for hard strategy rules.
+5. **Hermes Tool Bridge (`nifty_trader/hermes/tool_bridge.py`)**: Connects perception services, browser data (Sensibull/TradingView), operator instructions, and memory to satisfy Brain observation requests.
+6. **Multi-Turn Collaborative Orchestrator (`nifty_trader/hermes/collaboration.py`)**: Handles interactive turns (Observe -> Reason -> Request Info -> Fetch Tools -> Re-evaluate -> Wait/Candidate).
+7. **Candidate Halting & Zero Broker Orders**: Immediately halts on `CANDIDATE` and dispatches trade candidate downstream without broker execution or position sizing.
+8. **Auditing & CLI (`nifty_trader/cli.py`)**: Complete SQLite audit trail (`collaborate-status`) and interactive collaboration execution (`collaborate`).
+9. **Verification**: 167 of 167 tests passing (100% pass rate). Stage 6 LOCKED.

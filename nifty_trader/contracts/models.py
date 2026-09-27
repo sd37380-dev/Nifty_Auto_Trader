@@ -279,6 +279,7 @@ class ManualInstructionContext(BaseModel):
     priority: str
     status: str
     created_at: datetime
+    created_by: str = "human_operator"
     expires_at: Optional[datetime] = None
     applicable_sources: List[str] = Field(default_factory=list)
 

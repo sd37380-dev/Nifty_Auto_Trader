@@ -405,6 +405,7 @@ class UnifiedObservationBuilder:
                     priority=inst.priority.value if hasattr(inst.priority, "value") else str(inst.priority),
                     status=inst.status.value if hasattr(inst.status, "value") else str(inst.status),
                     created_at=inst_created,
+                    created_by=getattr(inst, "created_by", "human_operator"),
                     expires_at=inst.expires_at,
                     applicable_sources=["all"],
                 )

@@ -14,5 +14,6 @@ data/browser/screenshots/*.png
 *.db
 *.sqlite
 *.sqlite3
-data/market/*.db
-data/agent/*.db
+data/**/*.jsonl
+data/**/*.db
+

@@ -267,6 +267,7 @@ class BrainInput(BaseModel):
     manual_instruction_context: List[ManualInstructionContext] = Field(default_factory=list)
     previous_brain_state: Optional["BrainState"] = None
     requested_focus: List[str] = Field(default_factory=list)
+    memory_context: Optional[str] = None
     timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 

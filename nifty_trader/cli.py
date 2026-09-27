@@ -807,6 +807,110 @@ async def cmd_autonomous_cycles(runtime: NiftyTraderRuntime, limit: int = 10) ->
     console.print(table)
 
 
+async def cmd_collaborate(
+    runtime: NiftyTraderRuntime,
+    symbol: str = "NIFTY",
+    max_turns: int = 3,
+) -> None:
+    """Executes Stage 6 Hermes-Brain Collaborative Trading Orchestration."""
+    console.print(Panel(
+        f"[bold cyan]STAGE 6: HERMES-BRAIN COLLABORATIVE TRADING ORCHESTRATION[/bold cyan]\n"
+        f"Operator: [green]Hermes Autonomous Agent[/green] | Reasoning Intelligence: [magenta]AI Brain (Gemini)[/magenta]\n"
+        f"Instrument: [bold yellow]{symbol}[/bold yellow] | Max Interactive Turns: [bold]{max_turns}[/bold]\n"
+        f"[dim]STRICT INVARIANT: No hard-coded strategy engine. Yields TradeCandidate only (Zero broker execution).[/dim]",
+        title="[bold green]Hermes-Brain Partnership[/bold green]",
+        border_style="cyan",
+    ))
+
+    with console.status("[bold green]Executing collaborative reasoning turn(s)...[/bold green]"):
+        cycle = await runtime.run_collaboration(symbol=symbol, max_turns=max_turns)
+
+    final_state_str = cycle.final_reasoning_state.value if cycle.final_reasoning_state else "FAILED/INCOMPLETE"
+    state_color = "green" if final_state_str == "CANDIDATE" else ("yellow" if final_state_str == "WAIT" else "cyan")
+
+    table = Table(title=f"Collaboration Turns Audit [Cycle ID: {cycle.cycle_id}]")
+    table.add_column("Turn #", style="bold white", justify="center")
+    table.add_column("Action Taken", style="cyan")
+    table.add_column("State Result", style=state_color)
+    table.add_column("Observation Requests", style="magenta")
+    table.add_column("Tools Invoked", style="yellow")
+    table.add_column("Duration", style="dim white", justify="right")
+
+    for t in cycle.turns:
+        st_val = t.reasoning_state.value if t.reasoning_state else "FAILED"
+        reqs = ", ".join(t.requested_items) if t.requested_items else "None"
+        tools = ", ".join(t.tools_invoked) if t.tools_invoked else "None"
+        table.add_row(
+            str(t.turn_index),
+            t.action_taken,
+            st_val,
+            reqs,
+            tools,
+            f"{t.duration_ms:.1f}ms",
+        )
+
+    console.print(table)
+
+    if cycle.candidate:
+        console.print(Panel(
+            f"[bold green]TRADE CANDIDATE PRODUCED BY BRAIN REASONING[/bold green]\n\n"
+            f"[bold]Thesis:[/bold] {cycle.candidate.thesis}\n"
+            f"[bold]Direction:[/bold] [{state_color}]{cycle.candidate.direction.value}[/{state_color}]\n"
+            f"[bold]Market Context:[/bold] {cycle.candidate.market_context}\n"
+            f"[bold]Setup Conditions:[/bold]\n" + "\n".join(f"  * {sc.description}" for sc in cycle.candidate.setup_conditions) + "\n"
+            f"[bold]Required Downstream Info:[/bold] {', '.join(cycle.candidate.required_downstream_information)}\n\n"
+            f"[bold red]SAFETY BOUNDARY: CANDIDATE ONLY. ZERO BROKER ORDERS EXECUTED.[/bold red]",
+            title="[bold yellow]Trade Candidate Output[/bold yellow]",
+            border_style="green",
+        ))
+    elif cycle.wait_decision:
+        w = cycle.wait_decision
+        console.print(Panel(
+            f"[bold yellow]COLLABORATIVE WAIT ACTIVE[/bold yellow]\n\n"
+            f"[bold]Wait Reason:[/bold] {w.get('reason')}\n"
+            f"[bold]Earliest Wake (UTC):[/bold] {w.get('earliest_wake_at')}\n"
+            f"[bold]Latest Wake (UTC):[/bold] {w.get('latest_wake_at')}\n"
+            f"[bold]Explanation:[/bold] {w.get('explanation')}\n"
+            f"[bold]Scheduled Wake Conditions:[/bold] {len(w.get('wake_conditions', []))} condition(s) registered",
+            title="[bold cyan]Autonomous Wait State[/bold cyan]",
+            border_style="yellow",
+        ))
+    else:
+        console.print(f"[bold {state_color}]Collaboration Cycle Concluded. Final State: {final_state_str}[/bold {state_color}]")
+
+
+async def cmd_collaborate_status(runtime: NiftyTraderRuntime, limit: int = 10) -> None:
+    """Lists recent collaborative trading cycles from audit store."""
+    cycles = runtime.collaborator.audit_store.load_recent_cycles(limit=limit)
+    if not cycles:
+        console.print("[yellow]No collaboration cycles found in audit log.[/yellow]")
+        return
+
+    table = Table(title="[bold green]Hermes-Brain Collaboration History (Audit Trail)[/bold green]")
+    table.add_column("Cycle ID", style="dim", no_wrap=True)
+    table.add_column("Session", style="white")
+    table.add_column("Started (UTC)", style="white")
+    table.add_column("Turns", style="bold white", justify="center")
+    table.add_column("Final State", style="bold green")
+    table.add_column("Model Used", style="cyan")
+    table.add_column("Candidate", style="magenta")
+
+    for c in cycles:
+        final_st = c.final_reasoning_state.value if c.final_reasoning_state else "INCOMPLETE"
+        has_cand = "[green]YES[/green]" if c.candidate else "[dim]NO[/dim]"
+        table.add_row(
+            c.cycle_id[:12],
+            c.session_id[:10],
+            c.started_at.strftime("%H:%M:%S"),
+            str(len(c.turns)),
+            final_st,
+            c.model_used,
+            has_cand,
+        )
+
+    console.print(table)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="NIFTY Autonomous Trader CLI")
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
@@ -873,6 +977,15 @@ def main() -> None:
     cycles_parser = auto_sub.add_parser("cycles", help="List persisted autonomous reasoning cycles")
     cycles_parser.add_argument("--limit", type=int, default=10, help="Number of records to show")
 
+    # Stage 6 Hermes-Brain Collaborative Orchestration CLI Commands
+    collab_parser = subparsers.add_parser("collaborate", help="Execute Hermes-Brain collaborative trading cycle")
+    collab_parser.add_argument("--symbol", default="NIFTY", help="Target instrument symbol")
+    collab_parser.add_argument("--max-turns", type=int, default=3, help="Maximum multi-turn interactive observation/re-evaluation turns")
+    collab_parser.add_argument("--once", action="store_true", default=True, help="Run a single bounded collaborative cycle (default True)")
+
+    collab_status = subparsers.add_parser("collaborate-status", help="List recent Hermes-Brain collaboration cycles from audit log")
+    collab_status.add_argument("--limit", type=int, default=10, help="Number of records to show")
+
     args = parser.parse_args()
     runtime = NiftyTraderRuntime()
 
@@ -920,6 +1033,17 @@ def main() -> None:
             runtime,
             limit=args.limit,
             state=args.state,
+        ))
+    elif args.command == "collaborate":
+        asyncio.run(cmd_collaborate(
+            runtime,
+            symbol=args.symbol,
+            max_turns=args.max_turns,
+        ))
+    elif args.command == "collaborate-status":
+        asyncio.run(cmd_collaborate_status(
+            runtime,
+            limit=args.limit,
         ))
     elif args.command == "autonomous":
         if args.auto_command == "start":

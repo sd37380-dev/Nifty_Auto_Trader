@@ -9,7 +9,7 @@ the Package 4 Canonical Trading Brain Domain Model.
 
 from datetime import datetime, timezone
 import logging
-from typing import Any, Dict, List, Literal, Optional, Set
+from typing import Any, Dict, List, Literal, Optional, Set, Union
 import uuid
 
 from nifty_trader.brain.context import BrainContextCompiler
@@ -86,8 +86,13 @@ class TradingBrainEngine:
         model_provider = tier_cfg.get("provider", "gemini")
         model_name = tier_cfg.get("model", "gemini-2.5-flash")
 
-        # 1. Compile structured observation context from observation
-        context = self.compiler.compile(brain_input.observation)
+        # 1. Compile structured observation context from observation, continuity, and memory
+        context = self.compiler.compile(
+            obs=brain_input.observation,
+            previous_brain_state=brain_input.previous_brain_state,
+            requested_focus=brain_input.requested_focus,
+            memory_context=getattr(brain_input, "memory_context", None),
+        )
 
         # 2. Build model-neutral reasoning prompt
         prompt = build_reasoning_prompt(context, prompt_version=self.prompt_version)
@@ -153,16 +158,19 @@ class TradingBrainEngine:
 
     async def reason(
         self,
-        observation: UnifiedMarketObservation,
+        observation: Union[UnifiedMarketObservation, BrainInput],
         image_bytes: Optional[bytes] = None,
         image_mime_type: str = "image/png",
         task: Literal["MARKET_ANALYSIS", "SETUP_CONFIRMATION"] = "MARKET_ANALYSIS",
         requested_focus: Optional[List[str]] = None,
     ) -> BrainResult:
         """
-        High-level entry point accepting UnifiedMarketObservation.
-        Constructs canonical BrainInput and executes cognitive reasoning.
+        High-level entry point accepting UnifiedMarketObservation or BrainInput.
+        Constructs canonical BrainInput if observation is passed, and executes cognitive reasoning.
         """
+        if isinstance(observation, BrainInput):
+            return await self.analyze(brain_input=observation, image_bytes=image_bytes, image_mime_type=image_mime_type)
+
         prev_state = self.storage.get_latest_state()
         brain_input = BrainInput(
             schema_version=PACKAGE4_SCHEMA_VERSION,

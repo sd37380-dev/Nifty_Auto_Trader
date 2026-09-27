@@ -23,7 +23,13 @@ class BrainContextCompiler:
     Compiles UnifiedMarketObservation into organized contextual sections for AI reasoning.
     """
 
-    def compile(self, obs: UnifiedMarketObservation) -> Dict[str, Any]:
+    def compile(
+        self,
+        obs: UnifiedMarketObservation,
+        previous_brain_state: Optional[Any] = None,
+        requested_focus: Optional[List[str]] = None,
+        memory_context: Optional[str] = None,
+    ) -> Dict[str, Any]:
         """
         Extracts and formats observation components.
         """
@@ -110,6 +116,39 @@ class BrainContextCompiler:
             ev_lines.append(f"  * {ev.evidence_id}: [{ev.evidence_type.value}] from {ev.source_id} - {ev.excerpt or ev.reference or 'Evidence artifact'}")
         evidence_text = "\n".join(ev_lines) if ev_lines else "No evidence artifacts attached."
 
+        # 8. Previous Brain State Continuity
+        prev_state_text = None
+        if previous_brain_state:
+            hypos = []
+            for h in getattr(previous_brain_state, "hypotheses", []):
+                h_dir = h.direction.value if hasattr(h.direction, "value") else str(h.direction)
+                h_conf = h.confidence.value if hasattr(h.confidence, "value") else str(h.confidence)
+                hypos.append(f"  * [{h.hypothesis_id}] ({h_dir}, {h_conf}): {h.statement}")
+            hypos_str = "\n".join(hypos) if hypos else "None recorded."
+
+            scens = []
+            for s in getattr(previous_brain_state, "scenarios", []):
+                s_dir = s.direction.value if hasattr(s.direction, "value") else str(s.direction)
+                s_conf = s.confidence.value if hasattr(s.confidence, "value") else str(s.confidence)
+                scens.append(f"  * [{s.scenario_id}] ({s_dir}, {s_conf}): {s.description}")
+            scens_str = "\n".join(scens) if scens else "None recorded."
+
+            regime_val = previous_brain_state.market_context.regime.value if hasattr(previous_brain_state.market_context.regime, "value") else str(previous_brain_state.market_context.regime)
+            reasoning_val = previous_brain_state.reasoning_state.value if hasattr(previous_brain_state.reasoning_state, "value") else str(previous_brain_state.reasoning_state)
+
+            prev_state_text = (
+                f"Previous State ID: {previous_brain_state.state_id}\n"
+                f"Previous Reasoning State: {reasoning_val}\n"
+                f"Previous Market Regime: {regime_val} ({previous_brain_state.market_context.summary})\n"
+                f"Active Hypotheses from Prior Cycle:\n{hypos_str}\n"
+                f"Developing Scenarios from Prior Cycle:\n{scens_str}"
+            )
+
+        # 9. Requested Observation Focus
+        focus_text = None
+        if requested_focus:
+            focus_text = "\n".join(f"  * {f}" for f in requested_focus)
+
         return {
             "observation_id": obs.observation_id,
             "instrument": obs.instrument,
@@ -123,5 +162,8 @@ class BrainContextCompiler:
             "source_status": sources_text,
             "operator_instructions": instructions_text,
             "evidence_catalog": evidence_text,
+            "previous_brain_state": prev_state_text,
+            "requested_focus": focus_text,
+            "memory_context": memory_context,
             "warnings": [w.message for w in obs.warnings],
         }

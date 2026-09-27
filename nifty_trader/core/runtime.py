@@ -240,6 +240,34 @@ class NiftyTraderRuntime:
             storage=auto_storage,
         )
 
+        # Initialize Stage 6 Hermes-Brain Collaborative Trading Orchestrator
+        collab_dir = self.root_dir / "data" / "collaboration"
+        collab_dir.mkdir(parents=True, exist_ok=True)
+        from nifty_trader.brain.context.context_memory import ContextMemoryStore
+        from nifty_trader.brain.context.context_builder import HermesContextBuilder
+        from nifty_trader.hermes.tool_bridge import HermesToolBridge
+        from nifty_trader.hermes.collaboration import HermesBrainOrchestrator
+        from nifty_trader.hermes.contracts import CollaborationAuditStore
+
+        self.memory_store = ContextMemoryStore(storage_path=collab_dir / "context_memory.json")
+        self.tool_bridge = HermesToolBridge(
+            market_service=self.market_service,
+            browser_agent=self.browser,
+            instruction_manager=self.instruction_manager,
+            memory_store=self.memory_store,
+        )
+        self.context_builder = HermesContextBuilder(
+            memory_store=self.memory_store,
+        )
+        self.collaborator = HermesBrainOrchestrator(
+            brain_engine=self.brain,
+            tool_bridge=self.tool_bridge,
+            context_builder=self.context_builder,
+            brain_storage=brain_storage,
+            wait_policy=self.autonomous.wait_policy,
+            audit_store=CollaborationAuditStore(storage_dir=collab_dir),
+        )
+
         logger.info("NiftyTraderRuntime initialized in state: %s", self.state.value)
 
     def _load_environment(self, env_file: Optional[Path]) -> None:
@@ -547,4 +575,24 @@ class NiftyTraderRuntime:
         if unified_obs is None:
             unified_obs = await self.get_unified_market_observation()
         return await self.brain.reason(observation=unified_obs, image_bytes=image_bytes)
+
+    async def run_collaboration(
+        self,
+        session_id: Optional[str] = None,
+        symbol: str = "NIFTY",
+        max_turns: int = 3,
+        force_initial_observation: Optional[UnifiedMarketObservation] = None,
+    ):
+        """
+        Executes Stage 6 Hermes-Brain collaborative trading orchestration cycle.
+        """
+        import uuid
+        session = session_id or f"sess_{uuid.uuid4().hex[:8]}"
+        return await self.collaborator.run_collaboration_cycle(
+            session_id=session,
+            symbol=symbol,
+            max_turns=max_turns,
+            force_initial_observation=force_initial_observation,
+        )
+
 
