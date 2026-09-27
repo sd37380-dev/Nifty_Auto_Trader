@@ -27,6 +27,7 @@ from nifty_trader.autonomous.contracts import (
     AutonomousState,
     CycleResult,
     ObservationPriority,
+    Package4OutputContractValidator,
     ScheduledObservationPlan,
     WaitDecision,
     WaitReason,
@@ -376,10 +377,21 @@ class AutonomousObservationEngine:
                 ),
             )
 
-        # 6. Evaluate Brain Result & Formulate Next Step
+        # 6. Evaluate Brain Result & Formulate Next Step (Spec 52A)
         if not brain_result.success:
             self._consecutive_failures += 1
             cycle_record.errors.append(brain_result.failure.message)
+
+            # Non-retryable failure triggers structured autonomous failure (ERROR state)
+            if not brain_result.failure.retryable:
+                logger.error("Non-retryable BrainFailure [%s]: %s. Entering ERROR state.", brain_result.failure.code, brain_result.failure.message)
+                self.state_machine.transition_to(AutonomousState.ERROR, reason=f"Non-retryable brain failure: {brain_result.failure.code}", session_id=session_id, cycle_id=cycle_id)
+                cycle_record.resulting_state = AutonomousState.ERROR
+                cycle_record.completed_at = self.clock.now()
+                self.storage.save_cycle(cycle_record)
+                return CycleResult(success=False, state=AutonomousState.ERROR, cycle_id=cycle_id, failure=brain_result.failure.message, completed_at=self.clock.now())
+
+            # Retryable failure triggers bounded backoff
             wait_dec = self.wait_policy.formulate_decision(
                 failure=brain_result.failure,
                 consecutive_failures=self._consecutive_failures,
@@ -391,9 +403,25 @@ class AutonomousObservationEngine:
             self.storage.save_cycle(cycle_record)
             return CycleResult(success=False, state=AutonomousState.WAITING, cycle_id=cycle_id, next_wait=wait_dec, failure=brain_result.failure.message, completed_at=self.clock.now())
 
-        # Success path
-        self._consecutive_failures = 0
+        # Success path: Enforce Package 4 domain contract invariants (Spec 52A.9)
         brain_out = brain_result.output
+        is_valid, validation_err = Package4OutputContractValidator.validate(brain_out)
+        if not is_valid:
+            logger.error("Package 4 BrainOutput contract violation: %s. Entering ERROR state.", validation_err)
+            self._consecutive_failures += 1
+            cycle_record.errors.append(validation_err)
+            self.state_machine.transition_to(
+                AutonomousState.ERROR,
+                reason=f"Contract validation failure: {validation_err}",
+                session_id=session_id,
+                cycle_id=cycle_id,
+            )
+            cycle_record.resulting_state = AutonomousState.ERROR
+            cycle_record.completed_at = self.clock.now()
+            self.storage.save_cycle(cycle_record)
+            return CycleResult(success=False, state=AutonomousState.ERROR, cycle_id=cycle_id, failure=validation_err, completed_at=self.clock.now())
+
+        self._consecutive_failures = 0
         self._previous_brain_output = brain_out
         self._previous_observation = unified_obs
         cycle_record.brain_request_id = brain_out.brain_request_id

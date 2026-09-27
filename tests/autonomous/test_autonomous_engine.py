@@ -27,6 +27,7 @@ from nifty_trader.brain.contracts import (
     ObservationRequest,
     ReasoningState,
     ReasoningSummary,
+    TimeframeAssessment,
     TradeCandidate,
 )
 from nifty_trader.contracts.models import (
@@ -77,6 +78,8 @@ def _create_mock_runtime(market_status: MarketSessionStatus = MarketSessionStatu
 
     # Brain reasoning result default
     def get_brain_result(**kwargs):
+        tf_1h = TimeframeAssessment(timeframe="1H", summary="1H uptrend", directional_context=Direction.NEUTRAL)
+        tf_15m = TimeframeAssessment(timeframe="15M", summary="15M range", directional_context=Direction.NEUTRAL)
         out = BrainOutput(
             brain_request_id="breq_mock_1",
             observation_id="umo_test_auto_1",
@@ -86,6 +89,7 @@ def _create_mock_runtime(market_status: MarketSessionStatus = MarketSessionStatu
                 regime_confidence=Confidence(value=0.8, basis=["test"]),
                 summary="Consolidating near 25000",
             ),
+            timeframe_assessments=[tf_1h, tf_15m],
             observation_requests=[],
             confidence=Confidence(value=0.75, basis=["test"]),
             reasoning_summary=ReasoningSummary(
@@ -142,6 +146,8 @@ async def test_engine_candidate_stops_loop(tmp_path: Path):
         market_context="Bullish momentum",
         reasoning_confidence=Confidence(value=0.85, basis=["test"]),
     )
+    tf_1h = TimeframeAssessment(timeframe="1H", summary="1H uptrend", directional_context=Direction.LONG)
+    tf_15m = TimeframeAssessment(timeframe="15M", summary="15M breakout", directional_context=Direction.LONG)
     cand_output = BrainOutput(
         brain_request_id="breq_cand_1",
         observation_id="umo_cand_1",
@@ -151,6 +157,7 @@ async def test_engine_candidate_stops_loop(tmp_path: Path):
             regime_confidence=Confidence(value=0.85, basis=["test"]),
             summary="Uptrend intact",
         ),
+        timeframe_assessments=[tf_1h, tf_15m],
         candidate=cand,
         confidence=Confidence(value=0.85, basis=["test"]),
         reasoning_summary=ReasoningSummary(context="Candidate ready", interpretation="Long candidate"),

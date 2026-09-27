@@ -14,7 +14,7 @@ STRICT INVARIANTS:
 
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Dict, List, Literal, Optional, Tuple
 import uuid
 from pydantic import BaseModel, Field
 
@@ -256,3 +256,37 @@ class AutonomousLimits(BaseModel):
     sensibull_cooldown_seconds: float = 60.0
     tradingview_cooldown_seconds: float = 30.0
     restore_after_restart: bool = True
+
+
+# ==============================================================================
+# 4. Explicit Package 4 Output Contract Validator (Spec 52A)
+# ==============================================================================
+
+class Package4OutputContractValidator:
+    """
+    Enforces strict Package 4 domain invariants on BrainOutput consumed by Package 5.
+    (Specification Section 52A.9)
+    """
+
+    @staticmethod
+    def validate(output: BrainOutput) -> Tuple[bool, Optional[str]]:
+        # Invariant 1: CANDIDATE requires non-null candidate
+        if output.reasoning_state == ReasoningState.CANDIDATE:
+            if output.candidate is None:
+                return False, "Invariant violation: reasoning_state == CANDIDATE requires candidate != None"
+        else:
+            # Invariant 2: WAIT / WATCH / DEVELOPING / NO_TRADE forbids non-null candidate
+            if output.candidate is not None:
+                return False, f"Invariant violation: reasoning_state == {output.reasoning_state.value} forbids non-null candidate"
+
+        # Invariant 3: 1H and 15M assessments must exist
+        tf_set = {t.timeframe for t in output.timeframe_assessments}
+        if "1H" not in tf_set or "15M" not in tf_set:
+            return False, f"Invariant violation: both 1H and 15M timeframe assessments are required (found: {sorted(list(tf_set))})"
+
+        # Invariant 4: Confidence value bounded in [0.0, 1.0]
+        if not (0.0 <= output.confidence.value <= 1.0):
+            return False, f"Invariant violation: confidence.value ({output.confidence.value}) must be in [0.0, 1.0]"
+
+        return True, None
+
