@@ -77,3 +77,29 @@ logging:
   level: "INFO"
   log_dir: "logs"
   retention_days: 30
+
+autonomous:
+  enabled: true
+  max_cycles: 100
+  max_observation_requests: 20
+  max_model_calls: 50
+  max_consecutive_failures: 5
+  max_session_duration_minutes: 390
+  waiting:
+    minimum_seconds: 5.0
+    maximum_seconds: 3600.0
+  cooldown:
+    default_seconds: 30.0
+    sensibull_seconds: 60.0
+    tradingview_seconds: 30.0
+  recovery:
+    restore_after_restart: true
+
+change_detection:
+  candle_completion: true
+  source_refresh: true
+  structure_change: true
+  price_change:
+    enabled: true
+    minimum_relative_change: 0.001
+

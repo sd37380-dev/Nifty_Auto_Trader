@@ -3,28 +3,49 @@ Trading Brain & Market Reasoning Engine (Package 4).
 
 Orchestrates multi-source cognitive interpretation, scenario formulation,
 testable hypothesis generation, non-executable trade candidate drafting,
-and safety validation over canonical market observations.
+and safety validation over canonical market observations conforming to
+the Package 4 Canonical Trading Brain Domain Model.
 """
 
 from datetime import datetime, timezone
 import logging
-from typing import Any, Dict, Optional, Set
+from typing import Any, Dict, List, Literal, Optional, Set
 import uuid
 
 from nifty_trader.brain.context import BrainContextCompiler
 from nifty_trader.brain.contracts import (
-    BoundedConfidence,
-    BrainReasoningOutput,
+    DEFAULT_PROMPT_VERSION,
+    PACKAGE4_SCHEMA_VERSION,
+    BrainFailure,
+    BrainInput,
+    BrainOutput,
+    BrainResult,
+    BrainState,
+    Confidence,
+    Direction,
+    MarketContext,
+    MarketHypothesis,
     MarketRegime,
+    ObservationReference,
     ObservationRequest,
-    SetupState,
+    ReasoningState,
+    ReasoningSummary,
+    Scenario,
+    Severity,
+    StructureType,
+    TimeframeAssessment,
+    TradeCandidate,
     Uncertainty,
     UncertaintyType,
 )
-from nifty_trader.brain.prompts import SYSTEM_REASONING_POLICY, build_reasoning_prompt
+from nifty_trader.brain.prompts import (
+    DEFAULT_PROMPT_VERSION,
+    SYSTEM_REASONING_POLICY,
+    build_reasoning_prompt,
+)
 from nifty_trader.brain.storage import BrainStorage
 from nifty_trader.brain.validators import BrainOutputValidator
-from nifty_trader.contracts.models import UnifiedMarketObservation
+from nifty_trader.contracts.models import CanonicalObservationStatus, UnifiedMarketObservation
 from nifty_trader.router.base import TaskTier
 from nifty_trader.router.router import ModelRouter
 
@@ -42,134 +63,127 @@ class TradingBrainEngine:
         storage: Optional[BrainStorage] = None,
         context_compiler: Optional[BrainContextCompiler] = None,
         validator: Optional[BrainOutputValidator] = None,
+        prompt_version: str = DEFAULT_PROMPT_VERSION,
     ):
         self.router = router or ModelRouter()
         self.storage = storage or BrainStorage()
         self.compiler = context_compiler or BrainContextCompiler()
         self.validator = validator or BrainOutputValidator()
+        self.prompt_version = prompt_version
 
-    async def reason(
+    async def analyze(
         self,
-        observation: UnifiedMarketObservation,
+        brain_input: BrainInput,
         image_bytes: Optional[bytes] = None,
         image_mime_type: str = "image/png",
-    ) -> BrainReasoningOutput:
+    ) -> BrainResult:
         """
-        Executes a cognitive reasoning cycle on the provided canonical market observation.
-        Guaranteed to return a valid BrainReasoningOutput without crashing on LLM/provider failures.
+        Executes a cognitive reasoning cycle on the provided BrainInput.
+        Guaranteed to return a valid BrainResult (success=True with BrainOutput,
+        or success=False with BrainFailure) without crashing.
         """
         tier_cfg = self.router.get_tier_config(TaskTier.MARKET_ANALYSIS)
         model_provider = tier_cfg.get("provider", "gemini")
         model_name = tier_cfg.get("model", "gemini-2.5-flash")
 
-        # 1. Compile structured observation context
-        context = self.compiler.compile(observation)
+        # 1. Compile structured observation context from observation
+        context = self.compiler.compile(brain_input.observation)
 
         # 2. Build model-neutral reasoning prompt
-        prompt = build_reasoning_prompt(context)
+        prompt = build_reasoning_prompt(context, prompt_version=self.prompt_version)
 
         # 3. Route to AI reasoning engine with fallback protection
         try:
             raw_output = await self.router.route_structured(
                 task_tier=TaskTier.MARKET_ANALYSIS,
                 prompt=prompt,
-                response_model=BrainReasoningOutput,
+                response_model=BrainOutput,
                 system_instruction=SYSTEM_REASONING_POLICY,
                 image_bytes=image_bytes,
                 image_mime_type=image_mime_type,
             )
-            # Ensure observation_id matches input
-            raw_output.observation_id = observation.observation_id
-            raw_output.instrument = observation.instrument
+            # Ensure identifiers and schema version match
+            raw_output.brain_request_id = brain_input.brain_request_id
+            raw_output.observation_id = brain_input.observation.observation_id
+            raw_output.schema_version = PACKAGE4_SCHEMA_VERSION
 
-            # 4. Extract valid evidence IDs for audit traceability
-            valid_evidence_ids = {ev.evidence_id for ev in observation.evidence}
+            # 4. Extract valid evidence IDs & source freshness for audit traceability
+            valid_evidence_ids = {ev.evidence_id for ev in brain_input.observation.evidence}
+            source_freshness = {
+                src_id: (stat.status == CanonicalObservationStatus.SUCCESS)
+                for src_id, stat in brain_input.observation.source_status.items()
+            }
 
             # 5. Validate invariants & neutralize prohibited directives
-            validated_output = self.validator.validate_and_sanitize(raw_output, valid_evidence_ids)
+            validated_output = self.validator.validate_and_sanitize(
+                output=raw_output,
+                valid_evidence_ids=valid_evidence_ids,
+                source_freshness_flags=source_freshness,
+            )
+
+            # 6. Persist reasoning audit trail
+            try:
+                self.storage.save_output(
+                    output=validated_output,
+                    model_provider=model_provider,
+                    model_name=model_name,
+                    task=brain_input.task,
+                    prompt_version=self.prompt_version,
+                )
+            except Exception as store_err:
+                logger.error("Failed to persist brain output: %s", store_err)
+
+            return BrainResult(success=True, output=validated_output, failure=None)
 
         except Exception as e:
-            logger.error("TradingBrainEngine cognitive reasoning failure: %s. Engaging safe WAIT fallback.", e, exc_info=True)
-            validated_output = self._create_safe_fallback(
-                observation=observation,
-                error_message=str(e),
+            logger.error("TradingBrainEngine cognitive failure: %s. Constructing BrainFailure.", e, exc_info=True)
+            failure_code = "PROVIDER_UNAVAILABLE" if "exhausted" in str(e).lower() else "MODEL_ERROR"
+            failure = BrainFailure(
+                schema_version=PACKAGE4_SCHEMA_VERSION,
+                brain_request_id=brain_input.brain_request_id,
+                observation_id=brain_input.observation.observation_id,
+                code=failure_code,
+                message=str(e),
+                retryable=True,
+                provider=model_provider,
+                model=model_name,
+                created_at=datetime.now(timezone.utc),
             )
+            return BrainResult(success=False, output=None, failure=failure)
 
-        # 6. Persist reasoning audit trail
-        try:
-            self.storage.save_run(
-                output=validated_output,
-                model_provider=model_provider,
-                model_name=model_name,
-            )
-        except Exception as store_err:
-            logger.error("Failed to persist brain reasoning run: %s", store_err)
-
-        return validated_output
-
-    def _create_safe_fallback(
+    async def reason(
         self,
         observation: UnifiedMarketObservation,
-        error_message: str,
-    ) -> BrainReasoningOutput:
+        image_bytes: Optional[bytes] = None,
+        image_mime_type: str = "image/png",
+        task: Literal["MARKET_ANALYSIS", "SETUP_CONFIRMATION"] = "MARKET_ANALYSIS",
+        requested_focus: Optional[List[str]] = None,
+    ) -> BrainResult:
         """
-        Constructs an explicit, auditable WAIT state when AI models or network fail.
-        Guarantees zero order execution and zero pipeline crashes.
+        High-level entry point accepting UnifiedMarketObservation.
+        Constructs canonical BrainInput and executes cognitive reasoning.
         """
-        return BrainReasoningOutput(
-            schema_version="1.0",
-            brain_run_id=f"brain_fb_{uuid.uuid4().hex[:8]}",
-            observation_id=observation.observation_id,
+        prev_state = self.storage.get_latest_state()
+        brain_input = BrainInput(
+            schema_version=PACKAGE4_SCHEMA_VERSION,
+            brain_request_id=f"breq_{uuid.uuid4().hex[:10]}",
+            observation=observation,
+            task=task,
+            manual_instruction_context=observation.manual_instruction_context,
+            previous_brain_state=prev_state,
+            requested_focus=requested_focus or [],
             timestamp=datetime.now(timezone.utc),
-            instrument=observation.instrument,
-            regime=MarketRegime.UNCLEAR,
-            regime_confidence=0.0,
-            regime_evidence=["Cognitive engine fallback engaged due to provider failure."],
-            one_hour_interpretation="Cognitive analysis unavailable due to operational provider error.",
-            fifteen_minute_interpretation="Cognitive analysis unavailable due to operational provider error.",
-            multi_source_synthesis="Cross-source synthesis deferred. Provider returned an error.",
-            source_disagreement_assessment=None,
-            scenarios=[],
-            hypotheses=[],
-            current_state=SetupState.WAIT,
-            state_rationale=f"COGNITIVE_FAILOVER: Provider error encountered ({error_message}). Safety state WAIT engaged.",
-            next_observation_needed="Perform new observation cycle once cognitive provider connectivity is restored.",
-            candidate_thesis=None,
-            observation_requests=[
-                ObservationRequest(
-                    source="system",
-                    reason="Cognitive provider recovery",
-                    requested_information="Verify provider status and re-run analysis",
-                    priority="HIGH",
-                )
-            ],
-            confidence=BoundedConfidence(
-                value=0.0,
-                basis=["Automatic failover default with zero confidence."],
-            ),
-            uncertainties=[
-                Uncertainty(
-                    type=UncertaintyType.AMBIGUOUS_STRUCTURE,
-                    description=f"Model execution failure: {error_message}",
-                    affected_conclusion="All interpretations and state determinations",
-                    severity="HIGH",
-                )
-            ],
-            auditable_summary=(
-                f"SAFETY ENGAGED: Cognitive reasoning for observation '{observation.observation_id}' "
-                f"could not be processed by AI model ({error_message}). Defaulted to state WAIT. "
-                "No trade candidates formed."
-            ),
         )
+        return await self.analyze(brain_input=brain_input, image_bytes=image_bytes, image_mime_type=image_mime_type)
 
-    def get_latest_reasoning(self) -> Optional[BrainReasoningOutput]:
+    def get_latest_output(self) -> Optional[BrainOutput]:
         """Returns the most recent reasoning run."""
-        return self.storage.get_latest()
+        return self.storage.get_latest_output()
 
-    def get_reasoning_by_id(self, brain_run_id: str) -> Optional[BrainReasoningOutput]:
-        """Returns a specific reasoning run."""
-        return self.storage.get_run(brain_run_id)
+    def get_latest_state(self) -> Optional[BrainState]:
+        """Returns the most recent BrainState."""
+        return self.storage.get_latest_state()
 
-    def get_history(self, limit: int = 20, state: Optional[SetupState] = None):
+    def get_history(self, limit: int = 20, state: Optional[ReasoningState] = None) -> List[BrainOutput]:
         """Lists recent reasoning history."""
-        return self.storage.list_runs(limit=limit, state=state)
+        return self.storage.list_outputs(limit=limit, state=state)

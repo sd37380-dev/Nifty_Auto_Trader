@@ -7,10 +7,19 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from nifty_trader.brain.contracts import (
-    BoundedConfidence,
-    BrainReasoningOutput,
+    PACKAGE4_SCHEMA_VERSION,
+    BrainFailure,
+    BrainInput,
+    BrainOutput,
+    BrainResult,
+    Confidence,
+    Direction,
+    MarketContext,
     MarketRegime,
-    SetupState,
+    ReasoningState,
+    ReasoningSummary,
+    StructureType,
+    TimeframeAssessment,
 )
 from nifty_trader.brain.engine import TradingBrainEngine
 from nifty_trader.brain.storage import BrainStorage
@@ -73,34 +82,74 @@ async def test_trading_brain_engine_successful_reasoning(tmp_path, mock_observat
     mock_router = MagicMock()
     mock_router.get_tier_config.return_value = {"provider": "gemini", "model": "gemini-2.5-flash"}
 
-    expected_output = BrainReasoningOutput(
+    now = datetime.now(timezone.utc)
+    expected_output = BrainOutput(
+        schema_version=PACKAGE4_SCHEMA_VERSION,
+        brain_request_id="breq_engine_01",
         observation_id="obs_engine_test_01",
-        regime=MarketRegime.TRENDING_UP,
-        regime_confidence=0.85,
-        regime_evidence=["Higher highs and higher lows"],
-        one_hour_interpretation="Macro trend bullish",
-        fifteen_minute_interpretation="Local continuation flag",
-        multi_source_synthesis="Numerical data confirms uptrend",
-        current_state=SetupState.WATCH,
-        state_rationale="Watch for breakout confirmation above 25100",
-        next_observation_needed="15M close above 25100",
-        confidence=BoundedConfidence(value=0.8, basis=["Price structure"]),
-        auditable_summary="Watching potential breakout. No action authorized.",
+        reasoning_state=ReasoningState.WATCH,
+        market_context=MarketContext(
+            regime=MarketRegime.TRENDING_UP,
+            regime_confidence=Confidence(value=0.85, basis=["Higher highs"]),
+            structures=[StructureType.HIGHER_HIGH],
+            summary="Macro trend bullish",
+            key_levels=["25100"],
+            evidence=[],
+            uncertainties=[],
+        ),
+        timeframe_assessments=[
+            TimeframeAssessment(
+                timeframe="1H",
+                summary="Bullish continuation",
+                structures=[StructureType.HIGHER_HIGH],
+                directional_context=Direction.LONG,
+                important_observations=[],
+                evidence=[],
+                uncertainties=[],
+            ),
+            TimeframeAssessment(
+                timeframe="15M",
+                summary="Local consolidation flag",
+                structures=[StructureType.CONSOLIDATION],
+                directional_context=Direction.LONG,
+                important_observations=[],
+                evidence=[],
+                uncertainties=[],
+            ),
+        ],
+        scenarios=[],
+        hypotheses=[],
+        candidate=None,
+        observation_requests=[],
+        uncertainties=[],
+        confidence=Confidence(value=0.8, basis=["Price structure"]),
+        reasoning_summary=ReasoningSummary(
+            context="Bullish flag",
+            key_observations=[],
+            interpretation="Watching potential breakout above 25100. No action authorized.",
+            supporting_evidence=[],
+            contradictory_evidence=[],
+            what_would_change_assessment=["15M close below 25000"],
+        ),
+        generated_at=now,
     )
     mock_router.route_structured = AsyncMock(return_value=expected_output)
 
     engine = TradingBrainEngine(router=mock_router, storage=storage)
     result = await engine.reason(mock_observation)
 
-    assert result.observation_id == "obs_engine_test_01"
-    assert result.current_state == SetupState.WATCH
-    assert result.regime == MarketRegime.TRENDING_UP
+    assert result.success is True
+    assert result.output is not None
+    assert result.failure is None
+    assert result.output.observation_id == "obs_engine_test_01"
+    assert result.output.reasoning_state == ReasoningState.WATCH
+    assert result.output.market_context.regime == MarketRegime.TRENDING_UP
 
     # Check persistence in storage
-    saved = storage.get_latest()
+    saved = storage.get_latest_output()
     assert saved is not None
     assert saved.observation_id == "obs_engine_test_01"
-    assert saved.current_state == SetupState.WATCH
+    assert saved.reasoning_state == ReasoningState.WATCH
 
 
 @pytest.mark.asyncio
@@ -115,18 +164,12 @@ async def test_trading_brain_engine_safe_fallback_on_provider_error(tmp_path, mo
 
     engine = TradingBrainEngine(router=mock_router, storage=storage)
 
-    # Must NOT raise exception; must return safe fallback WAIT state
+    # Must NOT raise exception; must return BrainResult(success=False, failure=BrainFailure)
     result = await engine.reason(mock_observation)
 
-    assert result.observation_id == "obs_engine_test_01"
-    assert result.current_state == SetupState.WAIT
-    assert result.regime == MarketRegime.UNCLEAR
-    assert result.confidence.value == 0.0
-    assert "COGNITIVE_FAILOVER" in result.state_rationale
-    assert result.candidate_thesis is None
-
-    # Check that fallback was also persisted to SQLite
-    saved = storage.get_latest()
-    assert saved is not None
-    assert saved.current_state == SetupState.WAIT
-    assert "SAFETY ENGAGED" in saved.auditable_summary
+    assert result.success is False
+    assert result.output is None
+    assert result.failure is not None
+    assert result.failure.code == "PROVIDER_UNAVAILABLE"
+    assert result.failure.observation_id == "obs_engine_test_01"
+    assert result.failure.retryable is True

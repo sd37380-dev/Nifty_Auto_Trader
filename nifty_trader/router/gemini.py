@@ -5,6 +5,7 @@ Integrates Google GenAI SDK with structured Pydantic schema validation,
 multimodal vision inspection, and health checking.
 """
 
+import json
 import os
 import time
 from typing import Optional, Type, TypeVar
@@ -109,11 +110,39 @@ class GeminiProvider(ModelProvider):
             response_schema=response_model,
         )
 
-        response = await client.aio.models.generate_content(
-            model=target_model,
-            contents=contents,
-            config=config,
-        )
+        try:
+            response = await client.aio.models.generate_content(
+                model=target_model,
+                contents=contents,
+                config=config,
+            )
+        except Exception as e:
+            if "INVALID_ARGUMENT" in str(e):
+                # Complex nested unions can be rejected by Gemini's strict OpenAPI schema converter.
+                # Fall back to application/json with schema injected into system/user prompt.
+                schema_json = json.dumps(response_model.model_json_schema(), indent=2)
+                fallback_prompt = (
+                    f"{prompt}\n\n"
+                    f"CRITICAL: Output ONLY valid JSON adhering strictly to this JSON Schema:\n{schema_json}"
+                )
+                fallback_contents = []
+                if image_bytes:
+                    image_part = types.Part.from_bytes(data=image_bytes, mime_type=image_mime_type)
+                    fallback_contents.append(image_part)
+                fallback_contents.append(fallback_prompt)
+
+                fallback_config = types.GenerateContentConfig(
+                    temperature=temperature,
+                    system_instruction=system_instruction,
+                    response_mime_type="application/json",
+                )
+                response = await client.aio.models.generate_content(
+                    model=target_model,
+                    contents=fallback_contents,
+                    config=fallback_config,
+                )
+            else:
+                raise
 
         if not response.text:
             raise ValueError(f"Empty response received from Gemini model '{target_model}'.")

@@ -11,7 +11,7 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
-from nifty_trader.brain.contracts import CandidateDirection, SetupState
+from nifty_trader.brain.contracts import BrainOutput, BrainResult, Direction, ReasoningState
 from nifty_trader.core.runtime import NiftyTraderRuntime
 from nifty_trader.instruction.models import InstructionPriority, InstructionStatus
 from nifty_trader.market_data.models import MarketSessionStatus, Timeframe
@@ -555,37 +555,57 @@ async def cmd_brain_analyze(
 
     # Step 2: Brain Cognitive Reasoning
     console.print("[bold yellow]Engaging TradingBrainEngine with ModelRouter...[/bold yellow]")
-    brain_output = await runtime.reason_market(unified_obs=unified_obs, image_bytes=screenshot_bytes)
+    brain_result = await runtime.reason_market(unified_obs=unified_obs, image_bytes=screenshot_bytes)
+
+    if not brain_result.success:
+        failure = brain_result.failure
+        console.print(f"[bold red]Brain Reasoning Failed [{failure.code}]:[/bold red] {failure.message}")
+        return
+
+    brain_output = brain_result.output
 
     # State colors
     state_colors = {
-        SetupState.NO_TRADE: "red",
-        SetupState.WAIT: "yellow",
-        SetupState.WATCH: "cyan",
-        SetupState.DEVELOPING: "magenta",
-        SetupState.CANDIDATE: "green",
+        ReasoningState.NO_TRADE: "red",
+        ReasoningState.WAIT: "yellow",
+        ReasoningState.WATCH: "cyan",
+        ReasoningState.DEVELOPING: "magenta",
+        ReasoningState.CANDIDATE: "green",
     }
-    scol = state_colors.get(brain_output.current_state, "white")
+    scol = state_colors.get(brain_output.reasoning_state, "white")
 
     # Display Top Table
     table = Table(title="[bold green]Package 4 Trading Brain — Synthesis & Decision[/bold green]")
     table.add_column("Dimension", style="cyan", no_wrap=True)
     table.add_column("Assessment", style="white")
 
-    table.add_row("Brain Run ID", brain_output.brain_run_id)
+    table.add_row("Brain Request ID", brain_output.brain_request_id)
     table.add_row("Observation ID", brain_output.observation_id)
-    table.add_row("Instrument / Time", f"{brain_output.instrument} @ {brain_output.timestamp.strftime('%Y-%m-%d %H:%M:%S UTC')}")
-    table.add_row("Market Regime", f"[bold]{brain_output.regime.value}[/bold] (Confidence: {brain_output.regime_confidence:.2f})")
-    table.add_row("Current State", f"[bold {scol}]{brain_output.current_state.value}[/bold {scol}]")
-    table.add_row("State Rationale", brain_output.state_rationale)
-    table.add_row("Next Observation Needed", brain_output.next_observation_needed)
-    table.add_row("Bounded Confidence", f"{brain_output.confidence.value:.2f} (Basis: {', '.join(brain_output.confidence.basis) or 'Standard'})")
+    table.add_row("Generated (UTC)", brain_output.generated_at.strftime('%Y-%m-%d %H:%M:%S UTC'))
+    table.add_row("Market Regime", f"[bold]{brain_output.market_context.regime.value}[/bold] (Confidence: {brain_output.market_context.regime_confidence.value:.2f})")
+    table.add_row("Reasoning State", f"[bold {scol}]{brain_output.reasoning_state.value}[/bold {scol}]")
+    table.add_row("Market Summary", brain_output.market_context.summary)
+    table.add_row("Key Levels", ", ".join(brain_output.market_context.key_levels) or "None")
+    table.add_row("Confidence", f"{brain_output.confidence.value:.2f} (Basis: {', '.join(brain_output.confidence.basis)})")
     console.print(table)
+
+    # Timeframe Assessments Table
+    if brain_output.timeframe_assessments:
+        tf_table = Table(title="[bold cyan]Timeframe Assessments[/bold cyan]")
+        tf_table.add_column("TF", style="bold")
+        tf_table.add_column("Direction", style="yellow")
+        tf_table.add_column("Structures", style="cyan")
+        tf_table.add_column("Summary", style="white")
+        for tf in brain_output.timeframe_assessments:
+            structs_str = ", ".join(s.value for s in tf.structures) if tf.structures else "None"
+            tf_table.add_row(tf.timeframe, tf.directional_context.value, structs_str, tf.summary)
+        console.print(tf_table)
 
     # Scenarios Table
     if brain_output.scenarios:
         scen_table = Table(title="[bold cyan]Evaluated Market Scenarios[/bold cyan]")
         scen_table.add_column("Scenario ID", style="dim", no_wrap=True)
+        scen_table.add_column("Direction", style="yellow")
         scen_table.add_column("Description", style="white")
         scen_table.add_column("Confidence", style="magenta")
         scen_table.add_column("Confirm / Invalidate", style="yellow")
@@ -594,25 +614,24 @@ async def cmd_brain_analyze(
             inv_str = "; ".join(sc.invalidation_conditions) or "None"
             scen_table.add_row(
                 sc.scenario_id,
+                sc.direction.value,
                 sc.description,
-                f"{sc.confidence:.2f}",
+                f"{sc.confidence.value:.2f}",
                 f"Confirm: {conf_str}\nInvalid: {inv_str}",
             )
         console.print(scen_table)
 
     # Candidate Thesis Panel (if any)
-    if brain_output.candidate_thesis:
-        cand = brain_output.candidate_thesis
-        dcol = "green" if cand.direction == CandidateDirection.LONG else ("red" if cand.direction == CandidateDirection.SHORT else "yellow")
+    if brain_output.candidate:
+        cand = brain_output.candidate
+        dcol = "green" if cand.direction == Direction.LONG else ("red" if cand.direction == Direction.SHORT else "yellow")
         cand_text = (
             f"[bold cyan]Directional Bias:[/bold cyan] [{dcol}]{cand.direction.value}[/{dcol}]\n"
             f"[bold cyan]Thesis:[/bold cyan] {cand.thesis}\n"
             f"[bold cyan]Market Context:[/bold cyan] {cand.market_context}\n"
-            f"[bold cyan]Setup Conditions:[/bold cyan] {', '.join(cand.setup_conditions) or 'None'}\n"
+            f"[bold cyan]Setup Conditions:[/bold cyan] {', '.join(c.description for c in cand.setup_conditions) or 'None'}\n"
             f"[bold cyan]Confirmation Conditions:[/bold cyan] {', '.join(cand.confirmation_conditions) or 'None'}\n"
             f"[bold cyan]Invalidation Conditions:[/bold cyan] {', '.join(cand.invalidation_conditions) or 'None'}\n"
-            f"[bold cyan]Supporting Observations:[/bold cyan] {', '.join(cand.observations_supporting) or 'None'}\n"
-            f"[bold cyan]Counter Observations:[/bold cyan] {', '.join(cand.observations_against) or 'None'}\n"
             f"[bold yellow]Downstream Info Required:[/bold yellow] {', '.join(cand.required_downstream_information)}\n"
             f"[bold red]STRICT INVARIANT:[/bold red] Conceptual thesis only. Non-executable. Zero broker parameters."
         )
@@ -626,11 +645,18 @@ async def cmd_brain_analyze(
         obs_req_table.add_column("Reason", style="white")
         obs_req_table.add_column("Requested Information", style="yellow")
         for r in brain_output.observation_requests:
-            obs_req_table.add_row(r.request_id, r.source, r.reason, r.requested_information)
+            req_info_str = ", ".join(r.requested_information)
+            obs_req_table.add_row(r.request_id, r.source, r.reason, req_info_str)
         console.print(obs_req_table)
 
     # Auditable Executive Summary Panel
-    console.print(Panel(brain_output.auditable_summary, title="[bold green]Auditable Executive Reasoning Summary[/bold green]", border_style="green"))
+    summary_body = (
+        f"[bold cyan]Context:[/bold cyan] {brain_output.reasoning_summary.context}\n\n"
+        f"[bold cyan]Interpretation:[/bold cyan] {brain_output.reasoning_summary.interpretation}\n\n"
+        f"[bold cyan]What Would Change Assessment:[/bold cyan]\n"
+        + "\n".join(f"  * {w}" for w in brain_output.reasoning_summary.what_would_change_assessment)
+    )
+    console.print(Panel(summary_body, title="[bold green]Auditable Executive Reasoning Summary[/bold green]", border_style="green"))
     console.print("[bold green][OK] Brain reasoning cycle complete. Persisted to SQLite history.[/bold green]")
 
 
@@ -640,11 +666,11 @@ async def cmd_brain_history(
     state: Optional[str] = None,
 ) -> None:
     """Lists persisted reasoning runs from SQLite storage."""
-    state_enum = SetupState(state.upper()) if state and state.upper() in [s.value for s in SetupState] else None
+    state_enum = ReasoningState(state.upper()) if state and state.upper() in [s.value for s in ReasoningState] else None
     runs = runtime.brain.get_history(limit=limit, state=state_enum)
 
     table = Table(title="[bold green]Brain Reasoning History (SQLite Audit Trail)[/bold green]")
-    table.add_column("Run ID", style="dim", no_wrap=True)
+    table.add_column("Request ID", style="dim", no_wrap=True)
     table.add_column("Timestamp (UTC)", style="white")
     table.add_column("State", style="bold")
     table.add_column("Regime", style="cyan")
@@ -653,24 +679,129 @@ async def cmd_brain_history(
     table.add_column("Summary", style="dim white")
 
     state_colors = {
-        SetupState.NO_TRADE: "red",
-        SetupState.WAIT: "yellow",
-        SetupState.WATCH: "cyan",
-        SetupState.DEVELOPING: "magenta",
-        SetupState.CANDIDATE: "green",
+        ReasoningState.NO_TRADE: "red",
+        ReasoningState.WAIT: "yellow",
+        ReasoningState.WATCH: "cyan",
+        ReasoningState.DEVELOPING: "magenta",
+        ReasoningState.CANDIDATE: "green",
     }
 
     for r in runs:
-        scol = state_colors.get(r.current_state, "white")
-        cand_dir = r.candidate_thesis.direction.value if r.candidate_thesis else "NONE"
+        scol = state_colors.get(r.reasoning_state, "white")
+        cand_dir = r.candidate.direction.value if r.candidate else "NONE"
         table.add_row(
-            r.brain_run_id[:12],
-            r.timestamp.strftime("%Y-%m-%d %H:%M"),
-            f"[{scol}]{r.current_state.value}[/{scol}]",
-            r.regime.value,
+            r.brain_request_id[:12],
+            r.generated_at.strftime("%Y-%m-%d %H:%M"),
+            f"[{scol}]{r.reasoning_state.value}[/{scol}]",
+            r.market_context.regime.value,
             f"{r.confidence.value:.2f}",
             cand_dir,
-            r.auditable_summary[:60] + "...",
+            r.reasoning_summary.interpretation[:60] + "...",
+        )
+
+    console.print(table)
+
+
+async def cmd_autonomous_status(runtime: NiftyTraderRuntime) -> None:
+    """Displays operational status of the Package 5 Autonomous Engine."""
+    status = runtime.autonomous.get_status()
+
+    table = Table(title="[bold green]Package 5 Autonomous Observation Engine — Operational Status[/bold green]")
+    table.add_column("Parameter", style="cyan", no_wrap=True)
+    table.add_column("Value", style="white")
+
+    st = status.get("status", "UNKNOWN")
+    st_col = "green" if st == "OBSERVING" else ("yellow" if st in ["WAITING", "WATCHING"] else ("magenta" if st == "ANALYZING" else "white"))
+    table.add_row("Engine State", f"[bold {st_col}]{st}[/bold {st_col}]")
+    table.add_row("Running Active", f"{status.get('is_running')}")
+    table.add_row("Market Session", f"{status.get('market_session')}")
+    table.add_row("Session ID", f"{status.get('session_id')}")
+    table.add_row("Current Brain State", f"{status.get('current_brain_state')}")
+    table.add_row("Wait Reason", f"{status.get('wait_reason')}")
+    table.add_row("Next Scheduled Wake", f"{status.get('next_wake')}")
+    table.add_row("Cycles Completed", f"{status.get('cycles_completed')} / {status.get('max_cycles')}")
+    table.add_row("Model Calls Used", f"{status.get('model_calls')} / {status.get('max_model_calls')}")
+    table.add_row("Active Observation Plans", f"{status.get('active_observation_plans')}")
+    table.add_row("Consecutive Failures", f"{status.get('consecutive_failures')}")
+
+    console.print(table)
+
+
+async def cmd_autonomous_start(runtime: NiftyTraderRuntime, once: bool = False, symbol: str = "NIFTY") -> None:
+    """Starts autonomous observation and waiting engine."""
+    console.print(f"[bold yellow]Starting Autonomous Observation Engine for {symbol}...[/bold yellow]")
+    if once:
+        console.print("[dim]Executing single bounded observation & reasoning cycle...[/dim]")
+        await runtime.autonomous.start(symbol=symbol, run_once=True)
+        await cmd_autonomous_status(runtime)
+    else:
+        console.print("[dim]Starting continuous autonomous observation loop (Press Ctrl+C to stop)...[/dim]")
+        await runtime.autonomous.start(symbol=symbol, run_once=False)
+        try:
+            while runtime.autonomous.is_running:
+                await asyncio.sleep(1.0)
+        except (KeyboardInterrupt, asyncio.CancelledError):
+            console.print("\n[bold yellow]Stopping autonomous engine safely...[/bold yellow]")
+            await runtime.autonomous.stop("KeyboardInterrupt / User Stop")
+            console.print("[bold green][OK] Autonomous engine stopped.[/bold green]")
+
+
+async def cmd_autonomous_stop(runtime: NiftyTraderRuntime) -> None:
+    """Stops the autonomous observation engine."""
+    console.print("[bold yellow]Commanding Autonomous Engine to STOP...[/bold yellow]")
+    await runtime.autonomous.stop("Operator CLI STOP")
+    console.print("[bold green][OK] Autonomous engine stopped successfully.[/bold green]")
+
+
+async def cmd_autonomous_pause(runtime: NiftyTraderRuntime) -> None:
+    """Pauses the autonomous observation engine."""
+    console.print("[bold yellow]Commanding Autonomous Engine to PAUSE...[/bold yellow]")
+    await runtime.autonomous.pause("Operator CLI PAUSE")
+    console.print("[bold green][OK] Autonomous engine paused.[/bold green]")
+
+
+async def cmd_autonomous_resume(runtime: NiftyTraderRuntime) -> None:
+    """Resumes the autonomous observation engine."""
+    console.print("[bold yellow]Commanding Autonomous Engine to RESUME...[/bold yellow]")
+    await runtime.autonomous.resume("Operator CLI RESUME")
+    console.print("[bold green][OK] Autonomous engine resumed.[/bold green]")
+
+
+async def cmd_autonomous_observe_now(runtime: NiftyTraderRuntime) -> None:
+    """Triggers an immediate observation cycle."""
+    console.print("[bold yellow]Commanding Autonomous Engine to OBSERVE NOW...[/bold yellow]")
+    await runtime.autonomous.observe_now("Operator CLI OBSERVE_NOW")
+    console.print("[bold green][OK] Immediate observation cycle requested.[/bold green]")
+
+
+async def cmd_autonomous_cycles(runtime: NiftyTraderRuntime, limit: int = 10) -> None:
+    """Lists persisted autonomous reasoning cycles from SQLite audit trail."""
+    cycles = runtime.autonomous.storage.list_cycles(limit=limit)
+
+    table = Table(title="[bold green]Autonomous Cycles History (SQLite Audit Trail)[/bold green]")
+    table.add_column("Cycle ID", style="dim", no_wrap=True)
+    table.add_column("Index", style="white")
+    table.add_column("Started (UTC)", style="white")
+    table.add_column("Prev State", style="yellow")
+    table.add_column("Result State", style="bold green")
+    table.add_column("Wait Reason", style="cyan")
+    table.add_column("Wake Reason", style="dim white")
+    table.add_column("Observations", style="white")
+    table.add_column("Model Calls", style="white")
+
+    for c in cycles:
+        wr_str = c.wait_reason.value if c.wait_reason else "NONE"
+        wake_str = (c.wake_reason[:30] + "...") if c.wake_reason else "SCHEDULED"
+        table.add_row(
+            c.cycle_id[:10],
+            str(c.cycle_index),
+            c.started_at.strftime("%H:%M:%S"),
+            c.previous_state.value,
+            c.resulting_state.value,
+            wr_str,
+            wake_str,
+            str(c.observation_count),
+            str(c.model_call_count),
         )
 
     console.print(table)
@@ -725,6 +856,23 @@ def main() -> None:
     history_parser.add_argument("--limit", type=int, default=10, help="Number of records to show")
     history_parser.add_argument("--state", choices=["NO_TRADE", "WAIT", "WATCH", "DEVELOPING", "CANDIDATE"], help="Filter by setup state")
 
+    # Package 5 Autonomous Observation & Waiting CLI Commands
+    auto_parser = subparsers.add_parser("autonomous", help="Autonomous Observation & Waiting Engine commands")
+    auto_sub = auto_parser.add_subparsers(dest="auto_command", help="Autonomous sub-commands")
+
+    auto_start = auto_sub.add_parser("start", help="Start the autonomous observation engine")
+    auto_start.add_argument("--once", action="store_true", help="Run a single bounded observation cycle and exit")
+    auto_start.add_argument("--symbol", default="NIFTY", help="Target instrument symbol")
+
+    auto_sub.add_parser("status", help="Show autonomous engine operational status and next wake time")
+    auto_sub.add_parser("observe-now", help="Interrupt current wait and trigger an immediate observation cycle")
+    auto_sub.add_parser("pause", help="Pause the autonomous observation engine")
+    auto_sub.add_parser("resume", help="Resume the autonomous observation engine")
+    auto_sub.add_parser("stop", help="Stop the autonomous observation engine")
+
+    cycles_parser = auto_sub.add_parser("cycles", help="List persisted autonomous reasoning cycles")
+    cycles_parser.add_argument("--limit", type=int, default=10, help="Number of records to show")
+
     args = parser.parse_args()
     runtime = NiftyTraderRuntime()
 
@@ -773,6 +921,23 @@ def main() -> None:
             limit=args.limit,
             state=args.state,
         ))
+    elif args.command == "autonomous":
+        if args.auto_command == "start":
+            asyncio.run(cmd_autonomous_start(runtime, once=args.once, symbol=args.symbol))
+        elif args.auto_command == "status":
+            asyncio.run(cmd_autonomous_status(runtime))
+        elif args.auto_command == "stop":
+            asyncio.run(cmd_autonomous_stop(runtime))
+        elif args.auto_command == "pause":
+            asyncio.run(cmd_autonomous_pause(runtime))
+        elif args.auto_command == "resume":
+            asyncio.run(cmd_autonomous_resume(runtime))
+        elif args.auto_command == "observe-now":
+            asyncio.run(cmd_autonomous_observe_now(runtime))
+        elif args.auto_command == "cycles":
+            asyncio.run(cmd_autonomous_cycles(runtime, limit=args.limit))
+        else:
+            asyncio.run(cmd_autonomous_status(runtime))
     else:
         parser.print_help()
 

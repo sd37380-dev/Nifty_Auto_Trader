@@ -16,7 +16,10 @@ from nifty_trader.browser.browser_agent import BrowserAgent
 from nifty_trader.browser.hermes_adapter import HermesBrowserAdapter
 from nifty_trader.browser.models import BrowserObservation
 from nifty_trader.browser.screenshot import ScreenshotManager
-from nifty_trader.brain.contracts import BrainReasoningOutput
+from nifty_trader.autonomous.contracts import AutonomousLimits
+from nifty_trader.autonomous.engine import AutonomousObservationEngine
+from nifty_trader.autonomous.persistence import AutonomousStorage
+from nifty_trader.brain.contracts import BrainOutput, BrainResult
 from nifty_trader.brain.engine import TradingBrainEngine
 from nifty_trader.contracts.models import UnifiedMarketObservation
 from nifty_trader.core.state import MarketObservationOutput, TradingState
@@ -214,6 +217,29 @@ class NiftyTraderRuntime:
             storage=brain_storage,
         )
 
+        # Initialize Package 5 Autonomous Observation & Waiting Engine
+        auto_dir = self.root_dir / "data" / "autonomous"
+        auto_dir.mkdir(parents=True, exist_ok=True)
+        auto_cfg = self.settings.get("autonomous", {})
+        auto_limits = AutonomousLimits(
+            max_cycles=auto_cfg.get("max_cycles", 100),
+            max_observation_requests=auto_cfg.get("max_observation_requests", 20),
+            max_model_calls=auto_cfg.get("max_model_calls", 50),
+            max_consecutive_failures=auto_cfg.get("max_consecutive_failures", 5),
+            max_session_duration_minutes=auto_cfg.get("max_session_duration_minutes", 390),
+            min_wait_seconds=auto_cfg.get("waiting", {}).get("minimum_seconds", 5.0),
+            max_wait_seconds=auto_cfg.get("waiting", {}).get("maximum_seconds", 3600.0),
+            default_cooldown_seconds=auto_cfg.get("cooldown", {}).get("default_seconds", 30.0),
+            sensibull_cooldown_seconds=auto_cfg.get("cooldown", {}).get("sensibull_seconds", 60.0),
+            tradingview_cooldown_seconds=auto_cfg.get("cooldown", {}).get("tradingview_seconds", 30.0),
+        )
+        auto_storage = AutonomousStorage(db_path=auto_dir / "autonomous_engine.db")
+        self.autonomous = AutonomousObservationEngine(
+            runtime=self,
+            limits=auto_limits,
+            storage=auto_storage,
+        )
+
         logger.info("NiftyTraderRuntime initialized in state: %s", self.state.value)
 
     def _load_environment(self, env_file: Optional[Path]) -> None:
@@ -269,6 +295,7 @@ class NiftyTraderRuntime:
                 "active_count": len(self.instruction_manager.get_active_instructions()),
                 "total_count": len(self.instruction_manager.list_instructions()),
             },
+            "autonomous": self.autonomous.get_status(),
             "risk_policies": self.settings.get("risk", {}),
         }
 
@@ -512,7 +539,7 @@ class NiftyTraderRuntime:
         self,
         unified_obs: Optional[UnifiedMarketObservation] = None,
         image_bytes: Optional[bytes] = None,
-    ) -> BrainReasoningOutput:
+    ) -> BrainResult:
         """
         Executes Package 4 Trading Brain cognitive reasoning on canonical UnifiedMarketObservation.
         If unified_obs is not provided, gathers a fresh observation first.

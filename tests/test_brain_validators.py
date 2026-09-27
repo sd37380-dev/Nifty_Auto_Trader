@@ -1,76 +1,153 @@
 """
-Tests for Brain Output Validators and Hallucination Defense.
+Tests for Brain Output Validators and Domain Invariant Defense (Package 4 Rules 1-10).
 """
 
+from datetime import datetime, timezone
 import pytest
 
 from nifty_trader.brain.contracts import (
-    BoundedConfidence,
-    BrainReasoningOutput,
-    CandidateDirection,
+    PACKAGE4_SCHEMA_VERSION,
+    BrainOutput,
+    Confidence,
+    Direction,
+    MarketContext,
     MarketRegime,
-    SetupState,
+    ReasoningState,
+    ReasoningSummary,
+    StructureType,
+    TimeframeAssessment,
     TradeCandidate,
+    Uncertainty,
+    UncertaintyType,
 )
 from nifty_trader.brain.validators import BrainOutputValidator
 
 
-def test_validator_detects_and_neutralizes_prohibited_execution_directives():
-    validator = BrainOutputValidator()
-
-    # Attempt to inject prohibited execution directive
-    output = BrainReasoningOutput(
-        observation_id="obs_val_test",
-        regime=MarketRegime.TRENDING_UP,
-        regime_confidence=0.9,
-        regime_evidence=["Bullish breakout"],
-        one_hour_interpretation="Bullish trend",
-        fifteen_minute_interpretation="Buy now at market open",  # PROHIBITED!
-        multi_source_synthesis="Aligns across sources",
-        current_state=SetupState.CANDIDATE,
-        state_rationale="Great setup",
-        next_observation_needed="Next candle",
-        confidence=BoundedConfidence(value=0.85, basis=["Trend"]),
-        auditable_summary="Breakout seen.",
+@pytest.fixture
+def base_brain_output():
+    now = datetime.now(timezone.utc)
+    return BrainOutput(
+        schema_version=PACKAGE4_SCHEMA_VERSION,
+        brain_request_id="breq_val_01",
+        observation_id="obs_val_01",
+        reasoning_state=ReasoningState.WAIT,
+        market_context=MarketContext(
+            regime=MarketRegime.RANGING,
+            regime_confidence=Confidence(value=0.7, basis=["Range levels"]),
+            structures=[StructureType.CONSOLIDATION],
+            summary="Price in consolidation band",
+            key_levels=["24800", "25200"],
+            evidence=[],
+            uncertainties=[],
+        ),
+        timeframe_assessments=[
+            TimeframeAssessment(
+                timeframe="1H",
+                summary="Consolidating near 50-SMA",
+                structures=[StructureType.CONSOLIDATION],
+                directional_context=Direction.NEUTRAL,
+                important_observations=[],
+                evidence=[],
+                uncertainties=[],
+            ),
+            TimeframeAssessment(
+                timeframe="15M",
+                summary="Chop inside range",
+                structures=[StructureType.CONSOLIDATION],
+                directional_context=Direction.NEUTRAL,
+                important_observations=[],
+                evidence=[],
+                uncertainties=[],
+            ),
+        ],
+        scenarios=[],
+        hypotheses=[],
+        candidate=None,
+        observation_requests=[],
+        uncertainties=[],
+        confidence=Confidence(value=0.7, basis=["Range"]),
+        reasoning_summary=ReasoningSummary(
+            context="Consolidation context",
+            key_observations=["Range bound"],
+            interpretation="Wait for structural clarity",
+            supporting_evidence=[],
+            contradictory_evidence=[],
+            what_would_change_assessment=["Breakout"],
+        ),
+        generated_at=now,
     )
 
-    sanitized = validator.validate_and_sanitize(output)
+
+def test_validator_neutralizes_prohibited_execution_directives(base_brain_output):
+    validator = BrainOutputValidator()
+    # Inject prohibited execution directive into interpretation
+    base_brain_output.reasoning_summary.interpretation = "Buy now at market open for maximum profits"
+    base_brain_output.reasoning_state = ReasoningState.CANDIDATE
+
+    sanitized = validator.validate_and_sanitize(base_brain_output)
 
     # State must be demoted to WAIT and rationale updated
-    assert sanitized.current_state == SetupState.WAIT
-    assert "SAFETY DEMOTION" in sanitized.state_rationale
-    assert sanitized.candidate_thesis is None
+    assert sanitized.reasoning_state == ReasoningState.WAIT
+    assert "SAFETY DEMOTION" in sanitized.reasoning_summary.interpretation
+    assert sanitized.candidate is None
 
 
-def test_validator_neutralizes_active_candidate_thesis_in_wait_state():
+def test_validator_enforces_rules_1_to_3_candidate_null(base_brain_output):
     validator = BrainOutputValidator()
 
     candidate = TradeCandidate(
-        direction=CandidateDirection.LONG,
+        candidate_id="cand_01",
+        direction=Direction.LONG,
         thesis="Breakout thesis",
         market_context="Bullish context",
-        uncertainty="Impending economic release",
-        reasoning_confidence=0.8,
+        setup_conditions=[],
+        confirmation_conditions=[],
+        invalidation_conditions=[],
+        supporting_evidence=[],
+        opposing_evidence=[],
+        uncertainties=[],
+        reasoning_confidence=Confidence(value=0.8, basis=["Trend"]),
     )
 
-    output = BrainReasoningOutput(
-        observation_id="obs_val_test2",
-        regime=MarketRegime.RANGING,
-        regime_confidence=0.5,
-        regime_evidence=["Range bound"],
-        one_hour_interpretation="No clear trend",
-        fifteen_minute_interpretation="Chop",
-        multi_source_synthesis="Mixed signals",
-        current_state=SetupState.WAIT,  # WAIT state
-        state_rationale="Conditions not ripe",
-        next_observation_needed="Wait for break",
-        candidate_thesis=candidate,
-        confidence=BoundedConfidence(value=0.5, basis=["Mixed"]),
-        auditable_summary="Wait for clarity.",
-    )
+    # Rule 1: NO_TRADE -> candidate == None
+    base_brain_output.reasoning_state = ReasoningState.NO_TRADE
+    base_brain_output.candidate = candidate
+    sanitized = validator.validate_and_sanitize(base_brain_output)
+    assert sanitized.candidate is None
 
-    sanitized = validator.validate_and_sanitize(output)
+    # Rule 2: WAIT -> candidate == None
+    base_brain_output.reasoning_state = ReasoningState.WAIT
+    base_brain_output.candidate = candidate
+    sanitized = validator.validate_and_sanitize(base_brain_output)
+    assert sanitized.candidate is None
 
-    # For WAIT state, candidate direction must be neutralized
-    assert sanitized.current_state == SetupState.WAIT
-    assert sanitized.candidate_thesis.direction == CandidateDirection.NEUTRAL
+    # Rule 3: WATCH -> candidate == None
+    base_brain_output.reasoning_state = ReasoningState.WATCH
+    base_brain_output.candidate = candidate
+    sanitized = validator.validate_and_sanitize(base_brain_output)
+    assert sanitized.candidate is None
+
+
+def test_validator_enforces_rule_5_candidate_required(base_brain_output):
+    validator = BrainOutputValidator()
+
+    # Rule 5: CANDIDATE state requires candidate != None, else demoted to DEVELOPING
+    base_brain_output.reasoning_state = ReasoningState.CANDIDATE
+    base_brain_output.candidate = None
+
+    sanitized = validator.validate_and_sanitize(base_brain_output)
+    assert sanitized.reasoning_state == ReasoningState.DEVELOPING
+
+
+def test_validator_enforces_rule_10_stale_data_uncertainty(base_brain_output):
+    validator = BrainOutputValidator()
+
+    freshness = {
+        "numerical": True,
+        "sensibull": False,  # Stale!
+    }
+
+    sanitized = validator.validate_and_sanitize(base_brain_output, source_freshness_flags=freshness)
+    stale_uncertainties = [u for u in sanitized.uncertainties if u.type == UncertaintyType.STALE_DATA]
+    assert len(stale_uncertainties) == 1
+    assert "sensibull" in stale_uncertainties[0].description
