@@ -36,11 +36,13 @@ class HermesToolBridge:
         browser_agent: Optional[Any] = None,
         instruction_manager: Optional[Any] = None,
         memory_store: Optional[ContextMemoryStore] = None,
+        paper_service: Optional[Any] = None,
     ):
         self.market_service = market_service
         self.browser_agent = browser_agent
         self.instruction_manager = instruction_manager
         self.memory_store = memory_store or ContextMemoryStore()
+        self.paper_service = paper_service
 
     async def fetch_current_observation(
         self,
@@ -180,3 +182,9 @@ class HermesToolBridge:
             query_text=query_text,
             limit=limit,
         )
+
+    async def get_paper_position_observation(self) -> Optional[Any]:
+        """Fetches active paper trading positions telemetry from Sensibull."""
+        if self.paper_service and hasattr(self.paper_service, "get_paper_observation"):
+            return await self.paper_service.get_paper_observation()
+        return None

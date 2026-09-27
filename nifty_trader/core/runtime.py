@@ -249,12 +249,24 @@ class NiftyTraderRuntime:
         from nifty_trader.hermes.collaboration import HermesBrainOrchestrator
         from nifty_trader.hermes.contracts import CollaborationAuditStore
 
+        # Initialize Stage 8 Sensibull Paper-Trading Service
+        paper_dir = self.root_dir / "data" / "paper_trading"
+        paper_dir.mkdir(parents=True, exist_ok=True)
+        from nifty_trader.paper.service import SensibullPaperTradingService
+        from nifty_trader.paper.store import PaperTradeStore
+        self.paper_store = PaperTradeStore(db_path=paper_dir / "paper_trades.db")
+        self.paper_service = SensibullPaperTradingService(
+            browser_agent=self.browser,
+            store=self.paper_store,
+        )
+
         self.memory_store = ContextMemoryStore(storage_path=collab_dir / "context_memory.json")
         self.tool_bridge = HermesToolBridge(
             market_service=self.market_service,
             browser_agent=self.browser,
             instruction_manager=self.instruction_manager,
             memory_store=self.memory_store,
+            paper_service=self.paper_service,
         )
         self.context_builder = HermesContextBuilder(
             memory_store=self.memory_store,

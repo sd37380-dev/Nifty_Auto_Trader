@@ -1,8 +1,8 @@
 # NIFTY AUTONOMOUS TRADER — PROJECT STATUS
 
 **Project:** NIFTY Autonomous Trader (Hermes-Based Autonomous Trading Software)  
-**Current Phase:** STAGE 6 — Hermes–Brain Collaborative Trading Orchestration  
-**Status:** STAGE 6 COMPLETE & LOCKED ✅  
+**Current Phase:** STAGE 8 — Sensibull Paper-Trading Execution & State Synchronization Engine  
+**Status:** STAGE 8 COMPLETE & LOCKED ✅  
 **Date:** 2026-09-27  
 
 ---
@@ -20,8 +20,8 @@
 | **Package 4** | **Trading Brain & Market Reasoning Engine** | **PACKAGE 4 — COMPLETE & LOCKED ✅** |
 | **Package 5** | **Autonomous Observation & Waiting Engine** | **PACKAGE 5 — COMPLETE & LOCKED ✅** |
 | **Stage 6** | **Hermes–Brain Collaborative Trading Orchestration** | **STAGE 6 — COMPLETE & LOCKED ✅** |
-| **Package 6 / 7** | Deterministic Risk Engine | Planned |
-| **Package 8** | Simulated Paper Broker & Order Accounting | Planned |
+| **Package 7** | Deterministic Risk Engine | Planned |
+| **Stage 8** | **Sensibull Paper-Trading Execution & State Synchronization** | **STAGE 8 — COMPLETE & LOCKED ✅** |
 | **Package 9** | Position Monitoring & Dynamic Trailing | Planned |
 | **Package 10** | Trader Experience Memory Store | Planned |
 | **Package 11** | Post-Trade Post-Mortem & Mistake Analysis | Planned |
@@ -94,3 +94,18 @@
 7. **Candidate Halting & Zero Broker Orders**: Immediately halts on `CANDIDATE` and dispatches trade candidate downstream without broker execution or position sizing.
 8. **Auditing & CLI (`nifty_trader/cli.py`)**: Complete SQLite audit trail (`collaborate-status`) and interactive collaboration execution (`collaborate`).
 9. **Verification**: 167 of 167 tests passing (100% pass rate). Stage 6 LOCKED.
+
+---
+
+## Stage 8 Milestones Achieved (Sensibull Paper Trading & State Synchronization)
+
+1. **Decoupled Execution Architecture**: Stage 8 strictly executes and observes; does NOT decide trade quality (Hermes + AI Brain retains decision authority).
+2. **Strict Environment Safety Guard (`nifty_trader/paper/environment.py`)**: Certifies Virtual Trading / Virtual Portfolio URL and DOM text; instantly aborts if live broker order execution keywords appear.
+3. **Idempotency & Duplicate Action Prevention (`nifty_trader/paper/executor.py`)**: Deterministic SHA-256 fingerprinting prevents double-placement of orders during latency or network hiccups.
+4. **Visual & DOM Action Verification**: Verifies trade opening and square-off via confirmation toasts, active position rows, and cryptographic screenshot captures.
+5. **Position Reader & P&L Parser (`nifty_trader/paper/position_reader.py`)**: Parses strikes, option types, lots, quantities, entry prices, current LTP, unrealized and realized P&L.
+6. **Dual-State Reconciler (`nifty_trader/paper/reconciler.py`)**: Reconciles Hermes local SQLite store against Sensibull remote ground truth; detects and corrects missing positions, extra positions, and quantity discrepancies.
+7. **Thread-Safe SQLite Persistence (`nifty_trader/paper/store.py`)**: Stores orders, positions, and reconciliation events in `data/paper_trading/paper_trades.db`.
+8. **Hermes Telemetry Feeds (`nifty_trader/paper/service.py`)**: Generates `PaperPositionObservation` exposed to `HermesToolBridge` for Brain awareness of active risk and exposure.
+9. **Interactive CLI & Operational Tooling (`nifty_trader/cli.py`)**: Added `paper-status`, `paper-positions`, `paper-order`, `paper-close`, and `paper-sync`.
+10. **Verification**: 178 of 178 unit & integration tests passing (100% pass rate). Stage 8 LOCKED.

@@ -50,7 +50,7 @@ async def cmd_status(runtime: NiftyTraderRuntime) -> None:
     md_info = status.get("market_data", {})
     md_prov = md_info.get("provider", "NONE")
     table.add_row("Capability (Market Data)", f"[green]READY (v1.0.0, {md_prov})[/green]")
-    table.add_row("Capability (Paper Broker)", "[blue]NOT INSTALLED[/blue]")
+    table.add_row("Capability (Paper Broker)", "[green]READY (v1.0.0, Sensibull Virtual)[/green]")
     table.add_row("Capability (Live Broker)", "[red]DISABLED[/red]")
 
     # Market Session and Cache
@@ -967,6 +967,144 @@ async def cmd_collaborate_status(runtime: NiftyTraderRuntime, limit: int = 10) -
     console.print(table)
 
 
+async def cmd_paper_status(runtime: NiftyTraderRuntime) -> None:
+    """Shows Sensibull paper trading portfolio status and open positions count."""
+    console.print("[cyan]Connecting to Sensibull Virtual Portfolio...[/cyan]")
+    try:
+        summary = await runtime.paper_service.get_portfolio_status()
+        color = "green" if summary.is_safe_environment else "red"
+
+        table = Table(title="[bold green]Sensibull Virtual Portfolio Status[/bold green]")
+        table.add_column("Field", style="cyan", no_wrap=True)
+        table.add_column("Value", style="bold white")
+
+        table.add_row("Environment Mode", f"[{color}]{summary.environment.value}[/{color}]")
+        table.add_row("Safe Environment Verified", f"[{color}]{'YES' if summary.is_safe_environment else 'NO - DANGER'}[/{color}]")
+        table.add_row("Open Positions Count", str(summary.open_positions_count))
+        table.add_row("Total Positions Tracked", str(summary.total_positions))
+
+        unreal_color = "green" if summary.total_unrealized_pnl >= 0 else "red"
+        real_color = "green" if summary.total_realized_pnl >= 0 else "red"
+        net_color = "green" if summary.net_pnl >= 0 else "red"
+
+        table.add_row("Unrealized P&L", f"[{unreal_color}]Rs. {summary.total_unrealized_pnl:,.2f}[/{unreal_color}]")
+        table.add_row("Realized P&L", f"[{real_color}]Rs. {summary.total_realized_pnl:,.2f}[/{real_color}]")
+        table.add_row("Net Virtual P&L", f"[{net_color}]Rs. {summary.net_pnl:,.2f}[/{net_color}]")
+        table.add_row("Last Synced (UTC)", summary.last_synced_at.strftime("%Y-%m-%d %H:%M:%S"))
+
+        console.print(table)
+    except Exception as e:
+        console.print(f"[bold red]Failed to fetch paper trading status:[/bold red] {e}")
+
+
+async def cmd_paper_positions(runtime: NiftyTraderRuntime) -> None:
+    """Lists currently open paper positions on Sensibull."""
+    open_positions = runtime.paper_store.get_open_positions()
+    if not open_positions:
+        console.print("[yellow]No open paper positions found in local store. Running sync...[/yellow]")
+        summary = await runtime.paper_service.get_portfolio_status()
+        open_positions = [p for p in summary.positions if p.status.value == "OPEN"]
+
+    if not open_positions:
+        console.print("[bold green]Zero open paper positions.[/bold green]")
+        return
+
+    table = Table(title="[bold green]Open Paper Positions (Sensibull)[/bold green]")
+    table.add_column("Position ID", style="dim", no_wrap=True)
+    table.add_column("Symbol", style="white")
+    table.add_column("Strike", style="bold cyan")
+    table.add_column("Type", style="magenta")
+    table.add_column("Expiry", style="white")
+    table.add_column("Lots (Qty)", style="white")
+    table.add_column("Avg Price", style="white")
+    table.add_column("LTP", style="white")
+    table.add_column("P&L (Rs.)", style="bold")
+    table.add_column("P&L (%)", style="bold")
+
+    for p in open_positions:
+        pnl_color = "green" if p.unrealized_pnl >= 0 else "red"
+        table.add_row(
+            p.position_id[:10],
+            p.symbol,
+            str(p.strike),
+            p.option_type.value,
+            p.expiry,
+            f"{p.lots} ({p.quantity})",
+            f"Rs. {p.avg_price:.2f}",
+            f"Rs. {p.current_ltp:.2f}",
+            f"[{pnl_color}]Rs. {p.unrealized_pnl:+,.2f}[/{pnl_color}]",
+            f"[{pnl_color}]{p.pnl_percentage:+.2f}%[/{pnl_color}]",
+        )
+    console.print(table)
+
+
+async def cmd_paper_order(
+    runtime: NiftyTraderRuntime,
+    strike: float,
+    option_type: str,
+    action: str = "BUY",
+    lots: int = 1,
+    expiry: str = "CURRENT",
+    limit_price: Optional[float] = None,
+) -> None:
+    """Executes a paper order and visually verifies execution."""
+    from nifty_trader.paper.contracts import PaperAction, PaperOptionType, PaperTradeOrderRequest
+    req = PaperTradeOrderRequest(
+        symbol="NIFTY",
+        expiry=expiry,
+        strike=strike,
+        option_type=PaperOptionType(option_type.upper()),
+        action=PaperAction(action.upper()),
+        lots=lots,
+        quantity=lots * 25,
+        limit_price=limit_price,
+    )
+    console.print(f"[cyan]Submitting Paper Order: {req.action.value} {req.lots} Lot(s) NIFTY {req.strike} {req.option_type.value}...[/cyan]")
+    order = await runtime.paper_service.execute_trade(req)
+
+    status_color = "green" if order.status.value in ["OPEN", "FILLED"] else "red"
+    console.print(Panel(
+        f"[bold]Order ID:[/bold] {order.order_id}\n"
+        f"[bold]Status:[/bold] [{status_color}]{order.status.value}[/{status_color}]\n"
+        f"[bold]Details:[/bold] {order.action.value} {order.quantity} qty @ {order.strike} {order.option_type.value}\n"
+        f"[bold]Entry Price:[/bold] Rs. {order.entry_price if order.entry_price else 0.0:.2f}\n"
+        f"[bold]Reason/Note:[/bold] {order.status_reason or 'None'}\n"
+        f"[bold]Verified At:[/bold] {order.verified_at.strftime('%H:%M:%S UTC') if order.verified_at else 'UNVERIFIED'}",
+        title="[bold yellow]Paper Order Execution Result[/bold yellow]",
+        border_style=status_color,
+    ))
+
+
+async def cmd_paper_close(runtime: NiftyTraderRuntime, position_id: Optional[str] = None, close_all: bool = False) -> None:
+    """Closes an open paper position or squares off all positions."""
+    if close_all:
+        console.print("[bold yellow]Initiating emergency square-off of ALL open paper positions...[/bold yellow]")
+        closed = await runtime.paper_service.close_all_positions(reason="Manual CLI emergency square-off")
+        console.print(f"[bold green]Successfully closed {len(closed)} position(s).[/bold green]")
+        return
+
+    if not position_id:
+        console.print("[bold red]Please specify a --position-id or use --all to square off everything.[/bold red]")
+        return
+
+    console.print(f"[cyan]Closing position {position_id}...[/cyan]")
+    success, pos = await runtime.paper_service.close_position(position_id, reason="Manual CLI square-off")
+    if success and pos:
+        console.print(f"[bold green]Position {position_id} closed! Realized P&L: Rs. {pos.realized_pnl:+,.2f}[/bold green]")
+    else:
+        console.print(f"[bold red]Failed to close position {position_id}.[/bold red]")
+
+
+async def cmd_paper_sync(runtime: NiftyTraderRuntime) -> None:
+    """Synchronizes and reconciles Sensibull ground truth with Hermes store."""
+    console.print("[cyan]Reconciling Sensibull virtual portfolio state with local store...[/cyan]")
+    summary, discrepancies = await runtime.paper_service.sync_and_reconcile()
+    console.print(f"[bold green][OK] Reconciliation complete.[/bold green] Found {len(discrepancies)} discrepancy/discrepancies.")
+    if discrepancies:
+        for d in discrepancies:
+            console.print(f"  * [yellow]{d.discrepancy_type}[/yellow]: {d.resolution_action}")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="NIFTY Autonomous Trader CLI")
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
@@ -1046,6 +1184,24 @@ def main() -> None:
     collab_status = subparsers.add_parser("collaborate-status", help="List recent Hermes-Brain collaboration cycles from audit log")
     collab_status.add_argument("--limit", type=int, default=10, help="Number of records to show")
 
+    # Stage 8 Sensibull Paper-Trading Commands
+    subparsers.add_parser("paper-status", help="Show Sensibull paper trading status, open positions count, and P&L")
+    subparsers.add_parser("paper-positions", help="List active Sensibull virtual positions")
+
+    paper_order_parser = subparsers.add_parser("paper-order", help="Submit a paper trade order into Sensibull Virtual Portfolio")
+    paper_order_parser.add_argument("--strike", type=float, required=True, help="NIFTY option strike price")
+    paper_order_parser.add_argument("--type", choices=["CE", "PE", "FUT"], required=True, help="Option type (CE/PE/FUT)")
+    paper_order_parser.add_argument("--action", choices=["BUY", "SELL"], default="BUY", help="Order action (BUY/SELL)")
+    paper_order_parser.add_argument("--lots", type=int, default=1, help="Number of lots")
+    paper_order_parser.add_argument("--expiry", default="CURRENT", help="Expiry date")
+    paper_order_parser.add_argument("--limit-price", type=float, default=None, help="Optional limit entry price")
+
+    paper_close_parser = subparsers.add_parser("paper-close", help="Close/Square-off paper position(s)")
+    paper_close_parser.add_argument("--position-id", help="Position ID to close")
+    paper_close_parser.add_argument("--all", action="store_true", help="Emergency square-off for all open positions")
+
+    subparsers.add_parser("paper-sync", help="Synchronize and reconcile Sensibull ground truth with Hermes store")
+
     args = parser.parse_args()
     runtime = NiftyTraderRuntime()
 
@@ -1107,6 +1263,24 @@ def main() -> None:
             runtime,
             limit=args.limit,
         ))
+    elif args.command == "paper-status":
+        asyncio.run(cmd_paper_status(runtime))
+    elif args.command == "paper-positions":
+        asyncio.run(cmd_paper_positions(runtime))
+    elif args.command == "paper-order":
+        asyncio.run(cmd_paper_order(
+            runtime,
+            strike=args.strike,
+            option_type=args.type,
+            action=args.action,
+            lots=args.lots,
+            expiry=args.expiry,
+            limit_price=args.limit_price,
+        ))
+    elif args.command == "paper-close":
+        asyncio.run(cmd_paper_close(runtime, position_id=args.position_id, close_all=args.all))
+    elif args.command == "paper-sync":
+        asyncio.run(cmd_paper_sync(runtime))
     elif args.command == "autonomous":
         if args.auto_command == "start":
             asyncio.run(cmd_autonomous_start(runtime, once=args.once, symbol=args.symbol))
