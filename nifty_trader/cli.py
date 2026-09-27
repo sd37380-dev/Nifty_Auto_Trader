@@ -177,6 +177,62 @@ async def cmd_browser_open(runtime: NiftyTraderRuntime, url: str, run_multimodal
         sys.exit(1)
 
 
+def cmd_browser_login(target: str = "both", url: Optional[str] = None) -> None:
+    """
+    Launches a visible, regular Chrome browser window using Hermes's persistent
+    profile sandbox (data/browser/chrome_profile).
+    Allows the human user to sign into Google, Sensibull, and TradingView safely without
+    exposing passwords or 2FA to automated scripts, LLMs, or chat logs.
+    """
+    profile_dir = Path("data/browser/chrome_profile").resolve()
+    profile_dir.mkdir(parents=True, exist_ok=True)
+
+    chrome_path = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
+    if not Path(chrome_path).exists():
+        chrome_path = r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"
+
+    if not Path(chrome_path).exists():
+        console.print("[bold red]Chrome binary not found at standard installation paths.[/bold red]")
+        return
+
+    if url:
+        urls = [url]
+    elif target == "sensibull":
+        urls = ["https://web.sensibull.com"]
+    elif target == "tradingview":
+        urls = ["https://in.tradingview.com"]
+    else:
+        urls = ["https://web.sensibull.com", "https://in.tradingview.com"]
+
+    urls_display = "\n".join(f"  * [cyan]{u}[/cyan]" for u in urls)
+
+    console.print(Panel.fit(
+        "[bold cyan]SECURE INTERACTIVE BROWSER LOGIN[/bold cyan]\n\n"
+        f"[green]Opening Chrome with Hermes profile:[/green] [dim]{profile_dir}[/dim]\n"
+        f"[green]Target Services:[/green]\n{urls_display}\n\n"
+        "[bold yellow]Instructions:[/bold yellow]\n"
+        "1. In the Chrome window that opens, sign into Google (e.g. sd37380@gmail.com) or your broker.\n"
+        "2. For TradingView: click user icon -> 'Sign in' -> 'Continue with Google'.\n"
+        "3. For Sensibull: click 'Login' -> 'Continue with Google' or broker login.\n"
+        "4. Complete any 2FA verification prompts directly on your phone/screen.\n"
+        "5. Once logged in, close the browser window or return here and press Enter.\n\n"
+        "[bold green]The authenticated sessions will be saved permanently in Hermes's profile for automated observations and paper trading.[/bold green]",
+        border_style="cyan"
+    ))
+
+    cmd = [
+        chrome_path,
+        f"--user-data-dir={profile_dir}",
+        "--no-first-run",
+        "--no-default-browser-check",
+    ] + urls
+
+    subprocess.Popen(cmd)
+
+    input("\nPress Enter once you have finished logging in and are ready to save the sessions...")
+    console.print("[bold green][OK] Browser sessions stored in Hermes profile sandbox.[/bold green]")
+
+
 async def cmd_start(runtime: NiftyTraderRuntime) -> None:
     """Starts the autonomous trading runtime session."""
     console.print(Panel.fit(
@@ -924,6 +980,10 @@ def main() -> None:
     open_parser.add_argument("url", help="URL to navigate to")
     open_parser.add_argument("--multimodal", action="store_true", help="Send screenshot to ModelRouter for neutral perception check")
 
+    login_parser = subparsers.add_parser("browser-login", help="Launch interactive browser to securely log into Sensibull, TradingView, or Google without exposing credentials")
+    login_parser.add_argument("--target", choices=["sensibull", "tradingview", "both"], default="both", help="Target service to log in to (default: both)")
+    login_parser.add_argument("--url", default=None, help="Custom target login URL (overrides --target)")
+
     upstream_parser = subparsers.add_parser("upstream", help="Upstream Hermes management")
     upstream_parser.add_argument("action", choices=["check", "inspect", "test"], help="Upstream action to perform")
 
@@ -999,6 +1059,8 @@ def main() -> None:
         asyncio.run(cmd_browser_test(runtime))
     elif args.command == "browser-open":
         asyncio.run(cmd_browser_open(runtime, args.url, run_multimodal=args.multimodal))
+    elif args.command == "browser-login":
+        cmd_browser_login(target=args.target, url=args.url)
     elif args.command == "sensibull-test":
         asyncio.run(cmd_sensibull_test(runtime))
     elif args.command == "upstream":
