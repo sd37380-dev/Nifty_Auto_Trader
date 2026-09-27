@@ -1,8 +1,8 @@
 # NIFTY AUTONOMOUS TRADER — PROJECT STATUS
 
 **Project:** NIFTY Autonomous Trader (Hermes-Based Autonomous Trading Software)  
-**Current Phase:** STAGE 8 — Sensibull Paper-Trading Execution & State Synchronization Engine  
-**Status:** STAGE 8 COMPLETE & LOCKED ✅  
+**Current Phase:** STAGE 9 — Autonomous Trade Monitoring & Position Management  
+**Status:** STAGE 9 COMPLETE & LOCKED ✅  
 **Date:** 2026-09-27  
 
 ---
@@ -22,7 +22,7 @@
 | **Stage 6** | **Hermes–Brain Collaborative Trading Orchestration** | **STAGE 6 — COMPLETE & LOCKED ✅** |
 | **Package 7** | Deterministic Risk Engine | Planned |
 | **Stage 8** | **Sensibull Paper-Trading Execution & State Synchronization** | **STAGE 8 — COMPLETE & LOCKED ✅** |
-| **Package 9** | Position Monitoring & Dynamic Trailing | Planned |
+| **Stage 9** | **Autonomous Trade Monitoring & Position Management** | **STAGE 9 — COMPLETE & LOCKED ✅** |
 | **Package 10** | Trader Experience Memory Store | Planned |
 | **Package 11** | Post-Trade Post-Mortem & Mistake Analysis | Planned |
 | **Package 12** | Strategy Learning Laboratory | Planned |
@@ -109,3 +109,18 @@
 8. **Hermes Telemetry Feeds (`nifty_trader/paper/service.py`)**: Generates `PaperPositionObservation` exposed to `HermesToolBridge` for Brain awareness of active risk and exposure.
 9. **Interactive CLI & Operational Tooling (`nifty_trader/cli.py`)**: Added `paper-status`, `paper-positions`, `paper-order`, `paper-close`, and `paper-sync`.
 10. **Verification**: 178 of 178 unit & integration tests passing (100% pass rate). Stage 8 LOCKED.
+
+---
+
+## Stage 9 Milestones Achieved (Autonomous Trade Monitoring & Position Management)
+
+1. **Zero Hard-Coded Exits**: Position exits and continuation are driven strictly by cognitive AI Brain evaluation against the original thesis and current 1H/15M evidence (no hard-coded profit targets, stop-losses, or indicators).
+2. **Autonomous Operator Orchestration (`nifty_trader/monitoring/orchestrator.py`)**: End-to-end monitoring lifecycle managing open paper trades, gating execution on meaningful price moves, verifying Sensibull ground truth, and dispatching only authorized actions (`CONTINUE`, `WAIT`, `WATCH`, `CLOSE`).
+3. **Position-Aware Context Synthesis (`nifty_trader/monitoring/context_builder.py`)**: Synthesizes open position telemetry, original trade entry thesis, and fresh multi-timeframe market observations into canonical `BrainInput` with `task="POSITION_REASSESSMENT"`.
+4. **Section 10 Open Position Context Compiler (`nifty_trader/brain/context/compiler.py`)**: Formats active position details, entry price, current price, unrealized P&L, holding duration, and original thesis into prompt context for AI model evaluation.
+5. **Meaningful Change Gating**: Prevents redundant AI Brain calls by waiting patiently when price movement < 1.0% and duration < 15 minutes unless explicitly forced.
+6. **Automated Square-Off Execution via Stage 8**: Dispatches verified square-off through `SensibullPaperTradingService.close_position()`, ensuring visual confirmation and realized P&L recording.
+7. **Dual-State Ground Truth Reconciliation**: Reconciles local monitored positions against remote Sensibull virtual portfolio state, detecting external square-offs and recording discrepancy resolutions.
+8. **Comprehensive SQLite Audit Trail (`nifty_trader/monitoring/store.py`)**: Persists complete lifecycle records and events in `data/monitoring/position_monitoring.db`.
+9. **Interactive CLI & Operational Tooling (`nifty_trader/cli.py`)**: Added `position-status`, `position-monitor`, `position-history`, and `position-reconcile`.
+10. **Verification**: 187 of 187 unit & integration tests passing (100% pass rate). Stage 9 COMPLETE & LOCKED ✅.

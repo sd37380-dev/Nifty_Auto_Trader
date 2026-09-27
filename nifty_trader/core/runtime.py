@@ -280,6 +280,21 @@ class NiftyTraderRuntime:
             audit_store=CollaborationAuditStore(storage_dir=collab_dir),
         )
 
+        # Initialize Stage 9 Autonomous Position Monitor & Lifecycle Manager
+        monitoring_dir = self.root_dir / "data" / "monitoring"
+        monitoring_dir.mkdir(parents=True, exist_ok=True)
+        from nifty_trader.monitoring.store import PositionMonitoringStore
+        from nifty_trader.monitoring.orchestrator import AutonomousPositionMonitor
+        self.monitoring_store = PositionMonitoringStore(db_path=monitoring_dir / "position_monitoring.db")
+        self.position_monitor = AutonomousPositionMonitor(
+            paper_service=self.paper_service,
+            brain_engine=self.brain,
+            paper_store=self.paper_store,
+            monitoring_store=self.monitoring_store,
+            market_service=self.market_service,
+            wait_policy=self.autonomous.wait_policy,
+        )
+
         logger.info("NiftyTraderRuntime initialized in state: %s", self.state.value)
 
     def _load_environment(self, env_file: Optional[Path]) -> None:
@@ -336,6 +351,10 @@ class NiftyTraderRuntime:
                 "total_count": len(self.instruction_manager.list_instructions()),
             },
             "autonomous": self.autonomous.get_status(),
+            "monitoring": {
+                "open_monitored_positions": len(self.paper_store.get_open_positions()),
+                "total_records": len(self.monitoring_store.list_records(limit=1000)),
+            },
             "risk_policies": self.settings.get("risk", {}),
         }
 

@@ -25,14 +25,24 @@ class BrainContextCompiler:
 
     def compile(
         self,
-        obs: UnifiedMarketObservation,
+        obs: Any,
         previous_brain_state: Optional[Any] = None,
         requested_focus: Optional[List[str]] = None,
         memory_context: Optional[str] = None,
+        open_position_context: Optional[Any] = None,
     ) -> Dict[str, Any]:
         """
         Extracts and formats observation components.
+        Supports passing either UnifiedMarketObservation or BrainInput.
         """
+        if hasattr(obs, "observation"):
+            brain_input = obs
+            obs = brain_input.observation
+            open_position_context = open_position_context or getattr(brain_input, "open_position_context", None)
+            previous_brain_state = previous_brain_state or getattr(brain_input, "previous_brain_state", None)
+            requested_focus = requested_focus or getattr(brain_input, "requested_focus", None)
+            memory_context = memory_context or getattr(brain_input, "memory_context", None)
+
         # 1. Numerical 1H & 15M Context
         c1h = obs.numerical.candles_1h
         c15m = obs.numerical.candles_15m
@@ -149,6 +159,23 @@ class BrainContextCompiler:
         if requested_focus:
             focus_text = "\n".join(f"  * {f}" for f in requested_focus)
 
+        # 10. Open Position Context (for Position Reassessment)
+        pos_text = None
+        if open_position_context:
+            dir_str = open_position_context.direction.value if hasattr(open_position_context.direction, "value") else str(open_position_context.direction)
+            pos_text = (
+                f"Position ID: {open_position_context.position_id}\n"
+                f"Instrument: {open_position_context.symbol} {open_position_context.strike} {open_position_context.option_type}\n"
+                f"Direction: {dir_str}\n"
+                f"Lots / Quantity: {open_position_context.lots} ({open_position_context.quantity} qty)\n"
+                f"Entry Price: Rs. {open_position_context.entry_price:.2f}\n"
+                f"Current Price: Rs. {open_position_context.current_price:.2f}\n"
+                f"Unrealized P&L: Rs. {open_position_context.unrealized_pnl:+,.2f} ({open_position_context.pnl_percentage:+.2f}%)\n"
+                f"Holding Duration: {open_position_context.holding_duration_minutes:.1f} minutes\n"
+                f"Original Opening Thesis: {open_position_context.opening_candidate_thesis or 'Not recorded'}\n"
+                f"Original Opening Hypothesis: {open_position_context.opening_hypothesis or 'Not recorded'}"
+            )
+
         return {
             "observation_id": obs.observation_id,
             "instrument": obs.instrument,
@@ -165,5 +192,6 @@ class BrainContextCompiler:
             "previous_brain_state": prev_state_text,
             "requested_focus": focus_text,
             "memory_context": memory_context,
+            "open_position_context": pos_text,
             "warnings": [w.message for w in obs.warnings],
         }

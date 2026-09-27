@@ -76,6 +76,15 @@ class Direction(str, Enum):
     UNKNOWN = "UNKNOWN"
 
 
+class PositionManagementAction(str, Enum):
+    """Position management actions recommended during open position reassessment."""
+    CONTINUE = "CONTINUE"
+    WAIT = "WAIT"
+    WATCH = "WATCH"
+    MODIFY = "MODIFY"
+    CLOSE = "CLOSE"
+
+
 class EvidenceType(str, Enum):
     """Separates verifiable perceptual facts from model interpretations."""
     OBSERVATION = "OBSERVATION"
@@ -258,16 +267,37 @@ class ReasoningSummary(BaseModel):
 # 5. Exact Input, State & Output Contracts
 # ==============================================================================
 
+class OpenPositionContext(BaseModel):
+    """Context of an active open position provided to Brain for reassessment."""
+    position_id: str
+    symbol: str = "NIFTY"
+    direction: Direction
+    strike: float
+    option_type: str  # CE, PE, FUT
+    quantity: int
+    lots: int
+    entry_price: float
+    current_price: float
+    unrealized_pnl: float = 0.0
+    pnl_percentage: float = 0.0
+    holding_duration_minutes: float = 0.0
+    opening_candidate_thesis: Optional[str] = None
+    opening_hypothesis: Optional[str] = None
+    opening_timestamp: Optional[datetime] = None
+    status: str = "OPEN"
+
+
 class BrainInput(BaseModel):
     """Exact input boundary contract feeding Package 4."""
     schema_version: str = PACKAGE4_SCHEMA_VERSION
     brain_request_id: str = Field(default_factory=lambda: f"breq_{uuid.uuid4().hex[:10]}")
     observation: UnifiedMarketObservation
-    task: Literal["MARKET_ANALYSIS", "SETUP_CONFIRMATION"] = "MARKET_ANALYSIS"
+    task: Literal["MARKET_ANALYSIS", "SETUP_CONFIRMATION", "POSITION_REASSESSMENT"] = "MARKET_ANALYSIS"
     manual_instruction_context: List[ManualInstructionContext] = Field(default_factory=list)
     previous_brain_state: Optional["BrainState"] = None
     requested_focus: List[str] = Field(default_factory=list)
     memory_context: Optional[str] = None
+    open_position_context: Optional[OpenPositionContext] = None
     timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
@@ -304,6 +334,7 @@ class BrainOutput(BaseModel):
     scenarios: List[Scenario] = Field(default_factory=list)
     hypotheses: List[MarketHypothesis] = Field(default_factory=list)
     candidate: Optional[TradeCandidate] = None
+    position_action: Optional[PositionManagementAction] = None
     observation_requests: List[ObservationRequest] = Field(default_factory=list)
     uncertainties: List[Uncertainty] = Field(default_factory=list)
     confidence: Confidence

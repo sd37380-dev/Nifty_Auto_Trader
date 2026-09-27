@@ -51,6 +51,7 @@ async def cmd_status(runtime: NiftyTraderRuntime) -> None:
     md_prov = md_info.get("provider", "NONE")
     table.add_row("Capability (Market Data)", f"[green]READY (v1.0.0, {md_prov})[/green]")
     table.add_row("Capability (Paper Broker)", "[green]READY (v1.0.0, Sensibull Virtual)[/green]")
+    table.add_row("Capability (Position Monitor)", "[green]READY (v1.0.0, Autonomous AI Monitor)[/green]")
     table.add_row("Capability (Live Broker)", "[red]DISABLED[/red]")
 
     # Market Session and Cache
@@ -60,6 +61,8 @@ async def cmd_status(runtime: NiftyTraderRuntime) -> None:
     table.add_row("Cached Candles (1H / 15M)", f"{md_info.get('cache_1h_count', 0)} / {md_info.get('cache_15m_count', 0)}")
     inst_info = status.get("instructions", {})
     table.add_row("Active Operator Instructions", str(inst_info.get("active_count", 0)))
+    mon_info = status.get("monitoring", {})
+    table.add_row("Monitored Open Positions", str(mon_info.get("open_monitored_positions", 0)))
 
     # Browser
     b_status = status.get("browser", {}).get("status", "UNKNOWN")
@@ -1105,6 +1108,130 @@ async def cmd_paper_sync(runtime: NiftyTraderRuntime) -> None:
             console.print(f"  * [yellow]{d.discrepancy_type}[/yellow]: {d.resolution_action}")
 
 
+async def cmd_position_status(runtime: NiftyTraderRuntime) -> None:
+    """Shows active monitored positions, P&L, holding duration, and monitoring status."""
+    positions = runtime.paper_store.get_open_positions()
+    if not positions:
+        console.print("[yellow]No open positions currently under monitoring.[/yellow]")
+        return
+
+    table = Table(title="[bold green]NIFTY Autonomous Trader — Monitored Open Positions[/bold green]")
+    table.add_column("Position ID", style="cyan", no_wrap=True)
+    table.add_column("Instrument", style="bold")
+    table.add_column("Lots/Qty", style="magenta")
+    table.add_column("Entry Price", style="blue")
+    table.add_column("Current LTP", style="yellow")
+    table.add_column("Unrealized P&L", style="bold")
+    table.add_column("Duration", style="cyan")
+    table.add_column("Status", style="green")
+
+    import datetime
+    now = datetime.datetime.now(datetime.timezone.utc)
+    for pos in positions:
+        pnl = pos.unrealized_pnl
+        pnl_pct = pos.pnl_percentage
+        pnl_style = "green" if pnl >= 0 else "red"
+        pnl_text = f"[{pnl_style}]Rs. {pnl:+,.2f} ({pnl_pct:+.2f}%)[/{pnl_style}]"
+
+        duration_mins = max(0.0, (now - pos.first_detected_at).total_seconds() / 60.0)
+
+        table.add_row(
+            pos.position_id[:16],
+            f"{pos.symbol} {pos.strike:,.0f} {pos.option_type.value}",
+            f"{pos.lots}L / {pos.quantity}Q",
+            f"Rs. {pos.avg_price:.2f}",
+            f"Rs. {pos.current_ltp:.2f}",
+            pnl_text,
+            f"{duration_mins:.1f}m",
+            pos.status.value,
+        )
+
+    console.print(table)
+
+
+async def cmd_position_monitor(runtime: NiftyTraderRuntime, force: bool = False) -> None:
+    """Executes an autonomous monitoring and reassessment pass across all open positions."""
+    console.print(f"[cyan]Running autonomous position monitoring cycle (force_reassessment={force})...[/cyan]")
+    records = await runtime.position_monitor.monitor_once(force_reassessment=force)
+
+    if not records:
+        console.print("[yellow]No active positions found to monitor.[/yellow]")
+        return
+
+    console.print(f"[bold green]Monitored {len(records)} open position(s):[/bold green]")
+    for r in records:
+        action_col = "green" if r.brain_position_action and r.brain_position_action.value in ["CONTINUE", "WAIT"] else "yellow"
+        if r.brain_position_action and r.brain_position_action.value == "CLOSE":
+            action_col = "red"
+
+        act_text = r.brain_position_action.value if r.brain_position_action else "NONE"
+        content = (
+            f"[bold]Position ID:[/bold] {r.position_id}\n"
+            f"[bold]Instrument:[/bold] {r.symbol} {r.strike:,.0f} {r.option_type} ({r.lots} Lots)\n"
+            f"[bold]Entry / LTP:[/bold] Rs. {r.entry_price:.2f} / Rs. {r.current_price:.2f}\n"
+            f"[bold]Unrealized P&L:[/bold] Rs. {r.unrealized_pnl:+,.2f} ({r.pnl_percentage:+.2f}%)\n"
+            f"[bold]Duration:[/bold] {r.holding_duration_minutes:.1f} mins\n"
+            f"[bold]Monitoring State:[/bold] {r.monitoring_state.value}\n"
+            f"[bold]Action:[/bold] [{action_col}]{act_text}[/{action_col}]\n"
+            f"[bold]Brain Summary:[/bold] {r.brain_summary or r.wake_reason or 'No summary'}\n"
+            f"[bold]Execution Result:[/bold] {r.action_result or 'Monitoring ongoing'}"
+        )
+        console.print(Panel(
+            content,
+            title=f"[bold]Position Monitoring Record — {r.position_id[:12]}[/bold]",
+            border_style="cyan",
+        ))
+
+
+async def cmd_position_history(
+    runtime: NiftyTraderRuntime,
+    limit: int = 10,
+    position_id: Optional[str] = None,
+) -> None:
+    """Displays position monitoring audit trail and event history."""
+    records = runtime.monitoring_store.list_records(limit=limit, position_id=position_id)
+    if not records:
+        console.print("[yellow]No position monitoring records found in history.[/yellow]")
+        return
+
+    table = Table(title=f"[bold green]NIFTY Position Monitoring History (Latest {len(records)})[/bold green]")
+    table.add_column("Mon ID", style="cyan", no_wrap=True)
+    table.add_column("Pos ID", style="magenta", no_wrap=True)
+    table.add_column("State", style="bold")
+    table.add_column("Action", style="yellow")
+    table.add_column("P&L", style="bold")
+    table.add_column("Duration", style="blue")
+    table.add_column("Summary / Wake Reason")
+
+    for r in records:
+        pnl_style = "green" if r.unrealized_pnl >= 0 else "red"
+        pnl_text = f"[{pnl_style}]Rs. {r.unrealized_pnl:+,.2f}[/{pnl_style}]"
+        act_text = r.brain_position_action.value if r.brain_position_action else "-"
+        summary = (r.brain_summary or r.wake_reason or "")[:45]
+
+        table.add_row(
+            r.monitoring_id[:12],
+            r.position_id[:12],
+            r.monitoring_state.value,
+            act_text,
+            pnl_text,
+            f"{r.holding_duration_minutes:.1f}m",
+            summary,
+        )
+
+    console.print(table)
+
+
+async def cmd_position_reconcile(runtime: NiftyTraderRuntime) -> None:
+    """Verifies local monitored positions against remote Sensibull ground truth and resolves discrepancies."""
+    console.print("[cyan]Verifying monitored positions against Sensibull ground truth...[/cyan]")
+    summary, discrepancies = await runtime.position_monitor.reconcile_positions()
+    console.print(f"[bold green][OK] Position reconciliation complete.[/bold green] Found {len(discrepancies)} discrepancy/discrepancies.")
+    if discrepancies:
+        for d in discrepancies:
+            console.print(f"  * [yellow]{d.discrepancy_type}[/yellow]: {d.resolution_action}")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="NIFTY Autonomous Trader CLI")
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
@@ -1202,6 +1329,18 @@ def main() -> None:
 
     subparsers.add_parser("paper-sync", help="Synchronize and reconcile Sensibull ground truth with Hermes store")
 
+    # Stage 9 Autonomous Trade Monitoring & Position Management Commands
+    subparsers.add_parser("position-status", help="Show active monitored positions, P&L, and monitoring status")
+
+    pos_mon_parser = subparsers.add_parser("position-monitor", help="Run autonomous monitoring and reassessment pass")
+    pos_mon_parser.add_argument("--force", action="store_true", help="Force AI Brain reassessment even if price move is small")
+
+    pos_hist_parser = subparsers.add_parser("position-history", help="List persisted position monitoring lifecycle records")
+    pos_hist_parser.add_argument("--limit", type=int, default=10, help="Number of records to show")
+    pos_hist_parser.add_argument("--position-id", help="Filter records by Position ID")
+
+    subparsers.add_parser("position-reconcile", help="Reconcile monitored positions with Sensibull remote ground truth")
+
     args = parser.parse_args()
     runtime = NiftyTraderRuntime()
 
@@ -1281,6 +1420,14 @@ def main() -> None:
         asyncio.run(cmd_paper_close(runtime, position_id=args.position_id, close_all=args.all))
     elif args.command == "paper-sync":
         asyncio.run(cmd_paper_sync(runtime))
+    elif args.command == "position-status":
+        asyncio.run(cmd_position_status(runtime))
+    elif args.command == "position-monitor":
+        asyncio.run(cmd_position_monitor(runtime, force=args.force))
+    elif args.command == "position-history":
+        asyncio.run(cmd_position_history(runtime, limit=args.limit, position_id=args.position_id))
+    elif args.command == "position-reconcile":
+        asyncio.run(cmd_position_reconcile(runtime))
     elif args.command == "autonomous":
         if args.auto_command == "start":
             asyncio.run(cmd_autonomous_start(runtime, once=args.once, symbol=args.symbol))
