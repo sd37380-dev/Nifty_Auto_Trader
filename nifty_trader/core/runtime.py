@@ -295,6 +295,19 @@ class NiftyTraderRuntime:
             wait_policy=self.autonomous.wait_policy,
         )
 
+        # Initialize Stage 10 Performance Analysis & Experience Memory
+        exp_dir = self.root_dir / "data" / "experience"
+        exp_dir.mkdir(parents=True, exist_ok=True)
+        from nifty_trader.experience.persistence import ExperienceStore
+        from nifty_trader.experience.service import PerformanceAnalysisService
+        self.experience_store = ExperienceStore(db_path=exp_dir / "experience.db")
+        self.experience_service = PerformanceAnalysisService(
+            paper_store=self.paper_store,
+            monitoring_store=self.monitoring_store,
+            experience_store=self.experience_store,
+            context_memory_store=self.memory_store,
+        )
+
         logger.info("NiftyTraderRuntime initialized in state: %s", self.state.value)
 
     def _load_environment(self, env_file: Optional[Path]) -> None:
@@ -354,6 +367,9 @@ class NiftyTraderRuntime:
             "monitoring": {
                 "open_monitored_positions": len(self.paper_store.get_open_positions()),
                 "total_records": len(self.monitoring_store.list_records(limit=1000)),
+            },
+            "experience": {
+                "total_experiences": len(self.experience_store.list_experiences(limit=1000)),
             },
             "risk_policies": self.settings.get("risk", {}),
         }

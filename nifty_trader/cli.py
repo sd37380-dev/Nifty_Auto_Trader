@@ -52,6 +52,7 @@ async def cmd_status(runtime: NiftyTraderRuntime) -> None:
     table.add_row("Capability (Market Data)", f"[green]READY (v1.0.0, {md_prov})[/green]")
     table.add_row("Capability (Paper Broker)", "[green]READY (v1.0.0, Sensibull Virtual)[/green]")
     table.add_row("Capability (Position Monitor)", "[green]READY (v1.0.0, Autonomous AI Monitor)[/green]")
+    table.add_row("Capability (Experience Memory)", "[green]READY (v1.0.0, Evidence Memory & Metrics)[/green]")
     table.add_row("Capability (Live Broker)", "[red]DISABLED[/red]")
 
     # Market Session and Cache
@@ -63,6 +64,8 @@ async def cmd_status(runtime: NiftyTraderRuntime) -> None:
     table.add_row("Active Operator Instructions", str(inst_info.get("active_count", 0)))
     mon_info = status.get("monitoring", {})
     table.add_row("Monitored Open Positions", str(mon_info.get("open_monitored_positions", 0)))
+    exp_info = status.get("experience", {})
+    table.add_row("Stored Experience Records", str(exp_info.get("total_experiences", 0)))
 
     # Browser
     b_status = status.get("browser", {}).get("status", "UNKNOWN")
@@ -1232,6 +1235,179 @@ async def cmd_position_reconcile(runtime: NiftyTraderRuntime) -> None:
             console.print(f"  * [yellow]{d.discrepancy_type}[/yellow]: {d.resolution_action}")
 
 
+async def cmd_experience_analyze(runtime: NiftyTraderRuntime, trade_id: str, force: bool = False) -> None:
+    """Executes post-trade performance analysis and memory extraction for a trade."""
+    console.print(f"[cyan]Analyzing trade '{trade_id}' (force={force})...[/cyan]")
+    ok, record, errors = runtime.experience_service.analyze_trade(trade_id, force=force)
+    if not ok or not record:
+        console.print(f"[bold red]Analysis failed:[/bold red] {'; '.join(errors)}")
+        return
+
+    out_style = "green" if record.outcome_analysis.realized_pnl >= 0 else "red"
+    lessons_str = "\n".join(f"  * {l.statement}" for l in record.lessons) if record.lessons else "  None extracted"
+    panel = (
+        f"[bold]Experience ID:[/bold] {record.experience_id}\n"
+        f"[bold]Trade ID:[/bold] {record.trade_id}\n"
+        f"[bold]Instrument:[/bold] {record.symbol} {record.strike:.0f} {record.option_type}\n"
+        f"[bold]Outcome:[/bold] [{out_style}]{record.outcome_analysis.outcome.value}[/{out_style}] "
+        f"(Realized P&L: Rs. {record.outcome_analysis.realized_pnl:+,.2f}, Return: {record.outcome_analysis.pnl_percentage:+.2f}%)\n"
+        f"[bold]Reasoning Evaluation:[/bold] {record.reasoning_analysis.reasoning_outcome.value} "
+        f"({record.reasoning_analysis.thesis_evaluation})\n"
+        f"[bold]Execution Fidelity:[/bold] {record.execution_analysis.execution_outcome.value} "
+        f"(Slippage: Rs. {record.execution_analysis.entry_slippage:+.2f})\n"
+        f"[bold]Holding Duration:[/bold] {record.outcome_analysis.holding_duration_minutes:.1f} minutes\n"
+        f"[bold]Memory Status:[/bold] [green]{record.memory_status.value}[/green]\n\n"
+        f"[bold cyan]Grounded Lessons:[/bold cyan]\n{lessons_str}"
+    )
+    console.print(Panel(panel, title="[bold green]Post-Trade Experience Analysis Result[/bold green]", border_style="green"))
+
+
+async def cmd_experience_show(runtime: NiftyTraderRuntime, target_id: str) -> None:
+    """Displays detailed experience record, reconstructed timeline, and lessons."""
+    rec = runtime.experience_store.get_experience(target_id)
+    if not rec:
+        rec = runtime.experience_store.get_experience_by_trade(target_id)
+
+    if not rec:
+        console.print(f"[bold red]Experience record not found for ID '{target_id}'.[/bold red]")
+        return
+
+    console.print(f"[bold green]Experience Record: {rec.experience_id}[/bold green] (Trade: {rec.trade_id})")
+    console.print(f"[cyan]Summary:[/cyan] {rec.summary}\n")
+
+    # Timeline Table
+    table = Table(title="[bold yellow]Reconstructed Chronological Timeline[/bold yellow]")
+    table.add_column("Timestamp (UTC)", style="cyan", no_wrap=True)
+    table.add_column("Source", style="magenta")
+    table.add_column("Event Type", style="bold")
+    table.add_column("Description")
+
+    for evt in rec.timeline.events:
+        table.add_row(
+            evt.timestamp.strftime("%H:%M:%S"),
+            evt.source,
+            evt.event_type,
+            evt.description[:65],
+        )
+    console.print(table)
+
+    # Validated Lessons Table
+    if rec.lessons:
+        ltable = Table(title="[bold yellow]Evidence-Backed Lessons[/bold yellow]")
+        ltable.add_column("Lesson ID", style="cyan", no_wrap=True)
+        ltable.add_column("Type", style="magenta")
+        ltable.add_column("Takeaway Statement")
+        ltable.add_column("Evidence References", style="blue")
+
+        for l in rec.lessons:
+            ltable.add_row(
+                l.lesson_id,
+                l.lesson_type.value,
+                l.statement,
+                ", ".join(l.evidence_refs) if l.evidence_refs else "None",
+            )
+        console.print(ltable)
+
+
+async def cmd_experience_search(runtime: NiftyTraderRuntime, tag: Optional[str] = None, limit: int = 10) -> None:
+    """Searches stored experience memory by taxonomy tag or status."""
+    records = runtime.experience_store.list_experiences(limit=limit, tag=tag)
+    if not records:
+        console.print("[yellow]No experience records found matching criteria.[/yellow]")
+        return
+
+    table = Table(title=f"[bold green]Historical Experience Records (Total: {len(records)})[/bold green]")
+    table.add_column("Exp ID", style="cyan", no_wrap=True)
+    table.add_column("Trade ID", style="magenta", no_wrap=True)
+    table.add_column("Instrument", style="bold")
+    table.add_column("Outcome", style="bold")
+    table.add_column("P&L", style="bold")
+    table.add_column("Reasoning", style="yellow")
+    table.add_column("Status", style="green")
+    table.add_column("Tags", style="blue")
+
+    for r in records:
+        pnl_style = "green" if r.outcome_analysis.realized_pnl >= 0 else "red"
+        pnl_text = f"[{pnl_style}]Rs. {r.outcome_analysis.realized_pnl:+,.2f}[/{pnl_style}]"
+        table.add_row(
+            r.experience_id[:12],
+            r.trade_id[:12],
+            f"{r.symbol} {r.strike:.0f} {r.option_type}",
+            r.outcome_analysis.outcome.value,
+            pnl_text,
+            r.reasoning_analysis.reasoning_outcome.value,
+            r.memory_status.value,
+            ", ".join(r.tags[:2]),
+        )
+    console.print(table)
+
+
+async def cmd_performance_summary(runtime: NiftyTraderRuntime) -> None:
+    """Displays aggregated descriptive trading and operational performance statistics."""
+    summary = runtime.experience_service.get_performance_summary()
+
+    t1 = Table(title="[bold green]NIFTY Autonomous Trader — Verified Trading Performance[/bold green]")
+    t1.add_column("Metric", style="cyan", no_wrap=True)
+    t1.add_column("Value", style="magenta")
+
+    t1.add_row("Total Completed Trades", str(summary.total_completed_trades))
+    t1.add_row("Verified P&L Trades", str(summary.verified_trades_count))
+    t1.add_row("Unverified Trades", str(summary.unverified_trades_count))
+    t1.add_row("Win Rate", f"{summary.win_rate_pct:.1f}% ({summary.profitable_trades}W / {summary.loss_trades}L / {summary.breakeven_trades}BE)")
+    t1.add_row("Total Realized P&L", f"Rs. {summary.total_realized_pnl:+,.2f}")
+    t1.add_row("Average P&L per Trade", f"Rs. {summary.avg_pnl:+,.2f}")
+    t1.add_row("Median P&L", f"Rs. {summary.median_pnl:+,.2f}")
+    t1.add_row("Largest Gain", f"Rs. {summary.largest_gain:+,.2f}")
+    t1.add_row("Largest Loss", f"Rs. {summary.largest_loss:+,.2f}")
+    t1.add_row("Max Drawdown", f"Rs. {summary.max_drawdown:.2f}")
+    t1.add_row("Profit Factor", f"{summary.profit_factor:.2f}")
+    t1.add_row("Average Trade Duration", f"{summary.avg_duration_minutes:.1f} mins")
+    console.print(t1)
+
+    t2 = Table(title="[bold yellow]Cognitive & Operational Performance Metrics[/bold yellow]")
+    t2.add_column("Operational Metric", style="cyan", no_wrap=True)
+    t2.add_column("Value", style="yellow")
+
+    t2.add_row("Total Brain Reassessments", str(summary.total_reassessments))
+    t2.add_row("Avg Reassessments per Trade", f"{summary.avg_reassessments_per_trade:.1f}")
+    t2.add_row("Wait Cycle Frequency", str(summary.wait_frequency))
+    t2.add_row("Source Conflicts Observed", str(summary.source_conflicts_encountered))
+    t2.add_row("Execution Failures", str(summary.execution_failures_encountered))
+    t2.add_row("State Reconciliations", str(summary.reconciliation_events_encountered))
+    console.print(t2)
+
+
+async def cmd_performance_trades(runtime: NiftyTraderRuntime, limit: int = 20) -> None:
+    """Lists analyzed completed trades with multi-dimensional outcome evaluations."""
+    records = runtime.experience_store.list_experiences(limit=limit)
+    if not records:
+        console.print("[yellow]No analyzed completed trades found in experience store.[/yellow]")
+        return
+
+    table = Table(title=f"[bold green]Analyzed Completed Trades (Latest {len(records)})[/bold green]")
+    table.add_column("Trade ID", style="cyan", no_wrap=True)
+    table.add_column("Instrument", style="bold")
+    table.add_column("Outcome", style="bold")
+    table.add_column("Realized P&L", style="bold")
+    table.add_column("Duration", style="blue")
+    table.add_column("Reasoning Evaluation", style="yellow")
+    table.add_column("Execution Fidelity", style="green")
+
+    for r in records:
+        pnl_style = "green" if r.outcome_analysis.realized_pnl >= 0 else "red"
+        pnl_text = f"[{pnl_style}]Rs. {r.outcome_analysis.realized_pnl:+,.2f}[/{pnl_style}]"
+        table.add_row(
+            r.trade_id[:14],
+            f"{r.symbol} {r.strike:.0f} {r.option_type}",
+            r.outcome_analysis.outcome.value,
+            pnl_text,
+            f"{r.outcome_analysis.holding_duration_minutes:.1f}m",
+            r.reasoning_analysis.reasoning_outcome.value,
+            r.execution_analysis.execution_outcome.value,
+        )
+    console.print(table)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="NIFTY Autonomous Trader CLI")
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
@@ -1341,6 +1517,23 @@ def main() -> None:
 
     subparsers.add_parser("position-reconcile", help="Reconcile monitored positions with Sensibull remote ground truth")
 
+    # Stage 10 Experience Memory & Performance Analysis Commands
+    exp_an_parser = subparsers.add_parser("experience-analyze", help="Run performance analysis & experience extraction on a trade")
+    exp_an_parser.add_argument("trade_id", help="Trade ID or Position ID to analyze")
+    exp_an_parser.add_argument("--force", action="store_true", help="Force re-analysis even if already recorded")
+
+    exp_show_parser = subparsers.add_parser("experience-show", help="Display experience record and timeline breakdown")
+    exp_show_parser.add_argument("target_id", help="Experience ID or Trade ID")
+
+    exp_search_parser = subparsers.add_parser("experience-search", help="Search experience memory by tag or context")
+    exp_search_parser.add_argument("--tag", help="Filter by taxonomy tag (e.g. BREAKOUT, RANGE, REVERSAL)")
+    exp_search_parser.add_argument("--limit", type=int, default=10, help="Number of records to show")
+
+    subparsers.add_parser("performance-summary", help="Show descriptive trading and operational performance statistics")
+
+    perf_trades_parser = subparsers.add_parser("performance-trades", help="List completed trades and multidimensional evaluations")
+    perf_trades_parser.add_argument("--limit", type=int, default=20, help="Number of trades to show")
+
     args = parser.parse_args()
     runtime = NiftyTraderRuntime()
 
@@ -1428,6 +1621,16 @@ def main() -> None:
         asyncio.run(cmd_position_history(runtime, limit=args.limit, position_id=args.position_id))
     elif args.command == "position-reconcile":
         asyncio.run(cmd_position_reconcile(runtime))
+    elif args.command == "experience-analyze":
+        asyncio.run(cmd_experience_analyze(runtime, trade_id=args.trade_id, force=args.force))
+    elif args.command == "experience-show":
+        asyncio.run(cmd_experience_show(runtime, target_id=args.target_id))
+    elif args.command == "experience-search":
+        asyncio.run(cmd_experience_search(runtime, tag=args.tag, limit=args.limit))
+    elif args.command == "performance-summary":
+        asyncio.run(cmd_performance_summary(runtime))
+    elif args.command == "performance-trades":
+        asyncio.run(cmd_performance_trades(runtime, limit=args.limit))
     elif args.command == "autonomous":
         if args.auto_command == "start":
             asyncio.run(cmd_autonomous_start(runtime, once=args.once, symbol=args.symbol))

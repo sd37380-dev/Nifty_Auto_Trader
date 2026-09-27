@@ -5,6 +5,7 @@ Persists paper trade orders, positions, and reconciliation events.
 Database: data/paper_trading/paper_trades.db
 """
 
+from contextlib import contextmanager
 from datetime import datetime, timezone
 import json
 import logging
@@ -32,10 +33,14 @@ class PaperTradeStore:
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self._init_db()
 
-    def _get_connection(self) -> sqlite3.Connection:
+    @contextmanager
+    def _get_connection(self):
         conn = sqlite3.connect(str(self.db_path), timeout=10.0)
         conn.row_factory = sqlite3.Row
-        return conn
+        try:
+            yield conn
+        finally:
+            conn.close()
 
     def _init_db(self) -> None:
         with self._get_connection() as conn:
@@ -174,6 +179,33 @@ class PaperTradeStore:
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM paper_positions WHERE status = 'OPEN'")
             return [self._row_to_position(r) for r in cursor.fetchall()]
+
+    def get_position(self, position_id: str) -> Optional[PaperPosition]:
+        """Retrieves a position by position_id."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM paper_positions WHERE position_id = ?", (position_id,))
+            row = cursor.fetchone()
+            if not row:
+                return None
+            return self._row_to_position(row)
+
+    def get_all_positions(self, limit: int = 100) -> List[PaperPosition]:
+        """Retrieves all paper positions ordered by first_detected_at desc."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM paper_positions ORDER BY first_detected_at DESC LIMIT ?", (limit,))
+            return [self._row_to_position(r) for r in cursor.fetchall()]
+
+    def get_order(self, order_id: str) -> Optional[PaperTradeOrder]:
+        """Retrieves an order by order_id."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM paper_orders WHERE order_id = ?", (order_id,))
+            row = cursor.fetchone()
+            if not row:
+                return None
+            return self._row_to_order(row)
 
     def save_reconciliation(self, disc: ReconciliationDiscrepancy) -> None:
         """Logs a reconciliation event."""
