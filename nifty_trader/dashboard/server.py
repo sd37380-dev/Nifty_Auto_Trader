@@ -2145,9 +2145,9 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       const res = await fetch('/api/telegram/test', { method: 'POST' });
       const data = await res.json();
       if (data.status === 'ok') {
-        alert("✅ Telegram test alert dispatched successfully!\n\nCheck your Telegram chat for the confirmation message.");
+        alert(`✅ Telegram test alert dispatched successfully!\n\nCheck your Telegram chat for the confirmation message.`);
       } else {
-        alert("⚠️ Telegram test failed:\n\n" + (data.message || "Unknown error") + "\n\nPlease ensure your Bot Token and Chat ID are correct, and that you have started your bot by sending /start.");
+        alert(`⚠️ Telegram test failed:\n\n${data.message || 'Unknown error'}\n\nPlease ensure your Bot Token and Chat ID are correct, and that you have started your bot by sending /start.`);
       }
     } catch (err) {
       alert("Error sending Telegram test alert: " + err);

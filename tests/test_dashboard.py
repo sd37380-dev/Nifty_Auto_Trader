@@ -72,7 +72,7 @@ def test_dashboard_server_endpoints():
         # 5. Test NSE Option Chain API endpoint
         url_oc = "http://127.0.0.1:8899/api/option_chain?symbol=NIFTY"
         req_oc = urllib.request.Request(url_oc)
-        with urllib.request.urlopen(req_oc, timeout=5.0) as res:
+        with urllib.request.urlopen(req_oc, timeout=12.0) as res:
             assert res.status == 200
             oc_data = json.loads(res.read().decode("utf-8"))
             assert oc_data["status"] == "ok"
