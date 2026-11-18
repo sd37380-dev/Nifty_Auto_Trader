@@ -438,6 +438,26 @@ class MarketNewsService:
         except Exception:
             pass
 
+        # Telegram Alert: Dispatch instant alert for sudden big / high-impact news
+        if int(important) == 1 or score >= 4:
+            try:
+                from nifty_trader.notifications.telegram_service import get_telegram_service
+                get_telegram_service(self.root_dir).send_big_news_alert({
+                    "id": news_id,
+                    "title": clean_title,
+                    "summary": clean_summary,
+                    "source": source,
+                    "category": cat,
+                    "impact_type": imp,
+                    "impact_score": score,
+                    "market_effect": effect,
+                    "is_important": int(important),
+                    "url": url,
+                    "published_at": pub_str,
+                })
+            except Exception as tele_err:
+                logger.debug("Telegram news alert skipped: %s", tele_err)
+
         return news_id
 
     def fetch_live_rss(self) -> int:

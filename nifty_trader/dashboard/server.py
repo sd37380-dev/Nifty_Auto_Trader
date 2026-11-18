@@ -604,6 +604,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     <span class="badge badge-green" id="app-status">RESEARCH MODE</span>
     <span class="badge badge-green" id="sim-badge">⚡ SIMULATOR: AUTO-ACTIVE</span>
     <span class="badge" id="supabase-badge" style="font-size: 0.8rem; background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.4); color: #60a5fa;" title="Supabase Cloud Sync Status">☁️ SUPABASE: CHECKING...</span>
+    <span class="badge" id="telegram-badge" style="font-size: 0.8rem; background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.4); color: #38bdf8; cursor: pointer;" onclick="switchTab('tab-telegram')" title="Telegram Bot & 15-Minute Auto-Execution Alerts">📱 TELEGRAM: CHECKING...</span>
     <span class="badge badge-blue">Gemini 2.5 Brain: READY</span>
     <span class="badge badge-yellow">Sensibull Virtual: READY</span>
     <span class="badge badge-red">Live Broker: DISABLED</span>
@@ -737,6 +738,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   <button class="nav-tab" onclick="switchTab('tab-simulator', this)">⚡ Option Paper Simulator</button>
   <button class="nav-tab" onclick="switchTab('tab-option-chain', this)" id="nav-btn-option-chain">📊 NSE Option Chain &amp; Trade</button>
   <button class="nav-tab" onclick="switchTab('tab-news', this)" id="nav-btn-news">📰 Market News &amp; Impact <span id="nav-news-count-badge" class="badge badge-green" style="font-size: 0.65rem; padding: 1px 6px; margin-left: 4px;">--</span></button>
+  <button class="nav-tab" onclick="switchTab('tab-telegram', this)" id="nav-btn-telegram">📱 Telegram &amp; 15-Min Execution <span id="nav-pending-badge" class="badge badge-yellow" style="font-size: 0.65rem; padding: 1px 6px; margin-left: 4px; display: none;">0</span></button>
   <button class="nav-tab" onclick="switchTab('tab-brain', this)">AI Brain Reasoning</button>
   <button class="nav-tab" onclick="switchTab('tab-positions', this)">Paper Trades &amp; Monitoring</button>
   <button class="nav-tab" onclick="switchTab('tab-experience', this)">Experience Memory</button>
@@ -1709,10 +1711,13 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         </label>
       </div>
 
-      <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 14px; border-top: 1px solid var(--border); padding-top: 12px;">
+      <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 14px; border-top: 1px solid var(--border); padding-top: 12px; flex-wrap: wrap;">
         <button type="button" onclick="closeOptionTradeModal()" class="btn" style="padding: 7px 14px;">Cancel</button>
-        <button type="submit" id="oc-modal-submit-btn" class="btn" style="background: var(--green); color: black; border: none; font-weight: 800; padding: 7px 20px; font-size: 0.88rem;">
-          🚀 Execute Paper Trade
+        <button type="button" onclick="submitOptionTrade(event, 'arm_15m')" id="oc-modal-arm-btn" class="btn" style="background: #f59e0b; color: #000; border: none; font-weight: 800; padding: 7px 16px; font-size: 0.88rem;" title="Sends Telegram alert detailing WHY trade is taken and starts 15-minute countdown before auto-execution">
+          ⏱️ 15-Min Confirmation (Telegram Alert)
+        </button>
+        <button type="button" onclick="submitOptionTrade(event, 'instant')" id="oc-modal-submit-btn" class="btn" style="background: var(--green); color: black; border: none; font-weight: 800; padding: 7px 20px; font-size: 0.88rem;">
+          🚀 Instant Execution
         </button>
       </div>
     </form>
@@ -1789,6 +1794,160 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   <!-- News Cards Stream -->
   <div id="news-cards-container" style="display: flex; flex-direction: column; gap: 14px;">
     <div style="text-align: center; color: var(--text-secondary); padding: 30px;">Loading news stream...</div>
+  </div>
+</div>
+
+<!-- Tab Telegram: Real-Time Alerts, 15-Minute Countdown Safety Gate & News Updater -->
+<div id="tab-telegram" class="tab-content">
+  <!-- Header Banner -->
+  <div class="card" style="margin-bottom: 20px; border-left: 4px solid #38bdf8; background: linear-gradient(135deg, rgba(56, 189, 248, 0.08) 0%, rgba(19, 27, 46, 0.95) 100%);">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+      <div>
+        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+          <span style="font-size: 1.25rem; font-weight: 800; color: var(--text-primary);">📱 Telegram Notification Engine &amp; 15-Minute Execution Gate</span>
+          <span class="badge" id="tele-status-tag" style="background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.4); color: #38bdf8;">CHECKING...</span>
+        </div>
+        <div style="font-size: 0.82rem; color: var(--text-secondary); margin-top: 4px; max-width: 900px;">
+          Autonomous alert bridge for NIFTY &amp; BANKNIFTY: Dispatches instant breakout alerts, sudden high-impact market news, and <strong>trade confirmations with full AI reasoning ("Why system takes trade")</strong> that count down for <strong>15 minutes</strong> before auto-executing into the simulator.
+        </div>
+      </div>
+      <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+        <button class="btn" onclick="sendTelegramTest()" style="background: rgba(56, 189, 248, 0.2); border: 1px solid #38bdf8; color: #38bdf8; font-weight: 700; padding: 6px 14px; border-radius: 6px;">
+          📨 Send Test Alert
+        </button>
+        <button class="btn" onclick="fetchPendingTrades()" style="background: var(--bg-card); border: 1px solid var(--border); color: var(--text-primary); font-weight: 600; padding: 6px 14px; border-radius: 6px;">
+          🔄 Refresh Orders
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px;">
+    <!-- Telegram Bot Settings Card -->
+    <div class="card" style="border: 1px solid var(--border);">
+      <h3 style="font-size: 1.05rem; color: var(--text-primary); margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
+        ⚙️ Bot Credentials &amp; Channel
+      </h3>
+      <form onsubmit="saveTelegramCredentials(event)" style="display: flex; flex-direction: column; gap: 12px;">
+        <div>
+          <label style="display: block; font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 4px;">Telegram Bot Token</label>
+          <input type="password" id="tele-input-token" placeholder="e.g. 7123456789:AAHk..." style="width: 100%; background: var(--bg-main); border: 1px solid var(--border); padding: 8px 12px; border-radius: 6px; color: var(--text-primary); font-size: 0.85rem; font-family: monospace;" />
+          <span style="font-size: 0.7rem; color: var(--text-secondary);">Obtain via <a href="https://t.me/BotFather" target="_blank" style="color: #38bdf8;">@BotFather</a> on Telegram with <code>/newbot</code>.</span>
+        </div>
+        <div>
+          <label style="display: block; font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 4px;">Telegram Chat ID / Channel ID</label>
+          <input type="text" id="tele-input-chat" placeholder="e.g. 123456789 or -100..." style="width: 100%; background: var(--bg-main); border: 1px solid var(--border); padding: 8px 12px; border-radius: 6px; color: var(--text-primary); font-size: 0.85rem; font-family: monospace;" />
+          <span style="font-size: 0.7rem; color: var(--text-secondary);">Your personal user ID (from <a href="https://t.me/userinfobot" target="_blank" style="color: #38bdf8;">@userinfobot</a>) or group/channel ID.</span>
+        </div>
+        <div style="display: flex; gap: 10px; align-items: center; margin-top: 4px;">
+          <button type="submit" class="btn" style="background: #38bdf8; color: #000; border: none; font-weight: 700; padding: 8px 18px; border-radius: 6px;">
+            💾 Save Telegram Credentials
+          </button>
+          <span id="tele-save-feedback" style="font-size: 0.75rem; color: var(--green);"></span>
+        </div>
+      </form>
+    </div>
+
+    <!-- 15-Minute Auto-Execution Gate Architecture Card -->
+    <div class="card" style="border: 1px solid var(--border); background: rgba(19, 27, 46, 0.6);">
+      <h3 style="font-size: 1.05rem; color: var(--text-primary); margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
+        ⏱️ How the 15-Minute Execution Gate Works
+      </h3>
+      <div style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.6;">
+        <ol style="margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 8px;">
+          <li><strong style="color: var(--text-primary);">Level Breakout / Trade Condition Met:</strong> System spots a high-probability breakout or option setup.</li>
+          <li><strong style="color: var(--text-primary);">Telegram Alert Dispatched:</strong> Sends an instant message detailing the <em>exact technical reason</em> ("Why system takes trade"), strike, target, and stop loss.</li>
+          <li><strong style="color: var(--yellow);">15-Minute Confirmation Window:</strong> System enters an armed hold state for 900 seconds. You receive ample time to review market context.</li>
+          <li><strong style="color: var(--green);">Automatic Execution:</strong> If not cancelled via the Cancel button below, the system auto-fires the paper trade right when the 15-minute timer hits zero and sends an execution confirmation to Telegram.</li>
+          <li><strong style="color: var(--red);">Manual Cancellation:</strong> Click <em>Cancel Order</em> anytime during the 15 minutes to abort the trade.</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+
+  <!-- Active 15-Minute Countdown Orders Table -->
+  <div class="card" style="margin-bottom: 24px; border: 1px solid var(--border);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span style="font-size: 1.1rem; font-weight: 800; color: var(--text-primary);">⏳ Active Armed Orders (15-Minute Countdown)</span>
+        <span class="badge badge-yellow" id="pending-count-badge">0 ARMED</span>
+      </div>
+      <div style="font-size: 0.78rem; color: var(--text-secondary);">
+        Live auto-executing countdown &bull; Updates every second
+      </div>
+    </div>
+
+    <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+      <table style="width: 100%; border-collapse: collapse; font-size: 0.82rem;">
+        <thead>
+          <tr style="border-bottom: 1px solid var(--border); text-align: left; color: var(--text-secondary); background: rgba(0,0,0,0.2);">
+            <th style="padding: 10px 12px;">Order ID</th>
+            <th style="padding: 10px 12px;">Contract</th>
+            <th style="padding: 10px 12px;">Lots / Qty</th>
+            <th style="padding: 10px 12px;">Spot / Premium</th>
+            <th style="padding: 10px 12px;">SL / Target</th>
+            <th style="padding: 10px 12px;">Time Remaining</th>
+            <th style="padding: 10px 12px;">Status</th>
+            <th style="padding: 10px 12px;">Technical Rationale ("Why Trade")</th>
+            <th style="padding: 10px 12px; text-align: right;">Action</th>
+          </tr>
+        </thead>
+        <tbody id="pending-trades-tbody">
+          <tr>
+            <td colspan="9" style="text-align: center; color: var(--text-secondary); padding: 30px;">
+              No armed trades currently counting down. When a custom level or option setup triggers, it will appear here with a live 15-minute countdown.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Manual 15-Minute Arm Test Form -->
+  <div class="card" style="border: 1px solid var(--border); background: rgba(19, 27, 46, 0.4);">
+    <h3 style="font-size: 1.05rem; color: var(--text-primary); margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
+      🧪 Test Armed 15-Minute Execution Workflow
+    </h3>
+    <div style="font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 14px;">
+      Manually arm an order to simulate the exact production workflow: dispatches the Telegram intent alert with technical reasoning, counts down 15 minutes (or custom seconds for testing), and auto-executes into the Option Paper Simulator upon timer completion.
+    </div>
+    <form onsubmit="submitManualArmTrade(event)" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)) 2fr auto; gap: 10px; align-items: flex-end;">
+      <div>
+        <label style="display: block; font-size: 0.72rem; color: var(--text-secondary); margin-bottom: 3px;">Index</label>
+        <select id="arm-test-symbol" style="width: 100%; background: var(--bg-main); border: 1px solid var(--border); padding: 7px; border-radius: 6px; color: var(--text-primary); font-size: 0.8rem;">
+          <option value="NIFTY">NIFTY</option>
+          <option value="BANKNIFTY">BANKNIFTY</option>
+        </select>
+      </div>
+      <div>
+        <label style="display: block; font-size: 0.72rem; color: var(--text-secondary); margin-bottom: 3px;">Strike Price</label>
+        <input type="number" id="arm-test-strike" value="23500" step="50" style="width: 100%; background: var(--bg-main); border: 1px solid var(--border); padding: 7px; border-radius: 6px; color: var(--text-primary); font-size: 0.8rem;" />
+      </div>
+      <div>
+        <label style="display: block; font-size: 0.72rem; color: var(--text-secondary); margin-bottom: 3px;">Option Type</label>
+        <select id="arm-test-type" style="width: 100%; background: var(--bg-main); border: 1px solid var(--border); padding: 7px; border-radius: 6px; color: var(--text-primary); font-size: 0.8rem;">
+          <option value="CE">CALL (CE)</option>
+          <option value="PE">PUT (PE)</option>
+        </select>
+      </div>
+      <div>
+        <label style="display: block; font-size: 0.72rem; color: var(--text-secondary); margin-bottom: 3px;">Est. Premium (₹)</label>
+        <input type="number" id="arm-test-premium" value="125.50" step="0.05" style="width: 100%; background: var(--bg-main); border: 1px solid var(--border); padding: 7px; border-radius: 6px; color: var(--text-primary); font-size: 0.8rem;" />
+      </div>
+      <div>
+        <label style="display: block; font-size: 0.72rem; color: var(--text-secondary); margin-bottom: 3px;">Countdown (Sec)</label>
+        <input type="number" id="arm-test-countdown" value="900" min="10" max="1800" title="900s = 15 minutes standard" style="width: 100%; background: var(--bg-main); border: 1px solid var(--border); padding: 7px; border-radius: 6px; color: var(--yellow); font-size: 0.8rem; font-weight: 700;" />
+      </div>
+      <div>
+        <label style="display: block; font-size: 0.72rem; color: var(--text-secondary); margin-bottom: 3px;">Technical Reason ("Why System Takes Trade")</label>
+        <input type="text" id="arm-test-reason" value="Bullish breakout above PDH (23,500) confirmed on 15M candle with OI support" style="width: 100%; background: var(--bg-main); border: 1px solid var(--border); padding: 7px; border-radius: 6px; color: var(--text-primary); font-size: 0.8rem;" />
+      </div>
+      <div>
+        <button type="submit" class="btn" style="background: #f59e0b; color: #000; border: none; font-weight: 800; padding: 8px 16px; border-radius: 6px; font-size: 0.82rem; white-space: nowrap;">
+          ⏱️ Arm 15-Min Trade
+        </button>
+      </div>
+    </form>
   </div>
 </div>
 
@@ -1886,6 +2045,246 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     try { localStorage.setItem('nt_active_tab', tabId); } catch (e) {}
   }
 
+  // -------------------------------------------------------------
+  // TELEGRAM & 15-MINUTE ARMED TRADE FUNCTIONS
+  // -------------------------------------------------------------
+  async function fetchTelegramStatus() {
+    try {
+      const res = await fetch('/api/telegram/status');
+      if (!res.ok) return;
+      const data = await res.json();
+
+      const badge = document.getElementById('telegram-badge');
+      const tag = document.getElementById('tele-status-tag');
+
+      if (data.configured) {
+        if (badge) {
+          badge.className = 'badge badge-green';
+          badge.innerText = '📱 TELEGRAM: CONNECTED';
+          badge.style.border = '1px solid rgba(16, 185, 129, 0.4)';
+          badge.style.color = '#10b981';
+          badge.title = `Telegram Bot Connected (Chat: ${data.chat_id || 'Configured'})`;
+        }
+        if (tag) {
+          tag.className = 'badge badge-green';
+          tag.innerText = `CONNECTED (${data.chat_id || 'OK'})`;
+          tag.style.color = '#10b981';
+        }
+      } else {
+        if (badge) {
+          badge.className = 'badge badge-yellow';
+          badge.innerText = '📱 TELEGRAM: UNCONFIGURED';
+          badge.style.border = '1px solid rgba(245, 158, 11, 0.4)';
+          badge.style.color = '#f59e0b';
+          badge.title = 'Click to configure Telegram Bot Token and Chat ID';
+        }
+        if (tag) {
+          tag.className = 'badge badge-yellow';
+          tag.innerText = 'UNCONFIGURED';
+          tag.style.color = '#f59e0b';
+        }
+      }
+
+      const tokInput = document.getElementById('tele-input-token');
+      const chatInput = document.getElementById('tele-input-chat');
+      if (tokInput && !tokInput.value && data.bot_token_set) {
+        tokInput.placeholder = data.masked_token || 'Configured in environment';
+      }
+      if (chatInput && !chatInput.value && data.chat_id) {
+        chatInput.value = data.chat_id;
+      }
+    } catch (e) {
+      console.debug("Telegram status fetch error:", e);
+    }
+  }
+
+  async function saveTelegramCredentials(e) {
+    e.preventDefault();
+    const token = document.getElementById('tele-input-token').value.trim();
+    const chat = document.getElementById('tele-input-chat').value.trim();
+    const feedback = document.getElementById('tele-save-feedback');
+
+    if (!token && !chat) {
+      alert("Please enter a valid Bot Token and Chat ID.");
+      return;
+    }
+
+    try {
+      if (feedback) feedback.innerText = "Saving credentials...";
+      const res = await fetch('/api/telegram/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bot_token: token, chat_id: chat }),
+      });
+      const data = await res.json();
+      if (data.status === 'ok') {
+        if (feedback) {
+          feedback.style.color = 'var(--green)';
+          feedback.innerText = "✅ Credentials saved successfully!";
+          setTimeout(() => { if (feedback) feedback.innerText = ""; }, 4000);
+        }
+        await fetchTelegramStatus();
+        alert("Telegram credentials saved! You can now click 'Send Test Alert' to test communication.");
+      } else {
+        if (feedback) {
+          feedback.style.color = 'var(--red)';
+          feedback.innerText = "Error: " + (data.message || 'Failed');
+        }
+      }
+    } catch (err) {
+      console.error("Save Telegram creds error:", err);
+      if (feedback) {
+        feedback.style.color = 'var(--red)';
+        feedback.innerText = "Error saving credentials";
+      }
+    }
+  }
+
+  async function sendTelegramTest() {
+    try {
+      const res = await fetch('/api/telegram/test', { method: 'POST' });
+      const data = await res.json();
+      if (data.status === 'ok') {
+        alert("✅ Telegram test alert dispatched successfully!\n\nCheck your Telegram chat for the confirmation message.");
+      } else {
+        alert("⚠️ Telegram test failed:\n\n" + (data.message || "Unknown error") + "\n\nPlease ensure your Bot Token and Chat ID are correct, and that you have started your bot by sending /start.");
+      }
+    } catch (err) {
+      alert("Error sending Telegram test alert: " + err);
+    }
+  }
+
+  async function fetchPendingTrades() {
+    try {
+      const res = await fetch('/api/telegram/pending_trades');
+      if (!res.ok) return;
+      const data = await res.json();
+      const trades = data.pending_trades || [];
+      const armedCount = data.count || 0;
+
+      // Update badges
+      const navBadge = document.getElementById('nav-pending-badge');
+      if (navBadge) {
+        if (armedCount > 0) {
+          navBadge.innerText = armedCount;
+          navBadge.style.display = 'inline-block';
+        } else {
+          navBadge.style.display = 'none';
+        }
+      }
+      const countBadge = document.getElementById('pending-count-badge');
+      if (countBadge) countBadge.innerText = `${armedCount} ARMED`;
+
+      // Render table
+      const tbody = document.getElementById('pending-trades-tbody');
+      if (!tbody) return;
+
+      if (trades.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; color: var(--text-secondary); padding: 30px;">No armed trades currently active. When a breakout or option condition triggers, it will appear here with a live 15-minute countdown.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = trades.map(t => {
+        const isArmed = t.status === 'ARMED_15M';
+        const remSecs = t.remaining_seconds || 0;
+        const mins = Math.floor(remSecs / 60);
+        const secs = remSecs % 60;
+        const remStr = isArmed ? `${mins < 10 ? '0' : ''}${mins}:${secs < 10 ? '0' : ''}${secs}` : '--';
+
+        let statusBadge = '<span class="badge badge-yellow">ARMED 15M</span>';
+        if (t.status === 'EXECUTED') statusBadge = '<span class="badge badge-green">EXECUTED</span>';
+        else if (t.status === 'CANCELLED') statusBadge = '<span class="badge badge-red">CANCELLED</span>';
+
+        const optBadge = t.option_type === 'CE' ? 'badge-green' : 'badge-red';
+
+        return `
+          <tr style="border-bottom: 1px solid rgba(255,255,255,0.05); ${isArmed ? 'background: rgba(245, 158, 11, 0.04);' : ''}">
+            <td><code style="color: #38bdf8;">${t.pending_id || 'PT'}</code></td>
+            <td><strong>${t.symbol} ${t.strike} <span class="badge ${optBadge}">${t.option_type}</span></strong></td>
+            <td>${t.lots} Lots (${t.qty} Qty)</td>
+            <td>Spot: ₹${(t.spot_price || 0).toFixed(2)}<br/><span style="color: var(--accent); font-weight: 700;">Prem: ₹${(t.premium || 0).toFixed(2)}</span></td>
+            <td><span style="color: var(--red);">SL: ₹${(t.sl_price || 0).toFixed(2)}</span><br/><span style="color: var(--green);">Tgt: ₹${(t.target_price || 0).toFixed(2)}</span></td>
+            <td>
+              ${isArmed ? `<span style="font-size: 1.1rem; font-weight: 800; font-family: monospace; color: ${remSecs < 180 ? 'var(--red)' : 'var(--yellow)'};">${remStr}</span>` : '<span style="color: var(--text-secondary);">Completed</span>'}
+            </td>
+            <td>${statusBadge}</td>
+            <td style="max-width: 280px; font-size: 0.76rem; color: var(--text-secondary);">
+              ${t.reasoning || 'Standard setup condition matched'}
+            </td>
+            <td style="text-align: right;">
+              ${isArmed ? `
+                <button onclick="cancelPendingTrade('${t.pending_id}')" class="btn" style="background: rgba(239, 68, 68, 0.2); border: 1px solid var(--red); color: var(--red); font-size: 0.75rem; padding: 4px 10px; border-radius: 4px; font-weight: 700;" title="Cancel trade before 15-minute countdown finishes">
+                  🛑 Cancel Order
+                </button>
+              ` : `<span style="font-size: 0.72rem; color: var(--text-secondary);">${t.status === 'EXECUTED' ? 'Executed' : 'Aborted'}</span>`}
+            </td>
+          </tr>
+        `;
+      }).join('');
+    } catch (e) {
+      console.debug("Fetch pending trades error:", e);
+    }
+  }
+
+  async function cancelPendingTrade(pendingId) {
+    if (!confirm(`Are you sure you want to cancel pending order ${pendingId}?\n\nThis will stop the 15-minute countdown and prevent auto-execution into the simulator.`)) {
+      return;
+    }
+    try {
+      const res = await fetch('/api/telegram/cancel_pending', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pending_id: pendingId, reason: "Cancelled manually by user from dashboard" }),
+      });
+      const data = await res.json();
+      if (data.status === 'ok') {
+        alert(`Order ${pendingId} has been cancelled.\nA cancellation alert was sent to Telegram.`);
+        await fetchPendingTrades();
+      } else {
+        alert("Could not cancel order: " + (data.message || "Error"));
+      }
+    } catch (err) {
+      alert("Error cancelling pending trade: " + err);
+    }
+  }
+
+  async function submitManualArmTrade(e) {
+    e.preventDefault();
+    const sym = document.getElementById('arm-test-symbol').value;
+    const strike = parseInt(document.getElementById('arm-test-strike').value);
+    const optType = document.getElementById('arm-test-type').value;
+    const premium = parseFloat(document.getElementById('arm-test-premium').value);
+    const countdown = parseInt(document.getElementById('arm-test-countdown').value) || 900;
+    const reason = document.getElementById('arm-test-reason').value.trim() || "Manual 15M confirmation test";
+
+    try {
+      const res = await fetch('/api/telegram/arm_trade', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          symbol: sym,
+          strike: strike,
+          option_type: optType,
+          lots: 1,
+          premium: premium,
+          sl_points: 20,
+          target_points: 40,
+          reasoning: reason,
+          countdown_seconds: countdown,
+        }),
+      });
+      const data = await res.json();
+      if (data.status === 'ok') {
+        alert(`⚡ Trade Armed Successfully!\n\nOrder ID: ${data.pending_trade.pending_id}\nSymbol: ${sym} ${strike} ${optType}\nCountdown: ${countdown} seconds\n\nA Telegram intent alert was dispatched. The trade will auto-execute when countdown completes unless cancelled.`);
+        await fetchPendingTrades();
+      } else {
+        alert("Error arming trade: " + (data.message || "Error"));
+      }
+    } catch (err) {
+      alert("Error submitting arm trade: " + err);
+    }
+  }
+
   async function fetchData() {
     try {
       const res = await fetch('/api/data');
@@ -1916,6 +2315,12 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       }
     } catch (e) {
       console.debug("Supabase status check skipped:", e);
+    }
+
+    try {
+      await fetchTelegramStatus();
+    } catch (e) {
+      console.debug("Telegram status error:", e);
     }
   }
 
@@ -2985,7 +3390,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     if (tgtCalc) tgtCalc.innerText = `Target Price: ₹${(p.ltp + tgtPts).toFixed(2)}`;
   }
 
-  async function submitOptionTrade(e) {
+  async function submitOptionTrade(e, mode = 'instant') {
     e.preventDefault();
     if (!window._activeTradeModalParams) return;
     const p = window._activeTradeModalParams;
@@ -2994,8 +3399,47 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     const tgtPts = parseFloat(document.getElementById('oc-trade-tgt').value) || 40;
     const trailing = document.getElementById('oc-trade-trailing').checked;
 
-    const btn = document.getElementById('oc-modal-submit-btn');
-    if (btn) btn.innerText = 'EXECUTING...';
+    const btnSubmit = document.getElementById('oc-modal-submit-btn');
+    const btnArm = document.getElementById('oc-modal-arm-btn');
+
+    if (mode === 'arm_15m') {
+      if (btnArm) btnArm.innerText = 'ARMING...';
+      try {
+        const payload = {
+          symbol: p.sym,
+          strike: p.strike,
+          option_type: p.optType,
+          lots: lots,
+          premium: p.ltp,
+          spot_price: p.spot || 0,
+          sl_points: slPts,
+          target_points: tgtPts,
+          reasoning: `Manual strike selection from Option Chain (${p.sym} ${p.strike} ${p.optType}) with 15-minute confirmation safety timer before auto-execution.`,
+        };
+        const res = await fetch('/api/telegram/arm_trade', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+        if (data.status === 'ok') {
+          closeOptionTradeModal();
+          alert(`⏱️ Trade Armed with 15-Minute Countdown!\n\nOrder ID: ${data.pending_trade.pending_id}\nContract: ${p.sym} ${p.strike} ${p.optType}\n\nTelegram intent alert dispatched. You have 15 minutes to review before it automatically executes into the simulator.`);
+          switchTab('tab-telegram');
+          await fetchPendingTrades();
+        } else {
+          alert('Could not arm trade: ' + (data.message || 'Error'));
+        }
+      } catch (err) {
+        console.error('Arm trade error:', err);
+        alert('Error arming trade: ' + err);
+      } finally {
+        if (btnArm) btnArm.innerText = '⏱️ 15-Min Confirmation (Telegram Alert)';
+      }
+      return;
+    }
+
+    if (btnSubmit) btnSubmit.innerText = 'EXECUTING...';
 
     try {
       const payload = {
@@ -3029,7 +3473,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       console.error('Submit option trade error:', err);
       alert('Error executing trade: ' + err);
     } finally {
-      if (btn) btn.innerText = '🚀 Execute Paper Trade';
+      if (btnSubmit) btnSubmit.innerText = '🚀 Instant Execution';
     }
   }
 
@@ -3517,7 +3961,10 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 
   fetchData();
   fetchOptionChain();
+  fetchTelegramStatus();
+  fetchPendingTrades();
   setInterval(fetchData, 5000); // 5s live auto-refresh
+  setInterval(fetchPendingTrades, 2000); // 2s live countdown refresh for armed orders
   setInterval(() => {
     const ocTab = document.getElementById('tab-option-chain');
     if (ocTab && (ocTab.classList.contains('active') || ocTab.style.display === 'block')) {
@@ -3561,6 +4008,39 @@ class DashboardHTTPRequestHandler(BaseHTTPRequestHandler):
                 self.send_header("Content-Type", "application/json")
                 self.end_headers()
                 self.wfile.write(json.dumps({"configured": False, "error": str(ex)}).encode("utf-8"))
+            return
+        elif self.path == "/api/telegram/status":
+            try:
+                from nifty_trader.notifications.telegram_service import get_telegram_service
+                tele = get_telegram_service()
+                status = tele.get_status()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Cache-Control", "no-cache")
+                self.end_headers()
+                self.wfile.write(json.dumps(status).encode("utf-8"))
+            except Exception as ex:
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"configured": False, "error": str(ex)}).encode("utf-8"))
+            return
+        elif self.path == "/api/telegram/pending_trades":
+            try:
+                from nifty_trader.notifications.telegram_service import get_pending_trade_manager
+                pm = get_pending_trade_manager()
+                trades = pm.list_pending_trades()
+                armed_count = len([t for t in trades if t.get("status") == "ARMED_15M"])
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Cache-Control", "no-cache")
+                self.end_headers()
+                self.wfile.write(json.dumps({"pending_trades": trades, "count": armed_count}).encode("utf-8"))
+            except Exception as ex:
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"error": str(ex)}).encode("utf-8"))
             return
         elif self.path == "/" or self.path == "/index.html":
             self.send_response(200)
@@ -4029,6 +4509,108 @@ class DashboardHTTPRequestHandler(BaseHTTPRequestHandler):
                 self.send_header("Content-Type", "application/json")
                 self.end_headers()
                 self.wfile.write(json.dumps(res).encode("utf-8"))
+            except Exception as ex:
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": "error", "message": str(ex)}).encode("utf-8"))
+        elif self.path == "/api/telegram/config":
+            try:
+                content_length = int(self.headers.get("Content-Length", 0))
+                body = self.rfile.read(content_length).decode("utf-8")
+                data = json.loads(body)
+                from nifty_trader.notifications.telegram_service import get_telegram_service
+                tele = get_telegram_service()
+                bot_token = data.get("bot_token", "").strip()
+                chat_id = data.get("chat_id", "").strip()
+                if bot_token or chat_id:
+                    tele.set_credentials(
+                        bot_token=bot_token or tele.bot_token,
+                        chat_id=chat_id or tele.chat_id,
+                    )
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": "ok", "configured": tele.is_configured}).encode("utf-8"))
+            except Exception as ex:
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": "error", "message": str(ex)}).encode("utf-8"))
+        elif self.path == "/api/telegram/test":
+            try:
+                from nifty_trader.notifications.telegram_service import get_telegram_service
+                tele = get_telegram_service()
+                if not tele.is_configured:
+                    self.send_response(400)
+                    self.send_header("Content-Type", "application/json")
+                    self.end_headers()
+                    self.wfile.write(json.dumps({"status": "error", "message": "Telegram Bot Token and Chat ID are not configured yet."}).encode("utf-8"))
+                    return
+                res = tele.send_test_message()
+                if res.get("status") == "ok":
+                    self.send_response(200)
+                    self.send_header("Content-Type", "application/json")
+                    self.end_headers()
+                    self.wfile.write(json.dumps(res).encode("utf-8"))
+                else:
+                    self.send_response(400)
+                    self.send_header("Content-Type", "application/json")
+                    self.end_headers()
+                    self.wfile.write(json.dumps(res).encode("utf-8"))
+            except Exception as ex:
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": "error", "message": str(ex)}).encode("utf-8"))
+        elif self.path == "/api/telegram/arm_trade":
+            try:
+                content_length = int(self.headers.get("Content-Length", 0))
+                body = self.rfile.read(content_length).decode("utf-8")
+                data = json.loads(body)
+                from nifty_trader.notifications.telegram_service import get_pending_trade_manager
+                pm = get_pending_trade_manager()
+                trade = pm.arm_trade(
+                    symbol=data.get("symbol", "NIFTY"),
+                    strike=int(data.get("strike", 23500)),
+                    option_type=data.get("option_type", "CE"),
+                    lots=int(data.get("lots", 1)),
+                    premium=float(data.get("premium", 100.0)),
+                    spot_price=float(data.get("spot_price", 0.0)),
+                    sl_points=float(data.get("sl_points", 20.0)),
+                    target_points=float(data.get("target_points", 40.0)),
+                    reasoning=data.get("reasoning", "Autonomous setup condition matched with 15-minute confirmation gate"),
+                    custom_countdown=int(data.get("countdown_seconds")) if data.get("countdown_seconds") else None,
+                )
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": "ok", "pending_trade": trade}).encode("utf-8"))
+            except Exception as ex:
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": "error", "message": str(ex)}).encode("utf-8"))
+        elif self.path == "/api/telegram/cancel_pending":
+            try:
+                content_length = int(self.headers.get("Content-Length", 0))
+                body = self.rfile.read(content_length).decode("utf-8")
+                data = json.loads(body)
+                from nifty_trader.notifications.telegram_service import get_pending_trade_manager
+                pm = get_pending_trade_manager()
+                pending_id = data.get("pending_id", "")
+                reason = data.get("reason", "Cancelled by user from dashboard")
+                success = pm.cancel_trade(pending_id, reason=reason)
+                if success:
+                    self.send_response(200)
+                    self.send_header("Content-Type", "application/json")
+                    self.end_headers()
+                    self.wfile.write(json.dumps({"status": "ok", "pending_id": pending_id}).encode("utf-8"))
+                else:
+                    self.send_response(400)
+                    self.send_header("Content-Type", "application/json")
+                    self.end_headers()
+                    self.wfile.write(json.dumps({"status": "error", "message": f"Could not cancel {pending_id} (already completed, cancelled, or not found)"}).encode("utf-8"))
             except Exception as ex:
                 self.send_response(500)
                 self.send_header("Content-Type", "application/json")

@@ -315,9 +315,58 @@ class LevelStrategyManager:
                     trigger_reason = f"Spot {spot_price:.2f} crossed below level {lvl:.2f}"
 
             if is_triggered:
-                exec_info = self._execute_level_trade(trig, spot_price, trigger_reason)
-                if exec_info:
-                    executed_events.append(exec_info)
+                # 1. Dispatch Telegram Level Breakout Alert
+                try:
+                    from nifty_trader.notifications.telegram_service import get_telegram_service
+                    get_telegram_service(self.root_dir).send_level_breakout_alert(
+                        instrument=trig.instrument,
+                        current_spot=spot_price,
+                        level_price=lvl,
+                        condition=cond,
+                        trigger_reason=trigger_reason,
+                        action_note=f"Trade criteria matched for {trig.option_type}. Armed 15-minute countdown before auto-execution.",
+                    )
+                except Exception as tele_err:
+                    logger.debug("Telegram level alert skipped: %s", tele_err)
+
+                # 2. Arm 15-minute confirmation countdown trade (explained to Telegram & auto-executed in 15 min)
+                try:
+                    from nifty_trader.notifications.telegram_service import get_pending_trade_manager
+                    mgr = get_pending_trade_manager(self.root_dir)
+                    step = 100 if "BANK" in trig.instrument else 50
+                    strike = int(round(spot_price / step) * step) if trig.strike_mode == "ATM" else int(float(trig.strike_mode))
+                    pct_factor = 0.006 if "BANK" in trig.instrument else 0.0075
+                    base_prem = round(spot_price * pct_factor, 2)
+                    sl_pts = trig.sl_val if trig.sl_type == "POINTS" else 20.0
+                    tgt_pts = trig.target_val if trig.target_type == "POINTS" else 40.0
+
+                    reasoning_text = (
+                        f"Spot price reached key technical level ₹{lvl:,.2f} on {trig.instrument} satisfying condition '{cond}'.\n"
+                        f"Breakout context: {trigger_reason}.\n"
+                        f"Execution Strategy: Buying {trig.strike_mode} {strike} {trig.option_type} with 1:2 risk-reward ratio."
+                    )
+
+                    pending_info = mgr.arm_trade(
+                        symbol=trig.instrument,
+                        strike=strike,
+                        option_type=trig.option_type,
+                        lots=trig.lots,
+                        premium=base_prem,
+                        spot_price=spot_price,
+                        sl_points=sl_pts,
+                        target_points=tgt_pts,
+                        reasoning=reasoning_text,
+                    )
+
+                    trig.status = "TRIGGERED"
+                    trig.triggered_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+                    trig.executed_trade_id = pending_info["pending_id"]
+                    executed_events.append(pending_info)
+                except Exception as arm_err:
+                    logger.warning("Error arming 15m pending trade, falling back to direct exec: %s", arm_err)
+                    exec_info = self._execute_level_trade(trig, spot_price, trigger_reason)
+                    if exec_info:
+                        executed_events.append(exec_info)
 
         return executed_events
 

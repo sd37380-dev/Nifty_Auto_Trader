@@ -79,6 +79,57 @@ def test_dashboard_server_endpoints():
             assert "chain" in oc_data
             assert "spot_price" in oc_data["chain"]
             assert "strikes" in oc_data["chain"]
+
+        # 6. Test Telegram Status endpoint
+        url_tele = "http://127.0.0.1:8899/api/telegram/status"
+        req_tele = urllib.request.Request(url_tele)
+        with urllib.request.urlopen(req_tele, timeout=5.0) as res:
+            assert res.status == 200
+            tele_data = json.loads(res.read().decode("utf-8"))
+            assert "configured" in tele_data
+
+        # 7. Test Pending Trades endpoint
+        url_pending = "http://127.0.0.1:8899/api/telegram/pending_trades"
+        req_pending = urllib.request.Request(url_pending)
+        with urllib.request.urlopen(req_pending, timeout=5.0) as res:
+            assert res.status == 200
+            pending_data = json.loads(res.read().decode("utf-8"))
+            assert "pending_trades" in pending_data
+            assert "count" in pending_data
+
+        # 8. Test Arm Trade POST endpoint
+        url_arm = "http://127.0.0.1:8899/api/telegram/arm_trade"
+        arm_body = json.dumps({
+            "symbol": "NIFTY",
+            "strike": 23500,
+            "option_type": "CE",
+            "lots": 1,
+            "premium": 110.0,
+            "spot_price": 23510.0,
+            "sl_points": 20.0,
+            "target_points": 40.0,
+            "reasoning": "Breakout above PDH test",
+            "countdown_seconds": 60,
+        }).encode("utf-8")
+        req_arm = urllib.request.Request(url_arm, data=arm_body, headers={"Content-Type": "application/json"}, method="POST")
+        with urllib.request.urlopen(req_arm, timeout=5.0) as res:
+            assert res.status == 200
+            arm_data = json.loads(res.read().decode("utf-8"))
+            assert arm_data["status"] == "ok"
+            pid = arm_data["pending_trade"]["pending_id"]
+
+        # 9. Test Cancel Pending POST endpoint
+        url_cancel = "http://127.0.0.1:8899/api/telegram/cancel_pending"
+        cancel_body = json.dumps({
+            "pending_id": pid,
+            "reason": "Test cancel",
+        }).encode("utf-8")
+        req_cancel = urllib.request.Request(url_cancel, data=cancel_body, headers={"Content-Type": "application/json"}, method="POST")
+        with urllib.request.urlopen(req_cancel, timeout=5.0) as res:
+            assert res.status == 200
+            cancel_data = json.loads(res.read().decode("utf-8"))
+            assert cancel_data["status"] == "ok"
+            assert cancel_data["pending_id"] == pid
     finally:
         server.shutdown()
         server.server_close()
