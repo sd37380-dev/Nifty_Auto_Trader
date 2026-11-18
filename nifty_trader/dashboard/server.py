@@ -187,7 +187,11 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0b0f19">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="format-detection" content="telephone=no">
 <title>NIFTY Autonomous Trader — Live Webview Dashboard</title>
 <style>
   :root {
@@ -247,6 +251,13 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     margin-bottom: 20px;
     border-bottom: 1px solid var(--border);
     padding-bottom: 8px;
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .nav-tabs::-webkit-scrollbar {
+    display: none;
   }
   .nav-tab {
     background: transparent;
@@ -257,6 +268,9 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     font-weight: 600;
     font-size: 0.88rem;
     cursor: pointer;
+    flex-shrink: 0;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
     transition: all 0.2s ease;
   }
   .nav-tab:hover { background: var(--bg-card); color: var(--text-primary); }
@@ -269,6 +283,8 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     border-radius: 10px;
     padding: 16px;
     transition: border-color 0.2s;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
   .card:hover { border-color: #2e3e68; }
   .card-header { font-size: 0.85rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 10px; display: flex; justify-content: space-between; }
@@ -422,6 +438,158 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     border-color: #3b82f6;
     transform: translateY(-1px);
   }
+
+  /* ==============================================================================
+     MOBILE & TOUCH DEVICE RESPONSIVE SYSTEM
+     ============================================================================== */
+  @media (max-width: 900px) {
+    header {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 12px;
+    }
+    .status-badges {
+      flex-wrap: wrap;
+      justify-content: flex-start;
+      gap: 6px;
+    }
+    #header-spot-badge {
+      width: 100%;
+      text-align: center;
+      padding: 6px 10px !important;
+    }
+  }
+
+  @media (max-width: 680px) {
+    body {
+      padding: 10px 10px 60px 10px;
+    }
+    header {
+      padding-bottom: 12px;
+      margin-bottom: 12px;
+    }
+    .brand h1 {
+      font-size: 1.15rem;
+      letter-spacing: -0.3px;
+    }
+    .brand .tagline {
+      font-size: 0.72rem;
+      line-height: 1.3;
+    }
+    .badge {
+      font-size: 0.65rem;
+      padding: 3px 7px;
+    }
+    .btn {
+      padding: 6px 10px;
+      font-size: 0.76rem;
+      touch-action: manipulation;
+    }
+
+    /* News Ticker Mobile Layout */
+    .news-ticker-container {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 6px;
+      padding: 8px 10px;
+    }
+    .news-ticker-badge {
+      border-right: none;
+      border-bottom: 1px solid var(--border);
+      padding-right: 0;
+      padding-bottom: 4px;
+      font-size: 0.68rem;
+      width: 100%;
+    }
+    .news-ticker-viewport {
+      width: 100%;
+      padding: 2px 0;
+    }
+    .news-ticker-container > div:last-child {
+      border-left: none !important;
+      padding-left: 0 !important;
+      border-top: 1px solid var(--border);
+      padding-top: 6px;
+      justify-content: space-between;
+      width: 100%;
+      flex-wrap: wrap;
+    }
+
+    /* Persistent Market Telemetry Strip */
+    #persistent-market-bar {
+      position: relative !important;
+      padding: 10px 10px !important;
+      margin-bottom: 12px !important;
+    }
+    #persistent-market-bar > div:first-child {
+      flex-direction: column;
+      align-items: stretch !important;
+      gap: 6px !important;
+    }
+    #persistent-market-cards {
+      grid-template-columns: 1fr !important;
+      gap: 8px !important;
+    }
+
+    /* Grid & Cards */
+    .grid {
+      grid-template-columns: 1fr !important;
+      gap: 12px !important;
+      margin-bottom: 14px !important;
+    }
+    .card {
+      padding: 12px !important;
+      border-radius: 8px !important;
+    }
+    .card-value {
+      font-size: 1.25rem !important;
+    }
+    .card-header {
+      font-size: 0.78rem !important;
+    }
+
+    /* Tables Mobile Horizontal Scrolling */
+    table {
+      font-size: 0.72rem !important;
+      min-width: 520px;
+    }
+    th, td {
+      padding: 6px 8px !important;
+    }
+    .oc-table {
+      font-size: 0.7rem !important;
+      min-width: 720px;
+    }
+    .oc-table th, .oc-table td {
+      padding: 4px 3px !important;
+    }
+    .oc-btn-ce, .oc-btn-pe {
+      padding: 5px 8px !important;
+      font-size: 0.68rem !important;
+      touch-action: manipulation;
+    }
+
+    /* Mobile News Layout */
+    .news-item-card {
+      padding: 12px !important;
+    }
+
+    /* Modals Mobile Sizing */
+    #oc-trade-modal > div, #add-news-modal > div {
+      max-width: 96% !important;
+      width: 96% !important;
+      padding: 16px !important;
+      max-height: 92vh !important;
+      overflow-y: auto !important;
+      border-radius: 8px !important;
+      margin: auto;
+    }
+
+    /* Form Inputs on Touch Screens */
+    input, select, textarea {
+      font-size: 16px !important; /* Prevents auto-zoom on iOS Safari */
+    }
+  }
 </style>
 </head>
 <body>
@@ -475,14 +643,15 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       <span id="top-bar-session-badge" class="badge badge-green" style="font-size: 0.72rem;">AUTO-ACTIVE (09:15–15:30 IST)</span>
       <span style="font-size: 0.72rem; color: var(--text-secondary);">⏰ Continuous Mon–Fri (Excl. Sat/Sun/NSE Holidays)</span>
     </div>
-    <div style="display: flex; align-items: center; gap: 10px; font-size: 0.75rem;">
+    <div style="display: flex; align-items: center; gap: 8px; font-size: 0.75rem; flex-wrap: wrap;">
       <span style="color: var(--text-secondary);">Next 5M fetch: <strong id="top-bar-countdown" style="color: var(--accent);">05:00</strong></span>
       <span style="color: var(--text-secondary);" id="top-bar-last-time">--</span>
       <button class="btn" onclick="fetchSpotNow()" style="padding: 2px 10px; font-size: 0.72rem; background: var(--green); color: black; font-weight: 700; border: none; border-radius: 4px; cursor: pointer;">🔄 Fetch Now</button>
+      <button class="btn" id="market-bar-toggle-btn" onclick="toggleMarketBar()" style="padding: 2px 8px; font-size: 0.72rem; background: rgba(255,255,255,0.08); color: var(--text-secondary); border: 1px solid var(--border); border-radius: 4px; cursor: pointer;" title="Toggle Telemetry Cards">▲</button>
     </div>
   </div>
 
-  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 10px;">
+  <div id="persistent-market-cards" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 10px;">
     <!-- NIFTY 50 Persistent Strip -->
     <div style="background: rgba(19, 27, 46, 0.85); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 6px; padding: 8px 12px; display: flex; flex-direction: column; gap: 4px;">
       <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -1437,6 +1606,9 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   </div>
 
   <!-- Option Chain Table Container -->
+  <div style="font-size: 0.74rem; color: var(--text-secondary); margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+    <span>📱 <strong>Mobile Note:</strong> Swipe the option chain table left &amp; right with your finger to explore all CE/PE strikes, LTPs, and 1-click buy buttons.</span>
+  </div>
   <div class="card" style="padding: 0; overflow-x: auto; margin-bottom: 24px;">
     <table class="oc-table" id="option-chain-table">
       <thead>
@@ -2312,6 +2484,19 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       btn.style.color = window._tickerPaused ? 'var(--green)' : 'var(--yellow)';
     }
     applyTickerSpeed();
+  }
+
+  function toggleMarketBar() {
+    const cards = document.getElementById('persistent-market-cards');
+    const btn = document.getElementById('market-bar-toggle-btn');
+    if (!cards) return;
+    if (cards.style.display === 'none') {
+      cards.style.display = 'grid';
+      if (btn) btn.innerText = '▲';
+    } else {
+      cards.style.display = 'none';
+      if (btn) btn.innerText = '▼';
+    }
   }
 
   function renderNewsSection(newsData) {
