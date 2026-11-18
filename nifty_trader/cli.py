@@ -5,6 +5,7 @@ Command-Line Interface (CLI) for NIFTY Autonomous Trader.
 import argparse
 import asyncio
 from pathlib import Path
+import subprocess
 import sys
 from typing import Optional
 from rich.console import Console
@@ -72,9 +73,19 @@ async def cmd_status(runtime: NiftyTraderRuntime) -> None:
     b_color = "green" if b_status == "READY" else "yellow"
     table.add_row("Browser Session", f"[{b_color}]{b_status}[/{b_color}]")
 
-    # Risk policy constraints
-    for k, v in status["risk_policies"].items():
-        table.add_row(f"Policy ({k})", str(v))
+    # Deterministic Safety Guard Policies
+    sg = status.get("safety_guard", {})
+    sg_status = sg.get("status", "ARMED_AND_LOCKED")
+    table.add_row("Safety Guard Status", f"[bold green]{sg_status}[/bold green]")
+    table.add_row("Portfolio Daily Loss Limit", f"Rs. {sg.get('portfolio_max_daily_loss', 2000.0):,.2f}")
+    table.add_row("Max Lots Per Trade", f"{sg.get('max_lots_per_trade', 1)} Lot (Mandatory)")
+    table.add_row("Active Instrument Constraint", "1 Instrument at a time")
+
+    for sym, details in sg.get("instruments", {}).items():
+        table.add_row(
+            f"Policy [{sym}]",
+            f"Max {details['max_trades_per_day']} trades/day | Loss Cap: Rs. {details['max_daily_loss']:,.2f} | 1 Lot ({details['lot_size']} qty) | R:R {details['minimum_rr']}",
+        )
 
     console.print(table)
 
@@ -206,7 +217,7 @@ def cmd_browser_login(target: str = "both", url: Optional[str] = None) -> None:
     elif target == "sensibull":
         urls = ["https://web.sensibull.com"]
     elif target == "tradingview":
-        urls = ["https://in.tradingview.com"]
+        urls = ["https://in.tradingview.com/chart/?symbol=NSE%3ANIFTY"]
     else:
         urls = ["https://web.sensibull.com", "https://in.tradingview.com"]
 
@@ -511,6 +522,17 @@ async def cmd_market_observe(
             f"[bold cyan]Observation Summary:[/bold cyan]\n{perception.observation_summary}"
         )
         console.print(Panel(panel_text, title="[bold green]Objective Market Perception (Zero Trading Recommendations)[/bold green]", border_style="green"))
+
+        # Feed 15M TradingView chart observation into Local Option Paper Simulator
+        try:
+            from nifty_trader.simulator.service import get_simulator_service
+            svc = get_simulator_service()
+            svc.on_market_observation(obs)
+            console.print(f"[bold magenta]⚡ Local Option Simulator:[/bold magenta] {svc.last_chart_verdict}")
+            console.print(f"[dim]Audit Report saved at: data/paper_trading/SIMULATOR_REPORT.md[/dim]")
+        except Exception as sim_e:
+            logger.debug("Simulator feed in cli: %s", sim_e)
+
         console.print("[bold green][OK] Observation and perception analysis complete.[/bold green]")
     except Exception as e:
         console.print(f"[bold red][ERROR] Observation failed:[/bold red] {e}")
@@ -789,23 +811,158 @@ async def cmd_autonomous_status(runtime: NiftyTraderRuntime) -> None:
     console.print(table)
 
 
-async def cmd_autonomous_start(runtime: NiftyTraderRuntime, once: bool = False, symbol: str = "NIFTY") -> None:
-    """Starts autonomous observation and waiting engine."""
-    console.print(f"[bold yellow]Starting Autonomous Observation Engine for {symbol}...[/bold yellow]")
+async def cmd_autonomous_start(
+    runtime: NiftyTraderRuntime,
+    once: bool = False,
+    symbol: str = "NIFTY",
+    mode: str = "dual",
+) -> None:
+    """Starts autonomous observation and trading in dual, existing, or research mode."""
+    mode_clean = str(mode).strip().lower()
+    console.print(f"[bold yellow]Starting Autonomous Engine for {symbol} in [{mode_clean.upper()}] mode...[/bold yellow]")
+
+    from nifty_trader.autonomous.mode_a_trader import ExistingSystemTrader
+    from nifty_trader.core.dual_orchestrator import DualAutonomousOrchestrator
+    from nifty_trader.core.modes import TradingMode
+    from nifty_trader.core.trade_store import TradeAuditStore
+    from nifty_trader.paper.executor import SensibullPaperExecutor
+    from nifty_trader.paper.store import PaperTradeStore
+    from nifty_trader.research_zone.service import HermesResearchZoneService
+    from nifty_trader.research_zone.trader import HermesResearchTrader
+    from nifty_trader.safety.guard import DeterministicSafetyGuard
+
+    paper_store = PaperTradeStore()
+    audit_store = TradeAuditStore()
+    safety_guard = DeterministicSafetyGuard.from_settings(runtime.settings, store=paper_store)
+    executor = SensibullPaperExecutor(
+        browser_agent=runtime.browser,
+        store=paper_store,
+        safety_guard=safety_guard,
+    )
+
+    mode_a_trader = ExistingSystemTrader(
+        engine=runtime.autonomous,
+        safety_guard=safety_guard,
+        audit_store=audit_store,
+        paper_store=paper_store,
+        paper_executor=executor,
+    )
+    mode_b_service = HermesResearchZoneService()
+    mode_b_trader = HermesResearchTrader(
+        service=mode_b_service,
+        safety_guard=safety_guard,
+        audit_store=audit_store,
+        paper_store=paper_store,
+        paper_executor=executor,
+    )
+
+    orchestrator = DualAutonomousOrchestrator(
+        mode_a_trader=mode_a_trader,
+        mode_b_trader=mode_b_trader,
+        audit_store=audit_store,
+    )
+
     if once:
-        console.print("[dim]Executing single bounded observation & reasoning cycle...[/dim]")
-        await runtime.autonomous.start(symbol=symbol, run_once=True)
-        await cmd_autonomous_status(runtime)
+        console.print(f"[dim]Executing single bounded cycle in [{mode_clean.upper()}] mode...[/dim]")
+        if mode_clean in ["dual", "existing"]:
+            await mode_a_trader.execute_cycle(symbol=symbol)
+        if mode_clean in ["dual", "research"]:
+            await mode_b_trader.execute_cycle(symbol=symbol)
+        console.print("[bold green][OK] Single cycle execution complete.[/bold green]")
+        cmd_trades(mode=mode_clean)
+        return
+
+    console.print(f"[dim]Starting continuous autonomous loop for [{mode_clean.upper()}] (Press Ctrl+C to stop)...[/dim]\n")
+    try:
+        await orchestrator.start(mode=mode_clean, symbol=symbol)
+    except (KeyboardInterrupt, asyncio.CancelledError):
+        console.print("\n[bold yellow]Stopping autonomous engine safely...[/bold yellow]")
+        orchestrator.stop()
+        console.print("[bold green][OK] Autonomous engine stopped.[/bold green]")
+
+
+def cmd_trades(mode: str = "all", limit: int = 20) -> None:
+    """Displays trade audit records attributed by autonomous mode."""
+    from nifty_trader.core.modes import TradingMode
+    from nifty_trader.core.trade_store import TradeAuditStore
+
+    audit_store = TradeAuditStore()
+    mode_clean = str(mode).strip().lower()
+
+    if mode_clean == "existing":
+        trades = audit_store.get_trades_by_mode(TradingMode.EXISTING_SYSTEM)
+        title = "Trade Audit Log — Mode A (EXISTING_SYSTEM)"
+    elif mode_clean == "research":
+        trades = audit_store.get_trades_by_mode(TradingMode.HERMES_RESEARCH)
+        title = "Trade Audit Log — Mode B (HERMES_RESEARCH)"
     else:
-        console.print("[dim]Starting continuous autonomous observation loop (Press Ctrl+C to stop)...[/dim]")
-        await runtime.autonomous.start(symbol=symbol, run_once=False)
-        try:
-            while runtime.autonomous.is_running:
-                await asyncio.sleep(1.0)
-        except (KeyboardInterrupt, asyncio.CancelledError):
-            console.print("\n[bold yellow]Stopping autonomous engine safely...[/bold yellow]")
-            await runtime.autonomous.stop("KeyboardInterrupt / User Stop")
-            console.print("[bold green][OK] Autonomous engine stopped.[/bold green]")
+        trades = audit_store.get_all_trades(limit=limit * 2)
+        title = "Trade Audit Log — Dual Autonomous Modes (Strict Attribution)"
+
+    table = Table(title=f"[bold green]{title}[/bold green]")
+    table.add_column("Trade ID", style="cyan", no_wrap=True)
+    table.add_column("Decision Source", style="bold")
+    table.add_column("Research ID", style="magenta")
+    table.add_column("Instrument", style="white")
+    table.add_column("Strike / Type", style="yellow")
+    table.add_column("Score / Conf", style="dim")
+    table.add_column("Status", style="bold")
+    table.add_column("P&L", style="bold")
+    table.add_column("Outcome", style="dim")
+
+    for t in trades[:limit]:
+        source_color = "blue" if t.decision_source == TradingMode.EXISTING_SYSTEM else "magenta"
+        source_tag = f"[{source_color}]{t.decision_source.value}[/{source_color}]"
+        res_id = t.research_id or "[dim]N/A (Mode A)[/dim]"
+        strike_info = f"{t.strike} {t.option_type}" if t.strike else "N/A"
+        score_info = f"{t.score:+.1f} / {t.confidence:.2f}"
+
+        status_color = "green" if t.execution_status == "OPEN" else "yellow" if t.execution_status == "CLOSED" else "red"
+        status_tag = f"[{status_color}]{t.execution_status}[/{status_color}]"
+
+        pnl_color = "green" if t.pnl > 0 else "red" if t.pnl < 0 else "white"
+        pnl_tag = f"[{pnl_color}]Rs. {t.pnl:+,.2f}[/{pnl_color}]"
+
+        table.add_row(
+            t.trade_id,
+            source_tag,
+            res_id,
+            t.instrument,
+            strike_info,
+            score_info,
+            status_tag,
+            pnl_tag,
+            t.outcome,
+        )
+
+    console.print(table)
+
+    # Summary table
+    mode_a_trades = audit_store.get_trades_by_mode(TradingMode.EXISTING_SYSTEM)
+    mode_b_trades = audit_store.get_trades_by_mode(TradingMode.HERMES_RESEARCH)
+
+    sum_table = Table(title="[bold yellow]Performance Attribution Summary (Independent Modes)[/bold yellow]")
+    sum_table.add_column("Autonomous Mode", style="cyan")
+    sum_table.add_column("Total Trades", style="white")
+    sum_table.add_column("Open Positions", style="yellow")
+    sum_table.add_column("Realized P&L", style="bold")
+
+    pnl_a = sum(t.pnl for t in mode_a_trades if t.execution_status == "CLOSED")
+    pnl_b = sum(t.pnl for t in mode_b_trades if t.execution_status == "CLOSED")
+
+    sum_table.add_row(
+        "Mode A (EXISTING_SYSTEM)",
+        str(len(mode_a_trades)),
+        str(len([t for t in mode_a_trades if t.execution_status == "OPEN"])),
+        f"Rs. {pnl_a:+,.2f}",
+    )
+    sum_table.add_row(
+        "Mode B (HERMES_RESEARCH)",
+        str(len(mode_b_trades)),
+        str(len([t for t in mode_b_trades if t.execution_status == "OPEN"])),
+        f"Rs. {pnl_b:+,.2f}",
+    )
+    console.print(sum_table)
 
 
 async def cmd_autonomous_stop(runtime: NiftyTraderRuntime) -> None:
@@ -1048,35 +1205,43 @@ async def cmd_paper_order(
     runtime: NiftyTraderRuntime,
     strike: float,
     option_type: str,
+    symbol: str = "NIFTY",
     action: str = "BUY",
     lots: int = 1,
     expiry: str = "CURRENT",
     limit_price: Optional[float] = None,
+    stop_loss: Optional[float] = None,
+    target: Optional[float] = None,
 ) -> None:
-    """Executes a paper order and visually verifies execution."""
+    """Executes a paper order and visually verifies execution with Deterministic Safety Guard."""
     from nifty_trader.paper.contracts import PaperAction, PaperOptionType, PaperTradeOrderRequest
+    sym_clean = symbol.upper()
+    lot_size = 30 if "BANKNIFTY" in sym_clean else 65
     req = PaperTradeOrderRequest(
-        symbol="NIFTY",
+        symbol=sym_clean,
         expiry=expiry,
         strike=strike,
         option_type=PaperOptionType(option_type.upper()),
         action=PaperAction(action.upper()),
         lots=lots,
-        quantity=lots * 25,
+        quantity=lots * lot_size,
         limit_price=limit_price,
+        stop_loss_price=stop_loss,
+        target_price=target,
     )
-    console.print(f"[cyan]Submitting Paper Order: {req.action.value} {req.lots} Lot(s) NIFTY {req.strike} {req.option_type.value}...[/cyan]")
+    console.print(f"[cyan]Submitting Paper Order: {req.action.value} {req.lots} Lot(s) ({req.quantity} qty) {sym_clean} {req.strike} {req.option_type.value}...[/cyan]")
     order = await runtime.paper_service.execute_trade(req)
 
     status_color = "green" if order.status.value in ["OPEN", "FILLED"] else "red"
     console.print(Panel(
         f"[bold]Order ID:[/bold] {order.order_id}\n"
+        f"[bold]Symbol:[/bold] {order.symbol}\n"
         f"[bold]Status:[/bold] [{status_color}]{order.status.value}[/{status_color}]\n"
-        f"[bold]Details:[/bold] {order.action.value} {order.quantity} qty @ {order.strike} {order.option_type.value}\n"
+        f"[bold]Details:[/bold] {order.action.value} {order.quantity} qty ({order.lots} lot) @ {order.strike} {order.option_type.value}\n"
         f"[bold]Entry Price:[/bold] Rs. {order.entry_price if order.entry_price else 0.0:.2f}\n"
         f"[bold]Reason/Note:[/bold] {order.status_reason or 'None'}\n"
         f"[bold]Verified At:[/bold] {order.verified_at.strftime('%H:%M:%S UTC') if order.verified_at else 'UNVERIFIED'}",
-        title="[bold yellow]Paper Order Execution Result[/bold yellow]",
+        title=f"[bold {'green' if order.status.value in ['OPEN', 'FILLED'] else 'red'}]Paper Order Execution Result[/bold {'green' if order.status.value in ['OPEN', 'FILLED'] else 'red'}]",
         border_style=status_color,
     ))
 
@@ -1408,6 +1573,185 @@ async def cmd_performance_trades(runtime: NiftyTraderRuntime, limit: int = 20) -
     console.print(table)
 
 
+def cmd_research_run(
+    topic: str,
+    symbol: str,
+    timeframe: str,
+    days: int,
+    pattern: Optional[str],
+) -> None:
+    """Executes an end-to-end cognitive research loop in the isolated Research Zone."""
+    from nifty_trader.research_zone import HermesResearchZoneService
+    service = HermesResearchZoneService()
+    console.print(f"[bold cyan]Initiating Hermes Research Cycle:[/bold cyan] {topic} ({symbol} {timeframe}, {days} days)")
+    assessment = service.run_full_research_cycle(
+        topic=topic,
+        symbol=symbol,
+        timeframe=timeframe,
+        days=days,
+        pattern_id=pattern,
+    )
+
+    table = Table(title=f"[bold green]Hermes Dynamic Assessment — {symbol} {timeframe}[/bold green]")
+    table.add_column("Segment Name", style="cyan", no_wrap=True)
+    table.add_column("Score", style="bold")
+    table.add_column("Dynamic Importance", style="yellow")
+    table.add_column("Reasoning & Evidence", style="dim")
+
+    for seg in assessment.segments:
+        score_style = "green" if seg.score > 0 else "red" if seg.score < 0 else "white"
+        table.add_row(
+            seg.name,
+            f"[{score_style}]{seg.score:+.1f}[/{score_style}]",
+            f"{seg.importance:.2f}",
+            seg.reasoning_summary,
+        )
+    console.print(table)
+
+    dir_style = (
+        "green"
+        if assessment.direction.value == "BULLISH"
+        else "red"
+        if assessment.direction.value == "BEARISH"
+        else "yellow"
+    )
+    summary_panel = (
+        f"[bold]Total Weighted Score:[/bold] [{dir_style}]{assessment.total_score:+.2f}[/{dir_style}]\n"
+        f"[bold]Confidence:[/bold] {assessment.confidence*100:.1f}%\n"
+        f"[bold]Market Direction:[/bold] [{dir_style}]{assessment.direction.value}[/{dir_style}]\n"
+        f"[bold]Trade Finding:[/bold] {assessment.trade_finding}\n"
+    )
+    if assessment.supporting_evidence:
+        summary_panel += "\n[bold green]Supporting Evidence:[/bold green]\n" + "\n".join(f"  + {e}" for e in assessment.supporting_evidence)
+    if assessment.contradictory_evidence:
+        summary_panel += "\n[bold red]Contradictory Evidence:[/bold red]\n" + "\n".join(f"  - {e}" for e in assessment.contradictory_evidence)
+    console.print(Panel(summary_panel, title="[bold magenta]Assessment Result[/bold magenta]"))
+
+
+def cmd_research_assessment(symbol: str, research_id: Optional[str]) -> None:
+    """Displays a Hermes dynamic assessment from isolated storage."""
+    from nifty_trader.research_zone import HermesResearchZoneService
+    service = HermesResearchZoneService()
+    if research_id:
+        ass = service.storage.assessments.get_assessment(research_id)
+    else:
+        ass = service.get_latest_assessment(symbol=symbol)
+
+    if not ass:
+        console.print(f"[yellow]No assessment found for symbol '{symbol}' (ID: {research_id}).[/yellow]")
+        return
+
+    table = Table(title=f"[bold green]Assessment: {ass.research_id} ({ass.instrument} {ass.timeframe})[/bold green]")
+    table.add_column("Segment", style="cyan")
+    table.add_column("Score", style="bold")
+    table.add_column("Importance", style="yellow")
+    table.add_column("Reasoning", style="dim")
+    for s in ass.segments:
+        score_style = "green" if s.score > 0 else "red" if s.score < 0 else "white"
+        table.add_row(s.name, f"[{score_style}]{s.score:+.1f}[/{score_style}]", f"{s.importance:.2f}", s.reasoning_summary)
+    console.print(table)
+    console.print(
+        f"[bold]Total Score:[/bold] {ass.total_score:+.2f} | "
+        f"[bold]Confidence:[/bold] {ass.confidence*100:.1f}% | "
+        f"[bold]Direction:[/bold] {ass.direction.value}"
+    )
+
+
+def cmd_research_memory(limit: int = 10) -> None:
+    """Displays empirical findings and negative knowledge from Research Memory."""
+    from nifty_trader.research_zone import HermesResearchZoneService
+    service = HermesResearchZoneService()
+    findings = service.memory.get_all_findings(limit=limit)
+    failures = service.memory.get_all_failed_hypotheses(limit=limit)
+
+    t1 = Table(title="[bold green]Empirical Findings Catalog[/bold green]")
+    t1.add_column("Finding ID", style="cyan")
+    t1.add_column("Pattern", style="bold")
+    t1.add_column("Statistical Edge", style="green")
+    t1.add_column("Confidence", style="yellow")
+    for f in findings:
+        t1.add_row(f.finding_id, f.pattern_name, f.statistical_edge, f"{f.confidence*100:.0f}%")
+    console.print(t1)
+
+    t2 = Table(title="[bold red]Negative Knowledge Catalog (Failed Hypotheses)[/bold red]")
+    t2.add_column("Failed ID", style="cyan")
+    t2.add_column("Statement", style="bold")
+    t2.add_column("Failure Reason", style="red")
+    t2.add_column("Lessons Learned", style="yellow")
+    for fh in failures:
+        t2.add_row(fh.failed_id, fh.statement[:50] + "...", fh.failure_reason, fh.lessons_learned)
+    console.print(t2)
+
+
+def cmd_research_history(limit: int = 20, research_id: Optional[str] = None) -> None:
+    """Displays the progression history of empirical research inquiries."""
+    from nifty_trader.research_zone import HermesResearchZoneService
+    service = HermesResearchZoneService()
+    entries = service.memory.get_research_history(research_id=research_id, limit=limit)
+    if not entries:
+        console.print("[yellow]No research history entries recorded yet.[/yellow]")
+        return
+    table = Table(title="[bold cyan]Hermes Research Lifecycle History[/bold cyan]")
+    table.add_column("Timestamp", style="blue")
+    table.add_column("Research ID", style="cyan")
+    table.add_column("Stage", style="bold")
+    table.add_column("Summary", style="white")
+    for e in entries:
+        table.add_row(e.timestamp.strftime("%Y-%m-%d %H:%M:%S"), e.research_id, e.stage, e.summary)
+    console.print(table)
+
+
+def cmd_research_status() -> None:
+    """Displays the health, storage, and memory status of the Hermes Research Zone."""
+    from nifty_trader.research_zone import HermesResearchZoneService
+    service = HermesResearchZoneService()
+    health = service.adapter.health_check()
+    summary = service.get_memory_summary()
+
+    table = Table(title="[bold green]Hermes Data Research Zone — Operational Status[/bold green]")
+    table.add_column("Property", style="cyan", no_wrap=True)
+    table.add_column("Value", style="magenta")
+
+    table.add_row("Zone Status", "[green]OPERATIONAL (COMPLETELY ISOLATED)[/green]")
+    table.add_row("Dhan Adapter Status", f"[green]{health.get('status', 'ONLINE')}[/green] ({health.get('adapter', 'MockDhanDataAdapter')})")
+    table.add_row("Database Storage Location", str(service.storage.base_dir))
+    table.add_row("Stored Findings (Empirical)", str(summary.get("total_findings", 0)))
+    table.add_row("Failed Hypotheses (Negative Knowledge)", str(summary.get("total_failed_hypotheses", 0)))
+    table.add_row("Recent Research Cycles", str(summary.get("recent_history_count", 0)))
+    table.add_row("Completed Assessments", str(summary.get("recent_assessments_count", 0)))
+    console.print(table)
+
+
+def cmd_research_dataset(symbol: str = "NIFTY", timeframe: str = "15M", days: int = 15) -> None:
+    """Ingests raw bars, validates OHLC invariants, cleans, and builds feature set in research storage."""
+    from datetime import datetime, timedelta, timezone
+    from nifty_trader.research_zone import HermesResearchZoneService
+    service = HermesResearchZoneService()
+    now = datetime.now(timezone.utc)
+    from_date = now - timedelta(days=days)
+
+    console.print(f"[bold cyan]Ingesting Dataset for Research:[/bold cyan] {symbol} {timeframe} ({days} days)")
+    raw_bars = service.adapter.fetch_historical_bars(symbol=symbol, timeframe=timeframe, from_date=from_date, to_date=now)
+    cleaned_bars, rejected = service.data_engineering.validate_and_clean_bars(raw_bars)
+    dqr = service.data_engineering.assess_data_quality(cleaned_bars, symbol=symbol, timeframe=timeframe)
+
+    service.storage.market_data.save_normalized_bars(cleaned_bars)
+    feature_set = service.data_engineering.calculate_features(cleaned_bars, symbol=symbol, timeframe=timeframe)
+    service.storage.market_data.save_feature_set(feature_set)
+
+    table = Table(title=f"[bold green]Data Engineering Dataset Summary — {symbol} {timeframe}[/bold green]")
+    table.add_column("Metric", style="cyan", no_wrap=True)
+    table.add_column("Value", style="yellow")
+
+    table.add_row("Total Raw Bars Ingested", str(len(raw_bars)))
+    table.add_row("Rejected / Corrupted Bars", str(rejected))
+    table.add_row("Valid Normalized Bars Saved", str(len(cleaned_bars)))
+    table.add_row("Feature Rows Computed", str(len(feature_set.rows)))
+    table.add_row("Completeness", f"{dqr.completeness_percentage:.1f}%")
+    table.add_row("Data Quality Rating", f"[bold green]{dqr.quality_rating.value}[/bold green]")
+    console.print(table)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="NIFTY Autonomous Trader CLI")
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
@@ -1468,6 +1812,7 @@ def main() -> None:
     auto_start = auto_sub.add_parser("start", help="Start the autonomous observation engine")
     auto_start.add_argument("--once", action="store_true", help="Run a single bounded observation cycle and exit")
     auto_start.add_argument("--symbol", default="NIFTY", help="Target instrument symbol")
+    auto_start.add_argument("--mode", choices=["dual", "existing", "research"], default="dual", help="Autonomous mode: dual (both), existing (Mode A), research (Mode B)")
 
     auto_sub.add_parser("status", help="Show autonomous engine operational status and next wake time")
     auto_sub.add_parser("observe-now", help="Interrupt current wait and trigger an immediate observation cycle")
@@ -1477,6 +1822,11 @@ def main() -> None:
 
     cycles_parser = auto_sub.add_parser("cycles", help="List persisted autonomous reasoning cycles")
     cycles_parser.add_argument("--limit", type=int, default=10, help="Number of records to show")
+
+    # Dual Autonomous Trade Audit CLI Command
+    trades_parser = subparsers.add_parser("trades", help="Display trade audit records attributed by autonomous mode (EXISTING_SYSTEM vs HERMES_RESEARCH)")
+    trades_parser.add_argument("--mode", choices=["all", "existing", "research"], default="all", help="Filter trades by mode")
+    trades_parser.add_argument("--limit", type=int, default=20, help="Number of records to show")
 
     # Stage 6 Hermes-Brain Collaborative Orchestration CLI Commands
     collab_parser = subparsers.add_parser("collaborate", help="Execute Hermes-Brain collaborative trading cycle")
@@ -1492,12 +1842,15 @@ def main() -> None:
     subparsers.add_parser("paper-positions", help="List active Sensibull virtual positions")
 
     paper_order_parser = subparsers.add_parser("paper-order", help="Submit a paper trade order into Sensibull Virtual Portfolio")
-    paper_order_parser.add_argument("--strike", type=float, required=True, help="NIFTY option strike price")
+    paper_order_parser.add_argument("--symbol", choices=["NIFTY", "BANKNIFTY"], default="NIFTY", help="Tradable instrument symbol (NIFTY/BANKNIFTY)")
+    paper_order_parser.add_argument("--strike", type=float, required=True, help="Option strike price")
     paper_order_parser.add_argument("--type", choices=["CE", "PE", "FUT"], required=True, help="Option type (CE/PE/FUT)")
     paper_order_parser.add_argument("--action", choices=["BUY", "SELL"], default="BUY", help="Order action (BUY/SELL)")
-    paper_order_parser.add_argument("--lots", type=int, default=1, help="Number of lots")
+    paper_order_parser.add_argument("--lots", type=int, default=1, help="Number of lots (Mandatory limit: 1 lot)")
     paper_order_parser.add_argument("--expiry", default="CURRENT", help="Expiry date")
     paper_order_parser.add_argument("--limit-price", type=float, default=None, help="Optional limit entry price")
+    paper_order_parser.add_argument("--stop-loss", type=float, default=None, help="Optional stop loss price for 1:3 R:R enforcement")
+    paper_order_parser.add_argument("--target", type=float, default=None, help="Optional target price for 1:3 R:R enforcement")
 
     paper_close_parser = subparsers.add_parser("paper-close", help="Close/Square-off paper position(s)")
     paper_close_parser.add_argument("--position-id", help="Position ID to close")
@@ -1533,6 +1886,74 @@ def main() -> None:
 
     perf_trades_parser = subparsers.add_parser("performance-trades", help="List completed trades and multidimensional evaluations")
     perf_trades_parser.add_argument("--limit", type=int, default=20, help="Number of trades to show")
+
+    # Research & Intelligence Zone CLI Commands
+    res_run_parser = subparsers.add_parser("research-run", help="Execute an autonomous cognitive research loop in the isolated Research Zone")
+    res_run_parser.add_argument("--topic", default="NIFTY Momentum & Volatility Breakout Study", help="Research inquiry topic")
+    res_run_parser.add_argument("--symbol", default="NIFTY", help="Target instrument symbol")
+    res_run_parser.add_argument("--timeframe", default="15M", help="Target timeframe (e.g. 1M, 5M, 15M, 1H, 1D)")
+    res_run_parser.add_argument("--days", type=int, default=15, help="Number of historical days to analyze")
+    res_run_parser.add_argument("--pattern", default=None, help="Specific pattern ID to investigate")
+
+    res_ass_parser = subparsers.add_parser("research-assessment", help="Display latest Hermes dynamic assessment")
+    res_ass_parser.add_argument("--symbol", default="NIFTY", help="Target instrument symbol")
+    res_ass_parser.add_argument("--id", dest="research_id", default=None, help="Specific assessment research ID")
+
+    res_mem_parser = subparsers.add_parser("research-memory", help="Display findings catalog and negative knowledge from Research Memory")
+    res_mem_parser.add_argument("--limit", type=int, default=10, help="Number of records to show")
+
+    res_hist_parser = subparsers.add_parser("research-history", help="Display progression history of empirical research inquiries")
+    res_hist_parser.add_argument("--limit", type=int, default=20, help="Number of records to show")
+    res_hist_parser.add_argument("--id", dest="research_id", default=None, help="Filter by research ID")
+
+    # Research Zone CLI Namespace (research <subcommand>)
+    res_parser = subparsers.add_parser("research", help="Hermes Data Research Zone commands namespace")
+    res_sub = res_parser.add_subparsers(dest="res_command", help="Research sub-commands")
+
+    res_sub.add_parser("status", help="Show research zone health and memory statistics")
+
+    res_ds = res_sub.add_parser("dataset", help="Ingest, clean, and prepare feature dataset in research zone")
+    res_ds.add_argument("--symbol", default="NIFTY", help="Target instrument symbol")
+    res_ds.add_argument("--timeframe", default="15M", help="Target timeframe")
+    res_ds.add_argument("--days", type=int, default=15, help="Number of days")
+
+    res_r = res_sub.add_parser("run", help="Run full cognitive research cycle")
+    res_r.add_argument("--topic", default="NIFTY Momentum & Volatility Breakout Study", help="Research inquiry topic")
+    res_r.add_argument("--symbol", default="NIFTY", help="Target instrument symbol")
+    res_r.add_argument("--timeframe", default="15M", help="Target timeframe")
+    res_r.add_argument("--days", type=int, default=15, help="Number of days")
+    res_r.add_argument("--pattern", default=None, help="Specific pattern ID")
+
+    res_a = res_sub.add_parser("assessment", help="View latest or specific dynamic research assessment")
+    res_a.add_argument("--symbol", default="NIFTY", help="Target instrument symbol")
+    res_a.add_argument("--id", dest="research_id", default=None, help="Specific assessment research ID")
+
+    res_h = res_sub.add_parser("history", help="Show research inquiry lifecycle history")
+    res_h.add_argument("--limit", type=int, default=20, help="Number of records")
+    res_h.add_argument("--id", dest="research_id", default=None, help="Filter by research ID")
+
+    res_m = res_sub.add_parser("memory", help="Show verified empirical findings and negative knowledge")
+    res_m.add_argument("--limit", type=int, default=10, help="Number of records")
+
+    # Interactive Webview Dashboard Command
+    dash_parser = subparsers.add_parser("dashboard", help="Start local/cloud real-time Webview Dashboard server")
+    dash_parser.add_argument("--host", default=os.environ.get("HOST", "0.0.0.0" if os.environ.get("RENDER") else "127.0.0.1"), help="Host to bind dashboard server (default: 0.0.0.0 on Render, else 127.0.0.1)")
+    dash_parser.add_argument("--port", type=int, default=int(os.environ.get("PORT", 8080)), help="Port to bind dashboard server (default: $PORT or 8080)")
+    dash_parser.add_argument("--no-open", action="store_true", help="Do not automatically open default web browser (default: true on Render)")
+
+    # NIFTY Option Paper Trade Simulator CLI Command
+    sim_parser = subparsers.add_parser("paper-simulator", help="Local NIFTY Option Paper Trade Simulator (real feeling, no LLM required)")
+    sim_parser.add_argument("--rule", choices=["custom", "ema-pivot", "supertrend"], default="custom", help="Rule to simulate (default: custom from user_rule.py)")
+    sim_parser.add_argument("--days", type=int, default=30, help="Number of simulated trading days (default: 30)")
+    sim_parser.add_argument("--timeframe", choices=["15M", "5M"], default="15M", help="Candle timeframe (default: 15M)")
+    sim_parser.add_argument("--playback", action="store_true", help="Enable candle-by-candle live playback animation")
+    sim_parser.add_argument("--speed", type=float, default=0.04, help="Playback speed delay in seconds (default: 0.04)")
+    sim_parser.add_argument("--lots", type=int, default=1, help="Number of lots per trade (default: 1)")
+
+    # NIFTY Futures Short Strategy CLI Command
+    short_parser = subparsers.add_parser("short-strategy", help="NIFTY Futures Short Strategy backtest & execution")
+    short_parser.add_argument("--days", type=int, default=10, help="Number of simulated trading days for backtest")
+    short_parser.add_argument("--verbose", action="store_true", help="Display signal debug telemetry and trade logs")
 
     args = parser.parse_args()
     runtime = NiftyTraderRuntime()
@@ -1604,10 +2025,13 @@ def main() -> None:
             runtime,
             strike=args.strike,
             option_type=args.type,
+            symbol=args.symbol,
             action=args.action,
             lots=args.lots,
             expiry=args.expiry,
             limit_price=args.limit_price,
+            stop_loss=args.stop_loss,
+            target=args.target,
         ))
     elif args.command == "paper-close":
         asyncio.run(cmd_paper_close(runtime, position_id=args.position_id, close_all=args.all))
@@ -1631,9 +2055,50 @@ def main() -> None:
         asyncio.run(cmd_performance_summary(runtime))
     elif args.command == "performance-trades":
         asyncio.run(cmd_performance_trades(runtime, limit=args.limit))
+    elif args.command == "research-run":
+        cmd_research_run(
+            topic=args.topic,
+            symbol=args.symbol,
+            timeframe=args.timeframe,
+            days=args.days,
+            pattern=args.pattern,
+        )
+    elif args.command == "research-assessment":
+        cmd_research_assessment(symbol=args.symbol, research_id=args.research_id)
+    elif args.command == "research-memory":
+        cmd_research_memory(limit=args.limit)
+    elif args.command == "research-history":
+        cmd_research_history(limit=args.limit, research_id=args.research_id)
+    elif args.command == "research":
+        if args.res_command == "status" or not args.res_command:
+            cmd_research_status()
+        elif args.res_command == "dataset":
+            cmd_research_dataset(symbol=args.symbol, timeframe=args.timeframe, days=args.days)
+        elif args.res_command == "run":
+            cmd_research_run(
+                topic=args.topic,
+                symbol=args.symbol,
+                timeframe=args.timeframe,
+                days=args.days,
+                pattern=args.pattern,
+            )
+        elif args.res_command == "assessment":
+            cmd_research_assessment(symbol=args.symbol, research_id=args.research_id)
+        elif args.res_command == "history":
+            cmd_research_history(limit=args.limit, research_id=args.research_id)
+        elif args.res_command == "memory":
+            cmd_research_memory(limit=args.limit)
+        else:
+            cmd_research_status()
+    elif args.command == "dashboard":
+        from nifty_trader.dashboard import run_dashboard_server
+        no_open = args.no_open or bool(os.environ.get("RENDER"))
+        run_dashboard_server(host=args.host, port=args.port, open_browser=not no_open, block=True)
+    elif args.command == "trades":
+        cmd_trades(mode=args.mode, limit=args.limit)
     elif args.command == "autonomous":
         if args.auto_command == "start":
-            asyncio.run(cmd_autonomous_start(runtime, once=args.once, symbol=args.symbol))
+            asyncio.run(cmd_autonomous_start(runtime, once=args.once, symbol=args.symbol, mode=getattr(args, "mode", "dual")))
         elif args.auto_command == "status":
             asyncio.run(cmd_autonomous_status(runtime))
         elif args.auto_command == "stop":
@@ -1648,6 +2113,34 @@ def main() -> None:
             asyncio.run(cmd_autonomous_cycles(runtime, limit=args.limit))
         else:
             asyncio.run(cmd_autonomous_status(runtime))
+    elif args.command == "paper-simulator":
+        from nifty_trader.simulator import (
+            NiftyOptionSimulator,
+            CustomUserRule,
+            EMAPivotBounceRule,
+            SupertrendMomentumRule,
+        )
+        if args.rule == "ema-pivot":
+            active_rule = EMAPivotBounceRule()
+        elif args.rule == "supertrend":
+            active_rule = SupertrendMomentumRule()
+        else:
+            active_rule = CustomUserRule()
+
+        sim = NiftyOptionSimulator(default_lots=args.lots)
+        sim.run_simulation(
+            rule=active_rule,
+            timeframe=args.timeframe,
+            days_back=args.days,
+            playback_mode=args.playback,
+            playback_speed=args.speed,
+        )
+    elif args.command == "short-strategy":
+        from scripts.run_short_strategy_backtest import main as run_short_main
+        sys.argv = ["run_short_strategy_backtest.py", "--days", str(args.days)]
+        if args.verbose:
+            sys.argv.append("--verbose")
+        run_short_main()
     else:
         parser.print_help()
 

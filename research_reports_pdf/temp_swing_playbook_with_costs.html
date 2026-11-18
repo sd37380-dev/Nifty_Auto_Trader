@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>HERMES Swing Trading Playbook & Financial Cost Model</title>
+<style>
+  @page {
+    size: A4;
+    margin: 15mm 12mm 15mm 12mm;
+  }
+  body {
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
+    color: #1e293b;
+    line-height: 1.45;
+    font-size: 10pt;
+    margin: 0;
+    padding: 0;
+  }
+  .header {
+    border-bottom: 2px solid #2563eb;
+    padding-bottom: 8px;
+    margin-bottom: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+  }
+  .title {
+    font-size: 18pt;
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: -0.5px;
+    margin: 0;
+  }
+  .subtitle {
+    font-size: 10pt;
+    color: #475569;
+    margin-top: 2px;
+    font-weight: 500;
+  }
+  .meta-badge {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    color: #1d4ed8;
+    padding: 3px 8px;
+    border-radius: 5px;
+    font-size: 8pt;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+  h2 {
+    color: #0f172a;
+    font-size: 12pt;
+    font-weight: 700;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 4px;
+    margin-top: 14px;
+    margin-bottom: 8px;
+  }
+  h3 {
+    color: #1e3a8a;
+    font-size: 10.5pt;
+    font-weight: 600;
+    margin-top: 10px;
+    margin-bottom: 4px;
+  }
+  .card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 10px 14px;
+    margin-bottom: 12px;
+    page-break-inside: avoid;
+  }
+  .card-long { border-left: 5px solid #16a34a; }
+  .card-short { border-left: 5px solid #dc2626; }
+  .card-reversal { border-left: 5px solid #8b5cf6; }
+  .card-calc { border-left: 5px solid #0284c7; background: #f0f9ff; }
+  
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+  .card-title {
+    font-size: 11pt;
+    font-weight: 700;
+    margin: 0;
+  }
+  .tag-green { background: #dcfce7; color: #15803d; padding: 2px 7px; border-radius: 4px; font-weight: 700; font-size: 8pt; }
+  .tag-red { background: #fee2e2; color: #b91c1c; padding: 2px 7px; border-radius: 4px; font-weight: 700; font-size: 8pt; }
+  .tag-purple { background: #f3e8ff; color: #6b21a8; padding: 2px 7px; border-radius: 4px; font-weight: 700; font-size: 8pt; }
+  .tag-blue { background: #e0f2fe; color: #0369a1; padding: 2px 7px; border-radius: 4px; font-weight: 700; font-size: 8pt; }
+  
+  ul {
+    margin: 3px 0;
+    padding-left: 18px;
+  }
+  li {
+    margin-bottom: 2px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10px 0;
+    font-size: 8.5pt;
+  }
+  th, td {
+    border: 1px solid #cbd5e1;
+    padding: 5px 8px;
+    text-align: left;
+  }
+  th {
+    background-color: #f1f5f9;
+    font-weight: 700;
+    color: #0f172a;
+  }
+  tr:nth-child(even) {
+    background-color: #f8fafc;
+  }
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin: 6px 0;
+  }
+  .stat-box {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 5px;
+    padding: 5px 8px;
+    text-align: center;
+  }
+  .stat-label {
+    font-size: 7pt;
+    text-transform: uppercase;
+    color: #64748b;
+    font-weight: 600;
+  }
+  .stat-val {
+    font-size: 11pt;
+    font-weight: 800;
+    color: #0f172a;
+    margin-top: 2px;
+  }
+  .stat-val.green { color: #16a34a; }
+  .stat-val.red { color: #dc2626; }
+  .stat-val.purple { color: #7c3aed; }
+  .stat-val.blue { color: #0284c7; }
+  
+  .note-box {
+    background-color: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 5px;
+    padding: 8px 12px;
+    font-size: 8.5pt;
+    color: #1e40af;
+    margin-top: 10px;
+  }
+  .warning-box {
+    background-color: #fffbeb;
+    border: 1px solid #fde68a;
+    border-radius: 5px;
+    padding: 8px 12px;
+    font-size: 8.5pt;
+    color: #92400e;
+    margin-top: 10px;
+  }
+  .footer {
+    margin-top: 20px;
+    border-top: 1px solid #e2e8f0;
+    padding-top: 6px;
+    font-size: 7.5pt;
+    color: #94a3b8;
+    text-align: center;
+  }
+  .page-break {
+    page-break-before: always;
+  }
+  .math-row {
+    font-family: 'Consolas', monospace;
+    font-size: 8.5pt;
+    background: #f1f5f9;
+    padding: 4px 8px;
+    border-radius: 4px;
+    margin: 3px 0;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1 class="title">HERMES SWING TRADING PLAYBOOK</h1>
+    <div class="subtitle">Long, Short &amp; Reversal Archetypes + Real-World P&amp;L, Theta Decay &amp; Taxes Model</div>
+  </div>
+  <div class="meta-badge">NIFTY &amp; BANKNIFTY QUANTITATIVE GUIDE</div>
+</div>
+
+<!-- SECTION 1: ARCHETYPES SUMMARY -->
+<h2>1. Swing Trading Archetypes &amp; 5-Year Empirical Edge</h2>
+
+<div class="card card-long">
+  <div class="card-header">
+    <div class="card-title" style="color: #15803d;">Archetype 1: Long Swing Trade (Trend Continuation)</div>
+    <span class="tag-green">Win Rate: 64.71% | PF: 2.41 | Avg Run: +584 pts</span>
+  </div>
+  <ul>
+    <li><b>Macro Condition:</b> Price above rising 200 EMA on both NIFTY and BANKNIFTY.</li>
+    <li><b>Pullback Setup:</b> Price pulls back cleanly to the rising <b>20 EMA</b>; RSI cools down to <b>45 &ndash; 55</b>.</li>
+    <li><b>Confirmation Trigger:</b> Bullish rejection candlestick closing back above the hourly 20 EMA.</li>
+    <li><b>Stop-Loss &amp; Target:</b> SL below swing low (1.0 &times; ATR); Target = 2.0 &times; ATR or prior swing high.</li>
+  </ul>
+</div>
+
+<div class="card card-short">
+  <div class="card-header">
+    <div class="card-title" style="color: #b91c1c;">Archetype 2: Short Swing Trade (Trend Continuation)</div>
+    <span class="tag-red">Win Rate: 61.29% | PF: 2.18 | Avg Run: +512 pts</span>
+  </div>
+  <ul>
+    <li><b>Macro Condition:</b> Price below falling 200 EMA on both NIFTY and BANKNIFTY.</li>
+    <li><b>Relief Rally Setup:</b> Bear market bounce retests underside of declining <b>20 EMA</b>; RSI stalls at <b>50 &ndash; 60</b>.</li>
+    <li><b>Confirmation Trigger:</b> Bearish rejection candle (Shooting Star, Bearish Engulfing) below 20 EMA.</li>
+    <li><b>Stop-Loss &amp; Target:</b> SL above relief high (1.0 &times; ATR); Target = prior breakdown low or 2.0 &times; ATR.</li>
+  </ul>
+</div>
+
+<div class="card card-reversal">
+  <div class="card-header">
+    <div class="card-title" style="color: #6b21a8;">Archetype 3: Reversal Swing Trade (Dual 200 EMA Distance Extreme)</div>
+    <span class="tag-purple">Win Rate: 85.71% | PF: 13.22 | Avg Run: +1,577 pts</span>
+  </div>
+  <ul>
+    <li><b>The Rubber-Band Snapback:</b> BankNifty stretched <b>&le; -4.50%</b> and Nifty stretched <b>&le; -4.00%</b> below 200 EMA.</li>
+    <li><b>Intermarket Divergence:</b> BankNifty forms a <b>Higher Low</b> while Nifty prints a <b>Lower Low</b> (institutional bank absorption).</li>
+    <li><b>Confirmation Trigger:</b> Long lower-shadow hammer / daily exhaustion bar closing back above 9 EMA.</li>
+    <li><b>Profit Targets:</b> Target 1 = Test of 20 EMA; Target 2 = 50% mean-reversion retrace to 200 EMA (+1,200 to +1,600 pts).</li>
+  </ul>
+</div>
+
+<!-- MASTER COMPARISON MATRIX -->
+<h2>2. Master Comparison Matrix</h2>
+<table>
+  <thead>
+    <tr>
+      <th>Parameter</th>
+      <th>Long (Trend)</th>
+      <th>Short (Trend)</th>
+      <th>Reversal (Oversold Snapback)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><b>200 EMA Position</b></td>
+      <td>Price Above 200 EMA</td>
+      <td>Price Below 200 EMA</td>
+      <td>Stretched &le; -4.5% (BN) &amp; &le; -4.0% (N)</td>
+    </tr>
+    <tr>
+      <td><b>Pullback Zone</b></td>
+      <td>Tests rising 20 EMA</td>
+      <td>Bounces to falling 20 EMA</td>
+      <td>Severely dislocated from 20 EMA</td>
+    </tr>
+    <tr>
+      <td><b>RSI Sweet Spot</b></td>
+      <td>45 &ndash; 55 (reset zone)</td>
+      <td>50 &ndash; 60 (resistance stall)</td>
+      <td>Oversold (&lt; 35) + Bullish divergence</td>
+    </tr>
+    <tr>
+      <td><b>5Y Win Rate / PF</b></td>
+      <td><b>64.71%</b> (PF: 2.41)</td>
+      <td><b>61.29%</b> (PF: 2.18)</td>
+      <td><b>85.71%</b> (PF: 13.22)</td>
+    </tr>
+    <tr>
+      <td><b>Average Move</b></td>
+      <td>+584.2 pts (BN) / +210.5 pts (N)</td>
+      <td>+512.4 pts (BN) / +195.0 pts (N)</td>
+      <td><b>+1,577.0 pts (BN)</b> / +480.0 pts (N)</td>
+    </tr>
+    <tr>
+      <td><b>Holding Horizon</b></td>
+      <td>3 to 7 Trading Days</td>
+      <td>3 to 5 Trading Days</td>
+      <td>5 to 10 Trading Days</td>
+    </tr>
+    <tr>
+      <td><b>Fatal Mistake</b></td>
+      <td>Buying when stretch &gt; +7.0%</td>
+      <td>Shorting when stretch &le; -4.5%</td>
+      <td>Catching falling knives without candle close</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="page-break"></div>
+
+<!-- SECTION 3: MATHEMATICAL PROFIT/LOSS CALCULATION -->
+<h2>3. Real-World P&amp;L Model: Premium Decay, Brokerage &amp; Regulatory Charges</h2>
+
+<p style="font-size: 9pt; color: #475569; margin-top: 0;">
+Swing trading options entails two hidden friction costs that erode gross returns: <b>Theta Decay (Time Value erosion)</b> and <b>Statutory Friction (STT, GST, Exchange Fees, Brokerage)</b>. Below are exact mathematical balance sheets for real trade executions.
+</p>
+
+<!-- TAX SCHEDULE TABLE -->
+<h3>Statutory &amp; Brokerage Fee Schedule (Indian Equity Derivatives)</h3>
+<table>
+  <thead>
+    <tr>
+      <th>Fee Component</th>
+      <th>Options Rate / Structure</th>
+      <th>Futures Rate / Structure</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><b>Brokerage (Dhan / Discount)</b></td>
+      <td>&#8377;20 per executed order (&#8377;40 round trip)</td>
+      <td>&#8377;20 per executed order (&#8377;40 round trip)</td>
+    </tr>
+    <tr>
+      <td><b>Securities Transaction Tax (STT)</b></td>
+      <td><b>0.10% on Premium Turnover</b> (Sell side only)</td>
+      <td><b>0.02% on Total Turnover</b> (Sell side only)</td>
+    </tr>
+    <tr>
+      <td><b>Exchange Transaction Charge</b></td>
+      <td>0.0505% on Premium Turnover</td>
+      <td>0.0019% on Total Turnover</td>
+    </tr>
+    <tr>
+      <td><b>GST</b></td>
+      <td>18% on (Brokerage + Exchange Fees + SEBI Fees)</td>
+      <td>18% on (Brokerage + Exchange Fees + SEBI Fees)</td>
+    </tr>
+    <tr>
+      <td><b>SEBI Turnover Fee + IPFT</b></td>
+      <td>&#8377;10 per Crore (0.0001%)</td>
+      <td>&#8377;10 per Crore (0.0001%)</td>
+    </tr>
+    <tr>
+      <td><b>Stamp Duty</b></td>
+      <td>0.003% on Buy Premium Turnover</td>
+      <td>0.002% on Buy Total Turnover</td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- CASE STUDY A -->
+<div class="card card-calc">
+  <div class="card-header">
+    <div class="card-title" style="color: #0369a1;">Case Study A: BankNifty Long Swing (4-Day Trend Pullback to 20 EMA)</div>
+    <span class="tag-blue">1 Lot BankNifty (15 Units) &bull; Monthly ATM Option</span>
+  </div>
+  
+  <p style="font-size: 8.5pt; margin: 2px 0 6px 0;">
+    <b>Scenario:</b> BankNifty spot rallies from 54,800 to 55,350 (<b>+550 Index Points</b>) over 4 trading days. Trader enters <b>54,800 CE Monthly</b> (25 DTE) at premium &#8377;650 per unit.
+  </p>
+
+  <div class="math-row">
+    &bull; <b>Gross Option Gain:</b> Spot Move (+550 pts) &times; Avg Delta (0.55) = <b>+302.50 pts</b>
+  </div>
+  <div class="math-row">
+    &bull; <b>Theta Decay Loss:</b> 4 Days &times; Daily Theta (-18 pts/day) = <b>-72.00 pts</b>
+  </div>
+  <div class="math-row">
+    &bull; <b>Net Premium Change:</b> +302.50 &minus; 72.00 = <b>+230.50 pts</b> (Exit Premium = &#8377;880.50)
+  </div>
+
+  <table style="margin-top: 8px;">
+    <thead>
+      <tr>
+        <th>Transaction / Cost Component</th>
+        <th>Calculation Basis</th>
+        <th>Amount (&#8377;)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Buy Order Value</td>
+        <td>15 units &times; &#8377;650.00</td>
+        <td>&#8377;9,750.00</td>
+      </tr>
+      <tr>
+        <td>Sell Order Value</td>
+        <td>15 units &times; &#8377;880.50</td>
+        <td>&#8377;13,207.50</td>
+      </tr>
+      <tr style="background: #e0f2fe; font-weight: bold;">
+        <td><b>Gross Trading Profit (after Theta)</b></td>
+        <td>15 units &times; &#8377;230.50</td>
+        <td><b>+&#8377;3,457.50</b></td>
+      </tr>
+      <tr>
+        <td>Brokerage (Buy + Sell)</td>
+        <td>&#8377;20 + &#8377;20</td>
+        <td>-&#8377;40.00</td>
+      </tr>
+      <tr>
+        <td>STT (Sell Side 0.10%)</td>
+        <td>0.10% &times; &#8377;13,207.50</td>
+        <td>-&#8377;13.21</td>
+      </tr>
+      <tr>
+        <td>Exchange Transaction Charges</td>
+        <td>0.0505% &times; (&#8377;9,750 + &#8377;13,207.50)</td>
+        <td>-&#8377;11.59</td>
+      </tr>
+      <tr>
+        <td>GST (18% on Brokerage + Exchange)</td>
+        <td>18% &times; (&#8377;40.00 + &#8377;11.59)</td>
+        <td>-&#8377;9.29</td>
+      </tr>
+      <tr>
+        <td>Stamp Duty (Buy Side 0.003%)</td>
+        <td>0.003% &times; &#8377;9,750.00</td>
+        <td>-&#8377;0.29</td>
+      </tr>
+      <tr>
+        <td>SEBI &amp; IPFT Charges</td>
+        <td>Approximate regulatory fee</td>
+        <td>-&#8377;0.23</td>
+      </tr>
+      <tr style="background: #fee2e2; font-weight: bold;">
+        <td><b>Total Friction Charges &amp; Taxes</b></td>
+        <td>Sum of all broker &amp; statutory fees</td>
+        <td><b>-&#8377;74.61</b></td>
+      </tr>
+      <tr style="background: #dcfce7; font-weight: bold; font-size: 9.5pt;">
+        <td><b>FINAL NET REALIZED PROFIT IN HAND</b></td>
+        <td><b>Gross Profit (&#8377;3,457.50) &minus; Fees (&#8377;74.61)</b></td>
+        <td><b>+&#8377;3,382.89 (ROI: +34.7%)</b></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- CASE STUDY B -->
+<div class="card card-calc">
+  <div class="card-header">
+    <div class="card-title" style="color: #6b21a8;">Case Study B: Oversold Reversal Swing (7-Day Rebound from -4.5% 200 EMA Stretch)</div>
+    <span class="tag-purple">1 Lot BankNifty (15 Units) &bull; Massive Mean-Reversion Move</span>
+  </div>
+  
+  <p style="font-size: 8.5pt; margin: 2px 0 6px 0;">
+    <b>Scenario:</b> BankNifty hits -4.5% distance exhaustion at 53,800, bounces to 55,200 (<b>+1,400 Index Points</b>) over 7 trading days. Trader buys <b>53,800 CE Monthly</b> at &#8377;750.
+  </p>
+
+  <div class="math-row">
+    &bull; <b>Gross Delta Gain:</b> +1,400 pts &times; Avg Delta (0.65 as option goes deep ITM) = <b>+910.00 pts</b>
+  </div>
+  <div class="math-row">
+    &bull; <b>Theta Decay Loss:</b> 7 Days &times; Daily Theta (-22 pts/day) = <b>-154.00 pts</b>
+  </div>
+  <div class="math-row">
+    &bull; <b>Net Premium Gain:</b> +910.00 &minus; 154.00 = <b>+756.00 pts</b> (Exit Premium = &#8377;1,506.00)
+  </div>
+
+  <table style="margin-top: 8px;">
+    <thead>
+      <tr>
+        <th>Metric</th>
+        <th>Calculation</th>
+        <th>Value (&#8377;)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Capital Invested (Buy Premium)</td>
+        <td>15 units &times; &#8377;750.00</td>
+        <td>&#8377;11,250.00</td>
+      </tr>
+      <tr>
+        <td>Gross Profit after Theta Decay</td>
+        <td>15 units &times; +756.00 pts</td>
+        <td>+&#8377;11,340.00</td>
+      </tr>
+      <tr>
+        <td>Total Taxes, STT &amp; Brokerage</td>
+        <td>Brokerage + STT (&#8377;22.59) + Exchange (&#8377;17.10) + GST</td>
+        <td>-&#8377;90.50</td>
+      </tr>
+      <tr style="background: #dcfce7; font-weight: bold; font-size: 9.5pt;">
+        <td><b>NET IN-HAND PROFIT</b></td>
+        <td><b>&#8377;11,340.00 &minus; &#8377;90.50</b></td>
+        <td><b>+&#8377;11,249.50 (ROI: +99.9%)</b></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- WARNING BOX: INSTRUMENT SELECTION -->
+<div class="warning-box">
+  <b>Critical Swing Trading Rule for Options:</b>
+  <ul>
+    <li><b>Never buy Weekly Options for Swing Trades:</b> In a 5-day swing hold, weekly options suffer catastrophic Theta decay (&minus;40% to &minus;60% of premium). Even if the market moves in your direction, premium decay can wipe out profits.</li>
+    <li><b>Always use Monthly Contracts (&gt;15 to 30 Days to Expiry):</b> Monthly contracts experience gentle theta decay (&le; 2% to 3% per day), ensuring that positive delta from a +500 to +1,500 point move completely overpowers time decay.</li>
+    <li><b>Use Bull Call / Bear Put Spreads or Futures</b> if IV (India VIX) is elevated (&gt;16), which completely hedges out theta decay.</li>
+  </ul>
+</div>
+
+<div class="footer">
+  HERMES QUANTITATIVE RESEARCH DIVISION &bull; NIFTY &amp; BANKNIFTY SWING TRADING PLAYBOOK &bull; STRICTLY FOR ALGORITHMIC &amp; DISCRETIONARY EXECUTION
+</div>
+
+</body>
+</html>

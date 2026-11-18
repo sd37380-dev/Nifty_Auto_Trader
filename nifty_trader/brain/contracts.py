@@ -37,6 +37,20 @@ class MarketRegime(str, Enum):
     CONTRACTING = "CONTRACTING"
     UNCLEAR = "UNCLEAR"
 
+    @classmethod
+    def _missing_(cls, value):
+        v = str(value).upper().replace(" ", "_").replace("-", "_")
+        for member in cls:
+            if member.value == v:
+                return member
+        if "UP" in v or "BULL" in v:
+            return cls.TRENDING_UP
+        if "DOWN" in v or "BEAR" in v:
+            return cls.TRENDING_DOWN
+        if "RANGE" in v or "SIDE" in v:
+            return cls.RANGING
+        return cls.UNCLEAR
+
 
 class StructureType(str, Enum):
     """Recognized price action structure types."""
@@ -53,6 +67,22 @@ class StructureType(str, Enum):
     CONSOLIDATION = "CONSOLIDATION"
     EXPANSION = "EXPANSION"
     UNKNOWN = "UNKNOWN"
+
+    @classmethod
+    def _missing_(cls, value):
+        v = str(value).upper().replace(" ", "_").replace("-", "_")
+        for member in cls:
+            if member.value == v:
+                return member
+        if any(w in v for w in ["GAP", "EXPANSION", "MOMENTUM"]):
+            return cls.EXPANSION
+        if any(w in v for w in ["RANGE", "CONSOLIDAT"]):
+            return cls.CONSOLIDATION
+        if any(w in v for w in ["RECOVERY", "ACCEPT", "PULLBACK"]):
+            return cls.ACCEPTANCE
+        if any(w in v for w in ["REJECT", "FAIL"]):
+            return cls.REJECTION
+        return cls.UNKNOWN
 
 
 class ReasoningState(str, Enum):

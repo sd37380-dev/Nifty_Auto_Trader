@@ -1,0 +1,180 @@
+{
+  "dataset_total_bars": 92605,
+  "total_analyzed_sessions": 1232,
+  "window_statistical_map": {
+    "09:15-09:30": {
+      "mean_range_pts": 81.4,
+      "median_range_pts": 71.25,
+      "mean_body_pts": 42.48,
+      "mean_upper_wick_pts": 17.76,
+      "mean_lower_wick_pts": 21.16,
+      "mean_range_atr": 2.97,
+      "mean_efficiency_er": 0.246,
+      "mean_volatility_sigma": 22.03,
+      "reversal_prob_pct": 0.0,
+      "breakout_prob_pct": 0.0,
+      "breakout_failure_pct": 0.0,
+      "mean_mfe_pts": 62.17,
+      "mean_mae_pts": 19.23,
+      "predominant_behaviour": "Range"
+    },
+    "09:30-10:00": {
+      "mean_range_pts": 70.08,
+      "median_range_pts": 62.0,
+      "mean_body_pts": 35.84,
+      "mean_upper_wick_pts": 15.88,
+      "mean_lower_wick_pts": 18.35,
+      "mean_range_atr": 2.33,
+      "mean_efficiency_er": 0.217,
+      "mean_volatility_sigma": 16.09,
+      "reversal_prob_pct": 47.16,
+      "breakout_prob_pct": 87.01,
+      "breakout_failure_pct": 48.41,
+      "mean_mfe_pts": 52.56,
+      "mean_mae_pts": 17.51,
+      "predominant_behaviour": "Breakout"
+    },
+    "10:00-11:00": {
+      "mean_range_pts": 76.6,
+      "median_range_pts": 65.75,
+      "mean_body_pts": 37.8,
+      "mean_upper_wick_pts": 18.01,
+      "mean_lower_wick_pts": 20.79,
+      "mean_range_atr": 2.81,
+      "mean_efficiency_er": 0.146,
+      "mean_volatility_sigma": 13.17,
+      "reversal_prob_pct": 47.32,
+      "breakout_prob_pct": 77.11,
+      "breakout_failure_pct": 49.26,
+      "mean_mfe_pts": 57.96,
+      "mean_mae_pts": 18.64,
+      "predominant_behaviour": "Breakout"
+    },
+    "11:00-12:00": {
+      "mean_range_pts": 64.93,
+      "median_range_pts": 54.45,
+      "mean_body_pts": 32.8,
+      "mean_upper_wick_pts": 15.41,
+      "mean_lower_wick_pts": 16.72,
+      "mean_range_atr": 3.4,
+      "mean_efficiency_er": 0.15,
+      "mean_volatility_sigma": 11.11,
+      "reversal_prob_pct": 47.81,
+      "breakout_prob_pct": 56.09,
+      "breakout_failure_pct": 49.06,
+      "mean_mfe_pts": 49.63,
+      "mean_mae_pts": 15.3,
+      "predominant_behaviour": "Breakout"
+    },
+    "12:00-13:00": {
+      "mean_range_pts": 65.16,
+      "median_range_pts": 52.5,
+      "mean_body_pts": 32.36,
+      "mean_upper_wick_pts": 15.66,
+      "mean_lower_wick_pts": 17.14,
+      "mean_range_atr": 3.64,
+      "mean_efficiency_er": 0.148,
+      "mean_volatility_sigma": 11.37,
+      "reversal_prob_pct": 48.46,
+      "breakout_prob_pct": 51.3,
+      "breakout_failure_pct": 46.04,
+      "mean_mfe_pts": 50.1,
+      "mean_mae_pts": 15.07,
+      "predominant_behaviour": "Breakout"
+    },
+    "13:00-14:00": {
+      "mean_range_pts": 67.07,
+      "median_range_pts": 56.0,
+      "mean_body_pts": 32.59,
+      "mean_upper_wick_pts": 16.26,
+      "mean_lower_wick_pts": 18.22,
+      "mean_range_atr": 3.7,
+      "mean_efficiency_er": 0.139,
+      "mean_volatility_sigma": 11.47,
+      "reversal_prob_pct": 46.67,
+      "breakout_prob_pct": 50.08,
+      "breakout_failure_pct": 48.62,
+      "mean_mfe_pts": 50.82,
+      "mean_mae_pts": 16.25,
+      "predominant_behaviour": "Breakout"
+    },
+    "14:00-15:00": {
+      "mean_range_pts": 73.09,
+      "median_range_pts": 62.08,
+      "mean_body_pts": 35.51,
+      "mean_upper_wick_pts": 17.66,
+      "mean_lower_wick_pts": 19.92,
+      "mean_range_atr": 3.76,
+      "mean_efficiency_er": 0.139,
+      "mean_volatility_sigma": 12.44,
+      "reversal_prob_pct": 47.48,
+      "breakout_prob_pct": 50.32,
+      "breakout_failure_pct": 49.35,
+      "mean_mfe_pts": 54.7,
+      "mean_mae_pts": 18.39,
+      "predominant_behaviour": "Breakout"
+    },
+    "15:00-15:25": {
+      "mean_range_pts": 56.05,
+      "median_range_pts": 47.8,
+      "mean_body_pts": 29.98,
+      "mean_upper_wick_pts": 12.33,
+      "mean_lower_wick_pts": 13.74,
+      "mean_range_atr": 2.74,
+      "mean_efficiency_er": 0.235,
+      "mean_volatility_sigma": 12.79,
+      "reversal_prob_pct": 46.75,
+      "breakout_prob_pct": 37.09,
+      "breakout_failure_pct": 45.3,
+      "mean_mfe_pts": 44.98,
+      "mean_mae_pts": 11.06,
+      "predominant_behaviour": "Range"
+    }
+  },
+  "morning_dynamics": {
+    "opening_volatility_session_range_correlation": 0.525,
+    "opening_direction_session_direction_persistence_pct": 63.64,
+    "window2_reverses_window1_pct": 47.16,
+    "mean_session_range_after_wide_opening_pts": 298.19,
+    "mean_session_range_after_narrow_opening_pts": 159.53
+  },
+  "midday_dynamics": {
+    "avg_efficiency_midday_er": 0.145,
+    "afternoon_range_after_compressed_midday_pts": 0,
+    "afternoon_range_after_normal_midday_pts": 129.14,
+    "midday_compression_expansion_ratio": 0.0
+  },
+  "afternoon_dynamics": {
+    "afternoon_continues_morning_pct": 51.7,
+    "afternoon_reverses_morning_pct": 48.3
+  },
+  "closing_period_dynamics": {
+    "closing_move_predicts_gap_direction_pct": 49.96,
+    "mean_gap_after_bullish_close_pts": 16.01,
+    "mean_gap_after_bearish_close_pts": 8.52
+  },
+  "day_type_distribution": {
+    "Trend_Day": {
+      "count": 383,
+      "pct": 31.09
+    },
+    "Expansion_Day": {
+      "count": 378,
+      "pct": 30.68
+    },
+    "Range_Day": {
+      "count": 342,
+      "pct": 27.76
+    },
+    "Reversal_Day": {
+      "count": 129,
+      "pct": 10.47
+    }
+  },
+  "early_day_type_identification": {
+    "by_10_00_am": {
+      "trend_day_prediction_precision_pct": 38.04,
+      "range_day_prediction_precision_pct": 0.0
+    }
+  }
+}

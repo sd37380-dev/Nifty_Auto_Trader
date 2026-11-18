@@ -17,6 +17,7 @@ from nifty_trader.router.gemini import GeminiProvider
 from nifty_trader.router.openrouter import OpenRouterProvider
 from nifty_trader.router.openai_provider import OpenAIProvider
 from nifty_trader.router.anthropic_provider import AnthropicProvider
+from nifty_trader.router.nvidia_provider import NvidiaProvider
 
 logger = logging.getLogger("nifty_trader.router")
 T = TypeVar("T", bound=BaseModel)
@@ -156,6 +157,14 @@ class ModelRouter:
         self._providers["anthropic"] = AnthropicProvider(
             api_key_env=anthropic_cfg.get("api_key_env", "ANTHROPIC_API_KEY"),
             default_model=anthropic_cfg.get("default_model", "claude-3-5-sonnet-20241022"),
+        )
+
+        # NVIDIA NIM
+        nvidia_cfg = prov_configs.get("nvidia", {})
+        self._providers["nvidia"] = NvidiaProvider(
+            api_key_env=nvidia_cfg.get("api_key_env", "NVIDIA_API_KEY"),
+            base_url=nvidia_cfg.get("base_url", "https://integrate.api.nvidia.com/v1"),
+            default_model=nvidia_cfg.get("default_model", "nvidia/nemotron-3-ultra-550b-a55b"),
         )
 
     def register_provider(self, provider: ModelProvider) -> None:

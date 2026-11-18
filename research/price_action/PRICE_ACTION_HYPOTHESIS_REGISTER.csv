@@ -1,0 +1,14 @@
+test_id,hypothesis,category,definition,sample_size,win_rate,net_pts,profit_factor,status,tested_horizon
+TEST_H01,ORB-15 Breakout Continuation,BREAKOUT,Breakout beyond 09:15-09:30 range between 09:30-11:30,1615,37.15,2884.15,1.09,PROMISING,Intraday
+TEST_H02,ORB-30 Breakout Continuation,BREAKOUT,Breakout beyond 09:15-09:45 range between 09:45-12:00,1520,37.11,2151.4,1.07,PROMISING,Intraday
+TEST_H03,PDH/PDL Breakout Continuation,BREAKOUT,Close crosses beyond Previous Day High or Low,1558,36.26,-1717.0,0.95,REJECTED,Intraday
+TEST_H04,Inside-Bar Compression Breakout,COMPRESSION,Expansion candle closing outside previous inside-bar mother range,2377,37.32,-2304.7,0.96,REJECTED,Intraday
+TEST_H05,PDH/PDL Sweep & False Breakout Reversal,REVERSAL,Pierces PDH/PDL but closes back inside with >=35% wick rejection,847,38.13,1700.75,1.13,ROBUST CANDIDATE,Intraday & Swing
+TEST_H05_SHORT,PDH Sweep & Reversal Trap (Short Only),REVERSAL,Pierces PDH but closes back inside with >=35% upper wick,412,40.05,1352.2,1.24,ROBUST CANDIDATE,Intraday & Swing
+TEST_H06,First-Hour Range Sweep & Reversal,REVERSAL,Pierces 10:15 first-hour high/low and rejects back inside,1139,32.66,-1762.2,0.89,REJECTED,Intraday
+TEST_H07,Dynamic EMA20 Pin-Bar Rejection,REVERSAL,Pin-bar wick testing EMA20 aligned with 50 EMA trend,900,34.22,-699.1,0.95,DISCOVERY,Intraday
+TEST_H08,Session Extreme Engulfing Reversal,REVERSAL,Engulfing candle within 10 points of current session extreme,1700,32.47,-4418.3,0.85,REJECTED,Intraday
+TEST_H09,3-Consecutive Directional Candle Exhaustion,REVERSAL,Exhaustion reversal candle after 3+ consecutive thrust candles,4469,33.59,-7334.8,0.9,REJECTED,Intraday
+TEST_H10,Morning Momentum Expansion (09:30-10:30),REGIME,Session breakout between 09:30-10:30 with 15M trend alignment,624,35.74,645.1,1.05,PROMISING,Intraday
+TEST_H11,Afternoon Midday Sweep & Reversion,REGIME,Sweep of session high/low between 12:30-14:30 followed by rejection,525,31.24,-1833.8,0.77,REJECTED,Intraday
+TEST_H12,NR4 Compression Breakout + 15M Trend,COMPRESSION,NR4 contraction breaking out in direction of 15M trend,2870,35.16,-1248.3,0.98,DISCOVERY,Intraday

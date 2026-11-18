@@ -1,0 +1,307 @@
+{
+  "total_bars": 92605,
+  "range_percentiles": {
+    "p90": 35.95,
+    "p95": 45.84,
+    "p98": 62.35,
+    "p99": 77.7
+  },
+  "large_candles": {
+    "Top 10%": {
+      "threshold_pts": 35.95,
+      "bullish_count": 4396,
+      "bull_fwd_ret_1": 0.7,
+      "bull_fwd_ret_3": -0.64,
+      "bull_fwd_ret_6": 1.34,
+      "bull_fwd_ret_12": 1.93,
+      "bull_fwd_ret_24": 5.95,
+      "bull_mfe_6": 47.25,
+      "bull_mae_6": 49.21,
+      "bull_retrace_50_pct": 66.61,
+      "bull_retrace_100_pct": 37.78,
+      "bearish_count": 4861,
+      "bear_fwd_ret_1": -0.29,
+      "bear_fwd_ret_3": -2.25,
+      "bear_fwd_ret_6": -2.7,
+      "bear_fwd_ret_12": -4.42,
+      "bear_fwd_ret_24": -9.84,
+      "bear_mfe_6": 50.02,
+      "bear_mae_6": 50.55
+    },
+    "Top 5%": {
+      "threshold_pts": 45.84,
+      "bullish_count": 2177,
+      "bull_fwd_ret_1": 0.94,
+      "bull_fwd_ret_3": -1.7,
+      "bull_fwd_ret_6": -0.29,
+      "bull_fwd_ret_12": 0.42,
+      "bull_fwd_ret_24": 5.81,
+      "bull_mfe_6": 56.51,
+      "bull_mae_6": 61.02,
+      "bull_retrace_50_pct": 64.4,
+      "bull_retrace_100_pct": 35.42,
+      "bearish_count": 2453,
+      "bear_fwd_ret_1": -0.24,
+      "bear_fwd_ret_3": -3.51,
+      "bear_fwd_ret_6": -3.89,
+      "bear_fwd_ret_12": -5.27,
+      "bear_fwd_ret_24": -11.46,
+      "bear_mfe_6": 61.98,
+      "bear_mae_6": 62.91
+    },
+    "Top 2%": {
+      "threshold_pts": 62.35,
+      "bullish_count": 869,
+      "bull_fwd_ret_1": -0.14,
+      "bull_fwd_ret_3": -6.6,
+      "bull_fwd_ret_6": -1.07,
+      "bull_fwd_ret_12": -2.64,
+      "bull_fwd_ret_24": 8.44,
+      "bull_mfe_6": 78.05,
+      "bull_mae_6": 89.73,
+      "bull_retrace_50_pct": 61.1,
+      "bull_retrace_100_pct": 32.57,
+      "bearish_count": 983,
+      "bear_fwd_ret_1": -2.64,
+      "bear_fwd_ret_3": -10.7,
+      "bear_fwd_ret_6": -12.71,
+      "bear_fwd_ret_12": -13.35,
+      "bear_fwd_ret_24": -16.42,
+      "bear_mfe_6": 85.53,
+      "bear_mae_6": 97.12
+    },
+    "Top 1%": {
+      "threshold_pts": 77.7,
+      "bullish_count": 438,
+      "bull_fwd_ret_1": -3.02,
+      "bull_fwd_ret_3": -14.8,
+      "bull_fwd_ret_6": -2.42,
+      "bull_fwd_ret_12": -9.35,
+      "bull_fwd_ret_24": 6.81,
+      "bull_mfe_6": 108.19,
+      "bull_mae_6": 131.04,
+      "bull_retrace_50_pct": 60.27,
+      "bull_retrace_100_pct": 31.51,
+      "bearish_count": 491,
+      "bear_fwd_ret_1": -5.03,
+      "bear_fwd_ret_3": -20.54,
+      "bear_fwd_ret_6": -23.76,
+      "bear_fwd_ret_12": -26.8,
+      "bear_fwd_ret_24": -30.76,
+      "bear_mfe_6": 120.8,
+      "bear_mae_6": 144.9
+    }
+  },
+  "wicks": {
+    "wick_20pct": {
+      "threshold": 0.2,
+      "upper_wick_count": 47730,
+      "upper_win_rate_6": 45.36,
+      "upper_fwd_ret_6": -0.05,
+      "upper_mfe_6": 26.21,
+      "upper_mae_6": 25.05,
+      "lower_wick_count": 49670,
+      "lower_win_rate_6": 46.26,
+      "lower_fwd_ret_6": -0.79,
+      "lower_mfe_6": 24.27,
+      "lower_mae_6": 26.56
+    },
+    "wick_30pct": {
+      "threshold": 0.3,
+      "upper_wick_count": 33432,
+      "upper_win_rate_6": 45.08,
+      "upper_fwd_ret_6": -0.34,
+      "upper_mfe_6": 26.12,
+      "upper_mae_6": 25.38,
+      "lower_wick_count": 35681,
+      "lower_win_rate_6": 46.05,
+      "lower_fwd_ret_6": -1.02,
+      "lower_mfe_6": 24.11,
+      "lower_mae_6": 26.67
+    },
+    "wick_40pct": {
+      "threshold": 0.4,
+      "upper_wick_count": 22118,
+      "upper_win_rate_6": 44.9,
+      "upper_fwd_ret_6": -0.31,
+      "upper_mfe_6": 26.07,
+      "upper_mae_6": 25.47,
+      "lower_wick_count": 24117,
+      "lower_win_rate_6": 45.89,
+      "lower_fwd_ret_6": -1.02,
+      "lower_mfe_6": 24.03,
+      "lower_mae_6": 26.65
+    },
+    "wick_50pct": {
+      "threshold": 0.5,
+      "upper_wick_count": 13418,
+      "upper_win_rate_6": 44.4,
+      "upper_fwd_ret_6": -0.34,
+      "upper_mfe_6": 26.07,
+      "upper_mae_6": 25.79,
+      "lower_wick_count": 15216,
+      "lower_win_rate_6": 45.72,
+      "lower_fwd_ret_6": -0.9,
+      "lower_mfe_6": 24.14,
+      "lower_mae_6": 26.56
+    },
+    "wick_60pct": {
+      "threshold": 0.6,
+      "upper_wick_count": 7337,
+      "upper_win_rate_6": 44.16,
+      "upper_fwd_ret_6": -0.49,
+      "upper_mfe_6": 25.82,
+      "upper_mae_6": 25.77,
+      "lower_wick_count": 8575,
+      "lower_win_rate_6": 45.21,
+      "lower_fwd_ret_6": -1.37,
+      "lower_mfe_6": 24.06,
+      "lower_mae_6": 27.0
+    },
+    "wick_70pct": {
+      "threshold": 0.7,
+      "upper_wick_count": 3410,
+      "upper_win_rate_6": 44.72,
+      "upper_fwd_ret_6": -0.07,
+      "upper_mfe_6": 26.41,
+      "upper_mae_6": 25.95,
+      "lower_wick_count": 4045,
+      "lower_win_rate_6": 45.17,
+      "lower_fwd_ret_6": -1.56,
+      "lower_mfe_6": 24.16,
+      "lower_mae_6": 26.88
+    },
+    "wick_80pct": {
+      "threshold": 0.8,
+      "upper_wick_count": 1225,
+      "upper_win_rate_6": 44.41,
+      "upper_fwd_ret_6": -1.26,
+      "upper_mfe_6": 26.15,
+      "upper_mae_6": 26.41,
+      "lower_wick_count": 1426,
+      "lower_win_rate_6": 46.56,
+      "lower_fwd_ret_6": -1.47,
+      "lower_mfe_6": 24.67,
+      "lower_mae_6": 27.83
+    }
+  },
+  "contextual_impact": {
+    "Mid-Range (Isolated)": {
+      "upper_pin_count": 11338,
+      "upper_win_rate_6": 44.09,
+      "upper_mean_ret_6": -0.35,
+      "upper_mfe_6": 26.5,
+      "lower_pin_count": 12787,
+      "lower_win_rate_6": 45.73,
+      "lower_mean_ret_6": -0.82,
+      "lower_mfe_6": 24.7
+    },
+    "At PDH (Upper Resistance)": {
+      "upper_pin_count": 319,
+      "upper_win_rate_6": 43.89,
+      "upper_mean_ret_6": -0.31,
+      "upper_mfe_6": 22.73,
+      "lower_pin_count": 419,
+      "lower_win_rate_6": 45.82,
+      "lower_mean_ret_6": -1.09,
+      "lower_mfe_6": 19.64
+    },
+    "At PDL (Lower Support)": {
+      "upper_pin_count": 231,
+      "upper_win_rate_6": 48.92,
+      "upper_mean_ret_6": -1.1,
+      "upper_mfe_6": 25.96,
+      "lower_pin_count": 311,
+      "lower_win_rate_6": 43.41,
+      "lower_mean_ret_6": -2.91,
+      "lower_mfe_6": 23.17
+    },
+    "At Session VWAP": {
+      "upper_pin_count": 1628,
+      "upper_win_rate_6": 46.5,
+      "upper_mean_ret_6": -0.07,
+      "upper_mfe_6": 23.68,
+      "lower_pin_count": 1816,
+      "lower_win_rate_6": 45.87,
+      "lower_mean_ret_6": -1.21,
+      "lower_mfe_6": 21.4
+    }
+  },
+  "logical_combinations": {
+    "Top5_Bullish_Exhaustion_Wick": {
+      "count": 399,
+      "win_rate_6": 47.37,
+      "mean_ret_6": -6.21,
+      "mean_mfe_6": 64.14,
+      "mean_mae_6": 67.19,
+      "mfe_mae_ratio": 0.95
+    },
+    "Top5_Bearish_Climax_Wick": {
+      "count": 478,
+      "win_rate_6": 41.21,
+      "mean_ret_6": -6.92,
+      "mean_mfe_6": 63.69,
+      "mean_mae_6": 68.95,
+      "mfe_mae_ratio": 0.92
+    },
+    "Pinbar_at_PDH_Resistance": {
+      "count": 521,
+      "win_rate_6": 47.22,
+      "mean_ret_6": 1.23,
+      "mean_mfe_6": 24.93,
+      "mean_mae_6": 20.46,
+      "mfe_mae_ratio": 1.22
+    },
+    "Pinbar_at_PDL_Support": {
+      "count": 458,
+      "win_rate_6": 44.98,
+      "mean_ret_6": -1.11,
+      "mean_mfe_6": 24.19,
+      "mean_mae_6": 26.23,
+      "mfe_mae_ratio": 0.92
+    },
+    "Marubozu_Expansion_Bullish": {
+      "count": 873,
+      "win_rate_6": 47.65,
+      "mean_ret_6": -3.33,
+      "mean_mfe_6": 48.96,
+      "mean_mae_6": 57.89,
+      "mfe_mae_ratio": 0.85
+    },
+    "Marubozu_Expansion_Bearish": {
+      "count": 1028,
+      "win_rate_6": 44.65,
+      "mean_ret_6": -7.25,
+      "mean_mfe_6": 53.14,
+      "mean_mae_6": 57.66,
+      "mfe_mae_ratio": 0.92
+    }
+  },
+  "information_decay": {
+    "horizon_1_bars": {
+      "minutes": 5,
+      "correlation": -0.0018,
+      "mean_abs_ret": 10.78
+    },
+    "horizon_3_bars": {
+      "minutes": 15,
+      "correlation": -0.007,
+      "mean_abs_ret": 18.62
+    },
+    "horizon_6_bars": {
+      "minutes": 30,
+      "correlation": -0.0036,
+      "mean_abs_ret": 26.1
+    },
+    "horizon_12_bars": {
+      "minutes": 60,
+      "correlation": -0.0001,
+      "mean_abs_ret": 36.34
+    },
+    "horizon_24_bars": {
+      "minutes": 120,
+      "correlation": 0.0021,
+      "mean_abs_ret": 51.32
+    }
+  }
+}

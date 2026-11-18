@@ -58,6 +58,10 @@ class PaperTradeStore:
                     lots INTEGER NOT NULL,
                     quantity INTEGER NOT NULL,
                     entry_price REAL,
+                    mode TEXT NOT NULL DEFAULT 'EXISTING_SYSTEM',
+                    trade_intent_id TEXT,
+                    assessment_id TEXT,
+                    research_id TEXT,
                     status TEXT NOT NULL,
                     status_reason TEXT,
                     pre_execution_screenshot TEXT,
@@ -78,6 +82,10 @@ class PaperTradeStore:
                     quantity INTEGER NOT NULL,
                     avg_price REAL NOT NULL,
                     current_ltp REAL NOT NULL,
+                    mode TEXT NOT NULL DEFAULT 'EXISTING_SYSTEM',
+                    trade_intent_id TEXT,
+                    assessment_id TEXT,
+                    research_id TEXT,
                     unrealized_pnl REAL NOT NULL,
                     pnl_percentage REAL NOT NULL,
                     realized_pnl REAL NOT NULL,
@@ -98,6 +106,21 @@ class PaperTradeStore:
                     detected_at TEXT NOT NULL
                 )
             """)
+            # Migration check for existing DBs
+            for col, tbl, col_def in [
+                ("mode", "paper_orders", "TEXT NOT NULL DEFAULT 'EXISTING_SYSTEM'"),
+                ("trade_intent_id", "paper_orders", "TEXT"),
+                ("assessment_id", "paper_orders", "TEXT"),
+                ("research_id", "paper_orders", "TEXT"),
+                ("mode", "paper_positions", "TEXT NOT NULL DEFAULT 'EXISTING_SYSTEM'"),
+                ("trade_intent_id", "paper_positions", "TEXT"),
+                ("assessment_id", "paper_positions", "TEXT"),
+                ("research_id", "paper_positions", "TEXT"),
+            ]:
+                cursor.execute(f"PRAGMA table_info({tbl})")
+                cols = [c[1] for c in cursor.fetchall()]
+                if col not in cols:
+                    cursor.execute(f"ALTER TABLE {tbl} ADD COLUMN {col} {col_def}")
             conn.commit()
 
     def save_order(self, order: PaperTradeOrder) -> None:
@@ -107,9 +130,11 @@ class PaperTradeStore:
             cursor.execute("""
                 INSERT OR REPLACE INTO paper_orders (
                     order_id, request_id, idempotency_key, symbol, expiry, strike,
-                    option_type, action, lots, quantity, entry_price, status, status_reason,
+                    option_type, action, lots, quantity, entry_price, mode,
+                    trade_intent_id, assessment_id, research_id,
+                    status, status_reason,
                     pre_execution_screenshot, post_execution_screenshot, submitted_at, verified_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
                 order.order_id,
                 order.request_id,
@@ -122,6 +147,10 @@ class PaperTradeStore:
                 order.lots,
                 order.quantity,
                 order.entry_price,
+                order.mode,
+                order.trade_intent_id,
+                order.assessment_id,
+                order.research_id,
                 order.status.value,
                 order.status_reason,
                 order.pre_execution_screenshot,
@@ -148,9 +177,10 @@ class PaperTradeStore:
             cursor.execute("""
                 INSERT OR REPLACE INTO paper_positions (
                     position_id, symbol, expiry, strike, option_type, action, lots, quantity,
-                    avg_price, current_ltp, unrealized_pnl, pnl_percentage, realized_pnl,
+                    avg_price, current_ltp, mode, trade_intent_id, assessment_id, research_id,
+                    unrealized_pnl, pnl_percentage, realized_pnl,
                     status, first_detected_at, updated_at, closed_at, exit_price
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
                 pos.position_id,
                 pos.symbol,
@@ -162,6 +192,10 @@ class PaperTradeStore:
                 pos.quantity,
                 pos.avg_price,
                 pos.current_ltp,
+                pos.mode,
+                pos.trade_intent_id,
+                pos.assessment_id,
+                pos.research_id,
                 pos.unrealized_pnl,
                 pos.pnl_percentage,
                 pos.realized_pnl,
@@ -173,11 +207,14 @@ class PaperTradeStore:
             ))
             conn.commit()
 
-    def get_open_positions(self) -> List[PaperPosition]:
-        """Retrieves all currently OPEN paper positions."""
+    def get_open_positions(self, mode: Optional[str] = None) -> List[PaperPosition]:
+        """Retrieves all currently OPEN paper positions, optionally filtered by mode."""
         with self._get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM paper_positions WHERE status = 'OPEN'")
+            if mode:
+                cursor.execute("SELECT * FROM paper_positions WHERE status = 'OPEN' AND mode = ?", (mode,))
+            else:
+                cursor.execute("SELECT * FROM paper_positions WHERE status = 'OPEN'")
             return [self._row_to_position(r) for r in cursor.fetchall()]
 
     def get_position(self, position_id: str) -> Optional[PaperPosition]:
@@ -190,11 +227,14 @@ class PaperTradeStore:
                 return None
             return self._row_to_position(row)
 
-    def get_all_positions(self, limit: int = 100) -> List[PaperPosition]:
+    def get_all_positions(self, mode: Optional[str] = None, limit: int = 100) -> List[PaperPosition]:
         """Retrieves all paper positions ordered by first_detected_at desc."""
         with self._get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM paper_positions ORDER BY first_detected_at DESC LIMIT ?", (limit,))
+            if mode:
+                cursor.execute("SELECT * FROM paper_positions WHERE mode = ? ORDER BY first_detected_at DESC LIMIT ?", (mode, limit))
+            else:
+                cursor.execute("SELECT * FROM paper_positions ORDER BY first_detected_at DESC LIMIT ?", (limit,))
             return [self._row_to_position(r) for r in cursor.fetchall()]
 
     def get_order(self, order_id: str) -> Optional[PaperTradeOrder]:
@@ -226,14 +266,106 @@ class PaperTradeStore:
             ))
             conn.commit()
 
-    def get_recent_orders(self, limit: int = 10) -> List[PaperTradeOrder]:
+    def get_recent_orders(self, mode: Optional[str] = None, limit: int = 10) -> List[PaperTradeOrder]:
         """Retrieves recent orders ordered by submitted_at desc."""
         with self._get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM paper_orders ORDER BY submitted_at DESC LIMIT ?", (limit,))
+            if mode:
+                cursor.execute("SELECT * FROM paper_orders WHERE mode = ? ORDER BY submitted_at DESC LIMIT ?", (mode, limit))
+            else:
+                cursor.execute("SELECT * FROM paper_orders ORDER BY submitted_at DESC LIMIT ?", (limit,))
             return [self._row_to_order(r) for r in cursor.fetchall()]
 
+    def get_daily_trade_count(
+        self,
+        symbol: Optional[str] = None,
+        mode: Optional[str] = None,
+        target_date: Optional[str] = None,
+    ) -> int:
+        """
+        Counts executed/active orders submitted on the target date (format 'YYYY-MM-DD').
+        Defaults to today's UTC date. Excludes REJECTED and FAILED orders.
+        """
+        date_prefix = target_date or datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            query = "SELECT COUNT(*) FROM paper_orders WHERE submitted_at LIKE ? AND status NOT IN ('REJECTED', 'FAILED')"
+            params = [f"{date_prefix}%"]
+            if symbol:
+                query += " AND UPPER(symbol) = UPPER(?)"
+                params.append(symbol)
+            if mode:
+                query += " AND mode = ?"
+                params.append(mode)
+            cursor.execute(query, tuple(params))
+            row = cursor.fetchone()
+            return int(row[0]) if row else 0
+
+    def get_daily_realized_pnl(
+        self,
+        symbol: Optional[str] = None,
+        mode: Optional[str] = None,
+        target_date: Optional[str] = None,
+    ) -> float:
+        """
+        Sums realized P&L for positions closed on target_date (format 'YYYY-MM-DD').
+        """
+        date_prefix = target_date or datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            query = """
+                SELECT COALESCE(SUM(realized_pnl), 0.0) FROM paper_positions
+                WHERE (closed_at LIKE ? OR updated_at LIKE ?)
+                  AND status IN ('CLOSED', 'EXTERNAL_CLOSED')
+            """
+            params = [f"{date_prefix}%", f"{date_prefix}%"]
+            if symbol:
+                query += " AND UPPER(symbol) = UPPER(?)"
+                params.append(symbol)
+            if mode:
+                query += " AND mode = ?"
+                params.append(mode)
+            cursor.execute(query, tuple(params))
+            row = cursor.fetchone()
+            return float(row[0]) if row else 0.0
+
+    def get_open_positions_unrealized_pnl(
+        self,
+        symbol: Optional[str] = None,
+        mode: Optional[str] = None,
+    ) -> float:
+        """
+        Sums unrealized P&L for currently OPEN positions.
+        """
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            query = "SELECT COALESCE(SUM(unrealized_pnl), 0.0) FROM paper_positions WHERE status = 'OPEN'"
+            params = []
+            if symbol:
+                query += " AND UPPER(symbol) = UPPER(?)"
+                params.append(symbol)
+            if mode:
+                query += " AND mode = ?"
+                params.append(mode)
+            cursor.execute(query, tuple(params))
+            row = cursor.fetchone()
+            return float(row[0]) if row else 0.0
+
+    def get_daily_net_pnl(
+        self,
+        symbol: Optional[str] = None,
+        mode: Optional[str] = None,
+        target_date: Optional[str] = None,
+    ) -> float:
+        """
+        Combines realized P&L for closed positions today + unrealized P&L for currently open positions.
+        """
+        realized = self.get_daily_realized_pnl(symbol=symbol, mode=mode, target_date=target_date)
+        unrealized = self.get_open_positions_unrealized_pnl(symbol=symbol, mode=mode)
+        return realized + unrealized
+
     def _row_to_order(self, row: sqlite3.Row) -> PaperTradeOrder:
+        keys = row.keys()
         return PaperTradeOrder(
             order_id=row["order_id"],
             request_id=row["request_id"],
@@ -246,6 +378,10 @@ class PaperTradeStore:
             lots=row["lots"],
             quantity=row["quantity"],
             entry_price=row["entry_price"],
+            mode=row["mode"] if "mode" in keys and row["mode"] else "EXISTING_SYSTEM",
+            trade_intent_id=row["trade_intent_id"] if "trade_intent_id" in keys else None,
+            assessment_id=row["assessment_id"] if "assessment_id" in keys else None,
+            research_id=row["research_id"] if "research_id" in keys else None,
             status=PaperOrderStatus(row["status"]),
             status_reason=row["status_reason"],
             pre_execution_screenshot=row["pre_execution_screenshot"],
@@ -255,6 +391,7 @@ class PaperTradeStore:
         )
 
     def _row_to_position(self, row: sqlite3.Row) -> PaperPosition:
+        keys = row.keys()
         return PaperPosition(
             position_id=row["position_id"],
             symbol=row["symbol"],
@@ -266,6 +403,10 @@ class PaperTradeStore:
             quantity=row["quantity"],
             avg_price=row["avg_price"],
             current_ltp=row["current_ltp"],
+            mode=row["mode"] if "mode" in keys and row["mode"] else "EXISTING_SYSTEM",
+            trade_intent_id=row["trade_intent_id"] if "trade_intent_id" in keys else None,
+            assessment_id=row["assessment_id"] if "assessment_id" in keys else None,
+            research_id=row["research_id"] if "research_id" in keys else None,
             unrealized_pnl=row["unrealized_pnl"],
             pnl_percentage=row["pnl_percentage"],
             realized_pnl=row["realized_pnl"],

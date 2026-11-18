@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>NIFTY Autonomous Trader — Comprehensive Software Features Guide</title>
+<style>
+  @page {
+    size: A4 portrait;
+    margin: 18mm 15mm 18mm 15mm;
+    @bottom-right {
+      content: counter(page);
+    }
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: #1e293b;
+    line-height: 1.55;
+    font-size: 10.5pt;
+    margin: 0;
+    padding: 0;
+    background-color: #ffffff;
+  }
+
+  .cover-header {
+    border-bottom: 3px solid #2563eb;
+    padding-bottom: 16px;
+    margin-bottom: 24px;
+  }
+
+  .badge {
+    display: inline-block;
+    background: #eff6ff;
+    color: #1d4ed8;
+    font-weight: 700;
+    font-size: 8.5pt;
+    padding: 3px 10px;
+    border-radius: 9999px;
+    border: 1px solid #bfdbfe;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  h1 {
+    font-size: 23pt;
+    color: #0f172a;
+    margin: 10px 0 6px 0;
+    letter-spacing: -0.5px;
+    font-weight: 800;
+  }
+
+  .subtitle {
+    font-size: 12pt;
+    color: #64748b;
+    margin: 0 0 14px 0;
+    font-weight: 400;
+  }
+
+  .meta-grid {
+    display: flex;
+    justify-content: space-between;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-size: 9pt;
+    color: #475569;
+  }
+
+  .meta-item strong {
+    color: #0f172a;
+  }
+
+  h2 {
+    font-size: 14pt;
+    color: #0f172a;
+    border-bottom: 1.5px solid #e2e8f0;
+    padding-bottom: 6px;
+    margin-top: 26px;
+    margin-bottom: 12px;
+    page-break-after: avoid;
+  }
+
+  h3 {
+    font-size: 11.5pt;
+    color: #1e40af;
+    margin-top: 16px;
+    margin-bottom: 6px;
+    page-break-after: avoid;
+  }
+
+  p {
+    margin: 0 0 10px 0;
+    color: #334155;
+  }
+
+  .callout {
+    background: #f0fdf4;
+    border-left: 4px solid #16a34a;
+    padding: 10px 14px;
+    border-radius: 0 8px 8px 0;
+    margin: 12px 0;
+    font-size: 9.5pt;
+  }
+
+  .callout-title {
+    font-weight: 700;
+    color: #15803d;
+    margin-bottom: 4px;
+  }
+
+  .callout-blue {
+    background: #eff6ff;
+    border-left: 4px solid #2563eb;
+    padding: 10px 14px;
+    border-radius: 0 8px 8px 0;
+    margin: 12px 0;
+    font-size: 9.5pt;
+  }
+
+  .callout-blue-title {
+    font-weight: 700;
+    color: #1d4ed8;
+    margin-bottom: 4px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0;
+    font-size: 9pt;
+    page-break-inside: avoid;
+  }
+
+  th, td {
+    padding: 7px 10px;
+    text-align: left;
+    border-bottom: 1px solid #e2e8f0;
+  }
+
+  th {
+    background-color: #f1f5f9;
+    color: #0f172a;
+    font-weight: 700;
+    border-top: 1px solid #cbd5e1;
+    border-bottom: 2px solid #94a3b8;
+  }
+
+  tr:nth-child(even) td {
+    background-color: #f8fafc;
+  }
+
+  pre.code-block {
+    background: #0f172a;
+    color: #f8fafc;
+    padding: 10px 14px;
+    border-radius: 6px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size: 8pt;
+    line-height: 1.45;
+    margin: 10px 0;
+    overflow-x: auto;
+    white-space: pre;
+    page-break-inside: avoid;
+  }
+
+  .page-break {
+    page-break-before: always;
+  }
+
+  .feature-box {
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 14px;
+    background: #ffffff;
+    page-break-inside: avoid;
+  }
+
+  .feature-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+
+  .feature-title {
+    font-size: 11pt;
+    font-weight: 700;
+    color: #0f172a;
+  }
+
+  .feature-tag {
+    font-size: 7.5pt;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: #e0e7ff;
+    color: #3730a3;
+    text-transform: uppercase;
+  }
+
+  .feature-desc {
+    font-size: 9pt;
+    color: #475569;
+    margin-bottom: 6px;
+  }
+
+  .feature-list {
+    margin: 0;
+    padding-left: 18px;
+    font-size: 9pt;
+    color: #334155;
+  }
+
+  .feature-list li {
+    margin-bottom: 3px;
+  }
+
+  ul, ol {
+    margin: 0 0 10px 0;
+    padding-left: 20px;
+  }
+
+  li {
+    margin-bottom: 4px;
+    color: #334155;
+  }
+</style>
+</head>
+<body>
+
+<!-- Cover Header -->
+<div class="cover-header">
+  <span class="badge">OFFICIAL SOFTWARE MANUAL</span>
+  <h1>NIFTY Autonomous Trader</h1>
+  <div class="subtitle">Complete Feature Catalog & Operational Capabilities Guide — Version 0.1.0</div>
+  <div class="meta-grid">
+    <div class="meta-item"><strong>Target Index:</strong> NIFTY 50 (F&O / Options)</div>
+    <div class="meta-item"><strong>Architecture:</strong> Standalone Python 3.11+</div>
+    <div class="meta-item"><strong>Current State:</strong> Stages 1–10 + Segregated Research Zone</div>
+    <div class="meta-item"><strong>Paper Environment:</strong> Sensibull Virtual Portfolio</div>
+  </div>
+</div>
+
+<!-- Section 1: Executive Overview -->
+<h2>1. Executive Summary & Capabilities Matrix</h2>
+<p>
+  The <strong>NIFTY Autonomous Trader</strong> is a dedicated autonomous agentic trading system built to behave like a disciplined human trader. It is not an algorithmic black-box or a hard-coded indicator bot. Instead, it pairs a cognitive reasoning intelligence (AI Brain) with an autonomous operating agent (Hermes), gated by non-negotiable deterministic risk circuit breakers and operating over real browser interfaces.
+</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Feature Domain</th>
+      <th>Key Subsystems</th>
+      <th>Operational Role</th>
+      <th>Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>1. Cognitive AI Brain</strong></td>
+      <td>ModelRouter, Gemini 2.5 Flash/Pro, 17-State Engine</td>
+      <td>Non-hardcoded market structure reasoning & candidate generation</td>
+      <td>ACTIVE ✅</td>
+    </tr>
+    <tr>
+      <td><strong>2. Multimodal Sensory</strong></td>
+      <td>Chrome CDP, TradingView Observer, Sensibull DOM</td>
+      <td>Dual visual screenshot analysis & real-time option chain matrix</td>
+      <td>ACTIVE ✅</td>
+    </tr>
+    <tr>
+      <td><strong>3. Hermes Operator</strong></td>
+      <td>Autonomous Scheduler, Multi-Turn Collaborative Loop</td>
+      <td>15M/1H cadence scheduling, browser tool execution, inquiry loops</td>
+      <td>ACTIVE ✅</td>
+    </tr>
+    <tr>
+      <td><strong>4. Safety Guard</strong></td>
+      <td>Deterministic Circuit Breakers, Daily & Trade Loss Stops</td>
+      <td>Non-bypassable mathematical bounds; live trading permanently blocked</td>
+      <td>LOCKED ✅</td>
+    </tr>
+    <tr>
+      <td><strong>5. Sensibull Paper Broker</strong></td>
+      <td>Virtual DOM Execution, State Reconciler, Idempotency</td>
+      <td>Submits and verifies virtual paper trades in Sensibull Portfolio</td>
+      <td>ACTIVE ✅</td>
+    </tr>
+    <tr>
+      <td><strong>6. Position Monitoring</strong></td>
+      <td>Autonomous Trade Monitor, Dynamic Trailing Stops</td>
+      <td>Continuously tracks open P&L; re-evaluates thesis on price moves</td>
+      <td>ACTIVE ✅</td>
+    </tr>
+    <tr>
+      <td><strong>7. Experience Memory</strong></td>
+      <td>Post-Trade Analyzer, Behavioral Taxonomy, Metrics</td>
+      <td>Analyzes completed trades into grounded non-rule lessons in SQLite</td>
+      <td>ACTIVE ✅</td>
+    </tr>
+    <tr>
+      <td><strong>8. Data Research Zone</strong></td>
+      <td>Dhan Adapter, Data Engineering, Backtest & Contradiction</td>
+      <td>Segregated quantitative lab; dynamic segment importance scoring</td>
+      <td>ACTIVE ✅</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="callout">
+  <div class="callout-title">Core Safety Mandate</div>
+  Live real-money broker execution is permanently disabled in code. All execution flows terminate inside the Sensibull Virtual Portfolio paper-trading sandbox.
+</div>
+
+<div class="page-break"></div>
+
+<!-- Section 2: Detailed Feature Breakdown -->
+<h2>2. Detailed Feature Breakdown by Subsystem</h2>
+
+<!-- Domain 1 -->
+<div class="feature-box">
+  <div class="feature-header">
+    <div class="feature-title">Feature Domain 1: Cognitive Reasoning Layer (AI Brain)</div>
+    <span class="feature-tag">Cognitive</span>
+  </div>
+  <div class="feature-desc">Replaces brittle heuristic strategy rules with high-order contextual market reasoning.</div>
+  <ul class="feature-list">
+    <li><strong>ModelRouter Dynamic Routing:</strong> Task-tiered routing engine abstracting model providers (Google Gemini 2.5 Flash/Pro, OpenRouter, DeepSeek, Claude) with automatic failover and retry logic.</li>
+    <li><strong>17-State Market Reasoning Machine:</strong> Enforces disciplined transitions (<code>NO_TRADE</code> &rarr; <code>WAIT</code> &rarr; <code>WATCH</code> &rarr; <code>DEVELOPING</code> &rarr; <code>CANDIDATE</code>). The Brain never forces a trade when evidence is ambiguous.</li>
+    <li><strong>Regime & Structural Synthesis:</strong> Identifies macro regimes (<code>TRENDING_UP</code>, <code>TRENDING_DOWN</code>, <code>RANGING</code>, <code>EXPANDING</code>, <code>CONTRACTING</code>, <code>UNCLEAR</code>) and structural patterns (Higher Highs/Lows, Breakout Attempts, Rejections).</li>
+    <li><strong>Strict Pydantic Anti-Hallucination Contracts:</strong> Validates model outputs against strict schemas (<code>BrainOutput</code>, <code>Direction</code>, <code>SetupStatus</code>).</li>
+    <li><strong>Brain Reasoning Audit Store:</strong> Logs every prompt, token count, reasoning summary, uncertainty, and model output into <code>data/brain_history.db</code>.</li>
+  </ul>
+</div>
+
+<!-- Domain 2 -->
+<div class="feature-box">
+  <div class="feature-header">
+    <div class="feature-title">Feature Domain 2: Multimodal Sensory &amp; Perception Layer</div>
+    <span class="feature-tag">Perception</span>
+  </div>
+  <div class="feature-desc">Provides the eyes of the autonomous agent across browser and numerical market feeds.</div>
+  <ul class="feature-list">
+    <li><strong>Chrome CDP Integration:</strong> Connects to Google Chrome via remote debugging port 9222 with persistent profile storage in <code>data/browser_profile/</code>.</li>
+    <li><strong>One-Time Secure Login (<code>browser-login</code>):</strong> Enables users to sign into Sensibull, TradingView, and Google interactively without exposing passwords to LLMs or scripts.</li>
+    <li><strong>TradingView Multimodal Observer:</strong> Captures high-resolution canvas screenshots of NIFTY charts for visual vision reasoning alongside DOM price levels.</li>
+    <li><strong>Sensibull Option Chain Matrix:</strong> Scrapes real-time Put-Call Ratios (PCR), Max Pain strikes, Call/Put Open Interest buildups, and strike implied volatilities.</li>
+    <li><strong>Local Lightweight Chart Server:</strong> Serves a deterministic, local TradingView Lightweight Charts canvas via internal HTTP, eliminating third-party rate limits and captchas.</li>
+    <li><strong>Cross-Source Price Verifier:</strong> Cross-checks numerical feed prices against browser DOM text, halting on divergence &gt; ₹5.00.</li>
+  </ul>
+</div>
+
+<!-- Domain 3 -->
+<div class="feature-box">
+  <div class="feature-header">
+    <div class="feature-title">Feature Domain 3: Hermes Operator &amp; Collaborative Orchestration</div>
+    <span class="feature-tag">Orchestration</span>
+  </div>
+  <div class="feature-desc">Coordinates market cadence and drives interactive multi-turn dialogue with the AI Brain.</div>
+  <ul class="feature-list">
+    <li><strong>Autonomous Candle Boundary Scheduler:</strong> Schedules observation runs strictly at 15-minute and 1-hour candle completion boundaries, sleeping between intervals without CPU spin-locking.</li>
+    <li><strong>Multi-Turn Collaborative Inquiry Loop:</strong> Hermes presents market data; Brain requests missing context (e.g. <em>"Check 25300 PE Open Interest buildup"</em>); Hermes executes browser tools to retrieve evidence; Brain finalizes trade candidate.</li>
+    <li><strong>Candidate Halting:</strong> Immediately halts upon reaching <code>CANDIDATE</code>, passing the proposal downstream to the Safety Guard without unauthorized broker placement.</li>
+    <li><strong>Operator Instruction Subsystem:</strong> Allows human steering via CLI (<code>instruction</code>, <code>instruction-list</code>) with deterministic regex boundaries rejecting prohibited directives.</li>
+  </ul>
+</div>
+
+<div class="page-break"></div>
+
+<!-- Domain 4 -->
+<div class="feature-box">
+  <div class="feature-header">
+    <div class="feature-title">Feature Domain 4: Deterministic Safety Guard (Locked Risk Engine)</div>
+    <span class="feature-tag">Safety Guard</span>
+  </div>
+  <div class="feature-desc">Non-bypassable circuit breakers standing between cognitive reasoning and broker execution.</div>
+  <ul class="feature-list">
+    <li><strong>Portfolio Daily Loss Cap (₹2,000):</strong> Hard circuit breaker halting all system trading if cumulative daily loss reaches ₹2,000.</li>
+    <li><strong>Instrument Daily Loss Cap (₹1,000):</strong> Independent ₹1,000 daily loss stop for NIFTY and BANKNIFTY.</li>
+    <li><strong>Daily Trade Frequency Limit:</strong> Maximum 3 trades per day for NIFTY, and maximum 3 trades per day for BANKNIFTY.</li>
+    <li><strong>Strict 1-Lot Position Sizing:</strong> Mandates exactly 1 lot per trade (65 qty for NIFTY, 30 qty for BANKNIFTY); rejects excess lots instantly.</li>
+    <li><strong>Single Active Instrument Policy:</strong> Only 1 instrument allowed to be active concurrently. Multi-symbol overlapping is strictly blocked.</li>
+    <li><strong>Mandatory 1:3 Risk-to-Reward (R:R):</strong> Rejects any trade plan where the reward-to-risk ratio falls below 1:3.0.</li>
+    <li><strong>Intraday Timing Filters:</strong> Blocks new entries during opening volatility (09:15–09:25 IST) and pre-close square-off windows (after 15:15 IST).</li>
+    <li><strong>Paper Mode Verification:</strong> Checks Sensibull DOM badges to guarantee paper trading environment; aborts if live account detected.</li>
+    <li><strong>Fail-Closed Design:</strong> Any unknown position or platform error defaults immediately to a safe, non-executing state.</li>
+  </ul>
+</div>
+
+<!-- Domain 5 -->
+<div class="feature-box">
+  <div class="feature-header">
+    <div class="feature-title">Feature Domain 5: Sensibull Paper Broker &amp; Execution Lifecycle</div>
+    <span class="feature-tag">Execution</span>
+  </div>
+  <div class="feature-desc">Executes virtual option orders directly in Sensibull Virtual Portfolio.</div>
+  <ul class="feature-list">
+    <li><strong>DOM Action Dispatcher:</strong> Interacts with Sensibull UI elements to submit Buy/Sell virtual orders for NIFTY calls and puts.</li>
+    <li><strong>Execution Idempotency:</strong> Uses deterministic candidate hashing to prevent accidental duplicate orders.</li>
+    <li><strong>Remote-to-Local State Reconciler:</strong> Polls and verifies that placed virtual orders reflect accurately in Sensibull's position table.</li>
+    <li><strong>Complete 10-Stage Lifecycle:</strong> Manages state progression from <code>NO_POSITION</code> &rarr; <code>TRADE_INTENT</code> &rarr; <code>SAFETY_AUTHORIZED</code> &rarr; <code>POSITION_OPEN</code> &rarr; <code>POSITION_CLOSED</code>.</li>
+  </ul>
+</div>
+
+<!-- Domain 6 -->
+<div class="feature-box">
+  <div class="feature-header">
+    <div class="feature-title">Feature Domain 6: Autonomous Trade Monitoring &amp; Position Management</div>
+    <span class="feature-tag">Monitoring</span>
+  </div>
+  <div class="feature-desc">Continuously monitors open positions like a disciplined human trader.</div>
+  <ul class="feature-list">
+    <li><strong>Continuous Unrealized P&amp;L Tracking:</strong> Reads real-time position prices and calculates active profit/loss.</li>
+    <li><strong>Meaningful Move Gating:</strong> Triggers cognitive Brain reassessments only on material price moves (&gt; 1.0%) or structural candle closures, avoiding noise.</li>
+    <li><strong>Cognitive Reassessment Actions:</strong> Dispatches Brain directives: <code>CONTINUE</code>, <code>TRAIL_STOP</code>, or <code>CLOSE_NOW</code>.</li>
+    <li><strong>Automated Square-Off:</strong> Automatically executes complete liquidation on stop-loss hit or market close (15:20 IST).</li>
+    <li><strong>Lifecycle Audit Store:</strong> Logs all monitoring cycles, P&amp;L traces, and reassessments into <code>data/position_monitoring.db</code>.</li>
+  </ul>
+</div>
+
+<!-- Domain 7 -->
+<div class="feature-box">
+  <div class="feature-header">
+    <div class="feature-title">Feature Domain 7: Performance Analysis &amp; Experience Memory</div>
+    <span class="feature-tag">Experience</span>
+  </div>
+  <div class="feature-desc">Extracts grounded empirical lessons from completed trades without mutating code.</div>
+  <ul class="feature-list">
+    <li><strong>Decoupled Post-Mortem Analyzer:</strong> Separates Decision Quality, Execution Quality, and Market Outcome. Never equates <em>Profit = Good Reasoning</em> or <em>Loss = Bad Reasoning</em>.</li>
+    <li><strong>Multi-Source Timeline Reconstruction:</strong> Reconstructs entry, monitoring, and exit timelines using verified timestamps.</li>
+    <li><strong>Behavioral Taxonomy Tagging:</strong> Labels trades under structural tags (<code>BREAKOUT</code>, <code>RANGE_BOUNCE</code>, <code>VOLATILITY_EXPANSION</code>).</li>
+    <li><strong>Descriptive Performance Statistics:</strong> Calculates Win Rate, Profit Factor, Expectancy, and Average Duration stored in <code>data/experience.db</code>.</li>
+    <li><strong>Anti-Rule Safety Guard:</strong> Rejects imperative rules (<em>"NEVER BUY"</em>) to ensure memories remain descriptive historical records.</li>
+  </ul>
+</div>
+
+<div class="page-break"></div>
+
+<!-- Domain 8 -->
+<div class="feature-box">
+  <div class="feature-header">
+    <div class="feature-title">Feature Domain 8: Segregated Hermes Data Research Zone</div>
+    <span class="feature-tag">Research Lab</span>
+  </div>
+  <div class="feature-desc">An isolated quantitative research laboratory operating independently of live trading.</div>
+  <ul class="feature-list">
+    <li><strong>Dhan Broker Data Adapter:</strong> Abstract <code>DhanDataAdapter</code> with offline deterministic <code>MockDhanDataAdapter</code> generating synthetic OHLCV+OI bars, option chains, and market depth. Zero API keys required at this stage; ready for future live Dhan plug-in.</li>
+    <li><strong>Data Engineering Pipeline:</strong> Validates OHLC mathematical invariants, rejects corruptions, deduplicates bars, and resamples 1M bars into 5M, 15M, 1H, and 1D timeframes.</li>
+    <li><strong>Quantitative Indicator Preparation:</strong> Computes EMA (9, 20, 50, 200), RSI (14), MACD (12, 26, 9), ATR (14), Intraday VWAP with &plusmn;1.5 StdDev bands, Volume SMA ratios, and OI change percentages.</li>
+    <li><strong>Empirical Research Engine:</strong> Formulates falsifiable hypotheses, backtests historical forward returns, and calculates sample sizes, win rates, profit factors, and binomial p-values.</li>
+    <li><strong>Aggressive Contradiction Search:</strong> Actively hunts for counter-examples and failure regimes where setups fail, calculating false positive rates and spawning follow-up research questions.</li>
+    <li><strong>Independent Dynamic Scoring Engine:</strong> Strictly enforces the dynamic importance invariant (NO fixed or static percentage weights):
+      <pre class="code-block">Total Score = &Sigma; (Segment Score_i &times; Segment Importance_i) / &Sigma; Segment Importance_i</pre>
+      Dynamically weights segments based on active regime (trending vs consolidating vs volatile).
+    </li>
+    <li><strong>Negative Knowledge Catalog:</strong> Preserves failed hypotheses in <code>research_memory.db</code> so Hermes remembers which ideas have been statistically disproven.</li>
+  </ul>
+</div>
+
+---
+
+<h2>3. Command-Line Interface (CLI) Master Reference</h2>
+<p>The complete software capability suite is exposed through the <code>nifty-trader</code> CLI executable:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Command</th>
+      <th>Namespace / Group</th>
+      <th>Operational Function</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>nifty-trader status</code></td>
+      <td>Core System</td>
+      <td>Displays full system status, AI provider health, and risk policies</td>
+    </tr>
+    <tr>
+      <td><code>nifty-trader test-brain</code></td>
+      <td>Cognitive</td>
+      <td>Executes cognitive test with Gemini 2.5 to verify reasoning</td>
+    </tr>
+    <tr>
+      <td><code>nifty-trader browser-login</code></td>
+      <td>Sensory</td>
+      <td>Interactive browser window for secure login to Sensibull &amp; TradingView</td>
+    </tr>
+    <tr>
+      <td><code>nifty-trader market-observe</code></td>
+      <td>Perception</td>
+      <td>Captures multimodal TradingView screenshot + Sensibull option chain</td>
+    </tr>
+    <tr>
+      <td><code>nifty-trader brain-analyze</code></td>
+      <td>Cognitive</td>
+      <td>Runs full observation and triggers AI Brain market analysis</td>
+    </tr>
+    <tr>
+      <td><code>nifty-trader collaborate</code></td>
+      <td>Hermes-Brain</td>
+      <td>Executes interactive multi-turn collaborative trading inquiry</td>
+    </tr>
+    <tr>
+      <td><code>nifty-trader paper-status</code></td>
+      <td>Paper Broker</td>
+      <td>Displays Sensibull virtual portfolio status and open P&amp;L</td>
+    </tr>
+    <tr>
+      <td><code>nifty-trader paper-order</code></td>
+      <td>Paper Broker</td>
+      <td>Submits virtual option order into Sensibull Virtual Portfolio</td>
+    </tr>
+    <tr>
+      <td><code>nifty-trader position-monitor</code></td>
+      <td>Monitoring</td>
+      <td>Runs autonomous position reassessment pass on open positions</td>
+    </tr>
+    <tr>
+      <td><code>nifty-trader performance-summary</code></td>
+      <td>Experience</td>
+      <td>Displays historical Win Rate, Profit Factor, and trade metrics</td>
+    </tr>
+    <tr>
+      <td><code>nifty-trader research status</code></td>
+      <td>Research Zone</td>
+      <td>Displays research lab health, Dhan adapter status, and memory stats</td>
+    </tr>
+    <tr>
+      <td><code>nifty-trader research dataset</code></td>
+      <td>Research Zone</td>
+      <td>Ingests, cleans, and builds feature sets in research database</td>
+    </tr>
+    <tr>
+      <td><code>nifty-trader research run</code></td>
+      <td>Research Zone</td>
+      <td>Runs autonomous research loop (Hypothesis &rarr; Backtest &rarr; Contradiction)</td>
+    </tr>
+    <tr>
+      <td><code>nifty-trader research assessment</code></td>
+      <td>Research Zone</td>
+      <td>Displays dynamic assessment and situational segment weights</td>
+    </tr>
+    <tr>
+      <td><code>nifty-trader research memory</code></td>
+      <td>Research Zone</td>
+      <td>Displays verified findings catalog and negative knowledge</td>
+    </tr>
+    <tr>
+      <td><code>nifty-trader dashboard</code></td>
+      <td>Webview UI</td>
+      <td>Launches local real-time Webview Dashboard server on port 8080</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="page-break"></div>
+
+<!-- Section 4 -->
+<h2>4. Physical Data Storage &amp; Database Layout</h2>
+<p>All data persistence is strictly segregated across dedicated SQLite databases and sandbox directories:</p>
+
+<pre class="code-block">data/
+|-- browser_profile/             # Dedicated Chrome user profile (session cookies, logins)
+|-- candle_cache.db              # 1H and 15M historical candlestick cache
+|-- brain_history.db             # Full trace of Brain reasoning prompts, outputs & states
+|-- agent_instructions.db        # Operator manual instructions and directives
+|-- paper_positions.db           # Sensibull paper trades, order history & position states
+|-- position_monitoring.db       # Real-time monitoring cycles, P&L traces & reassessments
+|-- experience.db                # Post-trade post-mortems, metrics & taxonomy records
+`-- hermes_research/             # STRICTLY SEGREGATED RESEARCH DATABASES
+    |-- market_data.db           # Normalized bars, raw payloads, engineered feature sets
+    |-- research.db              # Questions, pattern definitions, hypotheses, backtest results
+    |-- assessments.db           # Dynamic assessments, dynamic segment weights & scores
+    `-- research_memory.db       # Verified findings, failed hypotheses (negative knowledge)</pre>
+
+---
+
+<h2>5. Standalone Packaging &amp; Verification</h2>
+<div class="callout-blue">
+  <div class="callout-blue-title">Distribution &amp; Portability Guarantee</div>
+  The software is packaged into a self-contained distribution wheel located at:
+  <br/>
+  <code>dist/nifty_autonomous_trader-0.1.0-py3-none-any.whl (266 KB)</code>
+  <br/>
+  It can be deployed to any clean machine running Python 3.11+ via <code>pip install &lt;wheel_file&gt;</code> without requiring prior Hermes installation or external background services.
+</div>
+
+<p>
+  <strong>Regression Test Baseline:</strong> All <strong>212 unit, integration, and contract tests</strong> pass with 100% compliance across the entire codebase.
+</p>
+
+</body>
+</html>

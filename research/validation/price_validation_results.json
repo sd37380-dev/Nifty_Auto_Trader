@@ -1,0 +1,340 @@
+{
+  "dataset_metadata": {
+    "table": "normalized_bars",
+    "database": "data/hermes_research/market_data.db",
+    "symbol": "NIFTY",
+    "exchange": "NSE (IDX_I)",
+    "instrument_type": "INDEX (Spot)",
+    "instrument_id": "13",
+    "total_5m_rows": 92739,
+    "total_15m_rows_clean": 31529,
+    "earliest_timestamp_utc": "2021-09-30T11:30:00+00:00",
+    "latest_timestamp_utc": "2026-09-29T13:40:00+00:00",
+    "timezone": "UTC (converted to Asia/Kolkata IST)",
+    "invalid_ohlc_bars": 2
+  },
+  "test_a_long_only": {
+    "total_trades": 781,
+    "long_trades": 781,
+    "short_trades": 0,
+    "wins": 255,
+    "losses": 526,
+    "win_rate": 32.65,
+    "gross_points": -855.1,
+    "net_points": -1636.1,
+    "gross_pnl_inr": -42755.0,
+    "net_pnl_inr": -339956.25,
+    "total_costs_inr": 258151.25,
+    "total_slippage_inr": 39050.0,
+    "profit_factor": 0.84,
+    "expectancy_pts": -2.09,
+    "max_drawdown_pts": 1736.6,
+    "max_drawdown_inr": 86830.0,
+    "avg_trade_pts": -2.09,
+    "avg_winner_pts": 34.18,
+    "avg_loser_pts": -19.68,
+    "avg_holding_mins": 38.2,
+    "trades_per_day": 0.63,
+    "max_consecutive_losses": 18,
+    "max_consecutive_wins": 6,
+    "yearly_stats": {
+      "2021": {
+        "year": 2021,
+        "trades": 33,
+        "win_rate": 21.21,
+        "net_points": -792.05,
+        "net_pnl_inr": -48904.33,
+        "profit_factor": 0.21,
+        "max_dd_points": 858.45
+      },
+      "2022": {
+        "year": 2022,
+        "trades": 144,
+        "win_rate": 32.64,
+        "net_points": -99.2,
+        "net_pnl_inr": -44860.67,
+        "profit_factor": 0.95,
+        "max_dd_points": 739.8
+      },
+      "2023": {
+        "year": 2023,
+        "trades": 176,
+        "win_rate": 34.66,
+        "net_points": -18.4,
+        "net_pnl_inr": -53427.88,
+        "profit_factor": 0.99,
+        "max_dd_points": 268.4
+      },
+      "2024": {
+        "year": 2024,
+        "trades": 176,
+        "win_rate": 32.39,
+        "net_points": -286.6,
+        "net_pnl_inr": -77252.53,
+        "profit_factor": 0.87,
+        "max_dd_points": 491.15
+      },
+      "2025": {
+        "year": 2025,
+        "trades": 144,
+        "win_rate": 35.42,
+        "net_points": -217.05,
+        "net_pnl_inr": -64523.6,
+        "profit_factor": 0.88,
+        "max_dd_points": 487.85
+      },
+      "2026": {
+        "year": 2026,
+        "trades": 108,
+        "win_rate": 29.63,
+        "net_points": -222.8,
+        "net_pnl_inr": -50987.24,
+        "profit_factor": 0.85,
+        "max_dd_points": 586.55
+      }
+    }
+  },
+  "test_b_short_only": {
+    "total_trades": 603,
+    "long_trades": 0,
+    "short_trades": 603,
+    "wins": 224,
+    "losses": 379,
+    "win_rate": 37.15,
+    "gross_points": 1014.2,
+    "net_points": 411.2,
+    "gross_pnl_inr": 50710.0,
+    "net_pnl_inr": -178753.04,
+    "total_costs_inr": 199313.04,
+    "total_slippage_inr": 30150.0,
+    "profit_factor": 1.05,
+    "expectancy_pts": 0.68,
+    "max_drawdown_pts": 801.6,
+    "max_drawdown_inr": 40080.0,
+    "avg_trade_pts": 0.68,
+    "avg_winner_pts": 37.95,
+    "avg_loser_pts": -21.34,
+    "avg_holding_mins": 31.7,
+    "trades_per_day": 0.48,
+    "max_consecutive_losses": 11,
+    "max_consecutive_wins": 6,
+    "yearly_stats": {
+      "2021": {
+        "year": 2021,
+        "trades": 32,
+        "win_rate": 31.25,
+        "net_points": -174.3,
+        "net_pnl_inr": -17680.67,
+        "profit_factor": 0.68,
+        "max_dd_points": 176.15
+      },
+      "2022": {
+        "year": 2022,
+        "trades": 111,
+        "win_rate": 38.74,
+        "net_points": 358.75,
+        "net_pnl_inr": -12425.73,
+        "profit_factor": 1.24,
+        "max_dd_points": 176.75
+      },
+      "2023": {
+        "year": 2023,
+        "trades": 94,
+        "win_rate": 38.3,
+        "net_points": 125.65,
+        "net_pnl_inr": -20949.49,
+        "profit_factor": 1.12,
+        "max_dd_points": 232.75
+      },
+      "2024": {
+        "year": 2024,
+        "trades": 115,
+        "win_rate": 31.3,
+        "net_points": -485.55,
+        "net_pnl_inr": -64981.76,
+        "profit_factor": 0.75,
+        "max_dd_points": 775.7
+      },
+      "2025": {
+        "year": 2025,
+        "trades": 140,
+        "win_rate": 38.57,
+        "net_points": 146.05,
+        "net_pnl_inr": -44200.99,
+        "profit_factor": 1.08,
+        "max_dd_points": 242.0
+      },
+      "2026": {
+        "year": 2026,
+        "trades": 111,
+        "win_rate": 40.54,
+        "net_points": 440.6,
+        "net_pnl_inr": -18514.4,
+        "profit_factor": 1.35,
+        "max_dd_points": 366.7
+      }
+    }
+  },
+  "test_c_long_and_short": {
+    "total_trades": 1384,
+    "long_trades": 781,
+    "short_trades": 603,
+    "wins": 479,
+    "losses": 905,
+    "win_rate": 34.61,
+    "gross_points": 159.1,
+    "net_points": -1224.9,
+    "gross_pnl_inr": 7955.0,
+    "net_pnl_inr": -518709.29,
+    "total_costs_inr": 457464.29,
+    "total_slippage_inr": 69200.0,
+    "profit_factor": 0.93,
+    "expectancy_pts": -0.89,
+    "max_drawdown_pts": 1679.65,
+    "max_drawdown_inr": 83982.5,
+    "avg_trade_pts": -0.89,
+    "avg_winner_pts": 35.94,
+    "avg_loser_pts": -20.38,
+    "avg_holding_mins": 35.4,
+    "trades_per_day": 1.11,
+    "max_consecutive_losses": 14,
+    "max_consecutive_wins": 9,
+    "yearly_stats": {
+      "2021": {
+        "year": 2021,
+        "trades": 65,
+        "win_rate": 26.15,
+        "net_points": -966.35,
+        "net_pnl_inr": -66585.0,
+        "profit_factor": 0.37,
+        "max_dd_points": 1012.75
+      },
+      "2022": {
+        "year": 2022,
+        "trades": 255,
+        "win_rate": 35.29,
+        "net_points": 259.55,
+        "net_pnl_inr": -57286.4,
+        "profit_factor": 1.07,
+        "max_dd_points": 759.9
+      },
+      "2023": {
+        "year": 2023,
+        "trades": 270,
+        "win_rate": 35.93,
+        "net_points": 107.25,
+        "net_pnl_inr": -74377.37,
+        "profit_factor": 1.04,
+        "max_dd_points": 324.25
+      },
+      "2024": {
+        "year": 2024,
+        "trades": 291,
+        "win_rate": 31.96,
+        "net_points": -772.15,
+        "net_pnl_inr": -142234.29,
+        "profit_factor": 0.81,
+        "max_dd_points": 994.15
+      },
+      "2025": {
+        "year": 2025,
+        "trades": 284,
+        "win_rate": 36.97,
+        "net_points": -71.0,
+        "net_pnl_inr": -108724.59,
+        "profit_factor": 0.98,
+        "max_dd_points": 533.35
+      },
+      "2026": {
+        "year": 2026,
+        "trades": 219,
+        "win_rate": 35.16,
+        "net_points": 217.8,
+        "net_pnl_inr": -69501.64,
+        "profit_factor": 1.08,
+        "max_dd_points": 865.4
+      }
+    }
+  },
+  "test_c_with_breakout_confirmation": {
+    "total_trades": 573,
+    "long_trades": 323,
+    "short_trades": 250,
+    "wins": 208,
+    "losses": 365,
+    "win_rate": 36.3,
+    "gross_points": 331.95,
+    "net_points": -241.05,
+    "gross_pnl_inr": 16597.5,
+    "net_pnl_inr": -201051.31,
+    "total_costs_inr": 188998.81,
+    "total_slippage_inr": 28650.0,
+    "profit_factor": 0.97,
+    "expectancy_pts": -0.42,
+    "max_drawdown_pts": 1051.3,
+    "max_drawdown_inr": 52565.0,
+    "avg_trade_pts": -0.42,
+    "avg_winner_pts": 38.25,
+    "avg_loser_pts": -22.46,
+    "avg_holding_mins": 41.0,
+    "trades_per_day": 0.46,
+    "max_consecutive_losses": 17,
+    "max_consecutive_wins": 7,
+    "yearly_stats": {
+      "2021": {
+        "year": 2021,
+        "trades": 33,
+        "win_rate": 36.36,
+        "net_points": -492.7,
+        "net_pnl_inr": -33880.38,
+        "profit_factor": 0.46,
+        "max_dd_points": 584.0
+      },
+      "2022": {
+        "year": 2022,
+        "trades": 116,
+        "win_rate": 33.62,
+        "net_points": -69.7,
+        "net_pnl_inr": -35374.31,
+        "profit_factor": 0.96,
+        "max_dd_points": 481.6
+      },
+      "2023": {
+        "year": 2023,
+        "trades": 97,
+        "win_rate": 34.02,
+        "net_points": -119.15,
+        "net_pnl_inr": -34472.57,
+        "profit_factor": 0.9,
+        "max_dd_points": 334.1
+      },
+      "2024": {
+        "year": 2024,
+        "trades": 112,
+        "win_rate": 34.82,
+        "net_points": -38.95,
+        "net_pnl_inr": -41705.94,
+        "profit_factor": 0.98,
+        "max_dd_points": 270.35
+      },
+      "2025": {
+        "year": 2025,
+        "trades": 129,
+        "win_rate": 40.31,
+        "net_points": 265.75,
+        "net_pnl_inr": -34566.75,
+        "profit_factor": 1.16,
+        "max_dd_points": 396.65
+      },
+      "2026": {
+        "year": 2026,
+        "trades": 86,
+        "win_rate": 38.37,
+        "net_points": 213.7,
+        "net_pnl_inr": -21051.36,
+        "profit_factor": 1.18,
+        "max_dd_points": 311.75
+      }
+    }
+  }
+}

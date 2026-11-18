@@ -1,0 +1,349 @@
+{
+  "question_set_a_large_candles": {
+    "Top 10%": {
+      "bullish_count": 4396,
+      "bull_next_1_prob": 51.14,
+      "bull_next_3_prob": 52.46,
+      "bull_next_6_prob": 52.12,
+      "bull_new_high_prob": 98.43,
+      "bull_retrace_25_prob": 77.05,
+      "bull_retrace_50_prob": 58.96,
+      "bull_retrace_100_prob": 33.03,
+      "bull_avg_fwd_ret_6": 1.08,
+      "bull_avg_mfe_6": 51.36,
+      "bull_avg_mae_6": 53.31,
+      "bearish_count": 4861,
+      "bear_next_1_prob": 48.57,
+      "bear_next_3_prob": 47.38,
+      "bear_next_6_prob": 47.09,
+      "bear_avg_fwd_ret_6": 4.05,
+      "bear_avg_mfe_6": 53.22,
+      "bear_avg_mae_6": 54.59,
+      "bear_retrace_50_prob": 62.09
+    },
+    "Top 5%": {
+      "bullish_count": 2177,
+      "bull_next_1_prob": 51.49,
+      "bull_next_3_prob": 53.1,
+      "bull_next_6_prob": 51.13,
+      "bull_new_high_prob": 98.25,
+      "bull_retrace_25_prob": 74.6,
+      "bull_retrace_50_prob": 56.13,
+      "bull_retrace_100_prob": 29.31,
+      "bull_avg_fwd_ret_6": -0.83,
+      "bull_avg_mfe_6": 61.2,
+      "bull_avg_mae_6": 65.96,
+      "bearish_count": 2453,
+      "bear_next_1_prob": 49.49,
+      "bear_next_3_prob": 48.15,
+      "bear_next_6_prob": 49.33,
+      "bear_avg_fwd_ret_6": 4.88,
+      "bear_avg_mfe_6": 65.39,
+      "bear_avg_mae_6": 66.44,
+      "bear_retrace_50_prob": 56.3
+    },
+    "Top 2%": {
+      "bullish_count": 869,
+      "bull_next_1_prob": 52.24,
+      "bull_next_3_prob": 53.74,
+      "bull_next_6_prob": 51.09,
+      "bull_new_high_prob": 98.5,
+      "bull_retrace_25_prob": 71.12,
+      "bull_retrace_50_prob": 52.24,
+      "bull_retrace_100_prob": 24.86,
+      "bull_avg_fwd_ret_6": -6.52,
+      "bull_avg_mfe_6": 80.93,
+      "bull_avg_mae_6": 98.18,
+      "bearish_count": 983,
+      "bear_next_1_prob": 48.02,
+      "bear_next_3_prob": 46.69,
+      "bear_next_6_prob": 47.0,
+      "bear_avg_fwd_ret_6": 12.63,
+      "bear_avg_mfe_6": 90.32,
+      "bear_avg_mae_6": 98.72,
+      "bear_retrace_50_prob": 54.73
+    },
+    "Top 1%": {
+      "bullish_count": 435,
+      "bull_next_1_prob": 49.66,
+      "bull_next_3_prob": 51.95,
+      "bull_next_6_prob": 51.95,
+      "bull_new_high_prob": 98.16,
+      "bull_retrace_25_prob": 71.72,
+      "bull_retrace_50_prob": 51.49,
+      "bull_retrace_100_prob": 25.06,
+      "bull_avg_fwd_ret_6": -12.25,
+      "bull_avg_mfe_6": 112.15,
+      "bull_avg_mae_6": 144.89,
+      "bearish_count": 490,
+      "bear_next_1_prob": 47.55,
+      "bear_next_3_prob": 47.14,
+      "bear_next_6_prob": 47.76,
+      "bear_avg_fwd_ret_6": 17.81,
+      "bear_avg_mfe_6": 128.34,
+      "bear_avg_mae_6": 141.95,
+      "bear_retrace_50_prob": 55.31
+    }
+  },
+  "question_set_b_wicks": {
+    "Wick >= 40%": {
+      "upper_wick_count": 22118,
+      "upper_reversal_next_1_prob": 47.52,
+      "upper_reversal_next_3_prob": 47.29,
+      "upper_reversal_next_6_prob": 48.06,
+      "upper_avg_ret_6": 0.96,
+      "upper_high_broken_6_prob": 75.95,
+      "upper_low_broken_6_prob": 98.06,
+      "lower_wick_count": 24117,
+      "lower_reversal_next_1_prob": 49.29,
+      "lower_reversal_next_3_prob": 50.37,
+      "lower_reversal_next_6_prob": 50.57,
+      "lower_avg_ret_6": -0.51,
+      "lower_low_broken_6_prob": 73.43
+    },
+    "Wick >= 50%": {
+      "upper_wick_count": 13418,
+      "upper_reversal_next_1_prob": 47.57,
+      "upper_reversal_next_3_prob": 46.79,
+      "upper_reversal_next_6_prob": 47.53,
+      "upper_avg_ret_6": 1.0,
+      "upper_high_broken_6_prob": 73.36,
+      "upper_low_broken_6_prob": 98.11,
+      "lower_wick_count": 15216,
+      "lower_reversal_next_1_prob": 49.43,
+      "lower_reversal_next_3_prob": 50.55,
+      "lower_reversal_next_6_prob": 50.55,
+      "lower_avg_ret_6": -0.48,
+      "lower_low_broken_6_prob": 70.33
+    },
+    "Wick >= 60%": {
+      "upper_wick_count": 7337,
+      "upper_reversal_next_1_prob": 47.13,
+      "upper_reversal_next_3_prob": 46.6,
+      "upper_reversal_next_6_prob": 47.29,
+      "upper_avg_ret_6": 1.04,
+      "upper_high_broken_6_prob": 70.72,
+      "upper_low_broken_6_prob": 98.06,
+      "lower_wick_count": 8575,
+      "lower_reversal_next_1_prob": 49.53,
+      "lower_reversal_next_3_prob": 50.4,
+      "lower_reversal_next_6_prob": 50.03,
+      "lower_avg_ret_6": -1.11,
+      "lower_low_broken_6_prob": 67.38
+    },
+    "Wick >= 70%": {
+      "upper_wick_count": 3410,
+      "upper_reversal_next_1_prob": 47.57,
+      "upper_reversal_next_3_prob": 46.63,
+      "upper_reversal_next_6_prob": 47.39,
+      "upper_avg_ret_6": 0.59,
+      "upper_high_broken_6_prob": 67.36,
+      "upper_low_broken_6_prob": 98.15,
+      "lower_wick_count": 4045,
+      "lower_reversal_next_1_prob": 50.63,
+      "lower_reversal_next_3_prob": 50.7,
+      "lower_reversal_next_6_prob": 49.94,
+      "lower_avg_ret_6": -1.97,
+      "lower_low_broken_6_prob": 63.61
+    }
+  },
+  "question_set_c_consecutive_candles": {
+    "2 Consecutive": {
+      "bullish_count": 11815,
+      "bull_continuation_prob_1": 48.64,
+      "bull_continuation_prob_3": 50.27,
+      "bull_continuation_prob_6": 50.51,
+      "bull_avg_ret_6": -0.62,
+      "bull_avg_mfe_6": 27.28,
+      "bull_avg_mae_6": 29.5,
+      "bearish_count": 11741,
+      "bear_continuation_prob_1": 47.1,
+      "bear_continuation_prob_3": 47.22,
+      "bear_continuation_prob_6": 46.96,
+      "bear_avg_ret_6": 1.23,
+      "bear_avg_mfe_6": 29.57,
+      "bear_avg_mae_6": 29.79
+    },
+    "3 Consecutive": {
+      "bullish_count": 5696,
+      "bull_continuation_prob_1": 49.6,
+      "bull_continuation_prob_3": 50.02,
+      "bull_continuation_prob_6": 50.3,
+      "bull_avg_ret_6": -0.15,
+      "bull_avg_mfe_6": 27.28,
+      "bull_avg_mae_6": 28.26,
+      "bearish_count": 5597,
+      "bear_continuation_prob_1": 47.94,
+      "bear_continuation_prob_3": 47.67,
+      "bear_continuation_prob_6": 47.65,
+      "bear_avg_ret_6": 0.31,
+      "bear_avg_mfe_6": 31.07,
+      "bear_avg_mae_6": 30.1
+    },
+    "4 Consecutive": {
+      "bullish_count": 2803,
+      "bull_continuation_prob_1": 49.84,
+      "bull_continuation_prob_3": 51.34,
+      "bull_continuation_prob_6": 52.59,
+      "bull_avg_ret_6": 2.43,
+      "bull_avg_mfe_6": 29.05,
+      "bull_avg_mae_6": 27.31,
+      "bearish_count": 2711,
+      "bear_continuation_prob_1": 45.81,
+      "bear_continuation_prob_3": 46.33,
+      "bear_continuation_prob_6": 47.84,
+      "bear_avg_ret_6": -0.13,
+      "bear_avg_mfe_6": 31.97,
+      "bear_avg_mae_6": 31.57
+    },
+    "5 Consecutive": {
+      "bullish_count": 1386,
+      "bull_continuation_prob_1": 47.33,
+      "bull_continuation_prob_3": 50.94,
+      "bull_continuation_prob_6": 52.89,
+      "bull_avg_ret_6": 3.67,
+      "bull_avg_mfe_6": 30.88,
+      "bull_avg_mae_6": 28.14,
+      "bearish_count": 1266,
+      "bear_continuation_prob_1": 45.02,
+      "bear_continuation_prob_3": 47.16,
+      "bear_continuation_prob_6": 49.61,
+      "bear_avg_ret_6": -0.65,
+      "bear_avg_mfe_6": 35.67,
+      "bear_avg_mae_6": 32.96
+    }
+  },
+  "question_set_d_inside_bars": {
+    "total_inside_bars": 12164,
+    "percentage_of_all_bars": 13.14,
+    "next_candle_up_prob": 49.36,
+    "next_candle_down_prob": 49.71,
+    "avg_fwd_ret_6": -0.21,
+    "avg_mfe_long_6": 29.93,
+    "avg_mae_long_6": 31.35
+  },
+  "question_set_j_gaps": {
+    "total_sessions_analyzed": 1236,
+    "gap_up_count": 713,
+    "gap_up_fill_rate": 63.53,
+    "gap_up_continuation_rate": 47.12,
+    "gap_down_count": 451,
+    "gap_down_fill_rate": 59.42,
+    "gap_down_continuation_rate": 49.89,
+    "gap_by_size": {
+      "Small Gap (5-30 pts)": {
+        "count": 289,
+        "fill_rate_percent": 89.62,
+        "avg_gap_size": 17.62
+      },
+      "Medium Gap (30-75 pts)": {
+        "count": 419,
+        "fill_rate_percent": 72.32,
+        "avg_gap_size": 50.94
+      },
+      "Large Gap (75-150 pts)": {
+        "count": 311,
+        "fill_rate_percent": 44.69,
+        "avg_gap_size": 101.3
+      },
+      "Extreme Gap (>150 pts)": {
+        "count": 146,
+        "fill_rate_percent": 14.38,
+        "avg_gap_size": 271.8
+      }
+    }
+  },
+  "question_set_k_opening_range": {
+    "ORB_15": {
+      "sessions": 1236,
+      "orb_high_equals_day_high_prob": 29.29,
+      "orb_low_equals_day_low_prob": 24.68,
+      "at_least_one_extreme_set_in_orb_prob": 53.32
+    },
+    "ORB_30": {
+      "sessions": 1236,
+      "orb_high_equals_day_high_prob": 34.71,
+      "orb_low_equals_day_low_prob": 32.04,
+      "at_least_one_extreme_set_in_orb_prob": 64.64
+    }
+  },
+  "question_set_l_tod_map": {
+    "09:15-09:30": {
+      "bars_count": 3708,
+      "avg_range_pts": 43.55,
+      "avg_body_pts": 23.02,
+      "relative_atr_volatility": 1.66,
+      "directional_persistence_prob": 50.81,
+      "avg_excursion_30m_pts": 37.14
+    },
+    "09:30-10:00": {
+      "bars_count": 7413,
+      "avg_range_pts": 26.99,
+      "avg_body_pts": 14.5,
+      "relative_atr_volatility": 0.99,
+      "directional_persistence_prob": 49.84,
+      "avg_excursion_30m_pts": 31.35
+    },
+    "10:00-11:00": {
+      "bars_count": 14798,
+      "avg_range_pts": 20.57,
+      "avg_body_pts": 10.86,
+      "relative_atr_volatility": 0.81,
+      "directional_persistence_prob": 48.57,
+      "avg_excursion_30m_pts": 25.06
+    },
+    "11:00-12:00": {
+      "bars_count": 14823,
+      "avg_range_pts": 18.27,
+      "avg_body_pts": 9.55,
+      "relative_atr_volatility": 0.82,
+      "directional_persistence_prob": 48.49,
+      "avg_excursion_30m_pts": 23.42
+    },
+    "12:00-13:00": {
+      "bars_count": 14831,
+      "avg_range_pts": 18.86,
+      "avg_body_pts": 9.89,
+      "relative_atr_volatility": 0.91,
+      "directional_persistence_prob": 48.39,
+      "avg_excursion_30m_pts": 23.93
+    },
+    "13:00-14:00": {
+      "bars_count": 14811,
+      "avg_range_pts": 19.33,
+      "avg_body_pts": 9.8,
+      "relative_atr_volatility": 1.0,
+      "directional_persistence_prob": 48.06,
+      "avg_excursion_30m_pts": 24.51
+    },
+    "14:00-15:00": {
+      "bars_count": 14817,
+      "avg_range_pts": 20.53,
+      "avg_body_pts": 10.53,
+      "relative_atr_volatility": 1.05,
+      "directional_persistence_prob": 48.57,
+      "avg_excursion_30m_pts": 28.78
+    },
+    "15:00-15:25": {
+      "bars_count": 7404,
+      "avg_range_pts": 20.86,
+      "avg_body_pts": 11.25,
+      "relative_atr_volatility": 1.03,
+      "directional_persistence_prob": 49.96,
+      "avg_excursion_30m_pts": 87.28
+    }
+  },
+  "question_set_m_vwap": {
+    "extended_bars_count": 41884,
+    "reversion_rate_within_1_hour": 47.05,
+    "avg_reversion_points_1_hour": 49.77
+  },
+  "question_set_n_pdl_pdh": {
+    "pdh_first_touches": 1245,
+    "pdh_continuation_rate_30m": 52.05,
+    "pdh_failure_reversal_rate_30m": 42.81,
+    "pdl_first_touches": 1163,
+    "pdl_continuation_rate_30m": 47.72,
+    "pdl_failure_reversal_rate_30m": 47.29
+  }
+}

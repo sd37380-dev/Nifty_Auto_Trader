@@ -55,6 +55,12 @@ class BrowserAgent:
 
     async def _execute_with_retry(self, action_coro_fn):
         """Executes a browser operation with bounded retries and recovery."""
+        if hasattr(self.provider, "_is_ws_open") and not self.provider._is_ws_open():
+            try:
+                await self.provider.start()
+            except Exception as start_err:
+                logger.debug("Pre-emptive browser start encountered: %s", start_err)
+
         last_error = None
         for attempt in range(self.max_retries + 1):
             try:
@@ -132,12 +138,26 @@ class BrowserAgent:
 
     async def inspect_tradingview_nifty(self, timeframe: str = "1h") -> BrowserObservation:
         """
-        Targeted capability method for inspecting TradingView NIFTY 50 page.
+        Targeted capability method for inspecting TradingView NIFTY 50 interactive chart page.
         Does NOT produce trading signals. Only captures perception.
         """
-        target_url = "https://in.tradingview.com/symbols/NSE-NIFTY/"
-        logger.info("Navigating to TradingView NIFTY 50 (%s)...", target_url)
-        obs = await self.navigate(target_url, capture_screen=True, screenshot_prefix=f"tradingview_nifty_{timeframe}")
+        target_url = "https://in.tradingview.com/chart/?symbol=NSE%3ANIFTY"
+        logger.info("Navigating to TradingView NIFTY 50 Interactive Chart (%s)...", target_url)
+
+        try:
+            await self.provider._send_cdp("Emulation.setDeviceMetricsOverride", {
+                "width": 1920,
+                "height": 1080,
+                "deviceScaleFactor": 1,
+                "mobile": False,
+            })
+        except Exception as e:
+            logger.debug("Could not override device metrics: %s", e)
+
+        await self._execute_with_retry(lambda: self.provider.open_url(target_url))
+        # Allow TradingView WebGL canvas and user chart indicators to stabilize
+        await asyncio.sleep(4.0)
+        obs = await self.observe_current_page(capture_screen=True, screenshot_prefix=f"tradingview_nifty_{timeframe}")
 
         # If timeframe interaction requested, attempt to click the matching button if visible
         if timeframe.lower() in ["1h", "15m"]:

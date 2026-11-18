@@ -1,0 +1,6464 @@
+{
+  "metadata": {
+    "total_loaded": 92739,
+    "total_in_session": 92605,
+    "invalid_ohlc_count": 2,
+    "invalid_rows": [
+      {
+        "timestamp": "2022-03-25T03:45:00+00:00",
+        "open": 17289.0,
+        "high": 17287.1,
+        "low": 17209.65,
+        "close": 17215.1
+      },
+      {
+        "timestamp": "2022-03-30T03:45:00+00:00",
+        "open": 17468.15,
+        "high": 17459.2,
+        "low": 17401.25,
+        "close": 17404.7
+      }
+    ],
+    "unique_trading_days": 1242,
+    "earliest_ist": "2021-10-01 09:15:00+05:30",
+    "latest_ist": "2026-09-29 15:25:00+05:30"
+  },
+  "baseline_summary": [
+    {
+      "hypothesis_id": "H01_ORB15_BREAKOUT",
+      "strategy_name": "ORB-15 Breakout Continuation",
+      "direction": "BOTH",
+      "timeframe": "5M",
+      "category": "BREAKOUT",
+      "description": "First candle breaking out of initial 15-minute range between 09:30 and 11:30 IST.",
+      "trades": 1615,
+      "win_rate": 37.15,
+      "expectancy": 1.79,
+      "profit_factor": 1.09,
+      "gross_points": 4499.15,
+      "net_points": 2884.15,
+      "gross_pnl_inr": 224957.5,
+      "net_pnl_inr": -385834.39,
+      "total_costs_inr": 530041.89,
+      "slippage_inr": 80750.0,
+      "max_drawdown": 1309.05,
+      "average_trade": 1.79,
+      "avg_holding_mins": 76.8,
+      "trades_per_day": 1.3,
+      "max_consecutive_losses": 13,
+      "status": "PROMISING",
+      "metrics_full": {
+        "total_trades": 1615,
+        "long_trades": 781,
+        "short_trades": 834,
+        "wins": 600,
+        "losses": 1015,
+        "win_rate": 37.15,
+        "gross_points": 4499.15,
+        "net_points": 2884.15,
+        "gross_pnl_inr": 224957.5,
+        "net_pnl_inr": -385834.39,
+        "total_costs_inr": 530041.89,
+        "total_slippage_inr": 80750.0,
+        "profit_factor": 1.09,
+        "expectancy_pts": 1.79,
+        "max_drawdown_pts": 1309.05,
+        "max_drawdown_inr": 65452.5,
+        "avg_trade_pts": 1.79,
+        "avg_winner_pts": 60.82,
+        "avg_loser_pts": -33.11,
+        "avg_holding_mins": 76.8,
+        "trades_per_day": 1.3,
+        "max_consecutive_losses": 13,
+        "max_consecutive_wins": 5,
+        "yearly_stats": {
+          "2021": {
+            "year": 2021,
+            "trades": 84,
+            "win_rate": 41.67,
+            "gross_points": 862.15,
+            "net_points": 778.15,
+            "net_pnl_inr": 15427.53,
+            "profit_factor": 1.52,
+            "max_dd_pts": 140.1
+          },
+          "2022": {
+            "year": 2022,
+            "trades": 324,
+            "win_rate": 39.81,
+            "gross_points": 1252.75,
+            "net_points": 928.75,
+            "net_pnl_inr": -42510.84,
+            "profit_factor": 1.15,
+            "max_dd_pts": 572.25
+          },
+          "2023": {
+            "year": 2023,
+            "trades": 318,
+            "win_rate": 35.85,
+            "gross_points": 253.25,
+            "net_points": -64.75,
+            "net_pnl_inr": -97197.91,
+            "profit_factor": 0.99,
+            "max_dd_pts": 672.1
+          },
+          "2024": {
+            "year": 2024,
+            "trades": 339,
+            "win_rate": 35.4,
+            "gross_points": 587.75,
+            "net_points": 248.75,
+            "net_pnl_inr": -108262.71,
+            "profit_factor": 1.03,
+            "max_dd_pts": 1309.05
+          },
+          "2025": {
+            "year": 2025,
+            "trades": 324,
+            "win_rate": 38.58,
+            "gross_points": 1597.05,
+            "net_points": 1273.05,
+            "net_pnl_inr": -56606.26,
+            "profit_factor": 1.19,
+            "max_dd_pts": 551.5
+          },
+          "2026": {
+            "year": 2026,
+            "trades": 226,
+            "win_rate": 34.07,
+            "gross_points": -53.8,
+            "net_points": -279.8,
+            "net_pnl_inr": -96684.2,
+            "profit_factor": 0.95,
+            "max_dd_pts": 679.6
+          }
+        },
+        "tod_stats": {
+          "09:30-10:00": {
+            "tod": "09:30-10:00",
+            "trades": 873,
+            "win_rate": 35.62,
+            "net_points": 884.15,
+            "profit_factor": 1.05
+          },
+          "10:00-11:00": {
+            "tod": "10:00-11:00",
+            "trades": 539,
+            "win_rate": 39.52,
+            "net_points": 1435.9,
+            "profit_factor": 1.14
+          },
+          "11:00-12:00": {
+            "tod": "11:00-12:00",
+            "trades": 203,
+            "win_rate": 37.44,
+            "net_points": 564.1,
+            "profit_factor": 1.16
+          }
+        }
+      }
+    },
+    {
+      "hypothesis_id": "H01_ORB15_BREAKOUT",
+      "strategy_name": "ORB-15 Breakout Continuation",
+      "direction": "LONG_ONLY",
+      "timeframe": "5M",
+      "category": "BREAKOUT",
+      "description": "First candle breaking out of initial 15-minute range between 09:30 and 11:30 IST.",
+      "trades": 781,
+      "win_rate": 37.13,
+      "expectancy": 2.03,
+      "profit_factor": 1.1,
+      "gross_points": 2364.25,
+      "net_points": 1583.25,
+      "gross_pnl_inr": 118212.5,
+      "net_pnl_inr": -177669.84,
+      "total_costs_inr": 256832.34,
+      "slippage_inr": 39050.0,
+      "max_drawdown": 785.65,
+      "average_trade": 2.03,
+      "avg_holding_mins": 77.7,
+      "trades_per_day": 0.63,
+      "max_consecutive_losses": 15,
+      "status": "ROBUST CANDIDATE",
+      "metrics_full": {
+        "total_trades": 781,
+        "long_trades": 781,
+        "short_trades": 0,
+        "wins": 290,
+        "losses": 491,
+        "win_rate": 37.13,
+        "gross_points": 2364.25,
+        "net_points": 1583.25,
+        "gross_pnl_inr": 118212.5,
+        "net_pnl_inr": -177669.84,
+        "total_costs_inr": 256832.34,
+        "total_slippage_inr": 39050.0,
+        "profit_factor": 1.1,
+        "expectancy_pts": 2.03,
+        "max_drawdown_pts": 785.65,
+        "max_drawdown_inr": 39282.5,
+        "avg_trade_pts": 2.03,
+        "avg_winner_pts": 58.38,
+        "avg_loser_pts": -31.26,
+        "avg_holding_mins": 77.7,
+        "trades_per_day": 0.63,
+        "max_consecutive_losses": 15,
+        "max_consecutive_wins": 6,
+        "yearly_stats": {
+          "2021": {
+            "year": 2021,
+            "trades": 42,
+            "win_rate": 33.33,
+            "gross_points": 48.15,
+            "net_points": 6.15,
+            "net_pnl_inr": -11416.51,
+            "profit_factor": 1.01,
+            "max_dd_pts": 433.75
+          },
+          "2022": {
+            "year": 2022,
+            "trades": 152,
+            "win_rate": 44.08,
+            "gross_points": 1317.2,
+            "net_points": 1165.2,
+            "net_pnl_inr": 16477.76,
+            "profit_factor": 1.49,
+            "max_dd_pts": 369.35
+          },
+          "2023": {
+            "year": 2023,
+            "trades": 159,
+            "win_rate": 33.33,
+            "gross_points": -10.0,
+            "net_points": -169.0,
+            "net_pnl_inr": -55651.82,
+            "profit_factor": 0.94,
+            "max_dd_pts": 555.95
+          },
+          "2024": {
+            "year": 2024,
+            "trades": 159,
+            "win_rate": 37.11,
+            "gross_points": 480.6,
+            "net_points": 321.6,
+            "net_pnl_inr": -40597.37,
+            "profit_factor": 1.09,
+            "max_dd_pts": 488.8
+          },
+          "2025": {
+            "year": 2025,
+            "trades": 164,
+            "win_rate": 39.02,
+            "gross_points": 695.7,
+            "net_points": 531.7,
+            "net_pnl_inr": -34438.7,
+            "profit_factor": 1.16,
+            "max_dd_pts": 369.5
+          },
+          "2026": {
+            "year": 2026,
+            "trades": 105,
+            "win_rate": 31.43,
+            "gross_points": -167.4,
+            "net_points": -272.4,
+            "net_pnl_inr": -52043.2,
+            "profit_factor": 0.89,
+            "max_dd_pts": 621.75
+          }
+        },
+        "tod_stats": {
+          "09:30-10:00": {
+            "tod": "09:30-10:00",
+            "trades": 409,
+            "win_rate": 36.43,
+            "net_points": 823.3,
+            "profit_factor": 1.1
+          },
+          "10:00-11:00": {
+            "tod": "10:00-11:00",
+            "trades": 267,
+            "win_rate": 38.58,
+            "net_points": 527.4,
+            "profit_factor": 1.11
+          },
+          "11:00-12:00": {
+            "tod": "11:00-12:00",
+            "trades": 105,
+            "win_rate": 36.19,
+            "net_points": 232.55,
+            "profit_factor": 1.13
+          }
+        }
+      }
+    },
+    {
+      "hypothesis_id": "H01_ORB15_BREAKOUT",
+      "strategy_name": "ORB-15 Breakout Continuation",
+      "direction": "SHORT_ONLY",
+      "timeframe": "5M",
+      "category": "BREAKOUT",
+      "description": "First candle breaking out of initial 15-minute range between 09:30 and 11:30 IST.",
+      "trades": 834,
+      "win_rate": 37.17,
+      "expectancy": 1.56,
+      "profit_factor": 1.07,
+      "gross_points": 2134.9,
+      "net_points": 1300.9,
+      "gross_pnl_inr": 106745.0,
+      "net_pnl_inr": -208164.55,
+      "total_costs_inr": 273209.55,
+      "slippage_inr": 41700.0,
+      "max_drawdown": 1366.85,
+      "average_trade": 1.56,
+      "avg_holding_mins": 75.9,
+      "trades_per_day": 0.67,
+      "max_consecutive_losses": 13,
+      "status": "PROMISING",
+      "metrics_full": {
+        "total_trades": 834,
+        "long_trades": 0,
+        "short_trades": 834,
+        "wins": 310,
+        "losses": 524,
+        "win_rate": 37.17,
+        "gross_points": 2134.9,
+        "net_points": 1300.9,
+        "gross_pnl_inr": 106745.0,
+        "net_pnl_inr": -208164.55,
+        "total_costs_inr": 273209.55,
+        "total_slippage_inr": 41700.0,
+        "profit_factor": 1.07,
+        "expectancy_pts": 1.56,
+        "max_drawdown_pts": 1366.85,
+        "max_drawdown_inr": 68342.5,
+        "avg_trade_pts": 1.56,
+        "avg_winner_pts": 63.1,
+        "avg_loser_pts": -34.85,
+        "avg_holding_mins": 75.9,
+        "trades_per_day": 0.67,
+        "max_consecutive_losses": 13,
+        "max_consecutive_wins": 6,
+        "yearly_stats": {
+          "2021": {
+            "year": 2021,
+            "trades": 42,
+            "win_rate": 50.0,
+            "gross_points": 814.0,
+            "net_points": 772.0,
+            "net_pnl_inr": 26844.04,
+            "profit_factor": 2.14,
+            "max_dd_pts": 173.55
+          },
+          "2022": {
+            "year": 2022,
+            "trades": 172,
+            "win_rate": 36.05,
+            "gross_points": -64.45,
+            "net_points": -236.45,
+            "net_pnl_inr": -58988.6,
+            "profit_factor": 0.94,
+            "max_dd_pts": 912.75
+          },
+          "2023": {
+            "year": 2023,
+            "trades": 159,
+            "win_rate": 38.36,
+            "gross_points": 263.25,
+            "net_points": 104.25,
+            "net_pnl_inr": -41546.09,
+            "profit_factor": 1.04,
+            "max_dd_pts": 343.3
+          },
+          "2024": {
+            "year": 2024,
+            "trades": 180,
+            "win_rate": 33.89,
+            "gross_points": 107.15,
+            "net_points": -72.85,
+            "net_pnl_inr": -67665.34,
+            "profit_factor": 0.98,
+            "max_dd_pts": 1366.85
+          },
+          "2025": {
+            "year": 2025,
+            "trades": 160,
+            "win_rate": 38.12,
+            "gross_points": 901.35,
+            "net_points": 741.35,
+            "net_pnl_inr": -22167.56,
+            "profit_factor": 1.21,
+            "max_dd_pts": 633.1
+          },
+          "2026": {
+            "year": 2026,
+            "trades": 121,
+            "win_rate": 36.36,
+            "gross_points": 113.6,
+            "net_points": -7.4,
+            "net_pnl_inr": -44641.0,
+            "profit_factor": 1.0,
+            "max_dd_pts": 514.9
+          }
+        },
+        "tod_stats": {
+          "09:30-10:00": {
+            "tod": "09:30-10:00",
+            "trades": 464,
+            "win_rate": 34.91,
+            "net_points": 60.85,
+            "profit_factor": 1.01
+          },
+          "10:00-11:00": {
+            "tod": "10:00-11:00",
+            "trades": 272,
+            "win_rate": 40.44,
+            "net_points": 908.5,
+            "profit_factor": 1.16
+          },
+          "11:00-12:00": {
+            "tod": "11:00-12:00",
+            "trades": 98,
+            "win_rate": 38.78,
+            "net_points": 331.55,
+            "profit_factor": 1.19
+          }
+        }
+      }
+    },
+    {
+      "hypothesis_id": "H02_ORB30_BREAKOUT",
+      "strategy_name": "ORB-30 Breakout Continuation",
+      "direction": "BOTH",
+      "timeframe": "5M",
+      "category": "BREAKOUT",
+      "description": "First candle breaking out of initial 30-minute range between 09:45 and 12:00 IST.",
+      "trades": 1520,
+      "win_rate": 37.11,
+      "expectancy": 1.42,
+      "profit_factor": 1.07,
+      "gross_points": 3671.4,
+      "net_points": 2151.4,
+      "gross_pnl_inr": 183570.0,
+      "net_pnl_inr": -390733.87,
+      "total_costs_inr": 498303.87,
+      "slippage_inr": 76000.0,
+      "max_drawdown": 1049.6,
+      "average_trade": 1.42,
+      "avg_holding_mins": 72.3,
+      "trades_per_day": 1.22,
+      "max_consecutive_losses": 13,
+      "status": "PROMISING",
+      "metrics_full": {
+        "total_trades": 1520,
+        "long_trades": 768,
+        "short_trades": 752,
+        "wins": 564,
+        "losses": 956,
+        "win_rate": 37.11,
+        "gross_points": 3671.4,
+        "net_points": 2151.4,
+        "gross_pnl_inr": 183570.0,
+        "net_pnl_inr": -390733.87,
+        "total_costs_inr": 498303.87,
+        "total_slippage_inr": 76000.0,
+        "profit_factor": 1.07,
+        "expectancy_pts": 1.42,
+        "max_drawdown_pts": 1049.6,
+        "max_drawdown_inr": 52480.0,
+        "avg_trade_pts": 1.42,
+        "avg_winner_pts": 55.66,
+        "avg_loser_pts": -30.59,
+        "avg_holding_mins": 72.3,
+        "trades_per_day": 1.22,
+        "max_consecutive_losses": 13,
+        "max_consecutive_wins": 6,
+        "yearly_stats": {
+          "2021": {
+            "year": 2021,
+            "trades": 79,
+            "win_rate": 37.97,
+            "gross_points": 461.55,
+            "net_points": 382.55,
+            "net_pnl_inr": -2883.63,
+            "profit_factor": 1.25,
+            "max_dd_pts": 256.35
+          },
+          "2022": {
+            "year": 2022,
+            "trades": 314,
+            "win_rate": 38.22,
+            "gross_points": 410.9,
+            "net_points": 96.9,
+            "net_pnl_inr": -81309.07,
+            "profit_factor": 1.02,
+            "max_dd_pts": 792.7
+          },
+          "2023": {
+            "year": 2023,
+            "trades": 293,
+            "win_rate": 36.52,
+            "gross_points": 190.75,
+            "net_points": -102.25,
+            "net_pnl_inr": -91760.65,
+            "profit_factor": 0.98,
+            "max_dd_pts": 575.85
+          },
+          "2024": {
+            "year": 2024,
+            "trades": 322,
+            "win_rate": 37.27,
+            "gross_points": 1340.1,
+            "net_points": 1018.1,
+            "net_pnl_inr": -63931.14,
+            "profit_factor": 1.14,
+            "max_dd_pts": 632.15
+          },
+          "2025": {
+            "year": 2025,
+            "trades": 287,
+            "win_rate": 38.33,
+            "gross_points": 1369.85,
+            "net_points": 1082.85,
+            "net_pnl_inr": -52119.87,
+            "profit_factor": 1.19,
+            "max_dd_pts": 748.05
+          },
+          "2026": {
+            "year": 2026,
+            "trades": 225,
+            "win_rate": 34.22,
+            "gross_points": -101.75,
+            "net_points": -326.75,
+            "net_pnl_inr": -98729.51,
+            "profit_factor": 0.93,
+            "max_dd_pts": 1049.6
+          }
+        },
+        "tod_stats": {
+          "09:30-10:00": {
+            "tod": "09:30-10:00",
+            "trades": 464,
+            "win_rate": 34.05,
+            "net_points": -220.25,
+            "profit_factor": 0.98
+          },
+          "10:00-11:00": {
+            "tod": "10:00-11:00",
+            "trades": 671,
+            "win_rate": 39.05,
+            "net_points": 1581.45,
+            "profit_factor": 1.12
+          },
+          "11:00-12:00": {
+            "tod": "11:00-12:00",
+            "trades": 356,
+            "win_rate": 37.08,
+            "net_points": 630.15,
+            "profit_factor": 1.11
+          },
+          "12:00-13:00": {
+            "tod": "12:00-13:00",
+            "trades": 29,
+            "win_rate": 41.38,
+            "net_points": 160.05,
+            "profit_factor": 1.33
+          }
+        }
+      }
+    },
+    {
+      "hypothesis_id": "H02_ORB30_BREAKOUT",
+      "strategy_name": "ORB-30 Breakout Continuation",
+      "direction": "LONG_ONLY",
+      "timeframe": "5M",
+      "category": "BREAKOUT",
+      "description": "First candle breaking out of initial 30-minute range between 09:45 and 12:00 IST.",
+      "trades": 768,
+      "win_rate": 37.63,
+      "expectancy": 1.86,
+      "profit_factor": 1.1,
+      "gross_points": 2197.05,
+      "net_points": 1429.05,
+      "gross_pnl_inr": 109852.5,
+      "net_pnl_inr": -182020.4,
+      "total_costs_inr": 253472.9,
+      "slippage_inr": 38400.0,
+      "max_drawdown": 660.1,
+      "average_trade": 1.86,
+      "avg_holding_mins": 72.1,
+      "trades_per_day": 0.62,
+      "max_consecutive_losses": 9,
+      "status": "ROBUST CANDIDATE",
+      "metrics_full": {
+        "total_trades": 768,
+        "long_trades": 768,
+        "short_trades": 0,
+        "wins": 289,
+        "losses": 479,
+        "win_rate": 37.63,
+        "gross_points": 2197.05,
+        "net_points": 1429.05,
+        "gross_pnl_inr": 109852.5,
+        "net_pnl_inr": -182020.4,
+        "total_costs_inr": 253472.9,
+        "total_slippage_inr": 38400.0,
+        "profit_factor": 1.1,
+        "expectancy_pts": 1.86,
+        "max_drawdown_pts": 660.1,
+        "max_drawdown_inr": 33005.0,
+        "avg_trade_pts": 1.86,
+        "avg_winner_pts": 52.43,
+        "avg_loser_pts": -28.65,
+        "avg_holding_mins": 72.1,
+        "trades_per_day": 0.62,
+        "max_consecutive_losses": 9,
+        "max_consecutive_wins": 6,
+        "yearly_stats": {
+          "2021": {
+            "year": 2021,
+            "trades": 36,
+            "win_rate": 36.11,
+            "gross_points": 34.75,
+            "net_points": -1.25,
+            "net_pnl_inr": -10072.07,
+            "profit_factor": 1.0,
+            "max_dd_pts": 234.6
+          },
+          "2022": {
+            "year": 2022,
+            "trades": 149,
+            "win_rate": 44.97,
+            "gross_points": 1093.2,
+            "net_points": 944.2,
+            "net_pnl_inr": 6201.41,
+            "profit_factor": 1.44,
+            "max_dd_pts": 228.2
+          },
+          "2023": {
+            "year": 2023,
+            "trades": 149,
+            "win_rate": 33.56,
+            "gross_points": -118.65,
+            "net_points": -267.65,
+            "net_pnl_inr": -57687.82,
+            "profit_factor": 0.88,
+            "max_dd_pts": 571.4
+          },
+          "2024": {
+            "year": 2024,
+            "trades": 173,
+            "win_rate": 38.73,
+            "gross_points": 820.8,
+            "net_points": 647.8,
+            "net_pnl_inr": -29413.5,
+            "profit_factor": 1.19,
+            "max_dd_pts": 625.7
+          },
+          "2025": {
+            "year": 2025,
+            "trades": 151,
+            "win_rate": 38.41,
+            "gross_points": 665.45,
+            "net_points": 514.45,
+            "net_pnl_inr": -30288.52,
+            "profit_factor": 1.19,
+            "max_dd_pts": 376.8
+          },
+          "2026": {
+            "year": 2026,
+            "trades": 110,
+            "win_rate": 30.91,
+            "gross_points": -298.5,
+            "net_points": -408.5,
+            "net_pnl_inr": -60759.9,
+            "profit_factor": 0.84,
+            "max_dd_pts": 521.9
+          }
+        },
+        "tod_stats": {
+          "09:30-10:00": {
+            "tod": "09:30-10:00",
+            "trades": 234,
+            "win_rate": 34.19,
+            "net_points": -80.7,
+            "profit_factor": 0.98
+          },
+          "10:00-11:00": {
+            "tod": "10:00-11:00",
+            "trades": 340,
+            "win_rate": 39.41,
+            "net_points": 872.2,
+            "profit_factor": 1.14
+          },
+          "11:00-12:00": {
+            "tod": "11:00-12:00",
+            "trades": 181,
+            "win_rate": 38.12,
+            "net_points": 534.3,
+            "profit_factor": 1.19
+          },
+          "12:00-13:00": {
+            "tod": "12:00-13:00",
+            "trades": 13,
+            "win_rate": 46.15,
+            "net_points": 103.25,
+            "profit_factor": 1.53
+          }
+        }
+      }
+    },
+    {
+      "hypothesis_id": "H02_ORB30_BREAKOUT",
+      "strategy_name": "ORB-30 Breakout Continuation",
+      "direction": "SHORT_ONLY",
+      "timeframe": "5M",
+      "category": "BREAKOUT",
+      "description": "First candle breaking out of initial 30-minute range between 09:45 and 12:00 IST.",
+      "trades": 752,
+      "win_rate": 36.57,
+      "expectancy": 0.96,
+      "profit_factor": 1.05,
+      "gross_points": 1474.35,
+      "net_points": 722.35,
+      "gross_pnl_inr": 73717.5,
+      "net_pnl_inr": -208713.47,
+      "total_costs_inr": 244830.97,
+      "slippage_inr": 37600.0,
+      "max_drawdown": 1189.85,
+      "average_trade": 0.96,
+      "avg_holding_mins": 72.6,
+      "trades_per_day": 0.61,
+      "max_consecutive_losses": 12,
+      "status": "PROMISING",
+      "metrics_full": {
+        "total_trades": 752,
+        "long_trades": 0,
+        "short_trades": 752,
+        "wins": 275,
+        "losses": 477,
+        "win_rate": 36.57,
+        "gross_points": 1474.35,
+        "net_points": 722.35,
+        "gross_pnl_inr": 73717.5,
+        "net_pnl_inr": -208713.47,
+        "total_costs_inr": 244830.97,
+        "total_slippage_inr": 37600.0,
+        "profit_factor": 1.05,
+        "expectancy_pts": 0.96,
+        "max_drawdown_pts": 1189.85,
+        "max_drawdown_inr": 59492.5,
+        "avg_trade_pts": 0.96,
+        "avg_winner_pts": 59.06,
+        "avg_loser_pts": -32.54,
+        "avg_holding_mins": 72.6,
+        "trades_per_day": 0.61,
+        "max_consecutive_losses": 12,
+        "max_consecutive_wins": 8,
+        "yearly_stats": {
+          "2021": {
+            "year": 2021,
+            "trades": 43,
+            "win_rate": 39.53,
+            "gross_points": 426.8,
+            "net_points": 383.8,
+            "net_pnl_inr": 7188.44,
+            "profit_factor": 1.45,
+            "max_dd_pts": 205.7
+          },
+          "2022": {
+            "year": 2022,
+            "trades": 165,
+            "win_rate": 32.12,
+            "gross_points": -682.3,
+            "net_points": -847.3,
+            "net_pnl_inr": -87510.48,
+            "profit_factor": 0.76,
+            "max_dd_pts": 1134.75
+          },
+          "2023": {
+            "year": 2023,
+            "trades": 144,
+            "win_rate": 39.58,
+            "gross_points": 309.4,
+            "net_points": 165.4,
+            "net_pnl_inr": -34072.83,
+            "profit_factor": 1.07,
+            "max_dd_pts": 389.3
+          },
+          "2024": {
+            "year": 2024,
+            "trades": 149,
+            "win_rate": 35.57,
+            "gross_points": 519.3,
+            "net_points": 370.3,
+            "net_pnl_inr": -34517.64,
+            "profit_factor": 1.1,
+            "max_dd_pts": 597.65
+          },
+          "2025": {
+            "year": 2025,
+            "trades": 136,
+            "win_rate": 38.24,
+            "gross_points": 704.4,
+            "net_points": 568.4,
+            "net_pnl_inr": -21831.35,
+            "profit_factor": 1.2,
+            "max_dd_pts": 437.4
+          },
+          "2026": {
+            "year": 2026,
+            "trades": 115,
+            "win_rate": 37.39,
+            "gross_points": 196.75,
+            "net_points": 81.75,
+            "net_pnl_inr": -37969.61,
+            "profit_factor": 1.03,
+            "max_dd_pts": 748.05
+          }
+        },
+        "tod_stats": {
+          "09:30-10:00": {
+            "tod": "09:30-10:00",
+            "trades": 230,
+            "win_rate": 33.91,
+            "net_points": -139.55,
+            "profit_factor": 0.97
+          },
+          "10:00-11:00": {
+            "tod": "10:00-11:00",
+            "trades": 331,
+            "win_rate": 38.67,
+            "net_points": 709.25,
+            "profit_factor": 1.1
+          },
+          "11:00-12:00": {
+            "tod": "11:00-12:00",
+            "trades": 175,
+            "win_rate": 36.0,
+            "net_points": 95.85,
+            "profit_factor": 1.03
+          },
+          "12:00-13:00": {
+            "tod": "12:00-13:00",
+            "trades": 16,
+            "win_rate": 37.5,
+            "net_points": 56.8,
+            "profit_factor": 1.2
+          }
+        }
+      }
+    },
+    {
+      "hypothesis_id": "H03_PDH_PDL_BREAKOUT",
+      "strategy_name": "PDH / PDL Breakout Continuation",
+      "direction": "BOTH",
+      "timeframe": "5M",
+      "category": "BREAKOUT",
+      "description": "First 5M candle breaking and closing beyond previous day's high or low.",
+      "trades": 1558,
+      "win_rate": 36.26,
+      "expectancy": -1.1,
+      "profit_factor": 0.95,
+      "gross_points": -159.0,
+      "net_points": -1717.0,
+      "gross_pnl_inr": -7950.0,
+      "net_pnl_inr": -596307.95,
+      "total_costs_inr": 510457.95,
+      "slippage_inr": 77900.0,
+      "max_drawdown": 3702.4,
+      "average_trade": -1.1,
+      "avg_holding_mins": 73.6,
+      "trades_per_day": 1.25,
+      "max_consecutive_losses": 12,
+      "status": "DISCOVERY",
+      "metrics_full": {
+        "total_trades": 1558,
+        "long_trades": 821,
+        "short_trades": 737,
+        "wins": 565,
+        "losses": 993,
+        "win_rate": 36.26,
+        "gross_points": -159.0,
+        "net_points": -1717.0,
+        "gross_pnl_inr": -7950.0,
+        "net_pnl_inr": -596307.95,
+        "total_costs_inr": 510457.95,
+        "total_slippage_inr": 77900.0,
+        "profit_factor": 0.95,
+        "expectancy_pts": -1.1,
+        "max_drawdown_pts": 3702.4,
+        "max_drawdown_inr": 185120.0,
+        "avg_trade_pts": -1.1,
+        "avg_winner_pts": 56.23,
+        "avg_loser_pts": -33.72,
+        "avg_holding_mins": 73.6,
+        "trades_per_day": 1.25,
+        "max_consecutive_losses": 12,
+        "max_consecutive_wins": 5,
+        "yearly_stats": {
+          "2021": {
+            "year": 2021,
+            "trades": 87,
+            "win_rate": 35.63,
+            "gross_points": -31.2,
+            "net_points": -118.2,
+            "net_pnl_inr": -30309.47,
+            "profit_factor": 0.94,
+            "max_dd_pts": 502.35
+          },
+          "2022": {
+            "year": 2022,
+            "trades": 308,
+            "win_rate": 33.12,
+            "gross_points": -782.4,
+            "net_points": -1090.4,
+            "net_pnl_inr": -138941.94,
+            "profit_factor": 0.84,
+            "max_dd_pts": 1394.4
+          },
+          "2023": {
+            "year": 2023,
+            "trades": 318,
+            "win_rate": 38.68,
+            "gross_points": 582.1,
+            "net_points": 264.1,
+            "net_pnl_inr": -80822.25,
+            "profit_factor": 1.05,
+            "max_dd_pts": 535.0
+          },
+          "2024": {
+            "year": 2024,
+            "trades": 320,
+            "win_rate": 32.5,
+            "gross_points": -1167.85,
+            "net_points": -1487.85,
+            "net_pnl_inr": -187935.5,
+            "profit_factor": 0.82,
+            "max_dd_pts": 2607.4
+          },
+          "2025": {
+            "year": 2025,
+            "trades": 292,
+            "win_rate": 41.78,
+            "gross_points": 1142.45,
+            "net_points": 850.45,
+            "net_pnl_inr": -66032.47,
+            "profit_factor": 1.14,
+            "max_dd_pts": 529.8
+          },
+          "2026": {
+            "year": 2026,
+            "trades": 233,
+            "win_rate": 35.62,
+            "gross_points": 97.9,
+            "net_points": -135.1,
+            "net_pnl_inr": -92266.32,
+            "profit_factor": 0.97,
+            "max_dd_pts": 1125.05
+          }
+        },
+        "tod_stats": {
+          "09:15-09:30": {
+            "tod": "09:15-09:30",
+            "trades": 383,
+            "win_rate": 35.25,
+            "net_points": -320.85,
+            "profit_factor": 0.97
+          },
+          "09:30-10:00": {
+            "tod": "09:30-10:00",
+            "trades": 205,
+            "win_rate": 33.66,
+            "net_points": -742.7,
+            "profit_factor": 0.86
+          },
+          "10:00-11:00": {
+            "tod": "10:00-11:00",
+            "trades": 241,
+            "win_rate": 34.85,
+            "net_points": -897.75,
+            "profit_factor": 0.84
+          },
+          "11:00-12:00": {
+            "tod": "11:00-12:00",
+            "trades": 162,
+            "win_rate": 35.19,
+            "net_points": -26.75,
+            "profit_factor": 0.99
+          },
+          "12:00-13:00": {
+            "tod": "12:00-13:00",
+            "trades": 182,
+            "win_rate": 31.87,
+            "net_points": -399.35,
+            "profit_factor": 0.88
+          },
+          "13:00-14:00": {
+            "tod": "13:00-14:00",
+            "trades": 176,
+            "win_rate": 43.18,
+            "net_points": 944.2,
+            "profit_factor": 1.36
+          },
+          "14:00-15:00": {
+            "tod": "14:00-15:00",
+            "trades": 209,
+            "win_rate": 41.15,
+            "net_points": -273.8,
+            "profit_factor": 0.92
+          }
+        }
+      }
+    },
+    {
+      "hypothesis_id": "H03_PDH_PDL_BREAKOUT",
+      "strategy_name": "PDH / PDL Breakout Continuation",
+      "direction": "LONG_ONLY",
+      "timeframe": "5M",
+      "category": "BREAKOUT",
+      "description": "First 5M candle breaking and closing beyond previous day's high or low.",
+      "trades": 821,
+      "win_rate": 35.93,
+      "expectancy": -0.99,
+      "profit_factor": 0.95,
+      "gross_points": 8.5,
+      "net_points": -812.5,
+      "gross_pnl_inr": 425.0,
+      "net_pnl_inr": -309401.36,
+      "total_costs_inr": 268776.36,
+      "slippage_inr": 41050.0,
+      "max_drawdown": 1572.6,
+      "average_trade": -0.99,
+      "avg_holding_mins": 75.2,
+      "trades_per_day": 0.66,
+      "max_consecutive_losses": 12,
+      "status": "DISCOVERY",
+      "metrics_full": {
+        "total_trades": 821,
+        "long_trades": 821,
+        "short_trades": 0,
+        "wins": 295,
+        "losses": 526,
+        "win_rate": 35.93,
+        "gross_points": 8.5,
+        "net_points": -812.5,
+        "gross_pnl_inr": 425.0,
+        "net_pnl_inr": -309401.36,
+        "total_costs_inr": 268776.36,
+        "total_slippage_inr": 41050.0,
+        "profit_factor": 0.95,
+        "expectancy_pts": -0.99,
+        "max_drawdown_pts": 1572.6,
+        "max_drawdown_inr": 78630.0,
+        "avg_trade_pts": -0.99,
+        "avg_winner_pts": 52.11,
+        "avg_loser_pts": -30.77,
+        "avg_holding_mins": 75.2,
+        "trades_per_day": 0.66,
+        "max_consecutive_losses": 12,
+        "max_consecutive_wins": 7,
+        "yearly_stats": {
+          "2021": {
+            "year": 2021,
+            "trades": 47,
+            "win_rate": 31.91,
+            "gross_points": -55.3,
+            "net_points": -102.3,
+            "net_pnl_inr": -18329.27,
+            "profit_factor": 0.88,
+            "max_dd_pts": 453.85
+          },
+          "2022": {
+            "year": 2022,
+            "trades": 159,
+            "win_rate": 31.45,
+            "gross_points": -299.2,
+            "net_points": -458.2,
+            "net_pnl_inr": -66709.75,
+            "profit_factor": 0.86,
+            "max_dd_pts": 762.2
+          },
+          "2023": {
+            "year": 2023,
+            "trades": 181,
+            "win_rate": 40.88,
+            "gross_points": 454.85,
+            "net_points": 273.85,
+            "net_pnl_inr": -40209.28,
+            "profit_factor": 1.11,
+            "max_dd_pts": 356.35
+          },
+          "2024": {
+            "year": 2024,
+            "trades": 167,
+            "win_rate": 32.93,
+            "gross_points": -478.25,
+            "net_points": -645.25,
+            "net_pnl_inr": -91533.96,
+            "profit_factor": 0.83,
+            "max_dd_pts": 1119.55
+          },
+          "2025": {
+            "year": 2025,
+            "trades": 148,
+            "win_rate": 40.54,
+            "gross_points": 686.6,
+            "net_points": 538.6,
+            "net_pnl_inr": -27964.33,
+            "profit_factor": 1.18,
+            "max_dd_pts": 607.1
+          },
+          "2026": {
+            "year": 2026,
+            "trades": 119,
+            "win_rate": 34.45,
+            "gross_points": -300.2,
+            "net_points": -419.2,
+            "net_pnl_inr": -64654.77,
+            "profit_factor": 0.85,
+            "max_dd_pts": 703.35
+          }
+        },
+        "tod_stats": {
+          "09:15-09:30": {
+            "tod": "09:15-09:30",
+            "trades": 210,
+            "win_rate": 33.33,
+            "net_points": 9.15,
+            "profit_factor": 1.0
+          },
+          "09:30-10:00": {
+            "tod": "09:30-10:00",
+            "trades": 107,
+            "win_rate": 35.51,
+            "net_points": -193.2,
+            "profit_factor": 0.92
+          },
+          "10:00-11:00": {
+            "tod": "10:00-11:00",
+            "trades": 130,
+            "win_rate": 32.31,
+            "net_points": -553.85,
+            "profit_factor": 0.78
+          },
+          "11:00-12:00": {
+            "tod": "11:00-12:00",
+            "trades": 93,
+            "win_rate": 34.41,
+            "net_points": -293.65,
+            "profit_factor": 0.81
+          },
+          "12:00-13:00": {
+            "tod": "12:00-13:00",
+            "trades": 79,
+            "win_rate": 29.11,
+            "net_points": -505.25,
+            "profit_factor": 0.65
+          },
+          "13:00-14:00": {
+            "tod": "13:00-14:00",
+            "trades": 99,
+            "win_rate": 43.43,
+            "net_points": 572.95,
+            "profit_factor": 1.4
+          },
+          "14:00-15:00": {
+            "tod": "14:00-15:00",
+            "trades": 103,
+            "win_rate": 45.63,
+            "net_points": 151.35,
+            "profit_factor": 1.11
+          }
+        }
+      }
+    },
+    {
+      "hypothesis_id": "H03_PDH_PDL_BREAKOUT",
+      "strategy_name": "PDH / PDL Breakout Continuation",
+      "direction": "SHORT_ONLY",
+      "timeframe": "5M",
+      "category": "BREAKOUT",
+      "description": "First 5M candle breaking and closing beyond previous day's high or low.",
+      "trades": 737,
+      "win_rate": 36.64,
+      "expectancy": -1.23,
+      "profit_factor": 0.95,
+      "gross_points": -167.5,
+      "net_points": -904.5,
+      "gross_pnl_inr": -8375.0,
+      "net_pnl_inr": -286906.59,
+      "total_costs_inr": 241681.59,
+      "slippage_inr": 36850.0,
+      "max_drawdown": 2344.75,
+      "average_trade": -1.23,
+      "avg_holding_mins": 71.9,
+      "trades_per_day": 0.59,
+      "max_consecutive_losses": 11,
+      "status": "DISCOVERY",
+      "metrics_full": {
+        "total_trades": 737,
+        "long_trades": 0,
+        "short_trades": 737,
+        "wins": 270,
+        "losses": 467,
+        "win_rate": 36.64,
+        "gross_points": -167.5,
+        "net_points": -904.5,
+        "gross_pnl_inr": -8375.0,
+        "net_pnl_inr": -286906.59,
+        "total_costs_inr": 241681.59,
+        "total_slippage_inr": 36850.0,
+        "profit_factor": 0.95,
+        "expectancy_pts": -1.23,
+        "max_drawdown_pts": 2344.75,
+        "max_drawdown_inr": 117237.5,
+        "avg_trade_pts": -1.23,
+        "avg_winner_pts": 60.72,
+        "avg_loser_pts": -37.04,
+        "avg_holding_mins": 71.9,
+        "trades_per_day": 0.59,
+        "max_consecutive_losses": 11,
+        "max_consecutive_wins": 6,
+        "yearly_stats": {
+          "2021": {
+            "year": 2021,
+            "trades": 40,
+            "win_rate": 40.0,
+            "gross_points": 24.1,
+            "net_points": -15.9,
+            "net_pnl_inr": -11980.2,
+            "profit_factor": 0.98,
+            "max_dd_pts": 136.4
+          },
+          "2022": {
+            "year": 2022,
+            "trades": 149,
+            "win_rate": 34.9,
+            "gross_points": -483.2,
+            "net_points": -632.2,
+            "net_pnl_inr": -72232.19,
+            "profit_factor": 0.82,
+            "max_dd_pts": 803.7
+          },
+          "2023": {
+            "year": 2023,
+            "trades": 137,
+            "win_rate": 35.77,
+            "gross_points": 127.25,
+            "net_points": -9.75,
+            "net_pnl_inr": -40612.97,
+            "profit_factor": 1.0,
+            "max_dd_pts": 685.65
+          },
+          "2024": {
+            "year": 2024,
+            "trades": 153,
+            "win_rate": 32.03,
+            "gross_points": -689.6,
+            "net_points": -842.6,
+            "net_pnl_inr": -96401.54,
+            "profit_factor": 0.81,
+            "max_dd_pts": 1595.65
+          },
+          "2025": {
+            "year": 2025,
+            "trades": 144,
+            "win_rate": 43.06,
+            "gross_points": 455.85,
+            "net_points": 311.85,
+            "net_pnl_inr": -38068.14,
+            "profit_factor": 1.1,
+            "max_dd_pts": 438.8
+          },
+          "2026": {
+            "year": 2026,
+            "trades": 114,
+            "win_rate": 36.84,
+            "gross_points": 398.1,
+            "net_points": 284.1,
+            "net_pnl_inr": -27611.55,
+            "profit_factor": 1.11,
+            "max_dd_pts": 661.4
+          }
+        },
+        "tod_stats": {
+          "09:15-09:30": {
+            "tod": "09:15-09:30",
+            "trades": 173,
+            "win_rate": 37.57,
+            "net_points": -330.0,
+            "profit_factor": 0.94
+          },
+          "09:30-10:00": {
+            "tod": "09:30-10:00",
+            "trades": 98,
+            "win_rate": 31.63,
+            "net_points": -549.5,
+            "profit_factor": 0.81
+          },
+          "10:00-11:00": {
+            "tod": "10:00-11:00",
+            "trades": 111,
+            "win_rate": 37.84,
+            "net_points": -343.9,
+            "profit_factor": 0.89
+          },
+          "11:00-12:00": {
+            "tod": "11:00-12:00",
+            "trades": 69,
+            "win_rate": 36.23,
+            "net_points": 266.9,
+            "profit_factor": 1.22
+          },
+          "12:00-13:00": {
+            "tod": "12:00-13:00",
+            "trades": 103,
+            "win_rate": 33.98,
+            "net_points": 105.9,
+            "profit_factor": 1.06
+          },
+          "13:00-14:00": {
+            "tod": "13:00-14:00",
+            "trades": 77,
+            "win_rate": 42.86,
+            "net_points": 371.25,
+            "profit_factor": 1.32
+          },
+          "14:00-15:00": {
+            "tod": "14:00-15:00",
+            "trades": 106,
+            "win_rate": 36.79,
+            "net_points": -425.15,
+            "profit_factor": 0.77
+          }
+        }
+      }
+    },
+    {
+      "hypothesis_id": "H04_INSIDE_BAR_BREAKOUT",
+      "strategy_name": "Inside-Bar Breakout",
+      "direction": "BOTH",
+      "timeframe": "5M",
+      "category": "COMPRESSION",
+      "description": "Expansion candle breaking out beyond the range of a previous inside-bar mother candle.",
+      "trades": 2377,
+      "win_rate": 37.32,
+      "expectancy": -0.97,
+      "profit_factor": 0.96,
+      "gross_points": 72.35,
+      "net_points": -2304.65,
+      "gross_pnl_inr": 3617.5,
+      "net_pnl_inr": -892478.76,
+      "total_costs_inr": 777246.26,
+      "slippage_inr": 118850.0,
+      "max_drawdown": 3919.4,
+      "average_trade": -0.97,
+      "avg_holding_mins": 84.8,
+      "trades_per_day": 1.91,
+      "max_consecutive_losses": 12,
+      "status": "DISCOVERY",
+      "metrics_full": {
+        "total_trades": 2377,
+        "long_trades": 1205,
+        "short_trades": 1172,
+        "wins": 887,
+        "losses": 1490,
+        "win_rate": 37.32,
+        "gross_points": 72.35,
+        "net_points": -2304.65,
+        "gross_pnl_inr": 3617.5,
+        "net_pnl_inr": -892478.76,
+        "total_costs_inr": 777246.26,
+        "total_slippage_inr": 118850.0,
+        "profit_factor": 0.96,
+        "expectancy_pts": -0.97,
+        "max_drawdown_pts": 3919.4,
+        "max_drawdown_inr": 195970.0,
+        "avg_trade_pts": -0.97,
+        "avg_winner_pts": 58.89,
+        "avg_loser_pts": -36.6,
+        "avg_holding_mins": 84.8,
+        "trades_per_day": 1.91,
+        "max_consecutive_losses": 12,
+        "max_consecutive_wins": 6,
+        "yearly_stats": {
+          "2021": {
+            "year": 2021,
+            "trades": 134,
+            "win_rate": 35.07,
+            "gross_points": -19.0,
+            "net_points": -153.0,
+            "net_pnl_inr": -45114.51,
+            "profit_factor": 0.95,
+            "max_dd_pts": 768.45
+          },
+          "2022": {
+            "year": 2022,
+            "trades": 487,
+            "win_rate": 36.76,
+            "gross_points": -945.35,
+            "net_points": -1432.35,
+            "net_pnl_inr": -204961.3,
+            "profit_factor": 0.88,
+            "max_dd_pts": 1738.35
+          },
+          "2023": {
+            "year": 2023,
+            "trades": 475,
+            "win_rate": 36.84,
+            "gross_points": 283.35,
+            "net_points": -191.65,
+            "net_pnl_inr": -149717.95,
+            "profit_factor": 0.98,
+            "max_dd_pts": 997.1
+          },
+          "2024": {
+            "year": 2024,
+            "trades": 470,
+            "win_rate": 35.32,
+            "gross_points": -966.3,
+            "net_points": -1436.3,
+            "net_pnl_inr": -238918.82,
+            "profit_factor": 0.88,
+            "max_dd_pts": 2392.65
+          },
+          "2025": {
+            "year": 2025,
+            "trades": 459,
+            "win_rate": 39.87,
+            "gross_points": 1557.5,
+            "net_points": 1098.5,
+            "net_pnl_inr": -115354.98,
+            "profit_factor": 1.11,
+            "max_dd_pts": 845.95
+          },
+          "2026": {
+            "year": 2026,
+            "trades": 352,
+            "win_rate": 38.92,
+            "gross_points": 162.15,
+            "net_points": -189.85,
+            "net_pnl_inr": -138411.2,
+            "profit_factor": 0.98,
+            "max_dd_pts": 903.15
+          }
+        },
+        "tod_stats": {
+          "09:15-09:30": {
+            "tod": "09:15-09:30",
+            "trades": 98,
+            "win_rate": 43.88,
+            "net_points": 360.35,
+            "profit_factor": 1.11
+          },
+          "09:30-10:00": {
+            "tod": "09:30-10:00",
+            "trades": 303,
+            "win_rate": 32.01,
+            "net_points": -2683.3,
+            "profit_factor": 0.72
+          },
+          "10:00-11:00": {
+            "tod": "10:00-11:00",
+            "trades": 473,
+            "win_rate": 36.15,
+            "net_points": -191.4,
+            "profit_factor": 0.98
+          },
+          "11:00-12:00": {
+            "tod": "11:00-12:00",
+            "trades": 367,
+            "win_rate": 41.69,
+            "net_points": 2241.45,
+            "profit_factor": 1.32
+          },
+          "12:00-13:00": {
+            "tod": "12:00-13:00",
+            "trades": 362,
+            "win_rate": 32.32,
+            "net_points": -881.9,
+            "profit_factor": 0.89
+          },
+          "13:00-14:00": {
+            "tod": "13:00-14:00",
+            "trades": 363,
+            "win_rate": 37.74,
+            "net_points": 596.05,
+            "profit_factor": 1.08
+          },
+          "14:00-15:00": {
+            "tod": "14:00-15:00",
+            "trades": 411,
+            "win_rate": 41.12,
+            "net_points": -1745.9,
+            "profit_factor": 0.78
+          }
+        }
+      }
+    },
+    {
+      "hypothesis_id": "H04_INSIDE_BAR_BREAKOUT",
+      "strategy_name": "Inside-Bar Breakout",
+      "direction": "LONG_ONLY",
+      "timeframe": "5M",
+      "category": "COMPRESSION",
+      "description": "Expansion candle breaking out beyond the range of a previous inside-bar mother candle.",
+      "trades": 1493,
+      "win_rate": 36.37,
+      "expectancy": -2.41,
+      "profit_factor": 0.89,
+      "gross_points": -2109.5,
+      "net_points": -3602.5,
+      "gross_pnl_inr": -105475.0,
+      "net_pnl_inr": -667605.5,
+      "total_costs_inr": 487480.5,
+      "slippage_inr": 74650.0,
+      "max_drawdown": 3830.25,
+      "average_trade": -2.41,
+      "avg_holding_mins": 82.4,
+      "trades_per_day": 1.2,
+      "max_consecutive_losses": 13,
+      "status": "DISCOVERY",
+      "metrics_full": {
+        "total_trades": 1493,
+        "long_trades": 1493,
+        "short_trades": 0,
+        "wins": 543,
+        "losses": 950,
+        "win_rate": 36.37,
+        "gross_points": -2109.5,
+        "net_points": -3602.5,
+        "gross_pnl_inr": -105475.0,
+        "net_pnl_inr": -667605.5,
+        "total_costs_inr": 487480.5,
+        "total_slippage_inr": 74650.0,
+        "profit_factor": 0.89,
+        "expectancy_pts": -2.41,
+        "max_drawdown_pts": 3830.25,
+        "max_drawdown_inr": 191512.5,
+        "avg_trade_pts": -2.41,
+        "avg_winner_pts": 55.63,
+        "avg_loser_pts": -35.59,
+        "avg_holding_mins": 82.4,
+        "trades_per_day": 1.2,
+        "max_consecutive_losses": 13,
+        "max_consecutive_wins": 8,
+        "yearly_stats": {
+          "2021": {
+            "year": 2021,
+            "trades": 89,
+            "win_rate": 29.21,
+            "gross_points": -1070.55,
+            "net_points": -1159.55,
+            "net_pnl_inr": -82858.37,
+            "profit_factor": 0.53,
+            "max_dd_pts": 1326.45
+          },
+          "2022": {
+            "year": 2022,
+            "trades": 298,
+            "win_rate": 35.91,
+            "gross_points": -963.1,
+            "net_points": -1261.1,
+            "net_pnl_inr": -144756.87,
+            "profit_factor": 0.82,
+            "max_dd_pts": 1650.35
+          },
+          "2023": {
+            "year": 2023,
+            "trades": 314,
+            "win_rate": 40.13,
+            "gross_points": 753.7,
+            "net_points": 439.7,
+            "net_pnl_inr": -70877.72,
+            "profit_factor": 1.09,
+            "max_dd_pts": 801.6
+          },
+          "2024": {
+            "year": 2024,
+            "trades": 283,
+            "win_rate": 34.28,
+            "gross_points": -418.7,
+            "net_points": -701.7,
+            "net_pnl_inr": -135513.21,
+            "profit_factor": 0.9,
+            "max_dd_pts": 1000.3
+          },
+          "2025": {
+            "year": 2025,
+            "trades": 300,
+            "win_rate": 36.67,
+            "gross_points": 225.35,
+            "net_points": -74.65,
+            "net_pnl_inr": -114832.58,
+            "profit_factor": 0.99,
+            "max_dd_pts": 677.85
+          },
+          "2026": {
+            "year": 2026,
+            "trades": 209,
+            "win_rate": 36.84,
+            "gross_points": -636.2,
+            "net_points": -845.2,
+            "net_pnl_inr": -118766.75,
+            "profit_factor": 0.85,
+            "max_dd_pts": 973.5
+          }
+        },
+        "tod_stats": {
+          "09:15-09:30": {
+            "tod": "09:15-09:30",
+            "trades": 47,
+            "win_rate": 38.3,
+            "net_points": -243.6,
+            "profit_factor": 0.86
+          },
+          "09:30-10:00": {
+            "tod": "09:30-10:00",
+            "trades": 153,
+            "win_rate": 28.76,
+            "net_points": -2244.85,
+            "profit_factor": 0.57
+          },
+          "10:00-11:00": {
+            "tod": "10:00-11:00",
+            "trades": 298,
+            "win_rate": 39.26,
+            "net_points": 1021.55,
+            "profit_factor": 1.15
+          },
+          "11:00-12:00": {
+            "tod": "11:00-12:00",
+            "trades": 237,
+            "win_rate": 41.35,
+            "net_points": 1350.8,
+            "profit_factor": 1.3
+          },
+          "12:00-13:00": {
+            "tod": "12:00-13:00",
+            "trades": 226,
+            "win_rate": 31.42,
+            "net_points": -1091.95,
+            "profit_factor": 0.77
+          },
+          "13:00-14:00": {
+            "tod": "13:00-14:00",
+            "trades": 255,
+            "win_rate": 32.55,
+            "net_points": -1239.35,
+            "profit_factor": 0.78
+          },
+          "14:00-15:00": {
+            "tod": "14:00-15:00",
+            "trades": 277,
+            "win_rate": 40.43,
+            "net_points": -1155.1,
+            "profit_factor": 0.77
+          }
+        }
+      }
+    },
+    {
+      "hypothesis_id": "H04_INSIDE_BAR_BREAKOUT",
+      "strategy_name": "Inside-Bar Breakout",
+      "direction": "SHORT_ONLY",
+      "timeframe": "5M",
+      "category": "COMPRESSION",
+      "description": "Expansion candle breaking out beyond the range of a previous inside-bar mother candle.",
+      "trades": 1481,
+      "win_rate": 37.54,
+      "expectancy": 0.16,
+      "profit_factor": 1.01,
+      "gross_points": 1717.8,
+      "net_points": 236.8,
+      "gross_pnl_inr": 85890.0,
+      "net_pnl_inr": -472888.27,
+      "total_costs_inr": 484728.27,
+      "slippage_inr": 74050.0,
+      "max_drawdown": 2576.55,
+      "average_trade": 0.16,
+      "avg_holding_mins": 79.8,
+      "trades_per_day": 1.19,
+      "max_consecutive_losses": 12,
+      "status": "PROMISING",
+      "metrics_full": {
+        "total_trades": 1481,
+        "long_trades": 0,
+        "short_trades": 1481,
+        "wins": 556,
+        "losses": 925,
+        "win_rate": 37.54,
+        "gross_points": 1717.8,
+        "net_points": 236.8,
+        "gross_pnl_inr": 85890.0,
+        "net_pnl_inr": -472888.27,
+        "total_costs_inr": 484728.27,
+        "total_slippage_inr": 74050.0,
+        "profit_factor": 1.01,
+        "expectancy_pts": 0.16,
+        "max_drawdown_pts": 2576.55,
+        "max_drawdown_inr": 128827.5,
+        "avg_trade_pts": 0.16,
+        "avg_winner_pts": 58.02,
+        "avg_loser_pts": -34.62,
+        "avg_holding_mins": 79.8,
+        "trades_per_day": 1.19,
+        "max_consecutive_losses": 12,
+        "max_consecutive_wins": 6,
+        "yearly_stats": {
+          "2021": {
+            "year": 2021,
+            "trades": 83,
+            "win_rate": 37.35,
+            "gross_points": 760.45,
+            "net_points": 677.45,
+            "net_pnl_inr": 10723.0,
+            "profit_factor": 1.44,
+            "max_dd_pts": 270.9
+          },
+          "2022": {
+            "year": 2022,
+            "trades": 309,
+            "win_rate": 35.28,
+            "gross_points": -383.7,
+            "net_points": -692.7,
+            "net_pnl_inr": -119118.35,
+            "profit_factor": 0.9,
+            "max_dd_pts": 1184.7
+          },
+          "2023": {
+            "year": 2023,
+            "trades": 283,
+            "win_rate": 35.34,
+            "gross_points": -154.7,
+            "net_points": -437.7,
+            "net_pnl_inr": -105280.49,
+            "profit_factor": 0.91,
+            "max_dd_pts": 1038.85
+          },
+          "2024": {
+            "year": 2024,
+            "trades": 293,
+            "win_rate": 35.84,
+            "gross_points": -314.35,
+            "net_points": -607.35,
+            "net_pnl_inr": -134668.15,
+            "profit_factor": 0.91,
+            "max_dd_pts": 1621.85
+          },
+          "2025": {
+            "year": 2025,
+            "trades": 279,
+            "win_rate": 41.58,
+            "gross_points": 1080.75,
+            "net_points": 801.75,
+            "net_pnl_inr": -63658.11,
+            "profit_factor": 1.14,
+            "max_dd_pts": 759.4
+          },
+          "2026": {
+            "year": 2026,
+            "trades": 234,
+            "win_rate": 40.6,
+            "gross_points": 729.35,
+            "net_points": 495.35,
+            "net_pnl_inr": -60886.17,
+            "profit_factor": 1.09,
+            "max_dd_pts": 533.55
+          }
+        },
+        "tod_stats": {
+          "09:15-09:30": {
+            "tod": "09:15-09:30",
+            "trades": 51,
+            "win_rate": 49.02,
+            "net_points": 603.95,
+            "profit_factor": 1.36
+          },
+          "09:30-10:00": {
+            "tod": "09:30-10:00",
+            "trades": 164,
+            "win_rate": 35.37,
+            "net_points": -499.9,
+            "profit_factor": 0.9
+          },
+          "10:00-11:00": {
+            "tod": "10:00-11:00",
+            "trades": 278,
+            "win_rate": 32.01,
+            "net_points": -1167.05,
+            "profit_factor": 0.83
+          },
+          "11:00-12:00": {
+            "tod": "11:00-12:00",
+            "trades": 247,
+            "win_rate": 39.27,
+            "net_points": 874.3,
+            "profit_factor": 1.19
+          },
+          "12:00-13:00": {
+            "tod": "12:00-13:00",
+            "trades": 253,
+            "win_rate": 32.02,
+            "net_points": -448.05,
+            "profit_factor": 0.92
+          },
+          "13:00-14:00": {
+            "tod": "13:00-14:00",
+            "trades": 225,
+            "win_rate": 41.33,
+            "net_points": 1428.8,
+            "profit_factor": 1.38
+          },
+          "14:00-15:00": {
+            "tod": "14:00-15:00",
+            "trades": 263,
+            "win_rate": 42.97,
+            "net_points": -555.25,
+            "profit_factor": 0.88
+          }
+        }
+      }
+    },
+    {
+      "hypothesis_id": "H05_PDH_PDL_SWEEP_REVERSAL",
+      "strategy_name": "PDH / PDL Liquidity Sweep & Reversal",
+      "direction": "BOTH",
+      "timeframe": "5M",
+      "category": "REVERSAL",
+      "description": "False breakout trap: price pierces PDH/PDL but closes back inside with long rejection wick.",
+      "trades": 847,
+      "win_rate": 38.13,
+      "expectancy": 2.01,
+      "profit_factor": 1.13,
+      "gross_points": 2547.75,
+      "net_points": 1700.75,
+      "gross_pnl_inr": 127387.5,
+      "net_pnl_inr": -195950.13,
+      "total_costs_inr": 280987.63,
+      "slippage_inr": 42350.0,
+      "max_drawdown": 818.55,
+      "average_trade": 2.01,
+      "avg_holding_mins": 38.6,
+      "trades_per_day": 0.68,
+      "max_consecutive_losses": 12,
+      "status": "ROBUST CANDIDATE",
+      "metrics_full": {
+        "total_trades": 847,
+        "long_trades": 437,
+        "short_trades": 410,
+        "wins": 323,
+        "losses": 524,
+        "win_rate": 38.13,
+        "gross_points": 2547.75,
+        "net_points": 1700.75,
+        "gross_pnl_inr": 127387.5,
+        "net_pnl_inr": -195950.13,
+        "total_costs_inr": 280987.63,
+        "total_slippage_inr": 42350.0,
+        "profit_factor": 1.13,
+        "expectancy_pts": 2.01,
+        "max_drawdown_pts": 818.55,
+        "max_drawdown_inr": 40927.5,
+        "avg_trade_pts": 2.01,
+        "avg_winner_pts": 45.19,
+        "avg_loser_pts": -24.61,
+        "avg_holding_mins": 38.6,
+        "trades_per_day": 0.68,
+        "max_consecutive_losses": 12,
+        "max_consecutive_wins": 4,
+        "yearly_stats": {
+          "2021": {
+            "year": 2021,
+            "trades": 37,
+            "win_rate": 43.24,
+            "gross_points": 205.05,
+            "net_points": 168.05,
+            "net_pnl_inr": -1980.94,
+            "profit_factor": 1.32,
+            "max_dd_pts": 174.75
+          },
+          "2022": {
+            "year": 2022,
+            "trades": 153,
+            "win_rate": 43.14,
+            "gross_points": 1054.85,
+            "net_points": 901.85,
+            "net_pnl_inr": 3232.48,
+            "profit_factor": 1.43,
+            "max_dd_pts": 265.2
+          },
+          "2023": {
+            "year": 2023,
+            "trades": 146,
+            "win_rate": 32.19,
+            "gross_points": -272.9,
+            "net_points": -418.9,
+            "net_pnl_inr": -63879.98,
+            "profit_factor": 0.78,
+            "max_dd_pts": 469.05
+          },
+          "2024": {
+            "year": 2024,
+            "trades": 215,
+            "win_rate": 37.67,
+            "gross_points": 668.2,
+            "net_points": 453.2,
+            "net_pnl_inr": -53599.03,
+            "profit_factor": 1.13,
+            "max_dd_pts": 539.65
+          },
+          "2025": {
+            "year": 2025,
+            "trades": 163,
+            "win_rate": 36.2,
+            "gross_points": 329.2,
+            "net_points": 166.2,
+            "net_pnl_inr": -52519.19,
+            "profit_factor": 1.06,
+            "max_dd_pts": 438.7
+          },
+          "2026": {
+            "year": 2026,
+            "trades": 133,
+            "win_rate": 40.6,
+            "gross_points": 563.35,
+            "net_points": 430.35,
+            "net_pnl_inr": -27203.47,
+            "profit_factor": 1.2,
+            "max_dd_pts": 320.2
+          }
+        },
+        "tod_stats": {
+          "09:15-09:30": {
+            "tod": "09:15-09:30",
+            "trades": 101,
+            "win_rate": 33.66,
+            "net_points": -205.2,
+            "profit_factor": 0.92
+          },
+          "09:30-10:00": {
+            "tod": "09:30-10:00",
+            "trades": 124,
+            "win_rate": 45.97,
+            "net_points": 860.4,
+            "profit_factor": 1.45
+          },
+          "10:00-11:00": {
+            "tod": "10:00-11:00",
+            "trades": 131,
+            "win_rate": 39.69,
+            "net_points": 803.5,
+            "profit_factor": 1.45
+          },
+          "11:00-12:00": {
+            "tod": "11:00-12:00",
+            "trades": 117,
+            "win_rate": 40.17,
+            "net_points": 598.55,
+            "profit_factor": 1.42
+          },
+          "12:00-13:00": {
+            "tod": "12:00-13:00",
+            "trades": 119,
+            "win_rate": 31.09,
+            "net_points": -327.85,
+            "profit_factor": 0.81
+          },
+          "13:00-14:00": {
+            "tod": "13:00-14:00",
+            "trades": 116,
+            "win_rate": 31.9,
+            "net_points": -472.65,
+            "profit_factor": 0.75
+          },
+          "14:00-15:00": {
+            "tod": "14:00-15:00",
+            "trades": 139,
+            "win_rate": 42.45,
+            "net_points": 444.0,
+            "profit_factor": 1.27
+          }
+        }
+      }
+    },
+    {
+      "hypothesis_id": "H05_PDH_PDL_SWEEP_REVERSAL",
+      "strategy_name": "PDH / PDL Liquidity Sweep & Reversal",
+      "direction": "LONG_ONLY",
+      "timeframe": "5M",
+      "category": "REVERSAL",
+      "description": "False breakout trap: price pierces PDH/PDL but closes back inside with long rejection wick.",
+      "trades": 437,
+      "win_rate": 36.38,
+      "expectancy": 0.88,
+      "profit_factor": 1.05,
+      "gross_points": 822.8,
+      "net_points": 385.8,
+      "gross_pnl_inr": 41140.0,
+      "net_pnl_inr": -125319.3,
+      "total_costs_inr": 144609.3,
+      "slippage_inr": 21850.0,
+      "max_drawdown": 1106.75,
+      "average_trade": 0.88,
+      "avg_holding_mins": 37.8,
+      "trades_per_day": 0.35,
+      "max_consecutive_losses": 13,
+      "status": "PROMISING",
+      "metrics_full": {
+        "total_trades": 437,
+        "long_trades": 437,
+        "short_trades": 0,
+        "wins": 159,
+        "losses": 278,
+        "win_rate": 36.38,
+        "gross_points": 822.8,
+        "net_points": 385.8,
+        "gross_pnl_inr": 41140.0,
+        "net_pnl_inr": -125319.3,
+        "total_costs_inr": 144609.3,
+        "total_slippage_inr": 21850.0,
+        "profit_factor": 1.05,
+        "expectancy_pts": 0.88,
+        "max_drawdown_pts": 1106.75,
+        "max_drawdown_inr": 55337.5,
+        "avg_trade_pts": 0.88,
+        "avg_winner_pts": 48.68,
+        "avg_loser_pts": -26.46,
+        "avg_holding_mins": 37.8,
+        "trades_per_day": 0.35,
+        "max_consecutive_losses": 13,
+        "max_consecutive_wins": 6,
+        "yearly_stats": {
+          "2021": {
+            "year": 2021,
+            "trades": 19,
+            "win_rate": 52.63,
+            "gross_points": 305.35,
+            "net_points": 286.35,
+            "net_pnl_inr": 8987.76,
+            "profit_factor": 2.28,
+            "max_dd_pts": 68.95
+          },
+          "2022": {
+            "year": 2022,
+            "trades": 86,
+            "win_rate": 38.37,
+            "gross_points": 232.85,
+            "net_points": 146.85,
+            "net_pnl_inr": -16099.31,
+            "profit_factor": 1.11,
+            "max_dd_pts": 342.2
+          },
+          "2023": {
+            "year": 2023,
+            "trades": 66,
+            "win_rate": 34.85,
+            "gross_points": -57.75,
+            "net_points": -123.75,
+            "net_pnl_inr": -25418.03,
+            "profit_factor": 0.86,
+            "max_dd_pts": 240.15
+          },
+          "2024": {
+            "year": 2024,
+            "trades": 111,
+            "win_rate": 37.84,
+            "gross_points": 493.4,
+            "net_points": 382.4,
+            "net_pnl_inr": -20112.53,
+            "profit_factor": 1.2,
+            "max_dd_pts": 578.3
+          },
+          "2025": {
+            "year": 2025,
+            "trades": 89,
+            "win_rate": 26.97,
+            "gross_points": -342.7,
+            "net_points": -431.7,
+            "net_pnl_inr": -54875.22,
+            "profit_factor": 0.76,
+            "max_dd_pts": 615.6
+          },
+          "2026": {
+            "year": 2026,
+            "trades": 66,
+            "win_rate": 40.91,
+            "gross_points": 191.65,
+            "net_points": 125.65,
+            "net_pnl_inr": -17801.97,
+            "profit_factor": 1.11,
+            "max_dd_pts": 402.55
+          }
+        },
+        "tod_stats": {
+          "09:15-09:30": {
+            "tod": "09:15-09:30",
+            "trades": 44,
+            "win_rate": 34.09,
+            "net_points": -166.75,
+            "profit_factor": 0.86
+          },
+          "09:30-10:00": {
+            "tod": "09:30-10:00",
+            "trades": 75,
+            "win_rate": 42.67,
+            "net_points": 327.25,
+            "profit_factor": 1.25
+          },
+          "10:00-11:00": {
+            "tod": "10:00-11:00",
+            "trades": 68,
+            "win_rate": 38.24,
+            "net_points": 312.3,
+            "profit_factor": 1.29
+          },
+          "11:00-12:00": {
+            "tod": "11:00-12:00",
+            "trades": 61,
+            "win_rate": 42.62,
+            "net_points": 540.9,
+            "profit_factor": 1.74
+          },
+          "12:00-13:00": {
+            "tod": "12:00-13:00",
+            "trades": 68,
+            "win_rate": 27.94,
+            "net_points": -278.1,
+            "profit_factor": 0.75
+          },
+          "13:00-14:00": {
+            "tod": "13:00-14:00",
+            "trades": 58,
+            "win_rate": 32.76,
+            "net_points": -300.2,
+            "profit_factor": 0.7
+          },
+          "14:00-15:00": {
+            "tod": "14:00-15:00",
+            "trades": 63,
+            "win_rate": 34.92,
+            "net_points": -49.6,
+            "profit_factor": 0.95
+          }
+        }
+      }
+    },
+    {
+      "hypothesis_id": "H05_PDH_PDL_SWEEP_REVERSAL",
+      "strategy_name": "PDH / PDL Liquidity Sweep & Reversal",
+      "direction": "SHORT_ONLY",
+      "timeframe": "5M",
+      "category": "REVERSAL",
+      "description": "False breakout trap: price pierces PDH/PDL but closes back inside with long rejection wick.",
+      "trades": 412,
+      "win_rate": 40.05,
+      "expectancy": 3.28,
+      "profit_factor": 1.24,
+      "gross_points": 1764.2,
+      "net_points": 1352.2,
+      "gross_pnl_inr": 88210.0,
+      "net_pnl_inr": -69432.49,
+      "total_costs_inr": 137042.49,
+      "slippage_inr": 20600.0,
+      "max_drawdown": 464.1,
+      "average_trade": 3.28,
+      "avg_holding_mins": 39.4,
+      "trades_per_day": 0.33,
+      "max_consecutive_losses": 9,
+      "status": "ROBUST CANDIDATE",
+      "metrics_full": {
+        "total_trades": 412,
+        "long_trades": 0,
+        "short_trades": 412,
+        "wins": 165,
+        "losses": 247,
+        "win_rate": 40.05,
+        "gross_points": 1764.2,
+        "net_points": 1352.2,
+        "gross_pnl_inr": 88210.0,
+        "net_pnl_inr": -69432.49,
+        "total_costs_inr": 137042.49,
+        "total_slippage_inr": 20600.0,
+        "profit_factor": 1.24,
+        "expectancy_pts": 3.28,
+        "max_drawdown_pts": 464.1,
+        "max_drawdown_inr": 23205.0,
+        "avg_trade_pts": 3.28,
+        "avg_winner_pts": 41.83,
+        "avg_loser_pts": -22.47,
+        "avg_holding_mins": 39.4,
+        "trades_per_day": 0.33,
+        "max_consecutive_losses": 9,
+        "max_consecutive_wins": 7,
+        "yearly_stats": {
+          "2021": {
+            "year": 2021,
+            "trades": 18,
+            "win_rate": 33.33,
+            "gross_points": -100.3,
+            "net_points": -118.3,
+            "net_pnl_inr": -10968.7,
+            "profit_factor": 0.62,
+            "max_dd_pts": 156.2
+          },
+          "2022": {
+            "year": 2022,
+            "trades": 67,
+            "win_rate": 49.25,
+            "gross_points": 822.0,
+            "net_points": 755.0,
+            "net_pnl_inr": 19331.79,
+            "profit_factor": 2.05,
+            "max_dd_pts": 216.1
+          },
+          "2023": {
+            "year": 2023,
+            "trades": 81,
+            "win_rate": 29.63,
+            "gross_points": -222.0,
+            "net_points": -303.0,
+            "net_pnl_inr": -39146.86,
+            "profit_factor": 0.7,
+            "max_dd_pts": 396.9
+          },
+          "2024": {
+            "year": 2024,
+            "trades": 105,
+            "win_rate": 38.1,
+            "gross_points": 220.9,
+            "net_points": 115.9,
+            "net_pnl_inr": -31603.25,
+            "profit_factor": 1.08,
+            "max_dd_pts": 247.65
+          },
+          "2025": {
+            "year": 2025,
+            "trades": 74,
+            "win_rate": 47.3,
+            "gross_points": 671.9,
+            "net_points": 597.9,
+            "net_pnl_inr": 2356.03,
+            "profit_factor": 1.59,
+            "max_dd_pts": 154.35
+          },
+          "2026": {
+            "year": 2026,
+            "trades": 67,
+            "win_rate": 40.3,
+            "gross_points": 371.7,
+            "net_points": 304.7,
+            "net_pnl_inr": -9401.5,
+            "profit_factor": 1.3,
+            "max_dd_pts": 408.0
+          }
+        },
+        "tod_stats": {
+          "09:15-09:30": {
+            "tod": "09:15-09:30",
+            "trades": 57,
+            "win_rate": 33.33,
+            "net_points": -38.45,
+            "profit_factor": 0.97
+          },
+          "09:30-10:00": {
+            "tod": "09:30-10:00",
+            "trades": 49,
+            "win_rate": 51.02,
+            "net_points": 533.15,
+            "profit_factor": 1.9
+          },
+          "10:00-11:00": {
+            "tod": "10:00-11:00",
+            "trades": 63,
+            "win_rate": 41.27,
+            "net_points": 491.2,
+            "profit_factor": 1.71
+          },
+          "11:00-12:00": {
+            "tod": "11:00-12:00",
+            "trades": 56,
+            "win_rate": 37.5,
+            "net_points": 57.65,
+            "profit_factor": 1.08
+          },
+          "12:00-13:00": {
+            "tod": "12:00-13:00",
+            "trades": 51,
+            "win_rate": 35.29,
+            "net_points": -49.75,
+            "profit_factor": 0.93
+          },
+          "13:00-14:00": {
+            "tod": "13:00-14:00",
+            "trades": 59,
+            "win_rate": 32.2,
+            "net_points": -127.35,
+            "profit_factor": 0.86
+          },
+          "14:00-15:00": {
+            "tod": "14:00-15:00",
+            "trades": 77,
+            "win_rate": 48.05,
+            "net_points": 485.75,
+            "profit_factor": 1.64
+          }
+        }
+      }
+    },
+    {
+      "hypothesis_id": "H06_FIRST_HOUR_SWEEP_REVERSAL",
+      "strategy_name": "First-Hour High/Low Sweep Reversal",
+      "direction": "BOTH",
+      "timeframe": "5M",
+      "category": "REVERSAL",
+      "description": "Intraday false breakout of 10:15 first-hour boundaries followed by mean-reversion wick.",
+      "trades": 1139,
+      "win_rate": 32.66,
+      "expectancy": -1.55,
+      "profit_factor": 0.89,
+      "gross_points": -623.15,
+      "net_points": -1762.15,
+      "gross_pnl_inr": -31157.5,
+      "net_pnl_inr": -461493.64,
+      "total_costs_inr": 373386.14,
+      "slippage_inr": 56950.0,
+      "max_drawdown": 2313.35,
+      "average_trade": -1.55,
+      "avg_holding_mins": 35.4,
+      "trades_per_day": 0.92,
+      "max_consecutive_losses": 15,
+      "status": "DISCOVERY",
+      "metrics_full": {
+        "total_trades": 1139,
+        "long_trades": 577,
+        "short_trades": 562,
+        "wins": 372,
+        "losses": 767,
+        "win_rate": 32.66,
+        "gross_points": -623.15,
+        "net_points": -1762.15,
+        "gross_pnl_inr": -31157.5,
+        "net_pnl_inr": -461493.64,
+        "total_costs_inr": 373386.14,
+        "total_slippage_inr": 56950.0,
+        "profit_factor": 0.89,
+        "expectancy_pts": -1.55,
+        "max_drawdown_pts": 2313.35,
+        "max_drawdown_inr": 115667.5,
+        "avg_trade_pts": -1.55,
+        "avg_winner_pts": 36.6,
+        "avg_loser_pts": -20.05,
+        "avg_holding_mins": 35.4,
+        "trades_per_day": 0.92,
+        "max_consecutive_losses": 15,
+        "max_consecutive_wins": 7,
+        "yearly_stats": {
+          "2021": {
+            "year": 2021,
+            "trades": 57,
+            "win_rate": 28.07,
+            "gross_points": -58.95,
+            "net_points": -115.95,
+            "net_pnl_inr": -21726.19,
+            "profit_factor": 0.85,
+            "max_dd_pts": 285.95
+          },
+          "2022": {
+            "year": 2022,
+            "trades": 227,
+            "win_rate": 30.84,
+            "gross_points": -498.05,
+            "net_points": -725.05,
+            "net_pnl_inr": -98385.88,
+            "profit_factor": 0.77,
+            "max_dd_pts": 766.95
+          },
+          "2023": {
+            "year": 2023,
+            "trades": 225,
+            "win_rate": 31.11,
+            "gross_points": -39.55,
+            "net_points": -264.55,
+            "net_pnl_inr": -79547.08,
+            "profit_factor": 0.89,
+            "max_dd_pts": 511.3
+          },
+          "2024": {
+            "year": 2024,
+            "trades": 229,
+            "win_rate": 30.57,
+            "gross_points": -625.6,
+            "net_points": -854.6,
+            "net_pnl_inr": -124156.86,
+            "profit_factor": 0.76,
+            "max_dd_pts": 970.3
+          },
+          "2025": {
+            "year": 2025,
+            "trades": 219,
+            "win_rate": 34.25,
+            "gross_points": 116.6,
+            "net_points": -102.4,
+            "net_pnl_inr": -85908.74,
+            "profit_factor": 0.97,
+            "max_dd_pts": 522.05
+          },
+          "2026": {
+            "year": 2026,
+            "trades": 182,
+            "win_rate": 39.01,
+            "gross_points": 482.4,
+            "net_points": 300.4,
+            "net_pnl_inr": -51768.89,
+            "profit_factor": 1.12,
+            "max_dd_pts": 245.7
+          }
+        },
+        "tod_stats": {
+          "10:00-11:00": {
+            "tod": "10:00-11:00",
+            "trades": 393,
+            "win_rate": 33.33,
+            "net_points": -368.0,
+            "profit_factor": 0.93
+          },
+          "11:00-12:00": {
+            "tod": "11:00-12:00",
+            "trades": 275,
+            "win_rate": 35.27,
+            "net_points": -60.8,
+            "profit_factor": 0.98
+          },
+          "12:00-13:00": {
+            "tod": "12:00-13:00",
+            "trades": 212,
+            "win_rate": 27.36,
+            "net_points": -889.05,
+            "profit_factor": 0.69
+          },
+          "13:00-14:00": {
+            "tod": "13:00-14:00",
+            "trades": 238,
+            "win_rate": 34.45,
+            "net_points": -103.85,
+            "profit_factor": 0.96
+          },
+          "14:00-15:00": {
+            "tod": "14:00-15:00",
+            "trades": 21,
+            "win_rate": 19.05,
+            "net_points": -340.45,
+            "profit_factor": 0.31
+          }
+        }
+      }
+    },
+    {
+      "hypothesis_id": "H06_FIRST_HOUR_SWEEP_REVERSAL",
+      "strategy_name": "First-Hour High/Low Sweep Reversal",
+      "direction": "LONG_ONLY",
+      "timeframe": "5M",
+      "category": "REVERSAL",
+      "description": "Intraday false breakout of 10:15 first-hour boundaries followed by mean-reversion wick.",
+      "trades": 579,
+      "win_rate": 32.82,
+      "expectancy": -1.63,
+      "profit_factor": 0.88,
+      "gross_points": -367.3,
+      "net_points": -946.3,
+      "gross_pnl_inr": -18365.0,
+      "net_pnl_inr": -237592.41,
+      "total_costs_inr": 190277.41,
+      "slippage_inr": 28950.0,
+      "max_drawdown": 1233.05,
+      "average_trade": -1.63,
+      "avg_holding_mins": 38.2,
+      "trades_per_day": 0.47,
+      "max_consecutive_losses": 14,
+      "status": "DISCOVERY",
+      "metrics_full": {
+        "total_trades": 579,
+        "long_trades": 579,
+        "short_trades": 0,
+        "wins": 190,
+        "losses": 389,
+        "win_rate": 32.82,
+        "gross_points": -367.3,
+        "net_points": -946.3,
+        "gross_pnl_inr": -18365.0,
+        "net_pnl_inr": -237592.41,
+        "total_costs_inr": 190277.41,
+        "total_slippage_inr": 28950.0,
+        "profit_factor": 0.88,
+        "expectancy_pts": -1.63,
+        "max_drawdown_pts": 1233.05,
+        "max_drawdown_inr": 61652.5,
+        "avg_trade_pts": -1.63,
+        "avg_winner_pts": 37.72,
+        "avg_loser_pts": -20.86,
+        "avg_holding_mins": 38.2,
+        "trades_per_day": 0.47,
+        "max_consecutive_losses": 14,
+        "max_consecutive_wins": 5,
+        "yearly_stats": {
+          "2021": {
+            "year": 2021,
+            "trades": 26,
+            "win_rate": 30.77,
+            "gross_points": -23.55,
+            "net_points": -49.55,
+            "net_pnl_inr": -9757.01,
+            "profit_factor": 0.88,
+            "max_dd_pts": 183.05
+          },
+          "2022": {
+            "year": 2022,
+            "trades": 120,
+            "win_rate": 31.67,
+            "gross_points": -361.8,
+            "net_points": -481.8,
+            "net_pnl_inr": -56900.65,
+            "profit_factor": 0.73,
+            "max_dd_pts": 556.9
+          },
+          "2023": {
+            "year": 2023,
+            "trades": 103,
+            "win_rate": 31.07,
+            "gross_points": -66.95,
+            "net_points": -169.95,
+            "net_pnl_inr": -38812.59,
+            "profit_factor": 0.85,
+            "max_dd_pts": 311.15
+          },
+          "2024": {
+            "year": 2024,
+            "trades": 120,
+            "win_rate": 33.33,
+            "gross_points": -178.45,
+            "net_points": -298.45,
+            "net_pnl_inr": -57439.32,
+            "profit_factor": 0.84,
+            "max_dd_pts": 447.5
+          },
+          "2025": {
+            "year": 2025,
+            "trades": 114,
+            "win_rate": 34.21,
+            "gross_points": 173.1,
+            "net_points": 59.1,
+            "net_pnl_inr": -39035.24,
+            "profit_factor": 1.04,
+            "max_dd_pts": 287.65
+          },
+          "2026": {
+            "year": 2026,
+            "trades": 96,
+            "win_rate": 34.38,
+            "gross_points": 90.35,
+            "net_points": -5.65,
+            "net_pnl_inr": -35647.6,
+            "profit_factor": 1.0,
+            "max_dd_pts": 305.7
+          }
+        },
+        "tod_stats": {
+          "10:00-11:00": {
+            "tod": "10:00-11:00",
+            "trades": 185,
+            "win_rate": 34.59,
+            "net_points": -120.7,
+            "profit_factor": 0.96
+          },
+          "11:00-12:00": {
+            "tod": "11:00-12:00",
+            "trades": 144,
+            "win_rate": 31.25,
+            "net_points": -326.25,
+            "profit_factor": 0.85
+          },
+          "12:00-13:00": {
+            "tod": "12:00-13:00",
+            "trades": 112,
+            "win_rate": 27.68,
+            "net_points": -422.05,
+            "profit_factor": 0.73
+          },
+          "13:00-14:00": {
+            "tod": "13:00-14:00",
+            "trades": 128,
+            "win_rate": 36.72,
+            "net_points": -20.4,
+            "profit_factor": 0.99
+          },
+          "14:00-15:00": {
+            "tod": "14:00-15:00",
+            "trades": 10,
+            "win_rate": 30.0,
+            "net_points": -56.9,
+            "profit_factor": 0.69
+          }
+        }
+      }
+    },
+    {
+      "hypothesis_id": "H06_FIRST_HOUR_SWEEP_REVERSAL",
+      "strategy_name": "First-Hour High/Low Sweep Reversal",
+      "direction": "SHORT_ONLY",
+      "timeframe": "5M",
+      "category": "REVERSAL",
+      "description": "Intraday false breakout of 10:15 first-hour boundaries followed by mean-reversion wick.",
+      "trades": 567,
+      "win_rate": 32.45,
+      "expectancy": -1.47,
+      "profit_factor": 0.89,
+      "gross_points": -267.65,
+      "net_points": -834.65,
+      "gross_pnl_inr": -13382.5,
+      "net_pnl_inr": -226893.95,
+      "total_costs_inr": 185161.45,
+      "slippage_inr": 28350.0,
+      "max_drawdown": 1430.1,
+      "average_trade": -1.47,
+      "avg_holding_mins": 32.4,
+      "trades_per_day": 0.46,
+      "max_consecutive_losses": 10,
+      "status": "DISCOVERY",
+      "metrics_full": {
+        "total_trades": 567,
+        "long_trades": 0,
+        "short_trades": 567,
+        "wins": 184,
+        "losses": 383,
+        "win_rate": 32.45,
+        "gross_points": -267.65,
+        "net_points": -834.65,
+        "gross_pnl_inr": -13382.5,
+        "net_pnl_inr": -226893.95,
+        "total_costs_inr": 185161.45,
+        "total_slippage_inr": 28350.0,
+        "profit_factor": 0.89,
+        "expectancy_pts": -1.47,
+        "max_drawdown_pts": 1430.1,
+        "max_drawdown_inr": 71505.0,
+        "avg_trade_pts": -1.47,
+        "avg_winner_pts": 35.48,
+        "avg_loser_pts": -19.22,
+        "avg_holding_mins": 32.4,
+        "trades_per_day": 0.46,
+        "max_consecutive_losses": 10,
+        "max_consecutive_wins": 6,
+        "yearly_stats": {
+          "2021": {
+            "year": 2021,
+            "trades": 31,
+            "win_rate": 25.81,
+            "gross_points": -35.4,
+            "net_points": -66.4,
+            "net_pnl_inr": -11969.18,
+            "profit_factor": 0.82,
+            "max_dd_pts": 160.45
+          },
+          "2022": {
+            "year": 2022,
+            "trades": 109,
+            "win_rate": 30.28,
+            "gross_points": -110.15,
+            "net_points": -219.15,
+            "net_pnl_inr": -40837.01,
+            "profit_factor": 0.84,
+            "max_dd_pts": 259.2
+          },
+          "2023": {
+            "year": 2023,
+            "trades": 126,
+            "win_rate": 30.95,
+            "gross_points": 6.6,
+            "net_points": -119.4,
+            "net_pnl_inr": -43133.19,
+            "profit_factor": 0.91,
+            "max_dd_pts": 329.0
+          },
+          "2024": {
+            "year": 2024,
+            "trades": 110,
+            "win_rate": 27.27,
+            "gross_points": -464.25,
+            "net_points": -574.25,
+            "net_pnl_inr": -67959.78,
+            "profit_factor": 0.65,
+            "max_dd_pts": 648.45
+          },
+          "2025": {
+            "year": 2025,
+            "trades": 105,
+            "win_rate": 34.29,
+            "gross_points": -56.5,
+            "net_points": -161.5,
+            "net_pnl_inr": -46873.5,
+            "profit_factor": 0.9,
+            "max_dd_pts": 438.9
+          },
+          "2026": {
+            "year": 2026,
+            "trades": 86,
+            "win_rate": 44.19,
+            "gross_points": 392.05,
+            "net_points": 306.05,
+            "net_pnl_inr": -16121.29,
+            "profit_factor": 1.28,
+            "max_dd_pts": 242.6
+          }
+        },
+        "tod_stats": {
+          "10:00-11:00": {
+            "tod": "10:00-11:00",
+            "trades": 208,
+            "win_rate": 32.21,
+            "net_points": -247.3,
+            "profit_factor": 0.91
+          },
+          "11:00-12:00": {
+            "tod": "11:00-12:00",
+            "trades": 133,
+            "win_rate": 39.85,
+            "net_points": 288.25,
+            "profit_factor": 1.19
+          },
+          "12:00-13:00": {
+            "tod": "12:00-13:00",
+            "trades": 103,
+            "win_rate": 27.18,
+            "net_points": -461.0,
+            "profit_factor": 0.66
+          },
+          "13:00-14:00": {
+            "tod": "13:00-14:00",
+            "trades": 112,
+            "win_rate": 31.25,
+            "net_points": -131.05,
+            "profit_factor": 0.91
+          },
+          "14:00-15:00": {
+            "tod": "14:00-15:00",
+            "trades": 11,
+            "win_rate": 9.09,
+            "net_points": -283.55,
+            "profit_factor": 0.08
+          }
+        }
+      }
+    },
+    {
+      "hypothesis_id": "H07_EMA20_PINBAR_REJECTION",
+      "strategy_name": "Dynamic EMA20 Pin-Bar Rejection",
+      "direction": "BOTH",
+      "timeframe": "5M",
+      "category": "REVERSAL",
+      "description": "Pin-bar wick testing dynamic 20-period EMA aligned with dominant 50-period trend.",
+      "trades": 900,
+      "win_rate": 34.22,
+      "expectancy": -0.78,
+      "profit_factor": 0.95,
+      "gross_points": 200.9,
+      "net_points": -699.1,
+      "gross_pnl_inr": 10045.0,
+      "net_pnl_inr": -332262.47,
+      "total_costs_inr": 297307.47,
+      "slippage_inr": 45000.0,
+      "max_drawdown": 1635.0,
+      "average_trade": -0.78,
+      "avg_holding_mins": 40.7,
+      "trades_per_day": 0.72,
+      "max_consecutive_losses": 15,
+      "status": "DISCOVERY",
+      "metrics_full": {
+        "total_trades": 900,
+        "long_trades": 528,
+        "short_trades": 372,
+        "wins": 308,
+        "losses": 592,
+        "win_rate": 34.22,
+        "gross_points": 200.9,
+        "net_points": -699.1,
+        "gross_pnl_inr": 10045.0,
+        "net_pnl_inr": -332262.47,
+        "total_costs_inr": 297307.47,
+        "total_slippage_inr": 45000.0,
+        "profit_factor": 0.95,
+        "expectancy_pts": -0.78,
+        "max_drawdown_pts": 1635.0,
+        "max_drawdown_inr": 81750.0,
+        "avg_trade_pts": -0.78,
+        "avg_winner_pts": 39.73,
+        "avg_loser_pts": -21.85,
+        "avg_holding_mins": 40.7,
+        "trades_per_day": 0.72,
+        "max_consecutive_losses": 15,
+        "max_consecutive_wins": 5,
+        "yearly_stats": {
+          "2021": {
+            "year": 2021,
+            "trades": 41,
+            "win_rate": 26.83,
+            "gross_points": -175.05,
+            "net_points": -216.05,
+            "net_pnl_inr": -22275.27,
+            "profit_factor": 0.65,
+            "max_dd_pts": 326.45
+          },
+          "2022": {
+            "year": 2022,
+            "trades": 173,
+            "win_rate": 32.37,
+            "gross_points": -324.3,
+            "net_points": -497.3,
+            "net_pnl_inr": -72387.17,
+            "profit_factor": 0.81,
+            "max_dd_pts": 669.05
+          },
+          "2023": {
+            "year": 2023,
+            "trades": 174,
+            "win_rate": 36.78,
+            "gross_points": 184.9,
+            "net_points": 10.9,
+            "net_pnl_inr": -50813.09,
+            "profit_factor": 1.01,
+            "max_dd_pts": 390.55
+          },
+          "2024": {
+            "year": 2024,
+            "trades": 189,
+            "win_rate": 31.22,
+            "gross_points": -165.35,
+            "net_points": -354.35,
+            "net_pnl_inr": -85194.0,
+            "profit_factor": 0.88,
+            "max_dd_pts": 805.55
+          },
+          "2025": {
+            "year": 2025,
+            "trades": 191,
+            "win_rate": 36.65,
+            "gross_points": 419.05,
+            "net_points": 228.05,
+            "net_pnl_inr": -59583.48,
+            "profit_factor": 1.09,
+            "max_dd_pts": 295.75
+          },
+          "2026": {
+            "year": 2026,
+            "trades": 132,
+            "win_rate": 36.36,
+            "gross_points": 261.65,
+            "net_points": 129.65,
+            "net_pnl_inr": -42009.46,
+            "profit_factor": 1.06,
+            "max_dd_pts": 305.25
+          }
+        },
+        "tod_stats": {
+          "09:15-09:30": {
+            "tod": "09:15-09:30",
+            "trades": 40,
+            "win_rate": 37.5,
+            "net_points": -142.75,
+            "profit_factor": 0.85
+          },
+          "09:30-10:00": {
+            "tod": "09:30-10:00",
+            "trades": 56,
+            "win_rate": 26.79,
+            "net_points": -198.8,
+            "profit_factor": 0.83
+          },
+          "10:00-11:00": {
+            "tod": "10:00-11:00",
+            "trades": 128,
+            "win_rate": 39.06,
+            "net_points": 321.35,
+            "profit_factor": 1.17
+          },
+          "11:00-12:00": {
+            "tod": "11:00-12:00",
+            "trades": 163,
+            "win_rate": 29.45,
+            "net_points": -430.65,
+            "profit_factor": 0.81
+          },
+          "12:00-13:00": {
+            "tod": "12:00-13:00",
+            "trades": 161,
+            "win_rate": 30.43,
+            "net_points": -366.15,
+            "profit_factor": 0.83
+          },
+          "13:00-14:00": {
+            "tod": "13:00-14:00",
+            "trades": 186,
+            "win_rate": 33.87,
+            "net_points": -312.55,
+            "profit_factor": 0.87
+          },
+          "14:00-15:00": {
+            "tod": "14:00-15:00",
+            "trades": 166,
+            "win_rate": 40.96,
+            "net_points": 430.45,
+            "profit_factor": 1.22
+          }
+        }
+      }
+    },
+    {
+      "hypothesis_id": "H07_EMA20_PINBAR_REJECTION",
+      "strategy_name": "Dynamic EMA20 Pin-Bar Rejection",
+      "direction": "LONG_ONLY",
+      "timeframe": "5M",
+      "category": "REVERSAL",
+      "description": "Pin-bar wick testing dynamic 20-period EMA aligned with dominant 50-period trend.",
+      "trades": 528,
+      "win_rate": 32.58,
+      "expectancy": -2.26,
+      "profit_factor": 0.84,
+      "gross_points": -666.35,
+      "net_points": -1194.35,
+      "gross_pnl_inr": -33317.5,
+      "net_pnl_inr": -233686.78,
+      "total_costs_inr": 173969.28,
+      "slippage_inr": 26400.0,
+      "max_drawdown": 1438.05,
+      "average_trade": -2.26,
+      "avg_holding_mins": 46.5,
+      "trades_per_day": 0.43,
+      "max_consecutive_losses": 16,
+      "status": "DISCOVERY",
+      "metrics_full": {
+        "total_trades": 528,
+        "long_trades": 528,
+        "short_trades": 0,
+        "wins": 172,
+        "losses": 356,
+        "win_rate": 32.58,
+        "gross_points": -666.35,
+        "net_points": -1194.35,
+        "gross_pnl_inr": -33317.5,
+        "net_pnl_inr": -233686.78,
+        "total_costs_inr": 173969.28,
+        "total_slippage_inr": 26400.0,
+        "profit_factor": 0.84,
+        "expectancy_pts": -2.26,
+        "max_drawdown_pts": 1438.05,
+        "max_drawdown_inr": 71902.5,
+        "avg_trade_pts": -2.26,
+        "avg_winner_pts": 37.31,
+        "avg_loser_pts": -21.38,
+        "avg_holding_mins": 46.5,
+        "trades_per_day": 0.43,
+        "max_consecutive_losses": 16,
+        "max_consecutive_wins": 6,
+        "yearly_stats": {
+          "2021": {
+            "year": 2021,
+            "trades": 28,
+            "win_rate": 25.0,
+            "gross_points": -206.2,
+            "net_points": -234.2,
+            "net_pnl_inr": -19531.93,
+            "profit_factor": 0.48,
+            "max_dd_pts": 238.05
+          },
+          "2022": {
+            "year": 2022,
+            "trades": 97,
+            "win_rate": 28.87,
+            "gross_points": -530.95,
+            "net_points": -627.95,
+            "net_pnl_inr": -58066.94,
+            "profit_factor": 0.6,
+            "max_dd_pts": 730.0
+          },
+          "2023": {
+            "year": 2023,
+            "trades": 116,
+            "win_rate": 36.21,
+            "gross_points": 98.5,
+            "net_points": -17.5,
+            "net_pnl_inr": -35366.2,
+            "profit_factor": 0.99,
+            "max_dd_pts": 329.45
+          },
+          "2024": {
+            "year": 2024,
+            "trades": 109,
+            "win_rate": 30.28,
+            "gross_points": -176.55,
+            "net_points": -285.55,
+            "net_pnl_inr": -53224.97,
+            "profit_factor": 0.83,
+            "max_dd_pts": 538.25
+          },
+          "2025": {
+            "year": 2025,
+            "trades": 108,
+            "win_rate": 37.04,
+            "gross_points": 225.35,
+            "net_points": 117.35,
+            "net_pnl_inr": -34444.85,
+            "profit_factor": 1.08,
+            "max_dd_pts": 288.6
+          },
+          "2026": {
+            "year": 2026,
+            "trades": 70,
+            "win_rate": 31.43,
+            "gross_points": -76.5,
+            "net_points": -146.5,
+            "net_pnl_inr": -33051.89,
+            "profit_factor": 0.88,
+            "max_dd_pts": 380.65
+          }
+        },
+        "tod_stats": {
+          "09:15-09:30": {
+            "tod": "09:15-09:30",
+            "trades": 27,
+            "win_rate": 37.04,
+            "net_points": -192.75,
+            "profit_factor": 0.69
+          },
+          "09:30-10:00": {
+            "tod": "09:30-10:00",
+            "trades": 32,
+            "win_rate": 21.88,
+            "net_points": -150.35,
+            "profit_factor": 0.78
+          },
+          "10:00-11:00": {
+            "tod": "10:00-11:00",
+            "trades": 73,
+            "win_rate": 38.36,
+            "net_points": 193.45,
+            "profit_factor": 1.18
+          },
+          "11:00-12:00": {
+            "tod": "11:00-12:00",
+            "trades": 94,
+            "win_rate": 27.66,
+            "net_points": -465.5,
+            "profit_factor": 0.65
+          },
+          "12:00-13:00": {
+            "tod": "12:00-13:00",
+            "trades": 96,
+            "win_rate": 30.21,
+            "net_points": -209.0,
+            "profit_factor": 0.83
+          },
+          "13:00-14:00": {
+            "tod": "13:00-14:00",
+            "trades": 117,
+            "win_rate": 30.77,
+            "net_points": -440.3,
+            "profit_factor": 0.72
+          },
+          "14:00-15:00": {
+            "tod": "14:00-15:00",
+            "trades": 89,
+            "win_rate": 40.45,
+            "net_points": 70.1,
+            "profit_factor": 1.06
+          }
+        }
+      }
+    },
+    {
+      "hypothesis_id": "H07_EMA20_PINBAR_REJECTION",
+      "strategy_name": "Dynamic EMA20 Pin-Bar Rejection",
+      "direction": "SHORT_ONLY",
+      "timeframe": "5M",
+      "category": "REVERSAL",
+      "description": "Pin-bar wick testing dynamic 20-period EMA aligned with dominant 50-period trend.",
+      "trades": 372,
+      "win_rate": 36.56,
+      "expectancy": 1.33,
+      "profit_factor": 1.09,
+      "gross_points": 867.25,
+      "net_points": 495.25,
+      "gross_pnl_inr": 43362.5,
+      "net_pnl_inr": -98575.69,
+      "total_costs_inr": 123338.19,
+      "slippage_inr": 18600.0,
+      "max_drawdown": 442.2,
+      "average_trade": 1.33,
+      "avg_holding_mins": 32.4,
+      "trades_per_day": 0.3,
+      "max_consecutive_losses": 11,
+      "status": "PROMISING",
+      "metrics_full": {
+        "total_trades": 372,
+        "long_trades": 0,
+        "short_trades": 372,
+        "wins": 136,
+        "losses": 236,
+        "win_rate": 36.56,
+        "gross_points": 867.25,
+        "net_points": 495.25,
+        "gross_pnl_inr": 43362.5,
+        "net_pnl_inr": -98575.69,
+        "total_costs_inr": 123338.19,
+        "total_slippage_inr": 18600.0,
+        "profit_factor": 1.09,
+        "expectancy_pts": 1.33,
+        "max_drawdown_pts": 442.2,
+        "max_drawdown_inr": 22110.0,
+        "avg_trade_pts": 1.33,
+        "avg_winner_pts": 42.79,
+        "avg_loser_pts": -22.56,
+        "avg_holding_mins": 32.4,
+        "trades_per_day": 0.3,
+        "max_consecutive_losses": 11,
+        "max_consecutive_wins": 5,
+        "yearly_stats": {
+          "2021": {
+            "year": 2021,
+            "trades": 13,
+            "win_rate": 30.77,
+            "gross_points": 31.15,
+            "net_points": 18.15,
+            "net_pnl_inr": -2743.34,
+            "profit_factor": 1.11,
+            "max_dd_pts": 112.45
+          },
+          "2022": {
+            "year": 2022,
+            "trades": 76,
+            "win_rate": 36.84,
+            "gross_points": 206.65,
+            "net_points": 130.65,
+            "net_pnl_inr": -14320.23,
+            "profit_factor": 1.12,
+            "max_dd_pts": 193.6
+          },
+          "2023": {
+            "year": 2023,
+            "trades": 58,
+            "win_rate": 37.93,
+            "gross_points": 86.4,
+            "net_points": 28.4,
+            "net_pnl_inr": -15446.89,
+            "profit_factor": 1.04,
+            "max_dd_pts": 127.85
+          },
+          "2024": {
+            "year": 2024,
+            "trades": 80,
+            "win_rate": 32.5,
+            "gross_points": 11.2,
+            "net_points": -68.8,
+            "net_pnl_inr": -31969.03,
+            "profit_factor": 0.95,
+            "max_dd_pts": 343.05
+          },
+          "2025": {
+            "year": 2025,
+            "trades": 83,
+            "win_rate": 36.14,
+            "gross_points": 193.7,
+            "net_points": 110.7,
+            "net_pnl_inr": -25138.63,
+            "profit_factor": 1.09,
+            "max_dd_pts": 237.15
+          },
+          "2026": {
+            "year": 2026,
+            "trades": 62,
+            "win_rate": 41.94,
+            "gross_points": 338.15,
+            "net_points": 276.15,
+            "net_pnl_inr": -8957.57,
+            "profit_factor": 1.31,
+            "max_dd_pts": 180.1
+          }
+        },
+        "tod_stats": {
+          "09:15-09:30": {
+            "tod": "09:15-09:30",
+            "trades": 13,
+            "win_rate": 38.46,
+            "net_points": 50.0,
+            "profit_factor": 1.15
+          },
+          "09:30-10:00": {
+            "tod": "09:30-10:00",
+            "trades": 24,
+            "win_rate": 33.33,
+            "net_points": -48.45,
+            "profit_factor": 0.89
+          },
+          "10:00-11:00": {
+            "tod": "10:00-11:00",
+            "trades": 55,
+            "win_rate": 40.0,
+            "net_points": 127.9,
+            "profit_factor": 1.15
+          },
+          "11:00-12:00": {
+            "tod": "11:00-12:00",
+            "trades": 69,
+            "win_rate": 31.88,
+            "net_points": 34.85,
+            "profit_factor": 1.04
+          },
+          "12:00-13:00": {
+            "tod": "12:00-13:00",
+            "trades": 65,
+            "win_rate": 30.77,
+            "net_points": -157.15,
+            "profit_factor": 0.82
+          },
+          "13:00-14:00": {
+            "tod": "13:00-14:00",
+            "trades": 69,
+            "win_rate": 39.13,
+            "net_points": 127.75,
+            "profit_factor": 1.14
+          },
+          "14:00-15:00": {
+            "tod": "14:00-15:00",
+            "trades": 77,
+            "win_rate": 41.56,
+            "net_points": 360.35,
+            "profit_factor": 1.39
+          }
+        }
+      }
+    },
+    {
+      "hypothesis_id": "H08_SESSION_EXTREME_ENGULFING",
+      "strategy_name": "Session Extreme Engulfing Reversal",
+      "direction": "BOTH",
+      "timeframe": "5M",
+      "category": "REVERSAL",
+      "description": "Engulfing pattern occurring at intraday session extreme indicating momentum exhaustion.",
+      "trades": 1700,
+      "win_rate": 32.47,
+      "expectancy": -2.6,
+      "profit_factor": 0.85,
+      "gross_points": -2718.3,
+      "net_points": -4418.3,
+      "gross_pnl_inr": -135915.0,
+      "net_pnl_inr": -774806.6,
+      "total_costs_inr": 553891.6,
+      "slippage_inr": 85000.0,
+      "max_drawdown": 5638.55,
+      "average_trade": -2.6,
+      "avg_holding_mins": 49.7,
+      "trades_per_day": 1.37,
+      "max_consecutive_losses": 15,
+      "status": "DISCOVERY",
+      "metrics_full": {
+        "total_trades": 1700,
+        "long_trades": 810,
+        "short_trades": 890,
+        "wins": 552,
+        "losses": 1148,
+        "win_rate": 32.47,
+        "gross_points": -2718.3,
+        "net_points": -4418.3,
+        "gross_pnl_inr": -135915.0,
+        "net_pnl_inr": -774806.6,
+        "total_costs_inr": 553891.6,
+        "total_slippage_inr": 85000.0,
+        "profit_factor": 0.85,
+        "expectancy_pts": -2.6,
+        "max_drawdown_pts": 5638.55,
+        "max_drawdown_inr": 281927.5,
+        "avg_trade_pts": -2.6,
+        "avg_winner_pts": 45.77,
+        "avg_loser_pts": -25.86,
+        "avg_holding_mins": 49.7,
+        "trades_per_day": 1.37,
+        "max_consecutive_losses": 15,
+        "max_consecutive_wins": 7,
+        "yearly_stats": {
+          "2021": {
+            "year": 2021,
+            "trades": 94,
+            "win_rate": 35.11,
+            "gross_points": -149.2,
+            "net_points": -243.2,
+            "net_pnl_inr": -38319.2,
+            "profit_factor": 0.86,
+            "max_dd_pts": 588.95
+          },
+          "2022": {
+            "year": 2022,
+            "trades": 344,
+            "win_rate": 29.94,
+            "gross_points": -491.35,
+            "net_points": -835.35,
+            "net_pnl_inr": -136130.21,
+            "profit_factor": 0.86,
+            "max_dd_pts": 1340.35
+          },
+          "2023": {
+            "year": 2023,
+            "trades": 388,
+            "win_rate": 32.47,
+            "gross_points": -521.8,
+            "net_points": -909.8,
+            "net_pnl_inr": -160240.13,
+            "profit_factor": 0.84,
+            "max_dd_pts": 1063.25
+          },
+          "2024": {
+            "year": 2024,
+            "trades": 329,
+            "win_rate": 29.18,
+            "gross_points": -1824.85,
+            "net_points": -2153.85,
+            "net_pnl_inr": -224931.78,
+            "profit_factor": 0.69,
+            "max_dd_pts": 2202.15
+          },
+          "2025": {
+            "year": 2025,
+            "trades": 334,
+            "win_rate": 32.34,
+            "gross_points": -802.0,
+            "net_points": -1136.0,
+            "net_pnl_inr": -181148.28,
+            "profit_factor": 0.81,
+            "max_dd_pts": 1693.9
+          },
+          "2026": {
+            "year": 2026,
+            "trades": 211,
+            "win_rate": 40.76,
+            "gross_points": 1070.9,
+            "net_points": 859.9,
+            "net_pnl_inr": -34037.0,
+            "profit_factor": 1.23,
+            "max_dd_pts": 527.0
+          }
+        },
+        "tod_stats": {
+          "09:15-09:30": {
+            "tod": "09:15-09:30",
+            "trades": 112,
+            "win_rate": 38.39,
+            "net_points": 372.2,
+            "profit_factor": 1.14
+          },
+          "09:30-10:00": {
+            "tod": "09:30-10:00",
+            "trades": 267,
+            "win_rate": 31.46,
+            "net_points": -903.2,
+            "profit_factor": 0.85
+          },
+          "10:00-11:00": {
+            "tod": "10:00-11:00",
+            "trades": 339,
+            "win_rate": 30.97,
+            "net_points": -1249.0,
+            "profit_factor": 0.8
+          },
+          "11:00-12:00": {
+            "tod": "11:00-12:00",
+            "trades": 278,
+            "win_rate": 30.94,
+            "net_points": -879.1,
+            "profit_factor": 0.79
+          },
+          "12:00-13:00": {
+            "tod": "12:00-13:00",
+            "trades": 239,
+            "win_rate": 33.05,
+            "net_points": -370.2,
+            "profit_factor": 0.89
+          },
+          "13:00-14:00": {
+            "tod": "13:00-14:00",
+            "trades": 226,
+            "win_rate": 32.3,
+            "net_points": -763.9,
+            "profit_factor": 0.79
+          },
+          "14:00-15:00": {
+            "tod": "14:00-15:00",
+            "trades": 239,
+            "win_rate": 34.31,
+            "net_points": -625.1,
+            "profit_factor": 0.82
+          }
+        }
+      }
+    },
+    {
+      "hypothesis_id": "H08_SESSION_EXTREME_ENGULFING",
+      "strategy_name": "Session Extreme Engulfing Reversal",
+      "direction": "LONG_ONLY",
+      "timeframe": "5M",
+      "category": "REVERSAL",
+      "description": "Engulfing pattern occurring at intraday session extreme indicating momentum exhaustion.",
+      "trades": 834,
+      "win_rate": 32.49,
+      "expectancy": -3.13,
+      "profit_factor": 0.84,
+      "gross_points": -1777.8,
+      "net_points": -2611.8,
+      "gross_pnl_inr": -88890.0,
+      "net_pnl_inr": -401743.84,
+      "total_costs_inr": 271153.84,
+      "slippage_inr": 41700.0,
+      "max_drawdown": 3631.1,
+      "average_trade": -3.13,
+      "avg_holding_mins": 55.3,
+      "trades_per_day": 0.67,
+      "max_consecutive_losses": 15,
+      "status": "DISCOVERY",
+      "metrics_full": {
+        "total_trades": 834,
+        "long_trades": 834,
+        "short_trades": 0,
+        "wins": 271,
+        "losses": 563,
+        "win_rate": 32.49,
+        "gross_points": -1777.8,
+        "net_points": -2611.8,
+        "gross_pnl_inr": -88890.0,
+        "net_pnl_inr": -401743.84,
+        "total_costs_inr": 271153.84,
+        "total_slippage_inr": 41700.0,
+        "profit_factor": 0.84,
+        "expectancy_pts": -3.13,
+        "max_drawdown_pts": 3631.1,
+        "max_drawdown_inr": 181555.0,
+        "avg_trade_pts": -3.13,
+        "avg_winner_pts": 49.49,
+        "avg_loser_pts": -28.46,
+        "avg_holding_mins": 55.3,
+        "trades_per_day": 0.67,
+        "max_consecutive_losses": 15,
+        "max_consecutive_wins": 5,
+        "yearly_stats": {
+          "2021": {
+            "year": 2021,
+            "trades": 41,
+            "win_rate": 24.39,
+            "gross_points": -321.4,
+            "net_points": -362.4,
+            "net_pnl_inr": -29536.34,
+            "profit_factor": 0.58,
+            "max_dd_pts": 394.9
+          },
+          "2022": {
+            "year": 2022,
+            "trades": 167,
+            "win_rate": 28.74,
+            "gross_points": -574.2,
+            "net_points": -741.2,
+            "net_pnl_inr": -82896.48,
+            "profit_factor": 0.77,
+            "max_dd_pts": 1243.0
+          },
+          "2023": {
+            "year": 2023,
+            "trades": 200,
+            "win_rate": 33.5,
+            "gross_points": -241.95,
+            "net_points": -441.95,
+            "net_pnl_inr": -80837.31,
+            "profit_factor": 0.85,
+            "max_dd_pts": 584.85
+          },
+          "2024": {
+            "year": 2024,
+            "trades": 174,
+            "win_rate": 29.31,
+            "gross_points": -1117.8,
+            "net_points": -1291.8,
+            "net_pnl_inr": -126657.9,
+            "profit_factor": 0.68,
+            "max_dd_pts": 1546.75
+          },
+          "2025": {
+            "year": 2025,
+            "trades": 167,
+            "win_rate": 34.73,
+            "gross_points": -191.15,
+            "net_points": -358.15,
+            "net_pnl_inr": -79827.65,
+            "profit_factor": 0.89,
+            "max_dd_pts": 1054.65
+          },
+          "2026": {
+            "year": 2026,
+            "trades": 85,
+            "win_rate": 43.53,
+            "gross_points": 668.7,
+            "net_points": 583.7,
+            "net_pnl_inr": -1988.16,
+            "profit_factor": 1.34,
+            "max_dd_pts": 297.75
+          }
+        },
+        "tod_stats": {
+          "09:15-09:30": {
+            "tod": "09:15-09:30",
+            "trades": 62,
+            "win_rate": 33.87,
+            "net_points": -91.6,
+            "profit_factor": 0.94
+          },
+          "09:30-10:00": {
+            "tod": "09:30-10:00",
+            "trades": 148,
+            "win_rate": 31.08,
+            "net_points": -470.95,
+            "profit_factor": 0.87
+          },
+          "10:00-11:00": {
+            "tod": "10:00-11:00",
+            "trades": 183,
+            "win_rate": 31.69,
+            "net_points": -609.45,
+            "profit_factor": 0.83
+          },
+          "11:00-12:00": {
+            "tod": "11:00-12:00",
+            "trades": 132,
+            "win_rate": 32.58,
+            "net_points": -423.45,
+            "profit_factor": 0.8
+          },
+          "12:00-13:00": {
+            "tod": "12:00-13:00",
+            "trades": 109,
+            "win_rate": 34.86,
+            "net_points": -257.35,
+            "profit_factor": 0.85
+          },
+          "13:00-14:00": {
+            "tod": "13:00-14:00",
+            "trades": 100,
+            "win_rate": 31.0,
+            "net_points": -510.7,
+            "profit_factor": 0.72
+          },
+          "14:00-15:00": {
+            "tod": "14:00-15:00",
+            "trades": 100,
+            "win_rate": 34.0,
+            "net_points": -248.3,
+            "profit_factor": 0.84
+          }
+        }
+      }
+    },
+    {
+      "hypothesis_id": "H08_SESSION_EXTREME_ENGULFING",
+      "strategy_name": "Session Extreme Engulfing Reversal",
+      "direction": "SHORT_ONLY",
+      "timeframe": "5M",
+      "category": "REVERSAL",
+      "description": "Engulfing pattern occurring at intraday session extreme indicating momentum exhaustion.",
+      "trades": 942,
+      "win_rate": 32.7,
+      "expectancy": -1.94,
+      "profit_factor": 0.88,
+      "gross_points": -888.4,
+      "net_points": -1830.4,
+      "gross_pnl_inr": -44420.0,
+      "net_pnl_inr": -397841.45,
+      "total_costs_inr": 306321.45,
+      "slippage_inr": 47100.0,
+      "max_drawdown": 2785.65,
+      "average_trade": -1.94,
+      "avg_holding_mins": 45.6,
+      "trades_per_day": 0.76,
+      "max_consecutive_losses": 13,
+      "status": "DISCOVERY",
+      "metrics_full": {
+        "total_trades": 942,
+        "long_trades": 0,
+        "short_trades": 942,
+        "wins": 308,
+        "losses": 634,
+        "win_rate": 32.7,
+        "gross_points": -888.4,
+        "net_points": -1830.4,
+        "gross_pnl_inr": -44420.0,
+        "net_pnl_inr": -397841.45,
+        "total_costs_inr": 306321.45,
+        "total_slippage_inr": 47100.0,
+        "profit_factor": 0.88,
+        "expectancy_pts": -1.94,
+        "max_drawdown_pts": 2785.65,
+        "max_drawdown_inr": 139282.5,
+        "avg_trade_pts": -1.94,
+        "avg_winner_pts": 42.0,
+        "avg_loser_pts": -23.29,
+        "avg_holding_mins": 45.6,
+        "trades_per_day": 0.76,
+        "max_consecutive_losses": 13,
+        "max_consecutive_wins": 5,
+        "yearly_stats": {
+          "2021": {
+            "year": 2021,
+            "trades": 55,
+            "win_rate": 43.64,
+            "gross_points": 201.8,
+            "net_points": 146.8,
+            "net_pnl_inr": -7966.67,
+            "profit_factor": 1.18,
+            "max_dd_pts": 316.35
+          },
+          "2022": {
+            "year": 2022,
+            "trades": 198,
+            "win_rate": 30.3,
+            "gross_points": -24.2,
+            "net_points": -222.2,
+            "net_pnl_inr": -65424.21,
+            "profit_factor": 0.93,
+            "max_dd_pts": 418.05
+          },
+          "2023": {
+            "year": 2023,
+            "trades": 217,
+            "win_rate": 33.18,
+            "gross_points": -113.5,
+            "net_points": -330.5,
+            "net_pnl_inr": -81095.42,
+            "profit_factor": 0.88,
+            "max_dd_pts": 473.65
+          },
+          "2024": {
+            "year": 2024,
+            "trades": 168,
+            "win_rate": 28.57,
+            "gross_points": -858.7,
+            "net_points": -1026.7,
+            "net_pnl_inr": -111056.12,
+            "profit_factor": 0.68,
+            "max_dd_pts": 1227.8
+          },
+          "2025": {
+            "year": 2025,
+            "trades": 171,
+            "win_rate": 29.82,
+            "gross_points": -609.25,
+            "net_points": -780.25,
+            "net_pnl_inr": -102964.62,
+            "profit_factor": 0.73,
+            "max_dd_pts": 995.7
+          },
+          "2026": {
+            "year": 2026,
+            "trades": 133,
+            "win_rate": 39.85,
+            "gross_points": 515.45,
+            "net_points": 382.45,
+            "net_pnl_inr": -29334.41,
+            "profit_factor": 1.19,
+            "max_dd_pts": 374.8
+          }
+        },
+        "tod_stats": {
+          "09:15-09:30": {
+            "tod": "09:15-09:30",
+            "trades": 51,
+            "win_rate": 45.1,
+            "net_points": 550.7,
+            "profit_factor": 1.54
+          },
+          "09:30-10:00": {
+            "tod": "09:30-10:00",
+            "trades": 136,
+            "win_rate": 30.88,
+            "net_points": -538.4,
+            "profit_factor": 0.81
+          },
+          "10:00-11:00": {
+            "tod": "10:00-11:00",
+            "trades": 188,
+            "win_rate": 30.32,
+            "net_points": -604.7,
+            "profit_factor": 0.81
+          },
+          "11:00-12:00": {
+            "tod": "11:00-12:00",
+            "trades": 158,
+            "win_rate": 30.38,
+            "net_points": -487.55,
+            "profit_factor": 0.78
+          },
+          "12:00-13:00": {
+            "tod": "12:00-13:00",
+            "trades": 138,
+            "win_rate": 31.88,
+            "net_points": -158.15,
+            "profit_factor": 0.91
+          },
+          "13:00-14:00": {
+            "tod": "13:00-14:00",
+            "trades": 129,
+            "win_rate": 34.88,
+            "net_points": -150.3,
+            "profit_factor": 0.92
+          },
+          "14:00-15:00": {
+            "tod": "14:00-15:00",
+            "trades": 142,
+            "win_rate": 34.51,
+            "net_points": -442.0,
+            "profit_factor": 0.78
+          }
+        }
+      }
+    },
+    {
+      "hypothesis_id": "H09_CONSECUTIVE_EXHAUSTION",
+      "strategy_name": "3-Candle Exhaustion Reversal",
+      "direction": "BOTH",
+      "timeframe": "5M",
+      "category": "REVERSAL",
+      "description": "Exhaustion reversal candle following 3 or more consecutive directional thrust candles.",
+      "trades": 4469,
+      "win_rate": 33.59,
+      "expectancy": -1.64,
+      "profit_factor": 0.9,
+      "gross_points": -2865.8,
+      "net_points": -7334.8,
+      "gross_pnl_inr": -143290.0,
+      "net_pnl_inr": -1828397.47,
+      "total_costs_inr": 1461657.47,
+      "slippage_inr": 223450.0,
+      "max_drawdown": 9131.25,
+      "average_trade": -1.64,
+      "avg_holding_mins": 47.3,
+      "trades_per_day": 3.6,
+      "max_consecutive_losses": 17,
+      "status": "DISCOVERY",
+      "metrics_full": {
+        "total_trades": 4469,
+        "long_trades": 2324,
+        "short_trades": 2145,
+        "wins": 1501,
+        "losses": 2968,
+        "win_rate": 33.59,
+        "gross_points": -2865.8,
+        "net_points": -7334.8,
+        "gross_pnl_inr": -143290.0,
+        "net_pnl_inr": -1828397.47,
+        "total_costs_inr": 1461657.47,
+        "total_slippage_inr": 223450.0,
+        "profit_factor": 0.9,
+        "expectancy_pts": -1.64,
+        "max_drawdown_pts": 9131.25,
+        "max_drawdown_inr": 456562.5,
+        "avg_trade_pts": -1.64,
+        "avg_winner_pts": 46.07,
+        "avg_loser_pts": -25.77,
+        "avg_holding_mins": 47.3,
+        "trades_per_day": 3.6,
+        "max_consecutive_losses": 17,
+        "max_consecutive_wins": 9,
+        "yearly_stats": {
+          "2021": {
+            "year": 2021,
+            "trades": 252,
+            "win_rate": 38.89,
+            "gross_points": 758.9,
+            "net_points": 506.9,
+            "net_pnl_inr": -44913.65,
+            "profit_factor": 1.12,
+            "max_dd_pts": 536.15
+          },
+          "2022": {
+            "year": 2022,
+            "trades": 936,
+            "win_rate": 33.65,
+            "gross_points": -50.2,
+            "net_points": -986.2,
+            "net_pnl_inr": -305521.85,
+            "profit_factor": 0.94,
+            "max_dd_pts": 2327.0
+          },
+          "2023": {
+            "year": 2023,
+            "trades": 855,
+            "win_rate": 33.57,
+            "gross_points": -19.55,
+            "net_points": -874.55,
+            "net_pnl_inr": -296184.82,
+            "profit_factor": 0.92,
+            "max_dd_pts": 1205.6
+          },
+          "2024": {
+            "year": 2024,
+            "trades": 849,
+            "win_rate": 32.04,
+            "gross_points": -1824.75,
+            "net_points": -2673.75,
+            "net_pnl_inr": -435521.59,
+            "profit_factor": 0.84,
+            "max_dd_pts": 2959.7
+          },
+          "2025": {
+            "year": 2025,
+            "trades": 932,
+            "win_rate": 34.23,
+            "gross_points": -1255.35,
+            "net_points": -2187.35,
+            "net_pnl_inr": -454318.18,
+            "profit_factor": 0.87,
+            "max_dd_pts": 2373.05
+          },
+          "2026": {
+            "year": 2026,
+            "trades": 645,
+            "win_rate": 32.56,
+            "gross_points": -474.85,
+            "net_points": -1119.85,
+            "net_pnl_inr": -291937.38,
+            "profit_factor": 0.91,
+            "max_dd_pts": 1541.7
+          }
+        },
+        "tod_stats": {
+          "09:15-09:30": {
+            "tod": "09:15-09:30",
+            "trades": 279,
+            "win_rate": 39.07,
+            "net_points": 857.0,
+            "profit_factor": 1.12
+          },
+          "09:30-10:00": {
+            "tod": "09:30-10:00",
+            "trades": 502,
+            "win_rate": 30.48,
+            "net_points": -1766.6,
+            "profit_factor": 0.84
+          },
+          "10:00-11:00": {
+            "tod": "10:00-11:00",
+            "trades": 828,
+            "win_rate": 33.09,
+            "net_points": -940.4,
+            "profit_factor": 0.93
+          },
+          "11:00-12:00": {
+            "tod": "11:00-12:00",
+            "trades": 717,
+            "win_rate": 31.1,
+            "net_points": -1372.05,
+            "profit_factor": 0.88
+          },
+          "12:00-13:00": {
+            "tod": "12:00-13:00",
+            "trades": 674,
+            "win_rate": 33.09,
+            "net_points": -1077.15,
+            "profit_factor": 0.9
+          },
+          "13:00-14:00": {
+            "tod": "13:00-14:00",
+            "trades": 685,
+            "win_rate": 32.26,
+            "net_points": -1491.55,
+            "profit_factor": 0.86
+          },
+          "14:00-15:00": {
+            "tod": "14:00-15:00",
+            "trades": 784,
+            "win_rate": 38.01,
+            "net_points": -1544.05,
+            "profit_factor": 0.87
+          }
+        }
+      }
+    },
+    {
+      "hypothesis_id": "H09_CONSECUTIVE_EXHAUSTION",
+      "strategy_name": "3-Candle Exhaustion Reversal",
+      "direction": "LONG_ONLY",
+      "timeframe": "5M",
+      "category": "REVERSAL",
+      "description": "Exhaustion reversal candle following 3 or more consecutive directional thrust candles.",
+      "trades": 2802,
+      "win_rate": 33.76,
+      "expectancy": -1.86,
+      "profit_factor": 0.89,
+      "gross_points": -2408.85,
+      "net_points": -5210.85,
+      "gross_pnl_inr": -120442.5,
+      "net_pnl_inr": -1178308.19,
+      "total_costs_inr": 917765.69,
+      "slippage_inr": 140100.0,
+      "max_drawdown": 5816.9,
+      "average_trade": -1.86,
+      "avg_holding_mins": 49.9,
+      "trades_per_day": 2.26,
+      "max_consecutive_losses": 14,
+      "status": "DISCOVERY",
+      "metrics_full": {
+        "total_trades": 2802,
+        "long_trades": 2802,
+        "short_trades": 0,
+        "wins": 946,
+        "losses": 1856,
+        "win_rate": 33.76,
+        "gross_points": -2408.85,
+        "net_points": -5210.85,
+        "gross_pnl_inr": -120442.5,
+        "net_pnl_inr": -1178308.19,
+        "total_costs_inr": 917765.69,
+        "total_slippage_inr": 140100.0,
+        "profit_factor": 0.89,
+        "expectancy_pts": -1.86,
+        "max_drawdown_pts": 5816.9,
+        "max_drawdown_inr": 290845.0,
+        "avg_trade_pts": -1.86,
+        "avg_winner_pts": 46.21,
+        "avg_loser_pts": -26.36,
+        "avg_holding_mins": 49.9,
+        "trades_per_day": 2.26,
+        "max_consecutive_losses": 14,
+        "max_consecutive_wins": 8,
+        "yearly_stats": {
+          "2021": {
+            "year": 2021,
+            "trades": 147,
+            "win_rate": 36.05,
+            "gross_points": 104.85,
+            "net_points": -42.15,
+            "net_pnl_inr": -43078.28,
+            "profit_factor": 0.98,
+            "max_dd_pts": 509.15
+          },
+          "2022": {
+            "year": 2022,
+            "trades": 565,
+            "win_rate": 32.21,
+            "gross_points": -1137.35,
+            "net_points": -1702.35,
+            "net_pnl_inr": -239836.09,
+            "profit_factor": 0.83,
+            "max_dd_pts": 2276.95
+          },
+          "2023": {
+            "year": 2023,
+            "trades": 564,
+            "win_rate": 35.28,
+            "gross_points": 181.25,
+            "net_points": -382.75,
+            "net_pnl_inr": -185639.61,
+            "profit_factor": 0.95,
+            "max_dd_pts": 664.55
+          },
+          "2024": {
+            "year": 2024,
+            "trades": 536,
+            "win_rate": 36.01,
+            "gross_points": 252.3,
+            "net_points": -283.7,
+            "net_pnl_inr": -204993.6,
+            "profit_factor": 0.97,
+            "max_dd_pts": 944.65
+          },
+          "2025": {
+            "year": 2025,
+            "trades": 556,
+            "win_rate": 33.27,
+            "gross_points": -752.1,
+            "net_points": -1308.1,
+            "net_pnl_inr": -271361.19,
+            "profit_factor": 0.87,
+            "max_dd_pts": 1610.15
+          },
+          "2026": {
+            "year": 2026,
+            "trades": 434,
+            "win_rate": 30.88,
+            "gross_points": -1057.8,
+            "net_points": -1491.8,
+            "net_pnl_inr": -233399.42,
+            "profit_factor": 0.82,
+            "max_dd_pts": 1785.45
+          }
+        },
+        "tod_stats": {
+          "09:15-09:30": {
+            "tod": "09:15-09:30",
+            "trades": 158,
+            "win_rate": 33.54,
+            "net_points": -550.4,
+            "profit_factor": 0.88
+          },
+          "09:30-10:00": {
+            "tod": "09:30-10:00",
+            "trades": 309,
+            "win_rate": 27.51,
+            "net_points": -1969.65,
+            "profit_factor": 0.73
+          },
+          "10:00-11:00": {
+            "tod": "10:00-11:00",
+            "trades": 537,
+            "win_rate": 33.33,
+            "net_points": -73.2,
+            "profit_factor": 0.99
+          },
+          "11:00-12:00": {
+            "tod": "11:00-12:00",
+            "trades": 476,
+            "win_rate": 34.45,
+            "net_points": -188.85,
+            "profit_factor": 0.97
+          },
+          "12:00-13:00": {
+            "tod": "12:00-13:00",
+            "trades": 422,
+            "win_rate": 33.41,
+            "net_points": -726.6,
+            "profit_factor": 0.89
+          },
+          "13:00-14:00": {
+            "tod": "13:00-14:00",
+            "trades": 433,
+            "win_rate": 32.56,
+            "net_points": -1229.6,
+            "profit_factor": 0.82
+          },
+          "14:00-15:00": {
+            "tod": "14:00-15:00",
+            "trades": 467,
+            "win_rate": 39.19,
+            "net_points": -472.55,
+            "profit_factor": 0.93
+          }
+        }
+      }
+    },
+    {
+      "hypothesis_id": "H09_CONSECUTIVE_EXHAUSTION",
+      "strategy_name": "3-Candle Exhaustion Reversal",
+      "direction": "SHORT_ONLY",
+      "timeframe": "5M",
+      "category": "REVERSAL",
+      "description": "Exhaustion reversal candle following 3 or more consecutive directional thrust candles.",
+      "trades": 2799,
+      "win_rate": 33.83,
+      "expectancy": -0.96,
+      "profit_factor": 0.94,
+      "gross_points": 125.5,
+      "net_points": -2673.5,
+      "gross_pnl_inr": 6275.0,
+      "net_pnl_inr": -1048975.52,
+      "total_costs_inr": 915300.52,
+      "slippage_inr": 139950.0,
+      "max_drawdown": 4236.1,
+      "average_trade": -0.96,
+      "avg_holding_mins": 42.6,
+      "trades_per_day": 2.25,
+      "max_consecutive_losses": 20,
+      "status": "DISCOVERY",
+      "metrics_full": {
+        "total_trades": 2799,
+        "long_trades": 0,
+        "short_trades": 2799,
+        "wins": 947,
+        "losses": 1852,
+        "win_rate": 33.83,
+        "gross_points": 125.5,
+        "net_points": -2673.5,
+        "gross_pnl_inr": 6275.0,
+        "net_pnl_inr": -1048975.52,
+        "total_costs_inr": 915300.52,
+        "total_slippage_inr": 139950.0,
+        "profit_factor": 0.94,
+        "expectancy_pts": -0.96,
+        "max_drawdown_pts": 4236.1,
+        "max_drawdown_inr": 211805.0,
+        "avg_trade_pts": -0.96,
+        "avg_winner_pts": 43.13,
+        "avg_loser_pts": -23.5,
+        "avg_holding_mins": 42.6,
+        "trades_per_day": 2.25,
+        "max_consecutive_losses": 20,
+        "max_consecutive_wins": 7,
+        "yearly_stats": {
+          "2021": {
+            "year": 2021,
+            "trades": 161,
+            "win_rate": 35.4,
+            "gross_points": 131.25,
+            "net_points": -29.75,
+            "net_pnl_inr": -46375.64,
+            "profit_factor": 0.99,
+            "max_dd_pts": 337.9
+          },
+          "2022": {
+            "year": 2022,
+            "trades": 607,
+            "win_rate": 33.61,
+            "gross_points": 824.45,
+            "net_points": 217.45,
+            "net_pnl_inr": -155541.67,
+            "profit_factor": 1.02,
+            "max_dd_pts": 509.05
+          },
+          "2023": {
+            "year": 2023,
+            "trades": 522,
+            "win_rate": 32.57,
+            "gross_points": 89.4,
+            "net_points": -432.6,
+            "net_pnl_inr": -176315.02,
+            "profit_factor": 0.93,
+            "max_dd_pts": 801.8
+          },
+          "2024": {
+            "year": 2024,
+            "trades": 536,
+            "win_rate": 30.97,
+            "gross_points": -1626.3,
+            "net_points": -2162.3,
+            "net_pnl_inr": -298791.07,
+            "profit_factor": 0.78,
+            "max_dd_pts": 2605.4
+          },
+          "2025": {
+            "year": 2025,
+            "trades": 600,
+            "win_rate": 35.17,
+            "gross_points": -225.7,
+            "net_points": -825.7,
+            "net_pnl_inr": -263486.59,
+            "profit_factor": 0.92,
+            "max_dd_pts": 1679.95
+          },
+          "2026": {
+            "year": 2026,
+            "trades": 373,
+            "win_rate": 37.27,
+            "gross_points": 932.4,
+            "net_points": 559.4,
+            "net_pnl_inr": -108465.53,
+            "profit_factor": 1.09,
+            "max_dd_pts": 357.85
+          }
+        },
+        "tod_stats": {
+          "09:15-09:30": {
+            "tod": "09:15-09:30",
+            "trades": 121,
+            "win_rate": 46.28,
+            "net_points": 1407.4,
+            "profit_factor": 1.51
+          },
+          "09:30-10:00": {
+            "tod": "09:30-10:00",
+            "trades": 273,
+            "win_rate": 34.8,
+            "net_points": 347.45,
+            "profit_factor": 1.07
+          },
+          "10:00-11:00": {
+            "tod": "10:00-11:00",
+            "trades": 513,
+            "win_rate": 33.53,
+            "net_points": -885.75,
+            "profit_factor": 0.89
+          },
+          "11:00-12:00": {
+            "tod": "11:00-12:00",
+            "trades": 489,
+            "win_rate": 32.11,
+            "net_points": -979.0,
+            "profit_factor": 0.86
+          },
+          "12:00-13:00": {
+            "tod": "12:00-13:00",
+            "trades": 470,
+            "win_rate": 32.77,
+            "net_points": -685.8,
+            "profit_factor": 0.9
+          },
+          "13:00-14:00": {
+            "tod": "13:00-14:00",
+            "trades": 463,
+            "win_rate": 31.97,
+            "net_points": -440.0,
+            "profit_factor": 0.93
+          },
+          "14:00-15:00": {
+            "tod": "14:00-15:00",
+            "trades": 470,
+            "win_rate": 35.11,
+            "net_points": -1437.8,
+            "profit_factor": 0.79
+          }
+        }
+      }
+    },
+    {
+      "hypothesis_id": "H10_MORNING_MOMENTUM_BREAKOUT",
+      "strategy_name": "Morning Momentum Breakout",
+      "direction": "BOTH",
+      "timeframe": "5M",
+      "category": "REGIME_FILTERED",
+      "description": "Opening session momentum expansion between 09:30 and 10:30 aligned with 15M trend.",
+      "trades": 624,
+      "win_rate": 35.74,
+      "expectancy": 1.03,
+      "profit_factor": 1.05,
+      "gross_points": 1269.1,
+      "net_points": 645.1,
+      "gross_pnl_inr": 63455.0,
+      "net_pnl_inr": -172440.31,
+      "total_costs_inr": 204695.31,
+      "slippage_inr": 31200.0,
+      "max_drawdown": 1142.95,
+      "average_trade": 1.03,
+      "avg_holding_mins": 83.1,
+      "trades_per_day": 0.5,
+      "max_consecutive_losses": 11,
+      "status": "PROMISING",
+      "metrics_full": {
+        "total_trades": 624,
+        "long_trades": 333,
+        "short_trades": 291,
+        "wins": 223,
+        "losses": 401,
+        "win_rate": 35.74,
+        "gross_points": 1269.1,
+        "net_points": 645.1,
+        "gross_pnl_inr": 63455.0,
+        "net_pnl_inr": -172440.31,
+        "total_costs_inr": 204695.31,
+        "total_slippage_inr": 31200.0,
+        "profit_factor": 1.05,
+        "expectancy_pts": 1.03,
+        "max_drawdown_pts": 1142.95,
+        "max_drawdown_inr": 57147.5,
+        "avg_trade_pts": 1.03,
+        "avg_winner_pts": 62.15,
+        "avg_loser_pts": -32.95,
+        "avg_holding_mins": 83.1,
+        "trades_per_day": 0.5,
+        "max_consecutive_losses": 11,
+        "max_consecutive_wins": 6,
+        "yearly_stats": {
+          "2021": {
+            "year": 2021,
+            "trades": 31,
+            "win_rate": 48.39,
+            "gross_points": 524.25,
+            "net_points": 493.25,
+            "net_pnl_inr": 16026.89,
+            "profit_factor": 1.84,
+            "max_dd_pts": 120.75
+          },
+          "2022": {
+            "year": 2022,
+            "trades": 124,
+            "win_rate": 37.9,
+            "gross_points": -66.35,
+            "net_points": -190.35,
+            "net_pnl_inr": -43450.54,
+            "profit_factor": 0.93,
+            "max_dd_pts": 507.95
+          },
+          "2023": {
+            "year": 2023,
+            "trades": 126,
+            "win_rate": 28.57,
+            "gross_points": -399.5,
+            "net_points": -525.5,
+            "net_pnl_inr": -63514.6,
+            "profit_factor": 0.77,
+            "max_dd_pts": 782.8
+          },
+          "2024": {
+            "year": 2024,
+            "trades": 122,
+            "win_rate": 36.89,
+            "gross_points": 338.1,
+            "net_points": 216.1,
+            "net_pnl_inr": -32813.91,
+            "profit_factor": 1.07,
+            "max_dd_pts": 467.1
+          },
+          "2025": {
+            "year": 2025,
+            "trades": 134,
+            "win_rate": 37.31,
+            "gross_points": 646.85,
+            "net_points": 512.85,
+            "net_pnl_inr": -23826.68,
+            "profit_factor": 1.19,
+            "max_dd_pts": 396.85
+          },
+          "2026": {
+            "year": 2026,
+            "trades": 87,
+            "win_rate": 34.48,
+            "gross_points": 225.75,
+            "net_points": 138.75,
+            "net_pnl_inr": -24861.47,
+            "profit_factor": 1.07,
+            "max_dd_pts": 465.4
+          }
+        },
+        "tod_stats": {
+          "09:30-10:00": {
+            "tod": "09:30-10:00",
+            "trades": 388,
+            "win_rate": 34.54,
+            "net_points": -76.45,
+            "profit_factor": 0.99
+          },
+          "10:00-11:00": {
+            "tod": "10:00-11:00",
+            "trades": 236,
+            "win_rate": 37.71,
+            "net_points": 721.55,
+            "profit_factor": 1.16
+          }
+        }
+      }
+    },
+    {
+      "hypothesis_id": "H10_MORNING_MOMENTUM_BREAKOUT",
+      "strategy_name": "Morning Momentum Breakout",
+      "direction": "LONG_ONLY",
+      "timeframe": "5M",
+      "category": "REGIME_FILTERED",
+      "description": "Opening session momentum expansion between 09:30 and 10:30 aligned with 15M trend.",
+      "trades": 333,
+      "win_rate": 34.23,
+      "expectancy": 0.62,
+      "profit_factor": 1.03,
+      "gross_points": 538.45,
+      "net_points": 205.45,
+      "gross_pnl_inr": 26922.5,
+      "net_pnl_inr": -99910.69,
+      "total_costs_inr": 110183.19,
+      "slippage_inr": 16650.0,
+      "max_drawdown": 609.9,
+      "average_trade": 0.62,
+      "avg_holding_mins": 80.2,
+      "trades_per_day": 0.27,
+      "max_consecutive_losses": 9,
+      "status": "PROMISING",
+      "metrics_full": {
+        "total_trades": 333,
+        "long_trades": 333,
+        "short_trades": 0,
+        "wins": 114,
+        "losses": 219,
+        "win_rate": 34.23,
+        "gross_points": 538.45,
+        "net_points": 205.45,
+        "gross_pnl_inr": 26922.5,
+        "net_pnl_inr": -99910.69,
+        "total_costs_inr": 110183.19,
+        "total_slippage_inr": 16650.0,
+        "profit_factor": 1.03,
+        "expectancy_pts": 0.62,
+        "max_drawdown_pts": 609.9,
+        "max_drawdown_inr": 30495.0,
+        "avg_trade_pts": 0.62,
+        "avg_winner_pts": 56.87,
+        "avg_loser_pts": -28.66,
+        "avg_holding_mins": 80.2,
+        "trades_per_day": 0.27,
+        "max_consecutive_losses": 9,
+        "max_consecutive_wins": 5,
+        "yearly_stats": {
+          "2021": {
+            "year": 2021,
+            "trades": 16,
+            "win_rate": 37.5,
+            "gross_points": 64.8,
+            "net_points": 48.8,
+            "net_pnl_inr": -2022.82,
+            "profit_factor": 1.17,
+            "max_dd_pts": 120.75
+          },
+          "2022": {
+            "year": 2022,
+            "trades": 61,
+            "win_rate": 42.62,
+            "gross_points": 304.8,
+            "net_points": 243.8,
+            "net_pnl_inr": -4723.08,
+            "profit_factor": 1.26,
+            "max_dd_pts": 236.75
+          },
+          "2023": {
+            "year": 2023,
+            "trades": 73,
+            "win_rate": 27.4,
+            "gross_points": -195.85,
+            "net_points": -268.85,
+            "net_pnl_inr": -35273.3,
+            "profit_factor": 0.77,
+            "max_dd_pts": 368.85
+          },
+          "2024": {
+            "year": 2024,
+            "trades": 72,
+            "win_rate": 31.94,
+            "gross_points": -97.0,
+            "net_points": -169.0,
+            "net_pnl_inr": -34298.22,
+            "profit_factor": 0.9,
+            "max_dd_pts": 603.85
+          },
+          "2025": {
+            "year": 2025,
+            "trades": 72,
+            "win_rate": 38.89,
+            "gross_points": 443.95,
+            "net_points": 371.95,
+            "net_pnl_inr": -8178.57,
+            "profit_factor": 1.28,
+            "max_dd_pts": 287.0
+          },
+          "2026": {
+            "year": 2026,
+            "trades": 39,
+            "win_rate": 28.21,
+            "gross_points": 17.75,
+            "net_points": -21.25,
+            "net_pnl_inr": -15414.7,
+            "profit_factor": 0.97,
+            "max_dd_pts": 235.5
+          }
+        },
+        "tod_stats": {
+          "09:30-10:00": {
+            "tod": "09:30-10:00",
+            "trades": 212,
+            "win_rate": 33.96,
+            "net_points": 161.35,
+            "profit_factor": 1.04
+          },
+          "10:00-11:00": {
+            "tod": "10:00-11:00",
+            "trades": 121,
+            "win_rate": 34.71,
+            "net_points": 44.1,
+            "profit_factor": 1.02
+          }
+        }
+      }
+    },
+    {
+      "hypothesis_id": "H10_MORNING_MOMENTUM_BREAKOUT",
+      "strategy_name": "Morning Momentum Breakout",
+      "direction": "SHORT_ONLY",
+      "timeframe": "5M",
+      "category": "REGIME_FILTERED",
+      "description": "Opening session momentum expansion between 09:30 and 10:30 aligned with 15M trend.",
+      "trades": 291,
+      "win_rate": 37.46,
+      "expectancy": 1.51,
+      "profit_factor": 1.06,
+      "gross_points": 730.65,
+      "net_points": 439.65,
+      "gross_pnl_inr": 36532.5,
+      "net_pnl_inr": -72529.62,
+      "total_costs_inr": 94512.12,
+      "slippage_inr": 14550.0,
+      "max_drawdown": 1086.7,
+      "average_trade": 1.51,
+      "avg_holding_mins": 86.3,
+      "trades_per_day": 0.23,
+      "max_consecutive_losses": 11,
+      "status": "PROMISING",
+      "metrics_full": {
+        "total_trades": 291,
+        "long_trades": 0,
+        "short_trades": 291,
+        "wins": 109,
+        "losses": 182,
+        "win_rate": 37.46,
+        "gross_points": 730.65,
+        "net_points": 439.65,
+        "gross_pnl_inr": 36532.5,
+        "net_pnl_inr": -72529.62,
+        "total_costs_inr": 94512.12,
+        "total_slippage_inr": 14550.0,
+        "profit_factor": 1.06,
+        "expectancy_pts": 1.51,
+        "max_drawdown_pts": 1086.7,
+        "max_drawdown_inr": 54335.0,
+        "avg_trade_pts": 1.51,
+        "avg_winner_pts": 67.67,
+        "avg_loser_pts": -38.11,
+        "avg_holding_mins": 86.3,
+        "trades_per_day": 0.23,
+        "max_consecutive_losses": 11,
+        "max_consecutive_wins": 4,
+        "yearly_stats": {
+          "2021": {
+            "year": 2021,
+            "trades": 15,
+            "win_rate": 60.0,
+            "gross_points": 459.45,
+            "net_points": 444.45,
+            "net_pnl_inr": 18049.71,
+            "profit_factor": 2.52,
+            "max_dd_pts": 70.25
+          },
+          "2022": {
+            "year": 2022,
+            "trades": 63,
+            "win_rate": 33.33,
+            "gross_points": -371.15,
+            "net_points": -434.15,
+            "net_pnl_inr": -38727.46,
+            "profit_factor": 0.74,
+            "max_dd_pts": 776.35
+          },
+          "2023": {
+            "year": 2023,
+            "trades": 53,
+            "win_rate": 30.19,
+            "gross_points": -203.65,
+            "net_points": -256.65,
+            "net_pnl_inr": -28241.3,
+            "profit_factor": 0.77,
+            "max_dd_pts": 580.3
+          },
+          "2024": {
+            "year": 2024,
+            "trades": 50,
+            "win_rate": 44.0,
+            "gross_points": 435.1,
+            "net_points": 385.1,
+            "net_pnl_inr": 1484.31,
+            "profit_factor": 1.27,
+            "max_dd_pts": 236.35
+          },
+          "2025": {
+            "year": 2025,
+            "trades": 62,
+            "win_rate": 35.48,
+            "gross_points": 202.9,
+            "net_points": 140.9,
+            "net_pnl_inr": -15648.11,
+            "profit_factor": 1.1,
+            "max_dd_pts": 368.15
+          },
+          "2026": {
+            "year": 2026,
+            "trades": 48,
+            "win_rate": 39.58,
+            "gross_points": 208.0,
+            "net_points": 160.0,
+            "net_pnl_inr": -9446.77,
+            "profit_factor": 1.16,
+            "max_dd_pts": 257.85
+          }
+        },
+        "tod_stats": {
+          "09:30-10:00": {
+            "tod": "09:30-10:00",
+            "trades": 176,
+            "win_rate": 35.23,
+            "net_points": -237.8,
+            "profit_factor": 0.95
+          },
+          "10:00-11:00": {
+            "tod": "10:00-11:00",
+            "trades": 115,
+            "win_rate": 40.87,
+            "net_points": 677.45,
+            "profit_factor": 1.29
+          }
+        }
+      }
+    },
+    {
+      "hypothesis_id": "H11_AFTERNOON_SWEEP_REVERSAL",
+      "strategy_name": "Afternoon Sweep & Mean Reversion",
+      "direction": "BOTH",
+      "timeframe": "5M",
+      "category": "REGIME_FILTERED",
+      "description": "Midday liquidity grab: price sweeps session high/low between 12:30 and 14:30 followed by rejection.",
+      "trades": 525,
+      "win_rate": 31.24,
+      "expectancy": -3.49,
+      "profit_factor": 0.77,
+      "gross_points": -1308.8,
+      "net_points": -1833.8,
+      "gross_pnl_inr": -65440.0,
+      "net_pnl_inr": -262675.52,
+      "total_costs_inr": 170985.52,
+      "slippage_inr": 26250.0,
+      "max_drawdown": 2311.15,
+      "average_trade": -3.49,
+      "avg_holding_mins": 33.5,
+      "trades_per_day": 0.42,
+      "max_consecutive_losses": 14,
+      "status": "DISCOVERY",
+      "metrics_full": {
+        "total_trades": 525,
+        "long_trades": 265,
+        "short_trades": 260,
+        "wins": 164,
+        "losses": 361,
+        "win_rate": 31.24,
+        "gross_points": -1308.8,
+        "net_points": -1833.8,
+        "gross_pnl_inr": -65440.0,
+        "net_pnl_inr": -262675.52,
+        "total_costs_inr": 170985.52,
+        "total_slippage_inr": 26250.0,
+        "profit_factor": 0.77,
+        "expectancy_pts": -3.49,
+        "max_drawdown_pts": 2311.15,
+        "max_drawdown_inr": 115557.5,
+        "avg_trade_pts": -3.49,
+        "avg_winner_pts": 37.42,
+        "avg_loser_pts": -22.08,
+        "avg_holding_mins": 33.5,
+        "trades_per_day": 0.42,
+        "max_consecutive_losses": 14,
+        "max_consecutive_wins": 4,
+        "yearly_stats": {
+          "2021": {
+            "year": 2021,
+            "trades": 17,
+            "win_rate": 41.18,
+            "gross_points": 18.15,
+            "net_points": 1.15,
+            "net_pnl_inr": -4698.93,
+            "profit_factor": 1.01,
+            "max_dd_pts": 86.6
+          },
+          "2022": {
+            "year": 2022,
+            "trades": 124,
+            "win_rate": 33.87,
+            "gross_points": 39.9,
+            "net_points": -84.1,
+            "net_pnl_inr": -38002.82,
+            "profit_factor": 0.96,
+            "max_dd_pts": 320.15
+          },
+          "2023": {
+            "year": 2023,
+            "trades": 111,
+            "win_rate": 28.83,
+            "gross_points": -538.95,
+            "net_points": -649.95,
+            "net_pnl_inr": -65084.89,
+            "profit_factor": 0.55,
+            "max_dd_pts": 719.0
+          },
+          "2024": {
+            "year": 2024,
+            "trades": 110,
+            "win_rate": 28.18,
+            "gross_points": -574.95,
+            "net_points": -684.95,
+            "net_pnl_inr": -73602.97,
+            "profit_factor": 0.64,
+            "max_dd_pts": 709.55
+          },
+          "2025": {
+            "year": 2025,
+            "trades": 105,
+            "win_rate": 25.71,
+            "gross_points": -602.15,
+            "net_points": -707.15,
+            "net_pnl_inr": -74582.46,
+            "profit_factor": 0.59,
+            "max_dd_pts": 739.2
+          },
+          "2026": {
+            "year": 2026,
+            "trades": 58,
+            "win_rate": 43.1,
+            "gross_points": 349.2,
+            "net_points": 291.2,
+            "net_pnl_inr": -6703.45,
+            "profit_factor": 1.37,
+            "max_dd_pts": 278.8
+          }
+        },
+        "tod_stats": {
+          "12:00-13:00": {
+            "tod": "12:00-13:00",
+            "trades": 122,
+            "win_rate": 24.59,
+            "net_points": -675.0,
+            "profit_factor": 0.65
+          },
+          "13:00-14:00": {
+            "tod": "13:00-14:00",
+            "trades": 261,
+            "win_rate": 32.18,
+            "net_points": -668.8,
+            "profit_factor": 0.83
+          },
+          "14:00-15:00": {
+            "tod": "14:00-15:00",
+            "trades": 142,
+            "win_rate": 35.21,
+            "net_points": -490.0,
+            "profit_factor": 0.77
+          }
+        }
+      }
+    },
+    {
+      "hypothesis_id": "H11_AFTERNOON_SWEEP_REVERSAL",
+      "strategy_name": "Afternoon Sweep & Mean Reversion",
+      "direction": "LONG_ONLY",
+      "timeframe": "5M",
+      "category": "REGIME_FILTERED",
+      "description": "Midday liquidity grab: price sweeps session high/low between 12:30 and 14:30 followed by rejection.",
+      "trades": 265,
+      "win_rate": 32.45,
+      "expectancy": -4.02,
+      "profit_factor": 0.76,
+      "gross_points": -800.95,
+      "net_points": -1065.95,
+      "gross_pnl_inr": -40047.5,
+      "net_pnl_inr": -139010.36,
+      "total_costs_inr": 85712.86,
+      "slippage_inr": 13250.0,
+      "max_drawdown": 1255.15,
+      "average_trade": -4.02,
+      "avg_holding_mins": 36.1,
+      "trades_per_day": 0.21,
+      "max_consecutive_losses": 9,
+      "status": "DISCOVERY",
+      "metrics_full": {
+        "total_trades": 265,
+        "long_trades": 265,
+        "short_trades": 0,
+        "wins": 86,
+        "losses": 179,
+        "win_rate": 32.45,
+        "gross_points": -800.95,
+        "net_points": -1065.95,
+        "gross_pnl_inr": -40047.5,
+        "net_pnl_inr": -139010.36,
+        "total_costs_inr": 85712.86,
+        "total_slippage_inr": 13250.0,
+        "profit_factor": 0.76,
+        "expectancy_pts": -4.02,
+        "max_drawdown_pts": 1255.15,
+        "max_drawdown_inr": 62757.5,
+        "avg_trade_pts": -4.02,
+        "avg_winner_pts": 39.56,
+        "avg_loser_pts": -24.96,
+        "avg_holding_mins": 36.1,
+        "trades_per_day": 0.21,
+        "max_consecutive_losses": 9,
+        "max_consecutive_wins": 4,
+        "yearly_stats": {
+          "2021": {
+            "year": 2021,
+            "trades": 9,
+            "win_rate": 33.33,
+            "gross_points": -25.3,
+            "net_points": -34.3,
+            "net_pnl_inr": -4245.36,
+            "profit_factor": 0.73,
+            "max_dd_pts": 80.8
+          },
+          "2022": {
+            "year": 2022,
+            "trades": 64,
+            "win_rate": 32.81,
+            "gross_points": -84.8,
+            "net_points": -148.8,
+            "net_pnl_inr": -24906.75,
+            "profit_factor": 0.87,
+            "max_dd_pts": 397.2
+          },
+          "2023": {
+            "year": 2023,
+            "trades": 61,
+            "win_rate": 36.07,
+            "gross_points": -178.25,
+            "net_points": -239.25,
+            "net_pnl_inr": -29742.46,
+            "profit_factor": 0.71,
+            "max_dd_pts": 317.05
+          },
+          "2024": {
+            "year": 2024,
+            "trades": 46,
+            "win_rate": 28.26,
+            "gross_points": -382.2,
+            "net_points": -428.2,
+            "net_pnl_inr": -37889.1,
+            "profit_factor": 0.52,
+            "max_dd_pts": 613.75
+          },
+          "2025": {
+            "year": 2025,
+            "trades": 51,
+            "win_rate": 27.45,
+            "gross_points": -230.75,
+            "net_points": -281.75,
+            "net_pnl_inr": -33091.79,
+            "profit_factor": 0.7,
+            "max_dd_pts": 441.6
+          },
+          "2026": {
+            "year": 2026,
+            "trades": 34,
+            "win_rate": 38.24,
+            "gross_points": 100.35,
+            "net_points": 66.35,
+            "net_pnl_inr": -9134.9,
+            "profit_factor": 1.13,
+            "max_dd_pts": 170.0
+          }
+        },
+        "tod_stats": {
+          "12:00-13:00": {
+            "tod": "12:00-13:00",
+            "trades": 52,
+            "win_rate": 28.85,
+            "net_points": -158.85,
+            "profit_factor": 0.82
+          },
+          "13:00-14:00": {
+            "tod": "13:00-14:00",
+            "trades": 129,
+            "win_rate": 32.56,
+            "net_points": -531.6,
+            "profit_factor": 0.76
+          },
+          "14:00-15:00": {
+            "tod": "14:00-15:00",
+            "trades": 84,
+            "win_rate": 34.52,
+            "net_points": -375.5,
+            "profit_factor": 0.73
+          }
+        }
+      }
+    },
+    {
+      "hypothesis_id": "H11_AFTERNOON_SWEEP_REVERSAL",
+      "strategy_name": "Afternoon Sweep & Mean Reversion",
+      "direction": "SHORT_ONLY",
+      "timeframe": "5M",
+      "category": "REGIME_FILTERED",
+      "description": "Midday liquidity grab: price sweeps session high/low between 12:30 and 14:30 followed by rejection.",
+      "trades": 260,
+      "win_rate": 30.0,
+      "expectancy": -2.95,
+      "profit_factor": 0.78,
+      "gross_points": -507.85,
+      "net_points": -767.85,
+      "gross_pnl_inr": -25392.5,
+      "net_pnl_inr": -123665.16,
+      "total_costs_inr": 85272.66,
+      "slippage_inr": 13000.0,
+      "max_drawdown": 1177.3,
+      "average_trade": -2.95,
+      "avg_holding_mins": 31.0,
+      "trades_per_day": 0.21,
+      "max_consecutive_losses": 14,
+      "status": "DISCOVERY",
+      "metrics_full": {
+        "total_trades": 260,
+        "long_trades": 0,
+        "short_trades": 260,
+        "wins": 78,
+        "losses": 182,
+        "win_rate": 30.0,
+        "gross_points": -507.85,
+        "net_points": -767.85,
+        "gross_pnl_inr": -25392.5,
+        "net_pnl_inr": -123665.16,
+        "total_costs_inr": 85272.66,
+        "total_slippage_inr": 13000.0,
+        "profit_factor": 0.78,
+        "expectancy_pts": -2.95,
+        "max_drawdown_pts": 1177.3,
+        "max_drawdown_inr": 58865.0,
+        "avg_trade_pts": -2.95,
+        "avg_winner_pts": 35.06,
+        "avg_loser_pts": -19.25,
+        "avg_holding_mins": 31.0,
+        "trades_per_day": 0.21,
+        "max_consecutive_losses": 14,
+        "max_consecutive_wins": 5,
+        "yearly_stats": {
+          "2021": {
+            "year": 2021,
+            "trades": 8,
+            "win_rate": 50.0,
+            "gross_points": 43.45,
+            "net_points": 35.45,
+            "net_pnl_inr": -453.57,
+            "profit_factor": 1.39,
+            "max_dd_pts": 47.3
+          },
+          "2022": {
+            "year": 2022,
+            "trades": 60,
+            "win_rate": 35.0,
+            "gross_points": 124.7,
+            "net_points": 64.7,
+            "net_pnl_inr": -13096.07,
+            "profit_factor": 1.09,
+            "max_dd_pts": 210.75
+          },
+          "2023": {
+            "year": 2023,
+            "trades": 50,
+            "win_rate": 20.0,
+            "gross_points": -360.7,
+            "net_points": -410.7,
+            "net_pnl_inr": -35342.43,
+            "profit_factor": 0.34,
+            "max_dd_pts": 463.15
+          },
+          "2024": {
+            "year": 2024,
+            "trades": 64,
+            "win_rate": 28.12,
+            "gross_points": -192.75,
+            "net_points": -256.75,
+            "net_pnl_inr": -35713.87,
+            "profit_factor": 0.74,
+            "max_dd_pts": 242.6
+          },
+          "2025": {
+            "year": 2025,
+            "trades": 54,
+            "win_rate": 24.07,
+            "gross_points": -371.4,
+            "net_points": -425.4,
+            "net_pnl_inr": -41490.67,
+            "profit_factor": 0.48,
+            "max_dd_pts": 495.75
+          },
+          "2026": {
+            "year": 2026,
+            "trades": 24,
+            "win_rate": 50.0,
+            "gross_points": 248.85,
+            "net_points": 224.85,
+            "net_pnl_inr": 2431.45,
+            "profit_factor": 1.82,
+            "max_dd_pts": 126.45
+          }
+        },
+        "tod_stats": {
+          "12:00-13:00": {
+            "tod": "12:00-13:00",
+            "trades": 70,
+            "win_rate": 21.43,
+            "net_points": -516.15,
+            "profit_factor": 0.52
+          },
+          "13:00-14:00": {
+            "tod": "13:00-14:00",
+            "trades": 132,
+            "win_rate": 31.82,
+            "net_points": -137.2,
+            "profit_factor": 0.92
+          },
+          "14:00-15:00": {
+            "tod": "14:00-15:00",
+            "trades": 58,
+            "win_rate": 36.21,
+            "net_points": -114.5,
+            "profit_factor": 0.85
+          }
+        }
+      }
+    },
+    {
+      "hypothesis_id": "H12_NR4_COMPRESSION_BREAKOUT",
+      "strategy_name": "NR4 Compression Breakout",
+      "direction": "BOTH",
+      "timeframe": "5M",
+      "category": "COMPRESSION",
+      "description": "Volatility contraction breakout following the narrowest 5M candle of the last 4 candles.",
+      "trades": 2870,
+      "win_rate": 35.16,
+      "expectancy": -0.43,
+      "profit_factor": 0.98,
+      "gross_points": 1621.65,
+      "net_points": -1248.35,
+      "gross_pnl_inr": 81082.5,
+      "net_pnl_inr": -1003055.79,
+      "total_costs_inr": 940638.29,
+      "slippage_inr": 143500.0,
+      "max_drawdown": 2241.2,
+      "average_trade": -0.43,
+      "avg_holding_mins": 60.9,
+      "trades_per_day": 2.31,
+      "max_consecutive_losses": 17,
+      "status": "DISCOVERY",
+      "metrics_full": {
+        "total_trades": 2870,
+        "long_trades": 1557,
+        "short_trades": 1313,
+        "wins": 1009,
+        "losses": 1861,
+        "win_rate": 35.16,
+        "gross_points": 1621.65,
+        "net_points": -1248.35,
+        "gross_pnl_inr": 81082.5,
+        "net_pnl_inr": -1003055.79,
+        "total_costs_inr": 940638.29,
+        "total_slippage_inr": 143500.0,
+        "profit_factor": 0.98,
+        "expectancy_pts": -0.43,
+        "max_drawdown_pts": 2241.2,
+        "max_drawdown_inr": 112060.0,
+        "avg_trade_pts": -0.43,
+        "avg_winner_pts": 50.87,
+        "avg_loser_pts": -28.25,
+        "avg_holding_mins": 60.9,
+        "trades_per_day": 2.31,
+        "max_consecutive_losses": 17,
+        "max_consecutive_wins": 7,
+        "yearly_stats": {
+          "2021": {
+            "year": 2021,
+            "trades": 139,
+            "win_rate": 31.65,
+            "gross_points": 28.75,
+            "net_points": -110.25,
+            "net_pnl_inr": -44286.97,
+            "profit_factor": 0.96,
+            "max_dd_pts": 433.55
+          },
+          "2022": {
+            "year": 2022,
+            "trades": 593,
+            "win_rate": 36.09,
+            "gross_points": -17.75,
+            "net_points": -610.75,
+            "net_pnl_inr": -192677.23,
+            "profit_factor": 0.94,
+            "max_dd_pts": 1504.4
+          },
+          "2023": {
+            "year": 2023,
+            "trades": 564,
+            "win_rate": 36.88,
+            "gross_points": 849.9,
+            "net_points": 285.9,
+            "net_pnl_inr": -152397.05,
+            "profit_factor": 1.04,
+            "max_dd_pts": 429.55
+          },
+          "2024": {
+            "year": 2024,
+            "trades": 560,
+            "win_rate": 33.39,
+            "gross_points": 10.75,
+            "net_points": -549.25,
+            "net_pnl_inr": -226574.14,
+            "profit_factor": 0.95,
+            "max_dd_pts": 1205.7
+          },
+          "2025": {
+            "year": 2025,
+            "trades": 564,
+            "win_rate": 36.17,
+            "gross_points": 848.1,
+            "net_points": 284.1,
+            "net_pnl_inr": -194985.64,
+            "profit_factor": 1.03,
+            "max_dd_pts": 888.8
+          },
+          "2026": {
+            "year": 2026,
+            "trades": 450,
+            "win_rate": 33.78,
+            "gross_points": -98.1,
+            "net_points": -548.1,
+            "net_pnl_inr": -192134.76,
+            "profit_factor": 0.94,
+            "max_dd_pts": 1780.65
+          }
+        },
+        "tod_stats": {
+          "09:15-09:30": {
+            "tod": "09:15-09:30",
+            "trades": 37,
+            "win_rate": 37.84,
+            "net_points": 327.85,
+            "profit_factor": 1.38
+          },
+          "09:30-10:00": {
+            "tod": "09:30-10:00",
+            "trades": 432,
+            "win_rate": 34.03,
+            "net_points": -275.25,
+            "profit_factor": 0.97
+          },
+          "10:00-11:00": {
+            "tod": "10:00-11:00",
+            "trades": 619,
+            "win_rate": 34.41,
+            "net_points": -374.2,
+            "profit_factor": 0.97
+          },
+          "11:00-12:00": {
+            "tod": "11:00-12:00",
+            "trades": 426,
+            "win_rate": 35.92,
+            "net_points": 533.95,
+            "profit_factor": 1.07
+          },
+          "12:00-13:00": {
+            "tod": "12:00-13:00",
+            "trades": 439,
+            "win_rate": 33.71,
+            "net_points": -144.4,
+            "profit_factor": 0.98
+          },
+          "13:00-14:00": {
+            "tod": "13:00-14:00",
+            "trades": 453,
+            "win_rate": 31.57,
+            "net_points": -1505.05,
+            "profit_factor": 0.81
+          },
+          "14:00-15:00": {
+            "tod": "14:00-15:00",
+            "trades": 464,
+            "win_rate": 41.16,
+            "net_points": 188.75,
+            "profit_factor": 1.03
+          }
+        }
+      }
+    },
+    {
+      "hypothesis_id": "H12_NR4_COMPRESSION_BREAKOUT",
+      "strategy_name": "NR4 Compression Breakout",
+      "direction": "LONG_ONLY",
+      "timeframe": "5M",
+      "category": "COMPRESSION",
+      "description": "Volatility contraction breakout following the narrowest 5M candle of the last 4 candles.",
+      "trades": 1557,
+      "win_rate": 34.36,
+      "expectancy": -1.48,
+      "profit_factor": 0.91,
+      "gross_points": -751.85,
+      "net_points": -2308.85,
+      "gross_pnl_inr": -37592.5,
+      "net_pnl_inr": -625151.47,
+      "total_costs_inr": 509708.97,
+      "slippage_inr": 77850.0,
+      "max_drawdown": 2526.1,
+      "average_trade": -1.48,
+      "avg_holding_mins": 65.4,
+      "trades_per_day": 1.25,
+      "max_consecutive_losses": 15,
+      "status": "DISCOVERY",
+      "metrics_full": {
+        "total_trades": 1557,
+        "long_trades": 1557,
+        "short_trades": 0,
+        "wins": 535,
+        "losses": 1022,
+        "win_rate": 34.36,
+        "gross_points": -751.85,
+        "net_points": -2308.85,
+        "gross_pnl_inr": -37592.5,
+        "net_pnl_inr": -625151.47,
+        "total_costs_inr": 509708.97,
+        "total_slippage_inr": 77850.0,
+        "profit_factor": 0.91,
+        "expectancy_pts": -1.48,
+        "max_drawdown_pts": 2526.1,
+        "max_drawdown_inr": 126305.0,
+        "avg_trade_pts": -1.48,
+        "avg_winner_pts": 45.19,
+        "avg_loser_pts": -25.92,
+        "avg_holding_mins": 65.4,
+        "trades_per_day": 1.25,
+        "max_consecutive_losses": 15,
+        "max_consecutive_wins": 5,
+        "yearly_stats": {
+          "2021": {
+            "year": 2021,
+            "trades": 79,
+            "win_rate": 29.11,
+            "gross_points": -364.6,
+            "net_points": -443.6,
+            "net_pnl_inr": -44303.23,
+            "profit_factor": 0.69,
+            "max_dd_pts": 591.8
+          },
+          "2022": {
+            "year": 2022,
+            "trades": 326,
+            "win_rate": 36.2,
+            "gross_points": -147.95,
+            "net_points": -473.95,
+            "net_pnl_inr": -113525.5,
+            "profit_factor": 0.91,
+            "max_dd_pts": 693.7
+          },
+          "2023": {
+            "year": 2023,
+            "trades": 347,
+            "win_rate": 38.04,
+            "gross_points": 448.05,
+            "net_points": 101.05,
+            "net_pnl_inr": -98470.11,
+            "profit_factor": 1.02,
+            "max_dd_pts": 337.25
+          },
+          "2024": {
+            "year": 2024,
+            "trades": 320,
+            "win_rate": 31.87,
+            "gross_points": -454.8,
+            "net_points": -774.8,
+            "net_pnl_inr": -152846.75,
+            "profit_factor": 0.87,
+            "max_dd_pts": 964.5
+          },
+          "2025": {
+            "year": 2025,
+            "trades": 295,
+            "win_rate": 34.24,
+            "gross_points": 522.65,
+            "net_points": 227.65,
+            "net_pnl_inr": -98721.86,
+            "profit_factor": 1.04,
+            "max_dd_pts": 837.0
+          },
+          "2026": {
+            "year": 2026,
+            "trades": 190,
+            "win_rate": 31.05,
+            "gross_points": -755.2,
+            "net_points": -945.2,
+            "net_pnl_inr": -117284.02,
+            "profit_factor": 0.76,
+            "max_dd_pts": 1045.75
+          }
+        },
+        "tod_stats": {
+          "09:15-09:30": {
+            "tod": "09:15-09:30",
+            "trades": 20,
+            "win_rate": 30.0,
+            "net_points": 53.9,
+            "profit_factor": 1.13
+          },
+          "09:30-10:00": {
+            "tod": "09:30-10:00",
+            "trades": 254,
+            "win_rate": 31.1,
+            "net_points": -1166.25,
+            "profit_factor": 0.8
+          },
+          "10:00-11:00": {
+            "tod": "10:00-11:00",
+            "trades": 351,
+            "win_rate": 31.34,
+            "net_points": -1028.75,
+            "profit_factor": 0.85
+          },
+          "11:00-12:00": {
+            "tod": "11:00-12:00",
+            "trades": 230,
+            "win_rate": 36.09,
+            "net_points": 363.2,
+            "profit_factor": 1.1
+          },
+          "12:00-13:00": {
+            "tod": "12:00-13:00",
+            "trades": 230,
+            "win_rate": 36.52,
+            "net_points": 316.25,
+            "profit_factor": 1.1
+          },
+          "13:00-14:00": {
+            "tod": "13:00-14:00",
+            "trades": 225,
+            "win_rate": 30.67,
+            "net_points": -678.35,
+            "profit_factor": 0.81
+          },
+          "14:00-15:00": {
+            "tod": "14:00-15:00",
+            "trades": 247,
+            "win_rate": 42.11,
+            "net_points": -168.85,
+            "profit_factor": 0.95
+          }
+        }
+      }
+    },
+    {
+      "hypothesis_id": "H12_NR4_COMPRESSION_BREAKOUT",
+      "strategy_name": "NR4 Compression Breakout",
+      "direction": "SHORT_ONLY",
+      "timeframe": "5M",
+      "category": "COMPRESSION",
+      "description": "Volatility contraction breakout following the narrowest 5M candle of the last 4 candles.",
+      "trades": 1313,
+      "win_rate": 36.1,
+      "expectancy": 0.81,
+      "profit_factor": 1.04,
+      "gross_points": 2373.5,
+      "net_points": 1060.5,
+      "gross_pnl_inr": 118675.0,
+      "net_pnl_inr": -377904.32,
+      "total_costs_inr": 430929.32,
+      "slippage_inr": 65650.0,
+      "max_drawdown": 1313.25,
+      "average_trade": 0.81,
+      "avg_holding_mins": 55.6,
+      "trades_per_day": 1.06,
+      "max_consecutive_losses": 15,
+      "status": "PROMISING",
+      "metrics_full": {
+        "total_trades": 1313,
+        "long_trades": 0,
+        "short_trades": 1313,
+        "wins": 474,
+        "losses": 839,
+        "win_rate": 36.1,
+        "gross_points": 2373.5,
+        "net_points": 1060.5,
+        "gross_pnl_inr": 118675.0,
+        "net_pnl_inr": -377904.32,
+        "total_costs_inr": 430929.32,
+        "total_slippage_inr": 65650.0,
+        "profit_factor": 1.04,
+        "expectancy_pts": 0.81,
+        "max_drawdown_pts": 1313.25,
+        "max_drawdown_inr": 65662.5,
+        "avg_trade_pts": 0.81,
+        "avg_winner_pts": 57.27,
+        "avg_loser_pts": -31.09,
+        "avg_holding_mins": 55.6,
+        "trades_per_day": 1.06,
+        "max_consecutive_losses": 15,
+        "max_consecutive_wins": 6,
+        "yearly_stats": {
+          "2021": {
+            "year": 2021,
+            "trades": 60,
+            "win_rate": 35.0,
+            "gross_points": 393.35,
+            "net_points": 333.35,
+            "net_pnl_inr": 16.26,
+            "profit_factor": 1.28,
+            "max_dd_pts": 343.35
+          },
+          "2022": {
+            "year": 2022,
+            "trades": 267,
+            "win_rate": 35.96,
+            "gross_points": 130.2,
+            "net_points": -136.8,
+            "net_pnl_inr": -79151.73,
+            "profit_factor": 0.98,
+            "max_dd_pts": 1011.7
+          },
+          "2023": {
+            "year": 2023,
+            "trades": 217,
+            "win_rate": 35.02,
+            "gross_points": 401.85,
+            "net_points": 184.85,
+            "net_pnl_inr": -53926.94,
+            "profit_factor": 1.05,
+            "max_dd_pts": 594.35
+          },
+          "2024": {
+            "year": 2024,
+            "trades": 240,
+            "win_rate": 35.42,
+            "gross_points": 465.55,
+            "net_points": 225.55,
+            "net_pnl_inr": -73727.39,
+            "profit_factor": 1.04,
+            "max_dd_pts": 711.15
+          },
+          "2025": {
+            "year": 2025,
+            "trades": 269,
+            "win_rate": 38.29,
+            "gross_points": 325.45,
+            "net_points": 56.45,
+            "net_pnl_inr": -96263.78,
+            "profit_factor": 1.01,
+            "max_dd_pts": 748.35
+          },
+          "2026": {
+            "year": 2026,
+            "trades": 260,
+            "win_rate": 35.77,
+            "gross_points": 657.1,
+            "net_points": 397.1,
+            "net_pnl_inr": -74850.74,
+            "profit_factor": 1.07,
+            "max_dd_pts": 1073.25
+          }
+        },
+        "tod_stats": {
+          "09:15-09:30": {
+            "tod": "09:15-09:30",
+            "trades": 17,
+            "win_rate": 47.06,
+            "net_points": 273.95,
+            "profit_factor": 1.63
+          },
+          "09:30-10:00": {
+            "tod": "09:30-10:00",
+            "trades": 178,
+            "win_rate": 38.2,
+            "net_points": 891.0,
+            "profit_factor": 1.19
+          },
+          "10:00-11:00": {
+            "tod": "10:00-11:00",
+            "trades": 268,
+            "win_rate": 38.43,
+            "net_points": 654.55,
+            "profit_factor": 1.12
+          },
+          "11:00-12:00": {
+            "tod": "11:00-12:00",
+            "trades": 196,
+            "win_rate": 35.71,
+            "net_points": 170.75,
+            "profit_factor": 1.05
+          },
+          "12:00-13:00": {
+            "tod": "12:00-13:00",
+            "trades": 209,
+            "win_rate": 30.62,
+            "net_points": -460.65,
+            "profit_factor": 0.88
+          },
+          "13:00-14:00": {
+            "tod": "13:00-14:00",
+            "trades": 228,
+            "win_rate": 32.46,
+            "net_points": -826.7,
+            "profit_factor": 0.81
+          },
+          "14:00-15:00": {
+            "tod": "14:00-15:00",
+            "trades": 217,
+            "win_rate": 40.09,
+            "net_points": 357.6,
+            "profit_factor": 1.1
+          }
+        }
+      }
+    }
+  ],
+  "robustness_studies": {
+    "H01_ORB15_BREAKOUT": {
+      "parameter_sensitivity": {
+        "target_rr": {
+          "1.0": {
+            "rr": 1.0,
+            "trades": 1666,
+            "win_rate": 50.42,
+            "gross_points": 1105.2,
+            "net_points": -560.8,
+            "profit_factor": 0.98,
+            "max_dd_pts": 2074.5
+          },
+          "1.5": {
+            "rr": 1.5,
+            "trades": 1621,
+            "win_rate": 42.38,
+            "gross_points": 3164.87,
+            "net_points": 1543.87,
+            "profit_factor": 1.05,
+            "max_dd_pts": 1363.41
+          },
+          "2.0": {
+            "rr": 2.0,
+            "trades": 1615,
+            "win_rate": 37.15,
+            "gross_points": 4499.15,
+            "net_points": 2884.15,
+            "profit_factor": 1.09,
+            "max_dd_pts": 1309.05
+          },
+          "2.5": {
+            "rr": 2.5,
+            "trades": 1611,
+            "win_rate": 33.89,
+            "gross_points": 6020.87,
+            "net_points": 4409.87,
+            "profit_factor": 1.13,
+            "max_dd_pts": 1204.4
+          },
+          "3.0": {
+            "rr": 3.0,
+            "trades": 1610,
+            "win_rate": 31.61,
+            "gross_points": 6814.4,
+            "net_points": 5204.4,
+            "profit_factor": 1.14,
+            "max_dd_pts": 1244.7
+          }
+        },
+        "sl_buffer": {
+          "3.0": {
+            "sl_buffer": 3.0,
+            "trades": 1654,
+            "win_rate": 36.52,
+            "gross_points": 3914.15,
+            "net_points": 2260.15,
+            "profit_factor": 1.07,
+            "max_dd_pts": 1140.0
+          },
+          "5.0": {
+            "sl_buffer": 5.0,
+            "trades": 1615,
+            "win_rate": 37.15,
+            "gross_points": 4499.15,
+            "net_points": 2884.15,
+            "profit_factor": 1.09,
+            "max_dd_pts": 1309.05
+          },
+          "8.0": {
+            "sl_buffer": 8.0,
+            "trades": 1561,
+            "win_rate": 37.16,
+            "gross_points": 3915.3,
+            "net_points": 2354.3,
+            "profit_factor": 1.07,
+            "max_dd_pts": 1524.15
+          },
+          "12.0": {
+            "sl_buffer": 12.0,
+            "trades": 1495,
+            "win_rate": 38.26,
+            "gross_points": 5464.9,
+            "net_points": 3969.9,
+            "profit_factor": 1.11,
+            "max_dd_pts": 1225.6
+          }
+        }
+      },
+      "walk_forward": {
+        "train_2021_2023": {
+          "period": "2021-10-01 to 2023-12-31 (In-Sample)",
+          "trades": 726,
+          "win_rate": 38.29,
+          "gross_points": 2368.15,
+          "net_points": 1642.15,
+          "profit_factor": 1.13,
+          "max_dd_pts": 672.1
+        },
+        "validation_2024": {
+          "period": "2024-01-01 to 2024-12-31 (Validation)",
+          "trades": 339,
+          "win_rate": 35.4,
+          "gross_points": 587.75,
+          "net_points": 248.75,
+          "profit_factor": 1.03,
+          "max_dd_pts": 1309.05
+        },
+        "test_2025_2026": {
+          "period": "2025-01-01 to 2026-09-29 (Out-of-Sample Test)",
+          "trades": 550,
+          "win_rate": 36.73,
+          "gross_points": 1543.25,
+          "net_points": 993.25,
+          "profit_factor": 1.08,
+          "max_dd_pts": 846.3
+        }
+      },
+      "friction_sensitivity": {
+        "zero_friction_gross": {
+          "gross_points": 4499.15,
+          "net_points": 4499.15,
+          "net_pnl_inr": 224957.5,
+          "profit_factor": 1.14
+        },
+        "standard_friction": {
+          "gross_points": 4499.15,
+          "net_points": 2884.15,
+          "net_pnl_inr": -385834.39,
+          "profit_factor": 1.09,
+          "total_friction_inr": 610791.89
+        },
+        "high_friction_2pt_slip": {
+          "gross_points": 4499.15,
+          "net_points": 1269.15,
+          "net_pnl_inr": -466584.39,
+          "profit_factor": 1.04,
+          "total_friction_inr": 691541.89
+        }
+      }
+    },
+    "H02_ORB30_BREAKOUT": {
+      "parameter_sensitivity": {
+        "target_rr": {
+          "1.0": {
+            "rr": 1.0,
+            "trades": 1587,
+            "win_rate": 51.35,
+            "gross_points": 1898.2,
+            "net_points": 311.2,
+            "profit_factor": 1.01,
+            "max_dd_pts": 1162.6
+          },
+          "1.5": {
+            "rr": 1.5,
+            "trades": 1532,
+            "win_rate": 42.23,
+            "gross_points": 2465.44,
+            "net_points": 933.44,
+            "profit_factor": 1.03,
+            "max_dd_pts": 1171.92
+          },
+          "2.0": {
+            "rr": 2.0,
+            "trades": 1520,
+            "win_rate": 37.11,
+            "gross_points": 3671.4,
+            "net_points": 2151.4,
+            "profit_factor": 1.07,
+            "max_dd_pts": 1049.6
+          },
+          "2.5": {
+            "rr": 2.5,
+            "trades": 1517,
+            "win_rate": 32.63,
+            "gross_points": 3786.0,
+            "net_points": 2269.0,
+            "profit_factor": 1.07,
+            "max_dd_pts": 1208.02
+          },
+          "3.0": {
+            "rr": 3.0,
+            "trades": 1514,
+            "win_rate": 30.78,
+            "gross_points": 4929.7,
+            "net_points": 3415.7,
+            "profit_factor": 1.11,
+            "max_dd_pts": 1073.05
+          }
+        },
+        "sl_buffer": {
+          "3.0": {
+            "sl_buffer": 3.0,
+            "trades": 1578,
+            "win_rate": 36.19,
+            "gross_points": 2734.65,
+            "net_points": 1156.65,
+            "profit_factor": 1.04,
+            "max_dd_pts": 983.35
+          },
+          "5.0": {
+            "sl_buffer": 5.0,
+            "trades": 1520,
+            "win_rate": 37.11,
+            "gross_points": 3671.4,
+            "net_points": 2151.4,
+            "profit_factor": 1.07,
+            "max_dd_pts": 1049.6
+          },
+          "8.0": {
+            "sl_buffer": 8.0,
+            "trades": 1468,
+            "win_rate": 36.04,
+            "gross_points": 2342.1,
+            "net_points": 874.1,
+            "profit_factor": 1.03,
+            "max_dd_pts": 1315.55
+          },
+          "12.0": {
+            "sl_buffer": 12.0,
+            "trades": 1397,
+            "win_rate": 37.08,
+            "gross_points": 2470.45,
+            "net_points": 1073.45,
+            "profit_factor": 1.03,
+            "max_dd_pts": 1286.55
+          }
+        }
+      },
+      "walk_forward": {
+        "train_2021_2023": {
+          "period": "2021-10-01 to 2023-12-31 (In-Sample)",
+          "trades": 686,
+          "win_rate": 37.46,
+          "gross_points": 1063.2,
+          "net_points": 377.2,
+          "profit_factor": 1.03,
+          "max_dd_pts": 886.45
+        },
+        "validation_2024": {
+          "period": "2024-01-01 to 2024-12-31 (Validation)",
+          "trades": 322,
+          "win_rate": 37.27,
+          "gross_points": 1340.1,
+          "net_points": 1018.1,
+          "profit_factor": 1.14,
+          "max_dd_pts": 632.15
+        },
+        "test_2025_2026": {
+          "period": "2025-01-01 to 2026-09-29 (Out-of-Sample Test)",
+          "trades": 512,
+          "win_rate": 36.52,
+          "gross_points": 1268.1,
+          "net_points": 756.1,
+          "profit_factor": 1.07,
+          "max_dd_pts": 1049.6
+        }
+      },
+      "friction_sensitivity": {
+        "zero_friction_gross": {
+          "gross_points": 3671.4,
+          "net_points": 3671.4,
+          "net_pnl_inr": 183570.0,
+          "profit_factor": 1.13
+        },
+        "standard_friction": {
+          "gross_points": 3671.4,
+          "net_points": 2151.4,
+          "net_pnl_inr": -390733.87,
+          "profit_factor": 1.07,
+          "total_friction_inr": 574303.87
+        },
+        "high_friction_2pt_slip": {
+          "gross_points": 3671.4,
+          "net_points": 631.4,
+          "net_pnl_inr": -466733.87,
+          "profit_factor": 1.02,
+          "total_friction_inr": 650303.87
+        }
+      }
+    },
+    "H05_PDH_PDL_SWEEP_REVERSAL": {
+      "parameter_sensitivity": {
+        "target_rr": {
+          "1.0": {
+            "rr": 1.0,
+            "trades": 923,
+            "win_rate": 52.55,
+            "gross_points": 1014.85,
+            "net_points": 91.85,
+            "profit_factor": 1.01,
+            "max_dd_pts": 813.9
+          },
+          "1.5": {
+            "rr": 1.5,
+            "trades": 879,
+            "win_rate": 44.14,
+            "gross_points": 1834.07,
+            "net_points": 955.07,
+            "profit_factor": 1.08,
+            "max_dd_pts": 948.53
+          },
+          "2.0": {
+            "rr": 2.0,
+            "trades": 847,
+            "win_rate": 38.13,
+            "gross_points": 2547.75,
+            "net_points": 1700.75,
+            "profit_factor": 1.13,
+            "max_dd_pts": 818.55
+          },
+          "2.5": {
+            "rr": 2.5,
+            "trades": 829,
+            "win_rate": 33.05,
+            "gross_points": 1914.55,
+            "net_points": 1085.55,
+            "profit_factor": 1.08,
+            "max_dd_pts": 979.33
+          },
+          "3.0": {
+            "rr": 3.0,
+            "trades": 807,
+            "win_rate": 29.74,
+            "gross_points": 1531.95,
+            "net_points": 724.95,
+            "profit_factor": 1.05,
+            "max_dd_pts": 1126.4
+          }
+        },
+        "sl_buffer": {
+          "3.0": {
+            "sl_buffer": 3.0,
+            "trades": 882,
+            "win_rate": 38.55,
+            "gross_points": 2515.8,
+            "net_points": 1633.8,
+            "profit_factor": 1.13,
+            "max_dd_pts": 929.7
+          },
+          "5.0": {
+            "sl_buffer": 5.0,
+            "trades": 847,
+            "win_rate": 38.13,
+            "gross_points": 2547.75,
+            "net_points": 1700.75,
+            "profit_factor": 1.13,
+            "max_dd_pts": 818.55
+          },
+          "8.0": {
+            "sl_buffer": 8.0,
+            "trades": 797,
+            "win_rate": 38.64,
+            "gross_points": 2757.4,
+            "net_points": 1960.4,
+            "profit_factor": 1.15,
+            "max_dd_pts": 849.4
+          },
+          "12.0": {
+            "sl_buffer": 12.0,
+            "trades": 746,
+            "win_rate": 37.94,
+            "gross_points": 1971.65,
+            "net_points": 1225.65,
+            "profit_factor": 1.08,
+            "max_dd_pts": 1021.4
+          }
+        }
+      },
+      "walk_forward": {
+        "train_2021_2023": {
+          "period": "2021-10-01 to 2023-12-31 (In-Sample)",
+          "trades": 336,
+          "win_rate": 38.39,
+          "gross_points": 987.0,
+          "net_points": 651.0,
+          "profit_factor": 1.14,
+          "max_dd_pts": 469.05
+        },
+        "validation_2024": {
+          "period": "2024-01-01 to 2024-12-31 (Validation)",
+          "trades": 215,
+          "win_rate": 37.67,
+          "gross_points": 668.2,
+          "net_points": 453.2,
+          "profit_factor": 1.13,
+          "max_dd_pts": 539.65
+        },
+        "test_2025_2026": {
+          "period": "2025-01-01 to 2026-09-29 (Out-of-Sample Test)",
+          "trades": 296,
+          "win_rate": 38.18,
+          "gross_points": 892.55,
+          "net_points": 596.55,
+          "profit_factor": 1.12,
+          "max_dd_pts": 540.5
+        }
+      },
+      "friction_sensitivity": {
+        "zero_friction_gross": {
+          "gross_points": 2547.75,
+          "net_points": 2547.75,
+          "net_pnl_inr": 127387.5,
+          "profit_factor": 1.21
+        },
+        "standard_friction": {
+          "gross_points": 2547.75,
+          "net_points": 1700.75,
+          "net_pnl_inr": -195950.13,
+          "profit_factor": 1.13,
+          "total_friction_inr": 323337.63
+        },
+        "high_friction_2pt_slip": {
+          "gross_points": 2547.75,
+          "net_points": 853.75,
+          "net_pnl_inr": -238300.13,
+          "profit_factor": 1.06,
+          "total_friction_inr": 365687.63
+        }
+      }
+    },
+    "H12_NR4_COMPRESSION_BREAKOUT": {
+      "parameter_sensitivity": {
+        "target_rr": {
+          "1.0": {
+            "rr": 1.0,
+            "trades": 3747,
+            "win_rate": 48.28,
+            "gross_points": -1360.45,
+            "net_points": -5107.45,
+            "profit_factor": 0.91,
+            "max_dd_pts": 5570.55
+          },
+          "1.5": {
+            "rr": 1.5,
+            "trades": 3202,
+            "win_rate": 40.32,
+            "gross_points": 856.26,
+            "net_points": -2345.74,
+            "profit_factor": 0.96,
+            "max_dd_pts": 3294.47
+          },
+          "2.0": {
+            "rr": 2.0,
+            "trades": 2870,
+            "win_rate": 35.16,
+            "gross_points": 1621.65,
+            "net_points": -1248.35,
+            "profit_factor": 0.98,
+            "max_dd_pts": 2241.2
+          },
+          "2.5": {
+            "rr": 2.5,
+            "trades": 2675,
+            "win_rate": 32.37,
+            "gross_points": 3230.62,
+            "net_points": 555.62,
+            "profit_factor": 1.01,
+            "max_dd_pts": 1920.93
+          },
+          "3.0": {
+            "rr": 3.0,
+            "trades": 2491,
+            "win_rate": 30.31,
+            "gross_points": 2560.95,
+            "net_points": 69.95,
+            "profit_factor": 1.0,
+            "max_dd_pts": 1971.8
+          }
+        },
+        "sl_buffer": {
+          "3.0": {
+            "sl_buffer": 3.0,
+            "trades": 3043,
+            "win_rate": 34.6,
+            "gross_points": 981.75,
+            "net_points": -2061.25,
+            "profit_factor": 0.96,
+            "max_dd_pts": 3063.8
+          },
+          "5.0": {
+            "sl_buffer": 5.0,
+            "trades": 2870,
+            "win_rate": 35.16,
+            "gross_points": 1621.65,
+            "net_points": -1248.35,
+            "profit_factor": 0.98,
+            "max_dd_pts": 2241.2
+          },
+          "8.0": {
+            "sl_buffer": 8.0,
+            "trades": 2670,
+            "win_rate": 35.96,
+            "gross_points": 1110.0,
+            "net_points": -1560.0,
+            "profit_factor": 0.97,
+            "max_dd_pts": 2583.95
+          },
+          "12.0": {
+            "sl_buffer": 12.0,
+            "trades": 2421,
+            "win_rate": 37.01,
+            "gross_points": 1266.9,
+            "net_points": -1154.1,
+            "profit_factor": 0.98,
+            "max_dd_pts": 2869.5
+          }
+        }
+      },
+      "walk_forward": {
+        "train_2021_2023": {
+          "period": "2021-10-01 to 2023-12-31 (In-Sample)",
+          "trades": 1296,
+          "win_rate": 35.96,
+          "gross_points": 860.9,
+          "net_points": -435.1,
+          "profit_factor": 0.98,
+          "max_dd_pts": 1512.05
+        },
+        "validation_2024": {
+          "period": "2024-01-01 to 2024-12-31 (Validation)",
+          "trades": 560,
+          "win_rate": 33.39,
+          "gross_points": 10.75,
+          "net_points": -549.25,
+          "profit_factor": 0.95,
+          "max_dd_pts": 1205.7
+        },
+        "test_2025_2026": {
+          "period": "2025-01-01 to 2026-09-29 (Out-of-Sample Test)",
+          "trades": 1014,
+          "win_rate": 35.11,
+          "gross_points": 750.0,
+          "net_points": -264.0,
+          "profit_factor": 0.99,
+          "max_dd_pts": 1780.65
+        }
+      },
+      "friction_sensitivity": {
+        "zero_friction_gross": {
+          "gross_points": 1621.65,
+          "net_points": 1621.65,
+          "net_pnl_inr": 81082.5,
+          "profit_factor": 1.03
+        },
+        "standard_friction": {
+          "gross_points": 1621.65,
+          "net_points": -1248.35,
+          "net_pnl_inr": -1003055.79,
+          "profit_factor": 0.98,
+          "total_friction_inr": 1084138.29
+        },
+        "high_friction_2pt_slip": {
+          "gross_points": 1621.65,
+          "net_points": -4118.35,
+          "net_pnl_inr": -1146555.79,
+          "profit_factor": 0.92,
+          "total_friction_inr": 1227638.29
+        }
+      }
+    },
+    "H04_INSIDE_BAR_BREAKOUT": {
+      "parameter_sensitivity": {
+        "target_rr": {
+          "1.0": {
+            "rr": 1.0,
+            "trades": 2879,
+            "win_rate": 48.94,
+            "gross_points": -2541.8,
+            "net_points": -5420.8,
+            "profit_factor": 0.9,
+            "max_dd_pts": 5503.05
+          },
+          "1.5": {
+            "rr": 1.5,
+            "trades": 2571,
+            "win_rate": 41.27,
+            "gross_points": -1298.13,
+            "net_points": -3869.13,
+            "profit_factor": 0.93,
+            "max_dd_pts": 4422.47
+          },
+          "2.0": {
+            "rr": 2.0,
+            "trades": 2377,
+            "win_rate": 37.32,
+            "gross_points": 72.35,
+            "net_points": -2304.65,
+            "profit_factor": 0.96,
+            "max_dd_pts": 3919.4
+          },
+          "2.5": {
+            "rr": 2.5,
+            "trades": 2245,
+            "win_rate": 35.77,
+            "gross_points": 2394.47,
+            "net_points": 149.47,
+            "profit_factor": 1.0,
+            "max_dd_pts": 2716.59
+          },
+          "3.0": {
+            "rr": 3.0,
+            "trades": 2166,
+            "win_rate": 34.26,
+            "gross_points": 2021.6,
+            "net_points": -144.4,
+            "profit_factor": 1.0,
+            "max_dd_pts": 2291.05
+          }
+        },
+        "sl_buffer": {
+          "3.0": {
+            "sl_buffer": 3.0,
+            "trades": 2463,
+            "win_rate": 36.99,
+            "gross_points": 128.75,
+            "net_points": -2334.25,
+            "profit_factor": 0.96,
+            "max_dd_pts": 3090.2
+          },
+          "5.0": {
+            "sl_buffer": 5.0,
+            "trades": 2377,
+            "win_rate": 37.32,
+            "gross_points": 72.35,
+            "net_points": -2304.65,
+            "profit_factor": 0.96,
+            "max_dd_pts": 3919.4
+          },
+          "8.0": {
+            "sl_buffer": 8.0,
+            "trades": 2239,
+            "win_rate": 38.28,
+            "gross_points": 570.3,
+            "net_points": -1668.7,
+            "profit_factor": 0.97,
+            "max_dd_pts": 3059.95
+          },
+          "12.0": {
+            "sl_buffer": 12.0,
+            "trades": 2097,
+            "win_rate": 39.39,
+            "gross_points": 203.95,
+            "net_points": -1893.05,
+            "profit_factor": 0.96,
+            "max_dd_pts": 2546.15
+          }
+        }
+      },
+      "walk_forward": {
+        "train_2021_2023": {
+          "period": "2021-10-01 to 2023-12-31 (In-Sample)",
+          "trades": 1096,
+          "win_rate": 36.59,
+          "gross_points": -681.0,
+          "net_points": -1777.0,
+          "profit_factor": 0.92,
+          "max_dd_pts": 2512.65
+        },
+        "validation_2024": {
+          "period": "2024-01-01 to 2024-12-31 (Validation)",
+          "trades": 470,
+          "win_rate": 35.32,
+          "gross_points": -966.3,
+          "net_points": -1436.3,
+          "profit_factor": 0.88,
+          "max_dd_pts": 2392.65
+        },
+        "test_2025_2026": {
+          "period": "2025-01-01 to 2026-09-29 (Out-of-Sample Test)",
+          "trades": 811,
+          "win_rate": 39.46,
+          "gross_points": 1719.65,
+          "net_points": 908.65,
+          "profit_factor": 1.05,
+          "max_dd_pts": 1400.2
+        }
+      },
+      "friction_sensitivity": {
+        "zero_friction_gross": {
+          "gross_points": 72.35,
+          "net_points": 72.35,
+          "net_pnl_inr": 3617.5,
+          "profit_factor": 1.0
+        },
+        "standard_friction": {
+          "gross_points": 72.35,
+          "net_points": -2304.65,
+          "net_pnl_inr": -892478.76,
+          "profit_factor": 0.96,
+          "total_friction_inr": 896096.26
+        },
+        "high_friction_2pt_slip": {
+          "gross_points": 72.35,
+          "net_points": -4681.65,
+          "net_pnl_inr": -1011328.76,
+          "profit_factor": 0.92,
+          "total_friction_inr": 1014946.26
+        }
+      }
+    },
+    "H10_MORNING_MOMENTUM_BREAKOUT": {
+      "parameter_sensitivity": {
+        "target_rr": {
+          "1.0": {
+            "rr": 1.0,
+            "trades": 760,
+            "win_rate": 51.97,
+            "gross_points": 2090.65,
+            "net_points": 1330.65,
+            "profit_factor": 1.11,
+            "max_dd_pts": 681.95
+          },
+          "1.5": {
+            "rr": 1.5,
+            "trades": 670,
+            "win_rate": 41.94,
+            "gross_points": 1456.42,
+            "net_points": 786.42,
+            "profit_factor": 1.06,
+            "max_dd_pts": 1089.23
+          },
+          "2.0": {
+            "rr": 2.0,
+            "trades": 624,
+            "win_rate": 35.74,
+            "gross_points": 1269.1,
+            "net_points": 645.1,
+            "profit_factor": 1.05,
+            "max_dd_pts": 1142.95
+          },
+          "2.5": {
+            "rr": 2.5,
+            "trades": 602,
+            "win_rate": 33.39,
+            "gross_points": 2372.77,
+            "net_points": 1770.77,
+            "profit_factor": 1.13,
+            "max_dd_pts": 969.23
+          },
+          "3.0": {
+            "rr": 3.0,
+            "trades": 594,
+            "win_rate": 32.32,
+            "gross_points": 3172.25,
+            "net_points": 2578.25,
+            "profit_factor": 1.19,
+            "max_dd_pts": 803.25
+          }
+        },
+        "sl_buffer": {
+          "3.0": {
+            "sl_buffer": 3.0,
+            "trades": 637,
+            "win_rate": 34.69,
+            "gross_points": 813.55,
+            "net_points": 176.55,
+            "profit_factor": 1.01,
+            "max_dd_pts": 1076.15
+          },
+          "5.0": {
+            "sl_buffer": 5.0,
+            "trades": 624,
+            "win_rate": 35.74,
+            "gross_points": 1269.1,
+            "net_points": 645.1,
+            "profit_factor": 1.05,
+            "max_dd_pts": 1142.95
+          },
+          "8.0": {
+            "sl_buffer": 8.0,
+            "trades": 605,
+            "win_rate": 36.36,
+            "gross_points": 1399.0,
+            "net_points": 794.0,
+            "profit_factor": 1.06,
+            "max_dd_pts": 1045.2
+          },
+          "12.0": {
+            "sl_buffer": 12.0,
+            "trades": 587,
+            "win_rate": 36.97,
+            "gross_points": 1304.0,
+            "net_points": 717.0,
+            "profit_factor": 1.05,
+            "max_dd_pts": 1288.4
+          }
+        }
+      },
+      "walk_forward": {
+        "train_2021_2023": {
+          "period": "2021-10-01 to 2023-12-31 (In-Sample)",
+          "trades": 281,
+          "win_rate": 34.88,
+          "gross_points": 58.4,
+          "net_points": -222.6,
+          "profit_factor": 0.96,
+          "max_dd_pts": 1095.9
+        },
+        "validation_2024": {
+          "period": "2024-01-01 to 2024-12-31 (Validation)",
+          "trades": 122,
+          "win_rate": 36.89,
+          "gross_points": 338.1,
+          "net_points": 216.1,
+          "profit_factor": 1.07,
+          "max_dd_pts": 467.1
+        },
+        "test_2025_2026": {
+          "period": "2025-01-01 to 2026-09-29 (Out-of-Sample Test)",
+          "trades": 221,
+          "win_rate": 36.2,
+          "gross_points": 872.6,
+          "net_points": 651.6,
+          "profit_factor": 1.14,
+          "max_dd_pts": 465.4
+        }
+      },
+      "friction_sensitivity": {
+        "zero_friction_gross": {
+          "gross_points": 1269.1,
+          "net_points": 1269.1,
+          "net_pnl_inr": 63455.0,
+          "profit_factor": 1.1
+        },
+        "standard_friction": {
+          "gross_points": 1269.1,
+          "net_points": 645.1,
+          "net_pnl_inr": -172440.31,
+          "profit_factor": 1.05,
+          "total_friction_inr": 235895.31
+        },
+        "high_friction_2pt_slip": {
+          "gross_points": 1269.1,
+          "net_points": 21.1,
+          "net_pnl_inr": -203640.31,
+          "profit_factor": 1.0,
+          "total_friction_inr": 267095.31
+        }
+      }
+    },
+    "H06_FIRST_HOUR_SWEEP_REVERSAL": {
+      "parameter_sensitivity": {
+        "target_rr": {
+          "1.0": {
+            "rr": 1.0,
+            "trades": 1244,
+            "win_rate": 48.47,
+            "gross_points": -650.9,
+            "net_points": -1894.9,
+            "profit_factor": 0.85,
+            "max_dd_pts": 2114.1
+          },
+          "1.5": {
+            "rr": 1.5,
+            "trades": 1178,
+            "win_rate": 39.13,
+            "gross_points": -566.52,
+            "net_points": -1744.52,
+            "profit_factor": 0.88,
+            "max_dd_pts": 2271.46
+          },
+          "2.0": {
+            "rr": 2.0,
+            "trades": 1139,
+            "win_rate": 32.66,
+            "gross_points": -623.15,
+            "net_points": -1762.15,
+            "profit_factor": 0.89,
+            "max_dd_pts": 2313.35
+          },
+          "2.5": {
+            "rr": 2.5,
+            "trades": 1124,
+            "win_rate": 28.56,
+            "gross_points": -686.18,
+            "net_points": -1810.18,
+            "profit_factor": 0.89,
+            "max_dd_pts": 2534.97
+          },
+          "3.0": {
+            "rr": 3.0,
+            "trades": 1118,
+            "win_rate": 25.58,
+            "gross_points": -367.25,
+            "net_points": -1485.25,
+            "profit_factor": 0.91,
+            "max_dd_pts": 2464.2
+          }
+        },
+        "sl_buffer": {
+          "3.0": {
+            "sl_buffer": 3.0,
+            "trades": 1212,
+            "win_rate": 32.59,
+            "gross_points": -419.0,
+            "net_points": -1631.0,
+            "profit_factor": 0.89,
+            "max_dd_pts": 2395.35
+          },
+          "5.0": {
+            "sl_buffer": 5.0,
+            "trades": 1139,
+            "win_rate": 32.66,
+            "gross_points": -623.15,
+            "net_points": -1762.15,
+            "profit_factor": 0.89,
+            "max_dd_pts": 2313.35
+          },
+          "8.0": {
+            "sl_buffer": 8.0,
+            "trades": 1069,
+            "win_rate": 33.68,
+            "gross_points": -226.95,
+            "net_points": -1295.95,
+            "profit_factor": 0.92,
+            "max_dd_pts": 2026.8
+          },
+          "12.0": {
+            "sl_buffer": 12.0,
+            "trades": 989,
+            "win_rate": 34.18,
+            "gross_points": 101.55,
+            "net_points": -887.45,
+            "profit_factor": 0.95,
+            "max_dd_pts": 1866.65
+          }
+        }
+      },
+      "walk_forward": {
+        "train_2021_2023": {
+          "period": "2021-10-01 to 2023-12-31 (In-Sample)",
+          "trades": 509,
+          "win_rate": 30.65,
+          "gross_points": -596.55,
+          "net_points": -1105.55,
+          "profit_factor": 0.82,
+          "max_dd_pts": 1261.35
+        },
+        "validation_2024": {
+          "period": "2024-01-01 to 2024-12-31 (Validation)",
+          "trades": 229,
+          "win_rate": 30.57,
+          "gross_points": -625.6,
+          "net_points": -854.6,
+          "profit_factor": 0.76,
+          "max_dd_pts": 970.3
+        },
+        "test_2025_2026": {
+          "period": "2025-01-01 to 2026-09-29 (Out-of-Sample Test)",
+          "trades": 401,
+          "win_rate": 36.41,
+          "gross_points": 599.0,
+          "net_points": 198.0,
+          "profit_factor": 1.04,
+          "max_dd_pts": 528.2
+        }
+      },
+      "friction_sensitivity": {
+        "zero_friction_gross": {
+          "gross_points": -623.15,
+          "net_points": -623.15,
+          "net_pnl_inr": -31157.5,
+          "profit_factor": 0.96
+        },
+        "standard_friction": {
+          "gross_points": -623.15,
+          "net_points": -1762.15,
+          "net_pnl_inr": -461493.64,
+          "profit_factor": 0.89,
+          "total_friction_inr": 430336.14
+        },
+        "high_friction_2pt_slip": {
+          "gross_points": -623.15,
+          "net_points": -2901.15,
+          "net_pnl_inr": -518443.64,
+          "profit_factor": 0.82,
+          "total_friction_inr": 487286.14
+        }
+      }
+    }
+  }
+}

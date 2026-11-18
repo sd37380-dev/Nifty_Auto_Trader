@@ -1,0 +1,441 @@
+{
+  "unconditional_distribution": {
+    "total_sessions": 1184,
+    "mean_signed_gap": 11.49,
+    "median_signed_gap": 20.43,
+    "mean_abs_gap": 79.69,
+    "median_abs_gap": 55.6,
+    "std_gap": 127.42,
+    "min_gap": -1153.65,
+    "max_gap": 1228.15,
+    "gap_up_count": 699,
+    "gap_up_pct": 59.04,
+    "gap_down_count": 455,
+    "gap_down_pct": 38.43,
+    "flat_count": 30,
+    "flat_pct": 2.53,
+    "percentiles": {
+      "p10": 8.7,
+      "p25": 26.02,
+      "p50": 55.6,
+      "p75": 94.24,
+      "p90": 166.18,
+      "p95": 224.93,
+      "p99": 487.22
+    }
+  },
+  "bucket_frequency": {
+    "0-5 pts": {
+      "count": 67,
+      "pct_of_all": 5.66,
+      "avg_gap_pts": 2.29,
+      "fill_rate": 95.52,
+      "avg_minutes_to_fill": 5.0,
+      "fill_before_1000_rate": 95.52,
+      "fill_before_1100_rate": 95.52,
+      "fill_before_1200_rate": 95.52,
+      "mfe_gap_dir_pts": 56.45,
+      "mae_against_gap_pts": 56.99,
+      "signed_day_ret_pts": 3.14,
+      "fwd_ret_30m": 3.76,
+      "fwd_ret_1h": 6.37,
+      "fwd_ret_t1": 12.6,
+      "fwd_ret_t3": 13.78
+    },
+    "5-15 pts": {
+      "count": 104,
+      "pct_of_all": 8.78,
+      "avg_gap_pts": 9.46,
+      "fill_rate": 91.35,
+      "avg_minutes_to_fill": 14.2,
+      "fill_before_1000_rate": 86.54,
+      "fill_before_1100_rate": 88.46,
+      "fill_before_1200_rate": 89.42,
+      "mfe_gap_dir_pts": 101.56,
+      "mae_against_gap_pts": 101.4,
+      "signed_day_ret_pts": -3.57,
+      "fwd_ret_30m": 0.47,
+      "fwd_ret_1h": 0.66,
+      "fwd_ret_t1": 21.1,
+      "fwd_ret_t3": 32.82
+    },
+    "15-30 pts": {
+      "count": 172,
+      "pct_of_all": 14.53,
+      "avg_gap_pts": 22.61,
+      "fill_rate": 88.37,
+      "avg_minutes_to_fill": 29.0,
+      "fill_before_1000_rate": 76.74,
+      "fill_before_1100_rate": 82.56,
+      "fill_before_1200_rate": 82.56,
+      "mfe_gap_dir_pts": 93.99,
+      "mae_against_gap_pts": 98.83,
+      "signed_day_ret_pts": 2.18,
+      "fwd_ret_30m": -6.59,
+      "fwd_ret_1h": -0.78,
+      "fwd_ret_t1": 37.39,
+      "fwd_ret_t3": 52.3
+    },
+    "30-50 pts": {
+      "count": 196,
+      "pct_of_all": 16.55,
+      "avg_gap_pts": 39.4,
+      "fill_rate": 78.57,
+      "avg_minutes_to_fill": 56.4,
+      "fill_before_1000_rate": 55.1,
+      "fill_before_1100_rate": 65.31,
+      "fill_before_1200_rate": 70.92,
+      "mfe_gap_dir_pts": 88.52,
+      "mae_against_gap_pts": 112.52,
+      "signed_day_ret_pts": -22.97,
+      "fwd_ret_30m": -3.27,
+      "fwd_ret_1h": -1.71,
+      "fwd_ret_t1": 15.34,
+      "fwd_ret_t3": 14.63
+    },
+    "50-75 pts": {
+      "count": 208,
+      "pct_of_all": 17.57,
+      "avg_gap_pts": 62.07,
+      "fill_rate": 66.35,
+      "avg_minutes_to_fill": 68.9,
+      "fill_before_1000_rate": 45.19,
+      "fill_before_1100_rate": 51.92,
+      "fill_before_1200_rate": 55.29,
+      "mfe_gap_dir_pts": 85.44,
+      "mae_against_gap_pts": 114.24,
+      "signed_day_ret_pts": -14.23,
+      "fwd_ret_30m": -6.42,
+      "fwd_ret_1h": -6.69,
+      "fwd_ret_t1": 18.65,
+      "fwd_ret_t3": 50.05
+    },
+    "75-100 pts": {
+      "count": 169,
+      "pct_of_all": 14.27,
+      "avg_gap_pts": 85.71,
+      "fill_rate": 50.3,
+      "avg_minutes_to_fill": 116.1,
+      "fill_before_1000_rate": 23.08,
+      "fill_before_1100_rate": 30.18,
+      "fill_before_1200_rate": 34.32,
+      "mfe_gap_dir_pts": 92.45,
+      "mae_against_gap_pts": 108.38,
+      "signed_day_ret_pts": -7.17,
+      "fwd_ret_30m": -7.7,
+      "fwd_ret_1h": -8.35,
+      "fwd_ret_t1": 5.52,
+      "fwd_ret_t3": -5.39
+    },
+    "100-150 pts": {
+      "count": 126,
+      "pct_of_all": 10.64,
+      "avg_gap_pts": 121.29,
+      "fill_rate": 37.3,
+      "avg_minutes_to_fill": 130.2,
+      "fill_before_1000_rate": 14.29,
+      "fill_before_1100_rate": 20.63,
+      "fill_before_1200_rate": 26.19,
+      "mfe_gap_dir_pts": 113.54,
+      "mae_against_gap_pts": 122.7,
+      "signed_day_ret_pts": 2.8,
+      "fwd_ret_30m": -8.46,
+      "fwd_ret_1h": -6.35,
+      "fwd_ret_t1": -11.03,
+      "fwd_ret_t3": -37.94
+    },
+    "150-200 pts": {
+      "count": 60,
+      "pct_of_all": 5.07,
+      "avg_gap_pts": 170.8,
+      "fill_rate": 23.33,
+      "avg_minutes_to_fill": 193.2,
+      "fill_before_1000_rate": 3.33,
+      "fill_before_1100_rate": 3.33,
+      "fill_before_1200_rate": 8.33,
+      "mfe_gap_dir_pts": 101.8,
+      "mae_against_gap_pts": 127.11,
+      "signed_day_ret_pts": -13.97,
+      "fwd_ret_30m": -3.03,
+      "fwd_ret_1h": -5.0,
+      "fwd_ret_t1": 47.08,
+      "fwd_ret_t3": 54.97
+    },
+    "200+ pts": {
+      "count": 82,
+      "pct_of_all": 6.93,
+      "avg_gap_pts": 349.77,
+      "fill_rate": 8.54,
+      "avg_minutes_to_fill": 186.4,
+      "fill_before_1000_rate": 1.22,
+      "fill_before_1100_rate": 2.44,
+      "fill_before_1200_rate": 2.44,
+      "mfe_gap_dir_pts": 115.02,
+      "mae_against_gap_pts": 182.69,
+      "signed_day_ret_pts": -9.25,
+      "fwd_ret_30m": -32.73,
+      "fwd_ret_1h": -25.94,
+      "fwd_ret_t1": -31.55,
+      "fwd_ret_t3": -4.87
+    }
+  },
+  "atr_bucket_frequency": {
+    "0-0.2x ATR": {
+      "count": 499,
+      "pct_of_all": 42.15,
+      "fill_rate": 88.58,
+      "signed_day_ret_pts": -8.48
+    },
+    "0.2-0.5x ATR": {
+      "count": 446,
+      "pct_of_all": 37.67,
+      "fill_rate": 58.07,
+      "signed_day_ret_pts": -4.69
+    },
+    "0.5-0.8x ATR": {
+      "count": 159,
+      "pct_of_all": 13.43,
+      "fill_rate": 30.19,
+      "signed_day_ret_pts": -6.05
+    },
+    "0.8-1.2x ATR": {
+      "count": 48,
+      "pct_of_all": 4.05,
+      "fill_rate": 8.33,
+      "signed_day_ret_pts": -34.2
+    },
+    "1.2-1.5x ATR": {
+      "count": 15,
+      "pct_of_all": 1.27,
+      "fill_rate": 13.33,
+      "signed_day_ret_pts": 10.88
+    },
+    ">1.5x ATR": {
+      "count": 17,
+      "pct_of_all": 1.44,
+      "fill_rate": 5.88,
+      "signed_day_ret_pts": -55.44
+    }
+  },
+  "yearly_stats": {
+    "2021": {
+      "sessions": 13,
+      "avg_abs_gap": 72.89,
+      "median_abs_gap": 70.25,
+      "large_gaps_gt_100_pct": 30.77,
+      "fill_rate": 53.85,
+      "avg_day_signed_ret": -19.79
+    },
+    "2022": {
+      "sessions": 248,
+      "avg_abs_gap": 103.86,
+      "median_abs_gap": 77.15,
+      "large_gaps_gt_100_pct": 33.47,
+      "fill_rate": 57.66,
+      "avg_day_signed_ret": -7.89
+    },
+    "2023": {
+      "sessions": 245,
+      "avg_abs_gap": 50.34,
+      "median_abs_gap": 43.25,
+      "large_gaps_gt_100_pct": 8.98,
+      "fill_rate": 64.9,
+      "avg_day_signed_ret": -2.39
+    },
+    "2024": {
+      "sessions": 246,
+      "avg_abs_gap": 72.88,
+      "median_abs_gap": 57.0,
+      "large_gaps_gt_100_pct": 20.73,
+      "fill_rate": 73.17,
+      "avg_day_signed_ret": -20.59
+    },
+    "2025": {
+      "sessions": 248,
+      "avg_abs_gap": 68.77,
+      "median_abs_gap": 46.62,
+      "large_gaps_gt_100_pct": 17.34,
+      "fill_rate": 69.35,
+      "avg_day_signed_ret": -7.86
+    },
+    "2026": {
+      "sessions": 184,
+      "avg_abs_gap": 110.52,
+      "median_abs_gap": 63.85,
+      "large_gaps_gt_100_pct": 35.33,
+      "fill_rate": 51.63,
+      "avg_day_signed_ret": 0.59
+    }
+  },
+  "volatility_stats": {
+    "HIGH_VOL": {
+      "sessions": 296,
+      "avg_abs_gap": 114.44,
+      "fill_rate": 63.18,
+      "large_gaps_pct": 35.47
+    },
+    "LOW_VOL": {
+      "sessions": 296,
+      "avg_abs_gap": 54.32,
+      "fill_rate": 64.19,
+      "large_gaps_pct": 11.49
+    },
+    "NORMAL_VOL": {
+      "sessions": 592,
+      "avg_abs_gap": 75.01,
+      "fill_rate": 64.02,
+      "large_gaps_pct": 21.79
+    }
+  },
+  "large_gap_cluster_prob": 40.96,
+  "uncond_large_gap_prob": 36.91,
+  "directional_fill_comparison": {
+    "UP": {
+      "count": 699,
+      "fill_rate": 64.23,
+      "avg_abs_gap": 77.21,
+      "avg_mfe": 83.78,
+      "avg_mae": 118.57,
+      "avg_signed_day_ret": -13.22
+    },
+    "DOWN": {
+      "count": 455,
+      "fill_rate": 60.88,
+      "avg_abs_gap": 88.7,
+      "avg_mfe": 115.46,
+      "avg_mae": 111.38,
+      "avg_signed_day_ret": -1.02
+    }
+  },
+  "prior_trend_stats": {
+    "Bullish Day -> Gap UP": {
+      "count": 367,
+      "fill_rate": 60.49,
+      "avg_signed_day_ret": -16.34,
+      "avg_mfe": 80.13,
+      "avg_mae": 119.96
+    },
+    "Bullish Day -> Gap DOWN": {
+      "count": 199,
+      "fill_rate": 59.3,
+      "avg_signed_day_ret": 5.96,
+      "avg_mfe": 109.29,
+      "avg_mae": 101.68
+    },
+    "Bearish Day -> Gap UP": {
+      "count": 332,
+      "fill_rate": 68.37,
+      "avg_signed_day_ret": -9.78,
+      "avg_mfe": 87.82,
+      "avg_mae": 117.04
+    },
+    "Bearish Day -> Gap DOWN": {
+      "count": 256,
+      "fill_rate": 62.11,
+      "avg_signed_day_ret": -6.44,
+      "avg_mfe": 120.27,
+      "avg_mae": 118.93
+    }
+  },
+  "structure_stats": {
+    "ABOVE_PDH": {
+      "count": 321,
+      "fill_rate": 49.53,
+      "avg_mfe": 74.59,
+      "avg_mae": 121.19,
+      "avg_signed_day_ret": -17.88
+    },
+    "BELOW_PDL": {
+      "count": 187,
+      "fill_rate": 49.73,
+      "avg_mfe": 109.73,
+      "avg_mae": 129.11,
+      "avg_signed_day_ret": -11.57
+    },
+    "DOWN_INTO_PDL": {
+      "count": 268,
+      "fill_rate": 68.66,
+      "avg_mfe": 119.46,
+      "avg_mae": 99.01,
+      "avg_signed_day_ret": 6.34
+    },
+    "INSIDE_RANGE": {
+      "count": 30,
+      "fill_rate": 100.0,
+      "avg_mfe": 0.0,
+      "avg_mae": 0.0,
+      "avg_signed_day_ret": 0.0
+    },
+    "UP_INTO_PDH": {
+      "count": 378,
+      "fill_rate": 76.72,
+      "avg_mfe": 91.59,
+      "avg_mae": 116.35,
+      "avg_signed_day_ret": -9.27
+    }
+  },
+  "first_15m_prediction": {
+    "Gap UP + 15M UP": {
+      "count": 291,
+      "fill_rate": 46.39,
+      "continuation_day_ret": 41.52
+    },
+    "Gap DOWN + 15M UP": {
+      "count": 241,
+      "fill_rate": 68.05,
+      "continuation_day_ret": -34.7
+    },
+    "Gap UP + 15M DOWN": {
+      "count": 406,
+      "fill_rate": 77.09,
+      "continuation_day_ret": -51.81
+    },
+    "Gap DOWN + 15M DOWN": {
+      "count": 214,
+      "fill_rate": 52.8,
+      "continuation_day_ret": 36.9
+    }
+  },
+  "regime_frequencies": {
+    "CONTINUATION": {
+      "count": 327,
+      "pct_of_all": 27.62,
+      "avg_abs_gap": 109.14,
+      "avg_signed_day_ret": 109.36,
+      "avg_ret_t1": 19.28,
+      "avg_ret_t3": 3.21
+    },
+    "FAILED_NO_FILL": {
+      "count": 101,
+      "pct_of_all": 8.53,
+      "avg_abs_gap": 220.53,
+      "avg_signed_day_ret": -75.45,
+      "avg_ret_t1": -2.44,
+      "avg_ret_t3": 18.1
+    },
+    "FILL_AND_HOLD": {
+      "count": 391,
+      "pct_of_all": 33.02,
+      "avg_abs_gap": 47.28,
+      "avg_signed_day_ret": 42.24,
+      "avg_ret_t1": 16.74,
+      "avg_ret_t3": 37.9
+    },
+    "REVERSAL": {
+      "count": 365,
+      "pct_of_all": 30.83,
+      "avg_abs_gap": 49.06,
+      "avg_signed_day_ret": -148.94,
+      "avg_ret_t1": 9.69,
+      "avg_ret_t3": 16.66
+    }
+  },
+  "unfilled_large_gap_stats": {
+    "unfilled_count": 200,
+    "avg_day_signed_ret": 36.83,
+    "t1_continuation_rate": 52.0,
+    "avg_t1_signed_ret": 4.28,
+    "avg_t3_signed_ret": 2.53,
+    "avg_t5_signed_ret": 22.66
+  }
+}

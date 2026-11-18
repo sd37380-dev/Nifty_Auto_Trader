@@ -1,0 +1,123 @@
+{
+  "candidate_name": "ATR-Filtered Defined-Risk Theta Spread (160 pt OTM)",
+  "train": {
+    "trades": 419,
+    "wins": 355,
+    "losses": 64,
+    "win_rate": 84.7,
+    "ci_95": "[81.0% - 87.9%]",
+    "profit_factor": 3.04,
+    "net_pts": 6903.0,
+    "expectancy": 16.5,
+    "max_dd": 260.0,
+    "sharpe": 8.82,
+    "max_consec_losses": 4,
+    "yearly": {
+      "2021": {
+        "trades": 5,
+        "win_rate": 60.0,
+        "net_pts": -19.0
+      },
+      "2022": {
+        "trades": 105,
+        "win_rate": 81.9,
+        "net_pts": 1487.0
+      },
+      "2023": {
+        "trades": 226,
+        "win_rate": 89.4,
+        "net_pts": 4586.0
+      },
+      "2024": {
+        "trades": 83,
+        "win_rate": 77.1,
+        "net_pts": 849.0
+      }
+    }
+  },
+  "validation": {
+    "trades": 117,
+    "wins": 93,
+    "losses": 24,
+    "win_rate": 79.5,
+    "ci_95": "[71.3% - 85.8%]",
+    "profit_factor": 2.12,
+    "net_pts": 1425.0,
+    "expectancy": 12.2,
+    "max_dd": 230.0,
+    "sharpe": 5.79,
+    "max_consec_losses": 2,
+    "yearly": {
+      "2025": {
+        "trades": 117,
+        "win_rate": 79.5,
+        "net_pts": 1425.0
+      }
+    }
+  },
+  "oos": {
+    "trades": 46,
+    "wins": 40,
+    "losses": 6,
+    "win_rate": 87.0,
+    "ci_95": "[74.3% - 93.9%]",
+    "profit_factor": 3.65,
+    "net_pts": 842.0,
+    "expectancy": 18.3,
+    "max_dd": 212.0,
+    "sharpe": 10.37,
+    "max_consec_losses": 4,
+    "yearly": {
+      "2026": {
+        "trades": 46,
+        "win_rate": 87.0,
+        "net_pts": 842.0
+      }
+    }
+  },
+  "full": {
+    "trades": 582,
+    "wins": 488,
+    "losses": 94,
+    "win_rate": 83.8,
+    "ci_95": "[80.6% - 86.6%]",
+    "profit_factor": 2.84,
+    "net_pts": 9170.0,
+    "expectancy": 15.8,
+    "max_dd": 260.0,
+    "sharpe": 8.25,
+    "max_consec_losses": 4,
+    "yearly": {
+      "2021": {
+        "trades": 5,
+        "win_rate": 60.0,
+        "net_pts": -19.0
+      },
+      "2022": {
+        "trades": 105,
+        "win_rate": 81.9,
+        "net_pts": 1487.0
+      },
+      "2023": {
+        "trades": 226,
+        "win_rate": 89.4,
+        "net_pts": 4586.0
+      },
+      "2024": {
+        "trades": 83,
+        "win_rate": 77.1,
+        "net_pts": 849.0
+      },
+      "2025": {
+        "trades": 117,
+        "win_rate": 79.5,
+        "net_pts": 1425.0
+      },
+      "2026": {
+        "trades": 46,
+        "win_rate": 87.0,
+        "net_pts": 842.0
+      }
+    }
+  }
+}

@@ -1,0 +1,139 @@
+[2026-09-25 13:30] ⚡ ENTRY PE | NIFTY 23050 PE | Buy: Rs. 91.35 | SL: Rs. 73.35 | Target: Rs. 126.35 | Lots: 1 (65 qty) | Reason: Bearish EMA crossover (9 < 21) & Close below VWAP with RSI=30.6
+[2026-09-25 14:00] 🏁 EXIT STOP_LOSS | NIFTY 23050 PE | Buy: Rs. 91.35 | Exit: Rs. 72.85 | Gross: Rs. -1,202.50 | Charges: Rs. 58.49 | Net: Rs. -1,260.99 (-20.2%) | Rule: My_Custom_Strategy
+[2026-09-28 09:45] ⚡ ENTRY PE | NIFTY 22850 PE | Buy: Rs. 74.80 | SL: Rs. 56.80 | Target: Rs. 109.80 | Lots: 1 (65 qty) | Reason: Bearish EMA crossover (9 < 21) & Close below VWAP with RSI=28.4
+[2026-09-28 10:00] 🏁 EXIT STOP_LOSS | NIFTY 22850 PE | Buy: Rs. 74.80 | Exit: Rs. 76.00 | Gross: Rs. +78.00 | Charges: Rs. 58.14 | Net: Rs. +19.86 (+1.6%) | Rule: My_Custom_Strategy
+[2026-09-28 10:00] ⚡ ENTRY PE | NIFTY 22850 PE | Buy: Rs. 64.15 | SL: Rs. 46.15 | Target: Rs. 99.15 | Lots: 1 (65 qty) | Reason: Bearish EMA crossover (9 < 21) & Close below VWAP with RSI=28.9
+[2026-09-28 10:15] 🏁 EXIT STOP_LOSS | NIFTY 22850 PE | Buy: Rs. 64.15 | Exit: Rs. 72.50 | Gross: Rs. +542.75 | Charges: Rs. 57.35 | Net: Rs. +485.40 (+13.0%) | Rule: My_Custom_Strategy
+[2026-09-28 12:45] ⚡ ENTRY PE | NIFTY 22850 PE | Buy: Rs. 72.85 | SL: Rs. 54.85 | Target: Rs. 107.85 | Lots: 1 (65 qty) | Reason: Bearish EMA crossover (9 < 21) & Close below VWAP with RSI=33.3
+[2026-09-28 13:00] 🏁 EXIT STOP_LOSS | NIFTY 22850 PE | Buy: Rs. 72.85 | Exit: Rs. 54.35 | Gross: Rs. -1,202.50 | Charges: Rs. 55.81 | Net: Rs. -1,258.31 (-25.4%) | Rule: My_Custom_Strategy
+[2026-09-28 13:00] ⚡ ENTRY PE | NIFTY 22800 PE | Buy: Rs. 73.95 | SL: Rs. 55.95 | Target: Rs. 108.95 | Lots: 1 (65 qty) | Reason: Bearish EMA crossover (9 < 21) & Close below VWAP with RSI=40.4
+[2026-09-28 14:00] 🏁 EXIT STOP_LOSS | NIFTY 22800 PE | Buy: Rs. 73.95 | Exit: Rs. 55.45 | Gross: Rs. -1,202.50 | Charges: Rs. 55.97 | Net: Rs. -1,258.47 (-25.0%) | Rule: My_Custom_Strategy
+[2026-09-28 14:15] ⚡ ENTRY PE | NIFTY 22800 PE | Buy: Rs. 55.25 | SL: Rs. 37.25 | Target: Rs. 90.25 | Lots: 1 (65 qty) | Reason: Bearish EMA crossover (9 < 21) & Close below VWAP with RSI=39.2
+[2026-09-28 14:30] 🏁 EXIT STOP_LOSS | NIFTY 22800 PE | Buy: Rs. 55.25 | Exit: Rs. 73.55 | Gross: Rs. +1,189.50 | Charges: Rs. 57.09 | Net: Rs. +1,132.41 (+33.1%) | Rule: My_Custom_Strategy
+[2026-08-18 09:30] ⚡ ENTRY PE | NIFTY 24200 PE | Buy: Rs. 122.50 | SL: Rs. 104.50 | Target: Rs. 157.50 | Lots: 1 (65 qty) | Reason: Bearish EMA crossover (9 < 21) & Close below VWAP with RSI=35.0
+[2026-08-18 10:00] 🏁 EXIT STOP_LOSS | NIFTY 24200 PE | Buy: Rs. 122.50 | Exit: Rs. 122.65 | Gross: Rs. +9.75 | Charges: Rs. 64.93 | Net: Rs. -55.18 (+0.1%) | Rule: My_Custom_Strategy
+[2026-08-18 12:45] ⚡ ENTRY PE | NIFTY 24200 PE | Buy: Rs. 119.60 | SL: Rs. 101.60 | Target: Rs. 154.60 | Lots: 1 (65 qty) | Reason: Bearish EMA crossover (9 < 21) & Close below VWAP with RSI=34.0
+[2026-08-18 15:00] 🏁 EXIT STOP_LOSS | NIFTY 24200 PE | Buy: Rs. 119.60 | Exit: Rs. 124.50 | Gross: Rs. +318.50 | Charges: Rs. 65.00 | Net: Rs. +253.50 (+4.1%) | Rule: My_Custom_Strategy
+[2026-08-19 12:45] ⚡ ENTRY PE | NIFTY 24050 PE | Buy: Rs. 94.55 | SL: Rs. 76.55 | Target: Rs. 129.55 | Lots: 1 (65 qty) | Reason: Bearish EMA crossover (9 < 21) & Close below VWAP with RSI=35.8
+[2026-08-19 14:30] 🏁 EXIT STOP_LOSS | NIFTY 24050 PE | Buy: Rs. 94.55 | Exit: Rs. 101.50 | Gross: Rs. +451.75 | Charges: Rs. 61.59 | Net: Rs. +390.16 (+7.3%) | Rule: My_Custom_Strategy
+[2026-08-20 13:00] ⚡ ENTRY CE | NIFTY 24250 CE | Buy: Rs. 144.35 | SL: Rs. 126.35 | Target: Rs. 179.35 | Lots: 1 (65 qty) | Reason: Bullish EMA crossover (9 > 21) & Close above VWAP with RSI=67.5
+[2026-08-20 14:00] 🏁 EXIT STOP_LOSS | NIFTY 24250 CE | Buy: Rs. 144.35 | Exit: Rs. 125.85 | Gross: Rs. -1,202.50 | Charges: Rs. 66.15 | Net: Rs. -1,268.65 (-12.8%) | Rule: My_Custom_Strategy
+[2026-08-20 14:00] ⚡ ENTRY CE | NIFTY 24250 CE | Buy: Rs. 131.05 | SL: Rs. 113.05 | Target: Rs. 166.05 | Lots: 1 (65 qty) | Reason: Bullish EMA crossover (9 > 21) & Close above VWAP with RSI=65.7
+[2026-08-20 14:15] 🏁 EXIT STOP_LOSS | NIFTY 24250 CE | Buy: Rs. 131.05 | Exit: Rs. 156.60 | Gross: Rs. +1,660.75 | Charges: Rs. 68.80 | Net: Rs. +1,591.95 (+19.5%) | Rule: My_Custom_Strategy
+[2026-08-20 14:15] ⚡ ENTRY CE | NIFTY 24250 CE | Buy: Rs. 133.05 | SL: Rs. 115.05 | Target: Rs. 168.05 | Lots: 1 (65 qty) | Reason: Bullish EMA crossover (9 > 21) & Close above VWAP with RSI=68.2
+[2026-08-20 15:00] 🏁 EXIT STOP_LOSS | NIFTY 24250 CE | Buy: Rs. 133.05 | Exit: Rs. 150.95 | Gross: Rs. +1,163.50 | Charges: Rs. 68.29 | Net: Rs. +1,095.21 (+13.4%) | Rule: My_Custom_Strategy
+[2026-08-21 09:30] ⚡ ENTRY CE | NIFTY 24250 CE | Buy: Rs. 134.50 | SL: Rs. 116.50 | Target: Rs. 169.50 | Lots: 1 (65 qty) | Reason: Bullish EMA crossover (9 > 21) & Close above VWAP with RSI=61.5
+[2026-08-21 09:45] 🏁 EXIT STOP_LOSS | NIFTY 24250 CE | Buy: Rs. 134.50 | Exit: Rs. 116.00 | Gross: Rs. -1,202.50 | Charges: Rs. 64.72 | Net: Rs. -1,267.22 (-13.8%) | Rule: My_Custom_Strategy
+[2026-08-21 09:45] ⚡ ENTRY CE | NIFTY 24250 CE | Buy: Rs. 105.40 | SL: Rs. 87.40 | Target: Rs. 140.40 | Lots: 1 (65 qty) | Reason: Bullish EMA crossover (9 > 21) & Close above VWAP with RSI=61.4
+[2026-08-21 11:45] 🏁 EXIT STOP_LOSS | NIFTY 24250 CE | Buy: Rs. 105.40 | Exit: Rs. 105.00 | Gross: Rs. -26.00 | Charges: Rs. 62.41 | Net: Rs. -88.41 (-0.4%) | Rule: My_Custom_Strategy
+[2026-11-17 14:43:33 UTC] 🔍 [15M CHART ANALYZED] NIFTY Spot: 22716.2 | Rule: My_Custom_Strategy -> Outside trading hours | No trade taken.
+[2026-11-17 14:54:12 UTC] 🗑️ [MANUAL DELETE] Deleted trade log record: sim_136058
+[2026-09-15 10:15] 🏁 EXIT TARGET | NIFTY 24000 CE | Buy: Rs. 100.00 | Exit: Rs. 120.00 | Gross: Rs. +1,300.00 | Charges: Rs. 60.00 | Net: Rs. +1,240.00 (+20.0%) | Rule: TestRule
+[2026-11-17 14:54:41 UTC] 🗑️ [MANUAL DELETE] Deleted trade log record: test_dummy_del_99
+[2026-11-17 14:55:13 UTC] 🗑️ [MANUAL DELETE] Deleted trade log record: sim_115983
+[2026-11-17 14:55:17 UTC] 🗑️ [MANUAL DELETE] Deleted trade log record: sim_111952
+[2026-11-17 14:55:20 UTC] 🧹 [RESET] Cleared all simulated trade records and reset capital to Rs. 100,000.00.
+[2026-11-17 14:55:25 UTC] 🗑️ [MANUAL DELETE] Deleted trade log record: sim_67846
+[2026-11-17 14:55:28 UTC] 🗑️ [MANUAL DELETE] Deleted trade log record: sim_67846
+[2026-11-17 14:55:32 UTC] 🗑️ [MANUAL DELETE] Deleted trade log record: sim_67846
+[2026-11-17 14:55:35 UTC] 🗑️ [MANUAL DELETE] Deleted trade log record: sim_67846
+[2026-11-17 14:55:38 UTC] 🗑️ [MANUAL DELETE] Deleted trade log record: sim_67846
+[2026-11-17 14:55:41 UTC] 🗑️ [MANUAL DELETE] Deleted trade log record: sim_67846
+[2026-11-17 14:55:49 UTC] 🗑️ [MANUAL DELETE] Deleted trade log record: sim_260337
+[2026-09-15 10:15] 🏁 EXIT TARGET | NIFTY 24000 CE | Buy: Rs. 100.00 | Exit: Rs. 120.00 | Gross: Rs. +1,300.00 | Charges: Rs. 60.00 | Net: Rs. +1,240.00 (+20.0%) | Rule: TestRule
+[2026-11-17 15:06:59 UTC] 🗑️ [MANUAL DELETE] Deleted trade log record: test_dummy_del_99
+[2026-11-17 15:06:59 UTC] ⚙️ [PRESET] Applied risk preset: Percentage (15% SL, 30% Profit Target, 1 Lot)
+[2026-11-17 15:06:59 UTC] ⚙️ [SETTINGS UPDATED] Lots=3 (195 qty) | SL=18.5 pts | Target=45.0 pts | TrailingSL=True (12.0 pts step)
+[2026-11-17 15:07:30 UTC] ⚙️ [PRESET] Applied risk preset: Percentage (20% SL, 50% Profit Target, 1 Lot)
+[2026-11-17 15:07:36 UTC] ⚙️ [SETTINGS UPDATED] Lots=2 (130 qty) | SL=25.0 pts | Target=60.0 pts | TrailingSL=True (15.0 pts step)
+[2026-11-17 15:07:39 UTC] 🔍 [15M CHART ANALYZED] NIFTY Spot: 22716.2 | Rule: My_Custom_Strategy -> Outside trading hours | No trade taken.
+[2026-11-17 15:10:04 UTC] ⚙️ [PRESET] Applied risk preset: Quick Scalp (15 pts SL, 25 pts Target, 1 Lot)
+[2026-11-17 15:10:08 UTC] ⚙️ [PRESET] Applied risk preset: Balanced 1:2 (20 pts SL, 40 pts Target, 1 Lot)
+[2026-11-17 15:10:10 UTC] ⚙️ [PRESET] Applied risk preset: Momentum Runner 1:3 (25 pts SL, 75 pts Target, 2 Lots)
+[2026-11-17 15:10:11 UTC] ⚙️ [PRESET] Applied risk preset: Percentage (15% SL, 30% Profit Target, 1 Lot)
+[2026-11-17 15:10:13 UTC] ⚙️ [PRESET] Applied risk preset: Percentage (20% SL, 50% Profit Target, 1 Lot)
+[2026-09-15 10:15] 🏁 EXIT TARGET | NIFTY 24000 CE | Buy: Rs. 100.00 | Exit: Rs. 120.00 | Gross: Rs. +1,300.00 | Charges: Rs. 60.00 | Net: Rs. +1,240.00 (+20.0%) | Rule: TestRule
+[2026-11-17 15:24:30 UTC] 🗑️ [MANUAL DELETE] Deleted trade log record: test_dummy_del_99
+[2026-11-17 15:24:30 UTC] ⚙️ [PRESET] Applied risk preset: Percentage (15% SL, 30% Profit Target, 1 Lot)
+[2026-11-17 15:24:30 UTC] ⚙️ [SETTINGS UPDATED] Lots=3 (195 qty) | SL=18.5 pts | Target=45.0 pts | TrailingSL=True (12.0 pts step)
+[2026-09-15 10:15] 🏁 EXIT TARGET | NIFTY 24000 CE | Buy: Rs. 100.00 | Exit: Rs. 120.00 | Gross: Rs. +1,300.00 | Charges: Rs. 60.00 | Net: Rs. +1,240.00 (+20.0%) | Rule: TestRule
+[2026-11-17 15:24:46 UTC] 🗑️ [MANUAL DELETE] Deleted trade log record: test_dummy_del_99
+[2026-11-17 15:24:46 UTC] ⚙️ [PRESET] Applied risk preset: Percentage (15% SL, 30% Profit Target, 1 Lot)
+[2026-11-17 15:24:46 UTC] ⚙️ [SETTINGS UPDATED] Lots=3 (195 qty) | SL=18.5 pts | Target=45.0 pts | TrailingSL=True (12.0 pts step)
+[2026-11-17 15:24:46 UTC] 🔍 [MANUAL CHART ANALYSIS] Spot: 22716.2 | Rule: My_Custom_Strategy -> Waiting for setup
+[2026-11-17 15:25:40 UTC] 🔍 [MANUAL CHART ANALYSIS] Spot: 22716.2 | Rule: My_Custom_Strategy -> Waiting for setup
+[2026-11-17 15:28:02 UTC] 📸 [MANUAL SCREENSHOT] Captured TradingView NIFTY chart: 20261117_152802_tradingview_nifty_1h_sess_4b6a9437.png
+[2026-11-17 15:34:14 UTC] 📸 [MANUAL SCREENSHOT] Captured TradingView NIFTY chart: 20261117_153414_tradingview_nifty_1h_sess_a11994b1.png
+[2026-09-15 10:15] 🏁 EXIT TARGET | NIFTY 24000 CE | Buy: Rs. 100.00 | Exit: Rs. 120.00 | Gross: Rs. +1,300.00 | Charges: Rs. 60.00 | Net: Rs. +1,240.00 (+20.0%) | Rule: TestRule
+[2026-11-17 15:45:11 UTC] 🗑️ [MANUAL DELETE] Deleted trade log record: test_dummy_del_99
+[2026-11-17 15:45:11 UTC] ⚙️ [PRESET] Applied risk preset: Percentage (15% SL, 30% Profit Target, 1 Lot)
+[2026-11-17 15:45:11 UTC] ⚙️ [SETTINGS UPDATED] Lots=3 (195 qty) | SL=18.5 pts | Target=45.0 pts | TrailingSL=True (12.0 pts step)
+[2026-11-17 15:45:11 UTC] 🔍 [MANUAL CHART ANALYSIS] Spot: 22716.2 | Rule: My_Custom_Strategy -> Waiting for setup
+[2026-11-17 15:46:53 UTC] 🔍 [MANUAL CHART ANALYSIS] Spot: 22716.2 | Rule: My_Custom_Strategy -> Waiting for setup
+[2026-11-17 15:47:17 UTC] 📸 [MANUAL SCREENSHOT] Captured TradingView NIFTY chart: 20261117_154717_tradingview_nifty_1h_sess_e8362163.png
+[2026-11-17 15:48:00 UTC] 📸 [MANUAL SCREENSHOT] Captured TradingView NIFTY chart: 20261117_154800_tradingview_nifty_1h_sess_802dbff5.png
+[2026-11-17 15:53:56 UTC] 📸 [MANUAL SCREENSHOT] Captured TradingView NIFTY chart: 20261117_154800_tradingview_nifty_1h_sess_802dbff5.png
+[2026-11-17 15:54:41 UTC] 📸 [MANUAL SCREENSHOT] Captured TradingView NIFTY chart: 20261117_154800_tradingview_nifty_1h_sess_802dbff5.png
+[2026-11-17 15:57:15 UTC] 📸 [MANUAL SCREENSHOT] Captured TradingView NIFTY chart: 20261117_154800_tradingview_nifty_1h_sess_802dbff5.png
+[2026-11-17 16:01:02 UTC] 📸 [MANUAL SCREENSHOT] Captured TradingView NIFTY chart: 20261117_160101_tradingview_nifty_1h_sess_cd04cc65.png
+[2026-11-17 16:02:04 UTC] 📸 [MANUAL SCREENSHOT] Captured TradingView NIFTY chart: 20261117_160202_tradingview_nifty_1h_sess_cbc9bc50.png
+[2026-11-17 16:46:39 UTC] 🎯 [CUSTOM LEVEL STRATEGY TRIGGERED] Trigger 'LVL_999167' hit! Reason: Spot 25405.00 crossed above level 25400.00 | Executed BUY NIFTY 50 25400 CE (1 Lot / 65 Qty) @ ₹191.04 | SL: ₹163.54 (Spot Level 25350.0 (~27.5 pts)) | Target: ₹263.54 (Spot Level 25550.0 (~72.5 pts)) | Note: Test Day High Breakout
+[2026-09-15 10:15] 🏁 EXIT TARGET | NIFTY 24000 CE | Buy: Rs. 100.00 | Exit: Rs. 120.00 | Gross: Rs. +1,300.00 | Charges: Rs. 60.00 | Net: Rs. +1,240.00 (+20.0%) | Rule: TestRule
+[2026-11-17 17:11:44 UTC] 🗑️ [MANUAL DELETE] Deleted trade log record: test_dummy_del_99
+[2026-11-17 17:11:44 UTC] ⚙️ [PRESET] Applied risk preset: Percentage (15% SL, 30% Profit Target, 1 Lot)
+[2026-11-17 17:11:44 UTC] ⚙️ [SETTINGS UPDATED] Lots=3 (195 qty) | SL=18.5 pts | Target=45.0 pts | TrailingSL=True (12.0 pts step)
+[2026-11-17 17:11:44 UTC] 🔍 [MANUAL CHART ANALYSIS] Spot: 22716.2 | Rule: My_Custom_Strategy -> Waiting for setup
+[2026-11-17 17:13:10 UTC] 🔍 [15M CHART ANALYZED] NIFTY Spot: 25005.0 | Rule: My_Custom_Strategy -> Waiting for setup | No trade taken.
+[2026-11-17 17:13:17 UTC] 🔍 [15M CHART ANALYZED] NIFTY Spot: 25005.0 | Rule: My_Custom_Strategy -> Waiting for setup | No trade taken.
+[2026-11-17 17:13:25 UTC] 🔍 [15M CHART ANALYZED] NIFTY Spot: 25005.0 | Rule: My_Custom_Strategy -> Waiting for setup | No trade taken.
+[2026-11-17 17:13:32 UTC] 🔍 [15M CHART ANALYZED] NIFTY Spot: 25005.0 | Rule: My_Custom_Strategy -> Waiting for setup | No trade taken.
+[2026-11-17 17:13:40 UTC] 🔍 [15M CHART ANALYZED] NIFTY Spot: 25005.0 | Rule: My_Custom_Strategy -> Waiting for setup | No trade taken.
+[2026-11-17 17:13:48 UTC] 🔍 [15M CHART ANALYZED] NIFTY Spot: 25005.0 | Rule: My_Custom_Strategy -> Waiting for setup | No trade taken.
+[2026-11-17 17:13:55 UTC] 🔍 [15M CHART ANALYZED] NIFTY Spot: 25005.0 | Rule: My_Custom_Strategy -> Waiting for setup | No trade taken.
+[2026-11-17 17:14:03 UTC] 🔍 [15M CHART ANALYZED] NIFTY Spot: 25005.0 | Rule: My_Custom_Strategy -> Waiting for setup | No trade taken.
+[2026-09-15 10:15] 🏁 EXIT TARGET | NIFTY 24000 CE | Buy: Rs. 100.00 | Exit: Rs. 120.00 | Gross: Rs. +1,300.00 | Charges: Rs. 60.00 | Net: Rs. +1,240.00 (+20.0%) | Rule: TestRule
+[2026-11-17 17:14:24 UTC] 🗑️ [MANUAL DELETE] Deleted trade log record: test_dummy_del_99
+[2026-11-17 17:14:24 UTC] ⚙️ [PRESET] Applied risk preset: Percentage (15% SL, 30% Profit Target, 1 Lot)
+[2026-11-17 17:14:24 UTC] ⚙️ [SETTINGS UPDATED] Lots=3 (195 qty) | SL=18.5 pts | Target=45.0 pts | TrailingSL=True (12.0 pts step)
+[2026-11-17 17:14:24 UTC] 🔍 [MANUAL CHART ANALYSIS] Spot: 22716.2 | Rule: My_Custom_Strategy -> Waiting for setup
+[2026-11-18 03:02:17 UTC] 🔍 [MANUAL CHART ANALYSIS] Spot: 22716.2 | Rule: My_Custom_Strategy -> Waiting for setup
+[2026-11-18 03:07:35 UTC] 📸 [MANUAL SCREENSHOT] Captured TradingView NIFTY chart: 20261118_030733_tradingview_nifty_1h_sess_d18ca8e6.png
+[2026-11-18 03:44:31 UTC] ⚡ [OPTION CHAIN PAPER TRADE] Placed: NIFTY 50 25400 CE | Lots: 1 (65 Qty) | Entry: ₹145.00 | SL: ₹125.00 | Tgt: ₹185.00 | Spot: ₹25387.40
+[2026-11-18 03:54:52 UTC] ⚡ [OPTION CHAIN PAPER TRADE] Placed: NIFTY 50 25400 CE | Lots: 1 (65 Qty) | Entry: ₹135.00 | SL: ₹115.00 | Tgt: ₹175.00 | Spot: ₹25323.15
+[2026-11-18 03:55:08 UTC] ⚡ [OPTION CHAIN PAPER TRADE] Placed: NIFTY 50 25400 CE | Lots: 1 (65 Qty) | Entry: ₹135.00 | SL: ₹115.00 | Tgt: ₹175.00 | Spot: ₹25323.15
+[2026-09-15 10:15] 🏁 EXIT TARGET | NIFTY 24000 CE | Buy: Rs. 100.00 | Exit: Rs. 120.00 | Gross: Rs. +1,300.00 | Charges: Rs. 60.00 | Net: Rs. +1,240.00 (+20.0%) | Rule: TestRule
+[2026-11-18 03:55:09 UTC] 🗑️ [MANUAL DELETE] Deleted trade log record: test_dummy_del_99
+[2026-11-18 03:55:09 UTC] ⚙️ [PRESET] Applied risk preset: Percentage (15% SL, 30% Profit Target, 1 Lot)
+[2026-11-18 03:55:09 UTC] ⚙️ [SETTINGS UPDATED] Lots=3 (195 qty) | SL=18.5 pts | Target=45.0 pts | TrailingSL=True (12.0 pts step)
+[2026-09-29 15:15] 🏁 EXIT STOP_LOSS | NIFTY 25400 CE | Buy: Rs. 135.00 | Exit: Rs. 114.50 | Gross: Rs. -1,332.50 | Charges: Rs. 64.59 | Net: Rs. -1,397.09 (-15.2%) | Rule: My_Custom_Strategy
+[2026-11-18 14:15:14 UTC] 🔍 [15M CHART ANALYZED] NIFTY Spot: 25005.0 | Rule: My_Custom_Strategy -> Waiting for setup | No trade taken.
+[2026-11-18 14:15:29 UTC] 🔍 [15M CHART ANALYZED] NIFTY Spot: 25005.0 | Rule: My_Custom_Strategy -> Waiting for setup | No trade taken.
+[2026-11-18 14:15:43 UTC] 🔍 [15M CHART ANALYZED] NIFTY Spot: 25005.0 | Rule: My_Custom_Strategy -> Waiting for setup | No trade taken.
+[2026-11-18 14:15:56 UTC] 🔍 [15M CHART ANALYZED] NIFTY Spot: 25005.0 | Rule: My_Custom_Strategy -> Waiting for setup | No trade taken.
+[2026-11-18 14:16:10 UTC] 🔍 [15M CHART ANALYZED] NIFTY Spot: 25005.0 | Rule: My_Custom_Strategy -> Waiting for setup | No trade taken.
+[2026-11-18 14:16:24 UTC] 🔍 [15M CHART ANALYZED] NIFTY Spot: 25005.0 | Rule: My_Custom_Strategy -> Waiting for setup | No trade taken.
+[2026-11-18 14:16:43 UTC] ⚡ [OPTION CHAIN PAPER TRADE] Placed: NIFTY 50 25400 CE | Lots: 1 (65 Qty) | Entry: ₹135.00 | SL: ₹115.00 | Tgt: ₹175.00 | Spot: ₹25357.30
+[2026-09-15 10:15] 🏁 EXIT TARGET | NIFTY 24000 CE | Buy: Rs. 100.00 | Exit: Rs. 120.00 | Gross: Rs. +1,300.00 | Charges: Rs. 60.00 | Net: Rs. +1,240.00 (+20.0%) | Rule: TestRule
+[2026-11-18 14:16:45 UTC] 🗑️ [MANUAL DELETE] Deleted trade log record: test_dummy_del_99
+[2026-11-18 14:16:45 UTC] ⚙️ [PRESET] Applied risk preset: Percentage (15% SL, 30% Profit Target, 1 Lot)
+[2026-11-18 14:16:45 UTC] ⚙️ [SETTINGS UPDATED] Lots=3 (195 qty) | SL=18.5 pts | Target=45.0 pts | TrailingSL=True (12.0 pts step)
+[2026-11-18 14:16:43 UTC] 🔍 [15M CHART ANALYZED] NIFTY Spot: 25005.0 | Rule: My_Custom_Strategy -> Waiting for setup | No trade taken.
+[2026-11-18 14:16:59 UTC] 🔍 [15M CHART ANALYZED] NIFTY Spot: 25005.0 | Rule: My_Custom_Strategy -> Waiting for setup | No trade taken.
+[2026-09-29 15:15] 🏁 EXIT STOP_LOSS | NIFTY 25400 CE | Buy: Rs. 135.00 | Exit: Rs. 114.50 | Gross: Rs. -1,332.50 | Charges: Rs. 64.59 | Net: Rs. -1,397.09 (-15.2%) | Rule: My_Custom_Strategy
+[2026-11-18 14:17:17 UTC] ⚡ [OPTION CHAIN PAPER TRADE] Placed: NIFTY 50 25400 CE | Lots: 1 (65 Qty) | Entry: ₹135.00 | SL: ₹115.00 | Tgt: ₹175.00 | Spot: ₹25357.30
+[2026-11-18 14:17:38 UTC] ⚡ [OPTION CHAIN PAPER TRADE] Placed: NIFTY 50 25400 CE | Lots: 1 (65 Qty) | Entry: ₹135.00 | SL: ₹115.00 | Tgt: ₹175.00 | Spot: ₹25357.30
+[2026-09-15 10:15] 🏁 EXIT TARGET | NIFTY 24000 CE | Buy: Rs. 100.00 | Exit: Rs. 120.00 | Gross: Rs. +1,300.00 | Charges: Rs. 60.00 | Net: Rs. +1,240.00 (+20.0%) | Rule: TestRule
+[2026-11-18 14:17:38 UTC] 🗑️ [MANUAL DELETE] Deleted trade log record: test_dummy_del_99
+[2026-11-18 14:17:38 UTC] ⚙️ [PRESET] Applied risk preset: Percentage (15% SL, 30% Profit Target, 1 Lot)
+[2026-11-18 14:17:38 UTC] ⚙️ [SETTINGS UPDATED] Lots=3 (195 qty) | SL=18.5 pts | Target=45.0 pts | TrailingSL=True (12.0 pts step)
+[2026-09-29 15:15] 🏁 EXIT STOP_LOSS | NIFTY 25400 CE | Buy: Rs. 135.00 | Exit: Rs. 114.50 | Gross: Rs. -1,332.50 | Charges: Rs. 64.59 | Net: Rs. -1,397.09 (-15.2%) | Rule: My_Custom_Strategy
+[2026-11-18 14:19:20 UTC] ⚡ [OPTION CHAIN PAPER TRADE] Placed: NIFTY 50 25400 CE | Lots: 1 (65 Qty) | Entry: ₹135.00 | SL: ₹115.00 | Tgt: ₹175.00 | Spot: ₹25357.30
+[2026-11-18 14:20:05 UTC] ⚡ [OPTION CHAIN PAPER TRADE] Placed: NIFTY 50 25400 CE | Lots: 1 (65 Qty) | Entry: ₹135.00 | SL: ₹115.00 | Tgt: ₹175.00 | Spot: ₹25357.30
+[2026-11-18 14:21:52 UTC] ⚡ [OPTION CHAIN PAPER TRADE] Placed: NIFTY 50 25400 CE | Lots: 1 (65 Qty) | Entry: ₹135.00 | SL: ₹115.00 | Tgt: ₹175.00 | Spot: ₹25357.30
+[2026-11-18 14:22:09 UTC] ⚡ [OPTION CHAIN PAPER TRADE] Placed: NIFTY 50 25400 CE | Lots: 1 (65 Qty) | Entry: ₹135.00 | SL: ₹115.00 | Tgt: ₹175.00 | Spot: ₹25357.30
+[2026-09-15 10:15] 🏁 EXIT TARGET | NIFTY 24000 CE | Buy: Rs. 100.00 | Exit: Rs. 120.00 | Gross: Rs. +1,300.00 | Charges: Rs. 60.00 | Net: Rs. +1,240.00 (+20.0%) | Rule: TestRule
+[2026-11-18 14:22:09 UTC] 🗑️ [MANUAL DELETE] Deleted trade log record: test_dummy_del_99
+[2026-11-18 14:22:09 UTC] ⚙️ [PRESET] Applied risk preset: Percentage (15% SL, 30% Profit Target, 1 Lot)
+[2026-11-18 14:22:09 UTC] ⚙️ [SETTINGS UPDATED] Lots=3 (195 qty) | SL=18.5 pts | Target=45.0 pts | TrailingSL=True (12.0 pts step)
+[2026-09-29 15:15] 🏁 EXIT STOP_LOSS | NIFTY 25400 CE | Buy: Rs. 135.00 | Exit: Rs. 114.50 | Gross: Rs. -1,332.50 | Charges: Rs. 64.59 | Net: Rs. -1,397.09 (-15.2%) | Rule: My_Custom_Strategy
+[2026-11-18 14:23:09 UTC] 📸 [MANUAL SCREENSHOT] Captured TradingView NIFTY chart: 20261118_142306_tradingview_nifty_1h_sess_ec638576.png

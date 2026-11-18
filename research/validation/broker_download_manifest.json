@@ -1,0 +1,259 @@
+{
+  "broker": "DhanHQ",
+  "status": "PARTIAL_CAPABILITY_PROBE_ONLY",
+  "generated_at_utc": "2026-09-29T18:34:31.618450+00:00",
+  "auth_method": "client-id and access-token HTTP headers; credentials read from environment/.env and excluded from manifest",
+  "historical_data_download": false,
+  "scope": "Small representative endpoint probes only; not a five-year market-data acquisition.",
+  "files": [
+    {
+      "path": "research/validation/broker_samples/dhan_scrip_master_detailed.csv",
+      "sha256": "924255feb2aec849d5f737a93a3725f9918fa41b83ded59c85a3fd8ef93ca032",
+      "bytes": 33820219,
+      "http_status": 200,
+      "rows": 198814,
+      "endpoint": "https://images.dhan.co/api-data/api-scrip-master-detailed.csv",
+      "purpose": "Unmodified public detailed instrument master response used to identify currently listed NIFTY FUTIDX contracts."
+    },
+    {
+      "path": "research/validation/broker_samples/expired_fut_2026_09.json",
+      "sha256": "8fe5e2f69fdeb1e324233eb0cadf87bd4576171e8cb0b8490732398df5046b72",
+      "bytes": 18608,
+      "http_status": 200,
+      "rows": 151,
+      "request_timestamp_utc": "2026-09-29T18:24:47.678991+00:00",
+      "endpoint": "https://api.dhan.co/v2/charts/intraday",
+      "request_period": {
+        "fromDate": "2026-09-10 09:15:00",
+        "toDate": "2026-09-11 15:30:00"
+      },
+      "security_id": "68407",
+      "instrument": "FUTIDX",
+      "exchange_segment": "NSE_FNO",
+      "expiry_flag": null,
+      "expiry_code": null,
+      "strike_selector": null,
+      "option_type": null
+    },
+    {
+      "path": "research/validation/broker_samples/future_front_2026_09.json",
+      "sha256": "6dccd6280cad31f2769592a6b664ac94942e158d9c8d22a860d33ea9f2ff155c",
+      "bytes": 18346,
+      "http_status": 200,
+      "rows": 151,
+      "request_timestamp_utc": "2026-09-29T18:24:48.666756+00:00",
+      "endpoint": "https://api.dhan.co/v2/charts/intraday",
+      "request_period": {
+        "fromDate": "2026-09-10 09:15:00",
+        "toDate": "2026-09-11 15:30:00"
+      },
+      "security_id": "48704",
+      "instrument": "FUTIDX",
+      "exchange_segment": "NSE_FNO",
+      "expiry_flag": null,
+      "expiry_code": null,
+      "strike_selector": null,
+      "option_type": null
+    },
+    {
+      "path": "research/validation/broker_samples/futures_68407_2022.json",
+      "sha256": "16bd872e3f726d7a839bdb748ab4e011c79f7374b91f16e9830fec409067ac1b",
+      "bytes": 472,
+      "http_status": 200,
+      "rows": 0,
+      "request_timestamp_utc": "2026-09-29T18:24:49.765867+00:00",
+      "endpoint": "https://api.dhan.co/v2/charts/intraday",
+      "request_period": {
+        "fromDate": "2022-01-12 09:15:00",
+        "toDate": "2022-01-13 15:30:00"
+      },
+      "security_id": "68407",
+      "instrument": "FUTIDX",
+      "exchange_segment": "NSE_FNO",
+      "expiry_flag": null,
+      "expiry_code": null,
+      "strike_selector": null,
+      "option_type": null
+    },
+    {
+      "path": "research/validation/broker_samples/option_call_atm_2024-07-10.json",
+      "sha256": "ccd54709336b9beb3e3b0892b91f186e598a61bf12a35ad5f091497d1dea0ee1",
+      "bytes": 13969,
+      "http_status": 200,
+      "rows": 75,
+      "request_timestamp_utc": "2026-09-29T18:24:58.584593+00:00",
+      "endpoint": "https://api.dhan.co/v2/charts/rollingoption",
+      "request_period": {
+        "fromDate": "2024-07-10",
+        "toDate": "2024-07-10"
+      },
+      "security_id": "13",
+      "instrument": "OPTIDX",
+      "exchange_segment": "NSE_FNO",
+      "expiry_flag": "MONTH",
+      "expiry_code": 1,
+      "strike_selector": "ATM",
+      "option_type": "CALL"
+    },
+    {
+      "path": "research/validation/broker_samples/option_call_atmm5_2024-07-10.json",
+      "sha256": "6d44088304e42b8d462a00ee353b7c3d9eb54e044f830813f75f8ca62843e841",
+      "bytes": 13851,
+      "http_status": 200,
+      "rows": 75,
+      "request_timestamp_utc": "2026-09-29T18:24:57.340495+00:00",
+      "endpoint": "https://api.dhan.co/v2/charts/rollingoption",
+      "request_period": {
+        "fromDate": "2024-07-10",
+        "toDate": "2024-07-10"
+      },
+      "security_id": "13",
+      "instrument": "OPTIDX",
+      "exchange_segment": "NSE_FNO",
+      "expiry_flag": "MONTH",
+      "expiry_code": 1,
+      "strike_selector": "ATM-5",
+      "option_type": "CALL"
+    },
+    {
+      "path": "research/validation/broker_samples/option_call_atmp5_2024-07-10.json",
+      "sha256": "c1266f7d187b6039451eac0d41e7982354bf1391d10a3cfd9dca4122f639d993",
+      "bytes": 13983,
+      "http_status": 200,
+      "rows": 75,
+      "request_timestamp_utc": "2026-09-29T18:24:59.253036+00:00",
+      "endpoint": "https://api.dhan.co/v2/charts/rollingoption",
+      "request_period": {
+        "fromDate": "2024-07-10",
+        "toDate": "2024-07-10"
+      },
+      "security_id": "13",
+      "instrument": "OPTIDX",
+      "exchange_segment": "NSE_FNO",
+      "expiry_flag": "MONTH",
+      "expiry_code": 1,
+      "strike_selector": "ATM+5",
+      "option_type": "CALL"
+    },
+    {
+      "path": "research/validation/broker_samples/option_put_atm_2024-07-10.json",
+      "sha256": "27841ceb21a3e20dcf182994855294cceb031795b99fc64a51d23eb17162a937",
+      "bytes": 13986,
+      "http_status": 200,
+      "rows": 75,
+      "request_timestamp_utc": "2026-09-29T18:25:02.423992+00:00",
+      "endpoint": "https://api.dhan.co/v2/charts/rollingoption",
+      "request_period": {
+        "fromDate": "2024-07-10",
+        "toDate": "2024-07-10"
+      },
+      "security_id": "13",
+      "instrument": "OPTIDX",
+      "exchange_segment": "NSE_FNO",
+      "expiry_flag": "MONTH",
+      "expiry_code": 1,
+      "strike_selector": "ATM",
+      "option_type": "PUT"
+    },
+    {
+      "path": "research/validation/broker_samples/option_put_atmm5_2024-07-10.json",
+      "sha256": "b614e208ccdcc13b0588fb04e715ee5c126781d7ae34fd7d96d697466ea8d40d",
+      "bytes": 13933,
+      "http_status": 200,
+      "rows": 75,
+      "request_timestamp_utc": "2026-09-29T18:25:00.995061+00:00",
+      "endpoint": "https://api.dhan.co/v2/charts/rollingoption",
+      "request_period": {
+        "fromDate": "2024-07-10",
+        "toDate": "2024-07-10"
+      },
+      "security_id": "13",
+      "instrument": "OPTIDX",
+      "exchange_segment": "NSE_FNO",
+      "expiry_flag": "MONTH",
+      "expiry_code": 1,
+      "strike_selector": "ATM-5",
+      "option_type": "PUT"
+    },
+    {
+      "path": "research/validation/broker_samples/option_put_atmp5_2024-07-10.json",
+      "sha256": "5489cad50e98e2c001389748e63c2fd304582acbbcbabdbd46f3f7c9f1659d0f",
+      "bytes": 13919,
+      "http_status": 200,
+      "rows": 75,
+      "request_timestamp_utc": "2026-09-29T18:25:03.703278+00:00",
+      "endpoint": "https://api.dhan.co/v2/charts/rollingoption",
+      "request_period": {
+        "fromDate": "2024-07-10",
+        "toDate": "2024-07-10"
+      },
+      "security_id": "13",
+      "instrument": "OPTIDX",
+      "exchange_segment": "NSE_FNO",
+      "expiry_flag": "MONTH",
+      "expiry_code": 1,
+      "strike_selector": "ATM+5",
+      "option_type": "PUT"
+    },
+    {
+      "path": "research/validation/broker_samples/rolling_call_2022-01-12.json",
+      "sha256": "2b811ec816bbc9a4a20dc5fd8cf8c6ce8d0154d1b7d1dc016780f24e30bf717b",
+      "bytes": 14144,
+      "http_status": 200,
+      "rows": 75,
+      "request_timestamp_utc": "2026-09-29T18:24:51.584890+00:00",
+      "endpoint": "https://api.dhan.co/v2/charts/rollingoption",
+      "request_period": {
+        "fromDate": "2022-01-12",
+        "toDate": "2022-01-12"
+      },
+      "security_id": "13",
+      "instrument": "OPTIDX",
+      "exchange_segment": "NSE_FNO",
+      "expiry_flag": "MONTH",
+      "expiry_code": 1,
+      "strike_selector": "ATM",
+      "option_type": "CALL"
+    },
+    {
+      "path": "research/validation/broker_samples/rolling_call_2024-07-10.json",
+      "sha256": "74e2f72351b51f73fdc1f7aefa1820949da5a0ee251c646833779b83577aaf96",
+      "bytes": 13969,
+      "http_status": 200,
+      "rows": 75,
+      "request_timestamp_utc": "2026-09-29T18:24:52.829212+00:00",
+      "endpoint": "https://api.dhan.co/v2/charts/rollingoption",
+      "request_period": {
+        "fromDate": "2024-07-10",
+        "toDate": "2024-07-10"
+      },
+      "security_id": "13",
+      "instrument": "OPTIDX",
+      "exchange_segment": "NSE_FNO",
+      "expiry_flag": "MONTH",
+      "expiry_code": 1,
+      "strike_selector": "ATM",
+      "option_type": "CALL"
+    },
+    {
+      "path": "research/validation/broker_samples/rolling_call_2026-09-10.json",
+      "sha256": "4790dc1e47492dec8314feb0190160fd5ca33e55e06b3ccd20af66862ab65642",
+      "bytes": 14249,
+      "http_status": 200,
+      "rows": 77,
+      "request_timestamp_utc": "2026-09-29T18:24:53.784230+00:00",
+      "endpoint": "https://api.dhan.co/v2/charts/rollingoption",
+      "request_period": {
+        "fromDate": "2026-09-10",
+        "toDate": "2026-09-10"
+      },
+      "security_id": "13",
+      "instrument": "OPTIDX",
+      "exchange_segment": "NSE_FNO",
+      "expiry_flag": "MONTH",
+      "expiry_code": 1,
+      "strike_selector": "ATM",
+      "option_type": "CALL"
+    }
+  ]
+}

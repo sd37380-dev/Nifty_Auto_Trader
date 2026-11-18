@@ -1,0 +1,201 @@
+{
+  "audit_timestamp_utc": "2026-09-30T15:13:22.379095+00:00",
+  "total_files": 9,
+  "total_rows": 495715,
+  "observed_dates": [
+    "2026-09-15",
+    "2026-09-16",
+    "2026-09-17"
+  ],
+  "observed_expiries": [
+    "06-OCT-2026",
+    "15-SEP-2026",
+    "22-SEP-2026",
+    "29-SEP-2026"
+  ],
+  "strike_count": 127,
+  "strike_range": [
+    15000.0,
+    34500.0
+  ],
+  "rights": [
+    "Call",
+    "Put"
+  ],
+  "positive_oi_percentage": 96.13,
+  "zero_oi_percentage": 3.87,
+  "invalid_ohlc_count": 0,
+  "negative_volume_count": 0,
+  "chain_reconstruction_test": {
+    "source_file": "NIFTY_OPT_1min_2026-09-16_exp2026-09-22.parquet",
+    "evaluation_timestamp": "2026-09-16 10:00:00",
+    "target_atm": 25200.0,
+    "target_strikes": [
+      24950.0,
+      25000.0,
+      25050.0,
+      25100.0,
+      25150.0,
+      25200.0,
+      25250.0,
+      25300.0,
+      25350.0,
+      25400.0,
+      25450.0
+    ],
+    "snapshot_rows_at_timestamp": 156,
+    "ce_strikes_found": [
+      24950.0,
+      25000.0,
+      25050.0,
+      25100.0,
+      25150.0,
+      25200.0,
+      25250.0,
+      25300.0,
+      25350.0,
+      25400.0,
+      25450.0
+    ],
+    "pe_strikes_found": [
+      25000.0,
+      25200.0,
+      25300.0,
+      25400.0
+    ],
+    "all_strikes_present": false,
+    "strike_oi_map": {
+      "24950": {
+        "ce_oi": 293150,
+        "ce_ltp": 1.0,
+        "pe_oi": 0,
+        "pe_ltp": 0.0
+      },
+      "25000": {
+        "ce_oi": 7113665,
+        "ce_ltp": 1.0,
+        "pe_oi": 80080,
+        "pe_ltp": 1793.4
+      },
+      "25050": {
+        "ce_oi": 344760,
+        "ce_ltp": 0.9,
+        "pe_oi": 0,
+        "pe_ltp": 0.0
+      },
+      "25100": {
+        "ce_oi": 1419340,
+        "ce_ltp": 1.0,
+        "pe_oi": 0,
+        "pe_ltp": 0.0
+      },
+      "25150": {
+        "ce_oi": 386750,
+        "ce_ltp": 0.9,
+        "pe_oi": 0,
+        "pe_ltp": 0.0
+      },
+      "25200": {
+        "ce_oi": 1159990,
+        "ce_ltp": 0.85,
+        "pe_oi": 0,
+        "pe_ltp": 1987.05
+      },
+      "25250": {
+        "ce_oi": 194350,
+        "ce_ltp": 0.8,
+        "pe_oi": 0,
+        "pe_ltp": 0.0
+      },
+      "25300": {
+        "ce_oi": 543270,
+        "ce_ltp": 0.8,
+        "pe_oi": 0,
+        "pe_ltp": 1806.15
+      },
+      "25350": {
+        "ce_oi": 22230,
+        "ce_ltp": 0.85,
+        "pe_oi": 0,
+        "pe_ltp": 0.0
+      },
+      "25400": {
+        "ce_oi": 371670,
+        "ce_ltp": 0.85,
+        "pe_oi": 0,
+        "pe_ltp": 2183.0
+      },
+      "25450": {
+        "ce_oi": 30160,
+        "ce_ltp": 0.9,
+        "pe_oi": 0,
+        "pe_ltp": 0.0
+      }
+    }
+  },
+  "files_detail": [
+    {
+      "file": "NIFTY_OPT_1min_2026-09-15_exp2026-09-15.parquet",
+      "rows": 57133,
+      "expiry": "15-SEP-2026",
+      "date": "2026-09-15",
+      "strikes": 92
+    },
+    {
+      "file": "NIFTY_OPT_1min_2026-09-15_exp2026-09-22.parquet",
+      "rows": 55758,
+      "expiry": "22-SEP-2026",
+      "date": "2026-09-15",
+      "strikes": 90
+    },
+    {
+      "file": "NIFTY_OPT_1min_2026-09-15_exp2026-09-29.parquet",
+      "rows": 65064,
+      "expiry": "29-SEP-2026",
+      "date": "2026-09-15",
+      "strikes": 115
+    },
+    {
+      "file": "NIFTY_OPT_1min_2026-09-16_exp2026-09-22.parquet",
+      "rows": 58575,
+      "expiry": "22-SEP-2026",
+      "date": "2026-09-16",
+      "strikes": 96
+    },
+    {
+      "file": "NIFTY_OPT_1min_2026-09-16_exp2026-09-29.parquet",
+      "rows": 66007,
+      "expiry": "29-SEP-2026",
+      "date": "2026-09-16",
+      "strikes": 123
+    },
+    {
+      "file": "NIFTY_OPT_1min_2026-09-16_exp2026-10-06.parquet",
+      "rows": 33287,
+      "expiry": "06-OCT-2026",
+      "date": "2026-09-16",
+      "strikes": 72
+    },
+    {
+      "file": "NIFTY_OPT_1min_2026-09-17_exp2026-09-22.parquet",
+      "rows": 57117,
+      "expiry": "22-SEP-2026",
+      "date": "2026-09-17",
+      "strikes": 96
+    },
+    {
+      "file": "NIFTY_OPT_1min_2026-09-17_exp2026-09-29.parquet",
+      "rows": 67422,
+      "expiry": "29-SEP-2026",
+      "date": "2026-09-17",
+      "strikes": 122
+    },
+    {
+      "file": "NIFTY_OPT_1min_2026-09-17_exp2026-10-06.parquet",
+      "rows": 35352,
+      "expiry": "06-OCT-2026",
+      "date": "2026-09-17",
+      "strikes": 78
+    }
+  ]
+}

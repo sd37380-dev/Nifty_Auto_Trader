@@ -301,6 +301,13 @@ class AutonomousObservationEngine:
             cycle_record.observation_id = unified_obs.observation_id
             cycle_record.observation_count += 1
 
+            # Feed 15M TradingView chart observation into Local Option Paper Simulator
+            try:
+                from nifty_trader.simulator.service import get_simulator_service
+                get_simulator_service().on_market_observation(unified_obs)
+            except Exception as sim_err:
+                logger.debug("Simulator chart observation hook: %s", sim_err)
+
             for s in sources:
                 self.planner.mark_source_executed(s, timestamp=now)
 

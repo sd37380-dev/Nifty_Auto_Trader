@@ -24,6 +24,7 @@ class YahooFinanceProvider(MarketDataProvider):
     TICKER_MAP = {
         "NIFTY": "^NSEI",
         "NIFTY50": "^NSEI",
+        "BANKNIFTY": "^NSEBANK",
     }
 
     TIMEFRAME_MAP = {

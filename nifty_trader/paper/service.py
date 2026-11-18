@@ -7,7 +7,7 @@ dual-state reconciliation, and telemetry feeds for Hermes.
 
 from datetime import datetime, timezone
 import logging
-from typing import List, Optional, Tuple
+from typing import Any, List, Optional, Tuple
 from nifty_trader.browser.browser_agent import BrowserAgent
 from nifty_trader.paper.contracts import (
     PaperPortfolioSummary,
@@ -44,14 +44,20 @@ class SensibullPaperTradingService:
         position_reader: Optional[SensibullPositionReader] = None,
         executor: Optional[SensibullPaperExecutor] = None,
         reconciler: Optional[SensibullStateReconciler] = None,
+        safety_guard: Optional[Any] = None,
     ):
         self.browser = browser_agent
         self.store = store or PaperTradeStore()
         self.detector = detector or SensibullEnvironmentDetector()
         self.navigator = navigator or SensibullPaperNavigator(browser_agent, self.detector)
         self.position_reader = position_reader or SensibullPositionReader()
+        self.safety_guard = safety_guard
         self.executor = executor or SensibullPaperExecutor(
-            browser_agent, self.store, self.navigator, self.position_reader
+            browser_agent,
+            self.store,
+            self.navigator,
+            self.position_reader,
+            safety_guard=safety_guard,
         )
         self.reconciler = reconciler or SensibullStateReconciler(self.store)
 

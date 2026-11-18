@@ -10,6 +10,7 @@ import json
 import logging
 import os
 import subprocess
+import sys
 import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -72,6 +73,16 @@ class HermesBrowserAdapter(BrowserProvider):
     def session_id(self) -> str:
         return self.session_mgr.session_id
 
+    def _kill_lingering_profile_processes(self) -> None:
+        """Kills any orphaned Chrome processes holding our profile directory."""
+        if sys.platform == "win32":
+            try:
+                prof_str = str(self.user_data_dir).replace("/", "\\")
+                cmd = f"Get-CimInstance Win32_Process -Filter \"Name = 'chrome.exe'\" | Where-Object {{ $_.CommandLine -like '*{prof_str}*' }} | ForEach-Object {{ Stop-Process -Id $_.ProcessId -Force }}"
+                subprocess.run(["powershell", "-NoProfile", "-Command", cmd], capture_output=True, timeout=5)
+            except Exception as e:
+                logger.debug("Failed cleaning lingering profile processes: %s", e)
+
     async def start(self) -> BrowserSession:
         """Launches the Chrome process and establishes the CDP WebSocket connection."""
         if self._process and self._process.poll() is None and self._ws:
@@ -79,6 +90,7 @@ class HermesBrowserAdapter(BrowserProvider):
 
         self.session_mgr.set_status(BrowserSessionStatus.STARTING)
         self.user_data_dir.mkdir(parents=True, exist_ok=True)
+        self._kill_lingering_profile_processes()
 
         if not Path(self.chrome_path).exists():
             self.session_mgr.set_status(BrowserSessionStatus.FAILED)
@@ -88,6 +100,7 @@ class HermesBrowserAdapter(BrowserProvider):
             self.chrome_path,
             f"--remote-debugging-port={self.remote_port}",
             "--headless=new" if self.headless else "--start-maximized",
+            "--window-size=1920,1080",
             "--disable-gpu",
             "--no-first-run",
             "--no-default-browser-check",
@@ -160,6 +173,10 @@ class HermesBrowserAdapter(BrowserProvider):
     async def _send_cdp(self, method: str, params: Optional[Dict[str, Any]] = None, timeout: float = 30.0) -> Dict[str, Any]:
         """Sends a CDP command and awaits the specific response matching request ID."""
         if not self._is_ws_open():
+            logger.info("CDP WebSocket not connected; automatically initializing browser session...")
+            await self.start()
+
+        if not self._is_ws_open():
             raise BrowserCrashError("CDP WebSocket is closed or uninitialized.")
 
         self._req_id += 1
@@ -193,12 +210,20 @@ class HermesBrowserAdapter(BrowserProvider):
             self._ws = None
 
         if self._process:
+            pid = self._process.pid
             try:
-                self._process.terminate()
-                self._process.wait(timeout=3)
+                if sys.platform == "win32":
+                    subprocess.run(["taskkill", "/F", "/T", "/PID", str(pid)], capture_output=True, timeout=5)
+                else:
+                    self._process.terminate()
+                    self._process.wait(timeout=3)
             except Exception:
-                self._process.kill()
+                try:
+                    self._process.kill()
+                except Exception:
+                    pass
             self._process = None
+            self._kill_lingering_profile_processes()
 
         logger.info("Browser session %s stopped.", self.session_id)
 

@@ -1,0 +1,132 @@
+{
+  "audit_date": "2026-09-29",
+  "dataset": {
+    "path": "data/hermes_research/market_data.db",
+    "sha256": "948598e6f8efee5d4eaafb671ff195dbc8144e41d799ae734df622106f65af3d",
+    "bytes": 104640512,
+    "normalized_bar_rows": 202907,
+    "raw_payload_rows": 0,
+    "tables": ["normalized_bars", "feature_sets", "raw_payloads"]
+  },
+  "instrument_identity": {
+    "nifty_classification": "SPOT_INDEX",
+    "evidence": [
+      "scripts/fetch_broker_data.py requests securityId=13, exchangeSegment=IDX_I, instrument=INDEX for NIFTY",
+      "The same loader writes the response as symbol NIFTY and sets open_interest=0",
+      "NIFTY|5M has 92,739 rows and zero OI on all 92,739 rows"
+    ],
+    "database_caveat": "normalized_bars does not persist security_id, exchange_segment, instrument, exchange, expiry, or contract_id; raw_payloads is empty. Classification is based on the repository's documented loader/provenance, not inferred from price behavior."
+  },
+  "requirements": {
+    "Futures OHLC": {
+      "status": "PARTIALLY_AVAILABLE",
+      "evidence": "The broker probe returned 5-minute OHLCV/OI for two explicit NIFTY FUTIDX IDs (68407, expiry 2026-09-29; 48704, expiry 2026-10-27) over 2026-09-10 to 2026-09-11 only. The NIFTY database series remains Spot/Index. Dhan documents intraday candles for active instruments; five-year expired Futures coverage is not established."
+    },
+    "Futures timestamp": {
+      "status": "PARTIALLY_AVAILABLE",
+      "evidence": "Timestamp arrays were returned for the sampled 2026 FUTIDX contracts; a five-year expiry-specific Futures timestamp series is unavailable."
+    },
+    "Futures expiry": {
+      "status": "PARTIALLY_AVAILABLE",
+      "evidence": "The current detailed instrument master provides IDs and expiry dates for currently listed NIFTY FUTIDX contracts. Historical expired contract identifiers and expiry-specific bars are not present in the supplied DB or current master."
+    },
+    "Futures contract rollover": {
+      "status": "MISSING",
+      "evidence": "No historical contract-ID sequence or rollover map exists. Dhan's active-instrument endpoint does not supply a continuous contract/roll series."
+    },
+    "5-minute Futures": {
+      "status": "PARTIALLY_AVAILABLE",
+      "evidence": "A small 2026 sample for two actual NIFTY FUTIDX IDs returned 5-minute bars. Five-year expired-contract bars are missing; the 92,739-row NIFTY 5M DB series is Spot/Index and OI is zero throughout."
+    },
+    "previous-day H/L/C": {
+      "status": "MISSING",
+      "evidence": "Previous-day Futures H/L/C cannot be derived without verified Futures history. Spot-derived values are not acceptable substitutes."
+    },
+    "EMA20": {
+      "status": "PARTIALLY_AVAILABLE",
+      "evidence": "The chronological calculation exists, but EMA20 over the required verified Futures history cannot be derived because the history is unavailable."
+    },
+    "EMA50": {
+      "status": "PARTIALLY_AVAILABLE",
+      "evidence": "The chronological calculation exists, but EMA50 over the required verified Futures history cannot be derived because the history is unavailable."
+    },
+    "ATR14": {
+      "status": "PARTIALLY_AVAILABLE",
+      "evidence": "The chronological Wilder calculation exists, but ATR14 over the required verified Futures history cannot be derived because the history is unavailable."
+    },
+    "option timestamp": {
+      "status": "PARTIALLY_AVAILABLE",
+      "evidence": "Dhan rolling-option API returned timestamped 5-minute OHLC/OI arrays on sampled 2022-01-12 (75 rows), 2024-07-10 (75 rows), and 2026-09-10 (77 rows). This endpoint is rolling, not a full timestamped chain, and its returned ATM ladder is spot-relative."
+    },
+    "option expiry": {
+      "status": "MISSING",
+      "evidence": "The Dhan rolling-option response omits actual expiry date and contract ID; expiryFlag=MONTH/expiryCode=1 is a rolling selector, not an expiry-resolved record."
+    },
+    "option strike": {
+      "status": "PARTIALLY_AVAILABLE",
+      "evidence": "Dhan rolling-option response includes a resolved strike array and accepts ATM-5 through ATM+5 in sampled calls. Its ATM reference is spot-based; the strategy requires the contemporaneous Futures-based ATM and actual expiry identity, so this is not a compliant historical strike grid."
+    },
+    "CE OI": {
+      "status": "PARTIALLY_AVAILABLE",
+      "evidence": "Dhan returned timestamped CE OI for rolling strike requests on sampled dates; the strikes are spot-relative and response lacks actual expiry. Not valid Futures-ATM ±5 OI."
+    },
+    "PE OI": {
+      "status": "PARTIALLY_AVAILABLE",
+      "evidence": "Dhan returned timestamped PE OI for rolling ATM-5, ATM, and ATM+5 requests on 2024-07-10; strikes are spot-relative and response lacks actual expiry. Not valid Futures-ATM ±5 OI."
+    },
+    "CE change OI": {
+      "status": "MISSING",
+      "evidence": "Dhan rolling historical response does not expose change OI; deriving it across rolling identities is unsafe and was not attempted."
+    },
+    "PE change OI": {
+      "status": "MISSING",
+      "evidence": "Dhan rolling historical response does not expose change OI; deriving it across rolling identities is unsafe and was not attempted."
+    },
+    "option LTP": {
+      "status": "PARTIALLY_AVAILABLE",
+      "evidence": "Rolling endpoint returns OHLC/close (usable as a bar close), not a separate historical quote/LTP field."
+    },
+    "historical ATM determination": {
+      "status": "PARTIALLY_AVAILABLE",
+      "evidence": "IndicatorEngine derives nearest-50 ATM from each supplied historical Futures price, and a regression test verifies ATM is recomputed at each replay timestamp. The five-year verified Futures inputs are unavailable, and Dhan rolling-option ATM offsets are spot-relative rather than anchored to the strategy's Futures price. Python round has ties-to-even behavior at exact half steps."
+    }
+  },
+  "option_ingestion_provenance": {
+    "source_script": "scripts/backfill_5year_options.py",
+    "requested_exchange_segment": "NSE_FNO",
+    "instrument": "OPTIDX",
+    "security_id": "13",
+    "expiry_request": "expiryFlag=MONTH, expiryCode=1",
+    "strike_request": "ATM",
+    "requested_fields": ["open", "high", "low", "close", "volume", "oi", "spot"],
+    "persisted_as": "NIFTY_ATM_CE / NIFTY_ATM_PE NormalizedBar rows with OHLCV and open_interest only",
+    "not_persisted": ["resolved strike", "resolved expiry date", "change OI", "option chain snapshot identifier", "raw broker payload"]
+  },
+  "broker_probe": {
+    "broker": "DhanHQ",
+    "authentication": "Existing DHAN_CLIENT_ID and DHAN_ACCESS_TOKEN loaded from .env; values not printed or persisted.",
+    "instrument_master": "Official detailed scrip master. Current NIFTY FUTIDX records included 68407 / 2026-09-29, 48704 / 2026-10-27, and 68407's then-listed Sep contract; identities are exchange contracts, not index Spot.",
+    "futures_endpoint": "/v2/charts/intraday; 5-minute OHLCV and open_interest returned for sampled 2026 IDs. Historical query for ID 68407 in 2022 returned zero rows.",
+    "options_endpoint": "/v2/charts/rollingoption; returned timestamp, actual strike, OHLC, volume, and OI in sampled 2022/2024/2026 periods. Actual expiry and change OI are absent; ATM offsets are based on rolling spot.",
+    "option_chain_endpoint": "/v2/optionchain is real-time only; it does not backfill historical snapshots.",
+    "full_download_performed": false,
+    "block_reason": "The tested official endpoints do not establish five-year contract-resolved Futures history or historical option OI selected from a Futures-anchored ATM with actual expiry identity."
+  },
+  "snapshot_alignment": {
+    "implemented_rule": "Exact equality after UTC normalization between Candle5M.timestamp and OptionChainSnapshot.timestamp.",
+    "backward_lookback_allowed": false,
+    "stale_forward_fill_allowed": false,
+    "failure_behavior": "Missing, empty, or all-zero-CE/PE-OI snapshot at any replay candle makes the historical option data insufficient and blocks BacktestEngine.run. A requested timestamp that disagrees with the replay cursor returns no market data.",
+    "timestamp_semantics": "Dataset timestamps are timezone-aware UTC, but whether each bar timestamp denotes candle open or close is undocumented. Vendor timestamp convention must be confirmed before aligning snapshots to the signal-at-close rule."
+  },
+  "backtest_gate": {
+    "status": "BLOCKED",
+    "exact_missing_data": [
+      "Five-year NIFTY FUTIDX 5-minute bars for actual dated contracts, with security IDs, expiry, and a documented causal contract-roll map",
+      "Historical CE/PE OI snapshots selected against each evaluation timestamp's historical Futures-derived ATM, including exact strike and actual expiry date; the tested rolling API anchors offsets to spot and omits expiry date",
+      "Historical change OI if the strategy requires it; the tested rolling API does not return change OI",
+      "Freeze the changing database and rerun the audit/hash before defining the reproducible study input"
+    ],
+    "performance_metrics_generated": false
+  }
+}

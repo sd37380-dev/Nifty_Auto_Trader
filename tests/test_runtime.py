@@ -14,9 +14,10 @@ async def test_runtime_initialization():
     assert runtime.state == TradingState.STARTUP
     assert runtime.settings["app"]["name"] == "NIFTY Autonomous Trader"
     assert runtime.settings["risk"]["max_risk_per_trade"] == 0.01
-    assert runtime.settings["risk"]["max_daily_loss"] == 5000
+    assert runtime.settings["risk"]["max_daily_loss"] == 2000
     assert runtime.settings["risk"]["max_trades_per_day"] == 3
-    assert runtime.settings["risk"]["minimum_rr"] == 2.0
+    assert runtime.settings["risk"]["minimum_rr"] == 3.0
+    assert runtime.settings["risk"]["max_lots_per_trade"] == 1
 
 
 @pytest.mark.asyncio
@@ -30,7 +31,8 @@ async def test_runtime_status():
     assert "state" in status
     assert "providers" in status
     assert "risk_policies" in status
-    assert status["risk_policies"]["max_risk_per_trade"] == 0.01
+    assert "safety_guard" in status
+    assert status["safety_guard"]["status"] == "ARMED_AND_LOCKED"
 
 
 @pytest.mark.asyncio

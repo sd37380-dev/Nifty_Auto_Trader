@@ -1,0 +1,255 @@
+{
+  "total_sessions": 1184,
+  "or_summary": {
+    "OR-5": {
+      "mean_range_pts": 65.16,
+      "median_range_pts": 57.0,
+      "mean_range_atr": 0.282,
+      "day_high_prob": 23.23,
+      "day_low_prob": 18.75,
+      "either_extreme_prob": 41.89,
+      "both_extremes_prob": 0.08,
+      "subseq_expansion_multiple": 3.47,
+      "correlation_with_subseq_range": 0.311,
+      "directional_persistence_prob": 59.46
+    },
+    "OR-10": {
+      "mean_range_pts": 75.15,
+      "median_range_pts": 65.93,
+      "mean_range_atr": 0.326,
+      "day_high_prob": 26.77,
+      "day_low_prob": 22.13,
+      "either_extreme_prob": 48.73,
+      "both_extremes_prob": 0.17,
+      "subseq_expansion_multiple": 2.89,
+      "correlation_with_subseq_range": 0.395,
+      "directional_persistence_prob": 61.66
+    },
+    "OR-15": {
+      "mean_range_pts": 82.03,
+      "median_range_pts": 71.5,
+      "mean_range_atr": 0.355,
+      "day_high_prob": 29.05,
+      "day_low_prob": 24.49,
+      "either_extreme_prob": 53.12,
+      "both_extremes_prob": 0.42,
+      "subseq_expansion_multiple": 2.61,
+      "correlation_with_subseq_range": 0.517,
+      "directional_persistence_prob": 62.67
+    },
+    "OR-30": {
+      "mean_range_pts": 99.08,
+      "median_range_pts": 87.55,
+      "mean_range_atr": 0.428,
+      "day_high_prob": 34.54,
+      "day_low_prob": 32.18,
+      "either_extreme_prob": 64.78,
+      "both_extremes_prob": 1.94,
+      "subseq_expansion_multiple": 2.05,
+      "correlation_with_subseq_range": 0.577,
+      "directional_persistence_prob": 66.72
+    },
+    "OR-45": {
+      "mean_range_pts": 110.73,
+      "median_range_pts": 97.4,
+      "mean_range_atr": 0.478,
+      "day_high_prob": 38.09,
+      "day_low_prob": 37.5,
+      "either_extreme_prob": 72.21,
+      "both_extremes_prob": 3.38,
+      "subseq_expansion_multiple": 1.76,
+      "correlation_with_subseq_range": 0.616,
+      "directional_persistence_prob": 69.09
+    },
+    "OR-60": {
+      "mean_range_pts": 119.56,
+      "median_range_pts": 105.67,
+      "mean_range_atr": 0.516,
+      "day_high_prob": 40.88,
+      "day_low_prob": 40.79,
+      "either_extreme_prob": 76.86,
+      "both_extremes_prob": 4.81,
+      "subseq_expansion_multiple": 1.55,
+      "correlation_with_subseq_range": 0.568,
+      "directional_persistence_prob": 69.85
+    }
+  },
+  "bo_summary": {
+    "OR-5": {
+      "total_breakouts": 1183,
+      "reentered_or_rate": 94.51,
+      "retrace_25_rate": 85.63,
+      "retrace_50_rate": 76.67,
+      "full_reversal_rate": 58.75,
+      "continuation_rate": 49.87,
+      "mean_mfe": 94.08,
+      "mean_mae": 98.81,
+      "mean_time_to_mfe_min": 171.6,
+      "mfe_aligned_with_gap": 92.54,
+      "mfe_opposed_gap": 95.48,
+      "mfe_aligned_with_trend": 94.07,
+      "mfe_opposed_trend": 94.08
+    },
+    "OR-15": {
+      "total_breakouts": 1180,
+      "reentered_or_rate": 95.0,
+      "retrace_25_rate": 83.05,
+      "retrace_50_rate": 70.42,
+      "full_reversal_rate": 47.63,
+      "continuation_rate": 52.03,
+      "mean_mfe": 91.04,
+      "mean_mae": 93.36,
+      "mean_time_to_mfe_min": 172.3,
+      "mfe_aligned_with_gap": 88.05,
+      "mfe_opposed_gap": 93.8,
+      "mfe_aligned_with_trend": 89.69,
+      "mfe_opposed_trend": 92.32
+    },
+    "OR-30": {
+      "total_breakouts": 1162,
+      "reentered_or_rate": 94.92,
+      "retrace_25_rate": 78.83,
+      "retrace_50_rate": 61.53,
+      "full_reversal_rate": 36.49,
+      "continuation_rate": 52.84,
+      "mean_mfe": 88.84,
+      "mean_mae": 84.44,
+      "mean_time_to_mfe_min": 165.5,
+      "mfe_aligned_with_gap": 84.07,
+      "mfe_opposed_gap": 93.51,
+      "mfe_aligned_with_trend": 83.14,
+      "mfe_opposed_trend": 94.78
+    },
+    "OR-60": {
+      "total_breakouts": 1125,
+      "reentered_or_rate": 94.84,
+      "retrace_25_rate": 70.67,
+      "retrace_50_rate": 49.78,
+      "full_reversal_rate": 24.8,
+      "continuation_rate": 52.36,
+      "mean_mfe": 80.55,
+      "mean_mae": 74.87,
+      "mean_time_to_mfe_min": 142.8,
+      "mfe_aligned_with_gap": 74.19,
+      "mfe_opposed_gap": 87.06,
+      "mfe_aligned_with_trend": 75.74,
+      "mfe_opposed_trend": 85.65
+    }
+  },
+  "two_sided_summary": {
+    "OR-5": {
+      "two_sided_breakout_rate": 58.87,
+      "mean_day_range_two_sided": 208.01,
+      "mean_day_range_one_sided": 217.14
+    },
+    "OR-15": {
+      "two_sided_breakout_rate": 47.47,
+      "mean_day_range_two_sided": 207.1,
+      "mean_day_range_one_sided": 215.98
+    },
+    "OR-30": {
+      "two_sided_breakout_rate": 35.81,
+      "mean_day_range_two_sided": 206.11,
+      "mean_day_range_one_sided": 214.92
+    },
+    "OR-60": {
+      "two_sided_breakout_rate": 23.56,
+      "mean_day_range_two_sided": 212.42,
+      "mean_day_range_one_sided": 211.56
+    }
+  },
+  "or15_by_vol": {
+    "HIGH": {
+      "sessions": 296,
+      "mean_range_pts": 106.31,
+      "either_extreme_prob": 54.73,
+      "two_sided_rate": 45.61
+    },
+    "LOW": {
+      "sessions": 296,
+      "mean_range_pts": 60.98,
+      "either_extreme_prob": 55.07,
+      "two_sided_rate": 45.61
+    },
+    "NORMAL": {
+      "sessions": 592,
+      "mean_range_pts": 80.43,
+      "either_extreme_prob": 51.35,
+      "two_sided_rate": 49.32
+    }
+  },
+  "or15_by_gap": {
+    "LARGE": {
+      "sessions": 437,
+      "mean_range_pts": 90.48,
+      "either_extreme_prob": 55.61,
+      "two_sided_rate": 44.62
+    },
+    "MEDIUM": {
+      "sessions": 404,
+      "mean_range_pts": 77.92,
+      "either_extreme_prob": 51.73,
+      "two_sided_rate": 49.5
+    },
+    "SMALL": {
+      "sessions": 343,
+      "mean_range_pts": 76.13,
+      "either_extreme_prob": 51.6,
+      "two_sided_rate": 48.69
+    }
+  },
+  "or15_swing": {
+    "UP": {
+      "sessions": 528,
+      "same_day_dir_prob": 64.58,
+      "t1_continuation_prob": 50.38,
+      "mean_t1_signed_drift": 11.47,
+      "mean_t3_signed_drift": 18.63
+    },
+    "DOWN": {
+      "sessions": 629,
+      "same_day_dir_prob": 63.75,
+      "t1_continuation_prob": 49.13,
+      "mean_t1_signed_drift": 4.34,
+      "mean_t3_signed_drift": -8.04
+    }
+  },
+  "yearly_or15": {
+    "2021": {
+      "sessions": 13,
+      "mean_range_pts": 86.65,
+      "either_extreme_prob": 61.54,
+      "two_sided_rate": 38.46
+    },
+    "2022": {
+      "sessions": 248,
+      "mean_range_pts": 78.72,
+      "either_extreme_prob": 52.82,
+      "two_sided_rate": 47.58
+    },
+    "2023": {
+      "sessions": 245,
+      "mean_range_pts": 58.9,
+      "either_extreme_prob": 49.39,
+      "two_sided_rate": 51.43
+    },
+    "2024": {
+      "sessions": 246,
+      "mean_range_pts": 82.17,
+      "either_extreme_prob": 48.78,
+      "two_sided_rate": 52.03
+    },
+    "2025": {
+      "sessions": 248,
+      "mean_range_pts": 90.6,
+      "either_extreme_prob": 56.45,
+      "two_sided_rate": 43.55
+    },
+    "2026": {
+      "sessions": 184,
+      "mean_range_pts": 105.25,
+      "either_extreme_prob": 59.24,
+      "two_sided_rate": 41.85
+    }
+  }
+}

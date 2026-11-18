@@ -249,15 +249,19 @@ class NiftyTraderRuntime:
         from nifty_trader.hermes.collaboration import HermesBrainOrchestrator
         from nifty_trader.hermes.contracts import CollaborationAuditStore
 
-        # Initialize Stage 8 Sensibull Paper-Trading Service
+        # Initialize Stage 8 Sensibull Paper-Trading Service & Deterministic Safety Guard
         paper_dir = self.root_dir / "data" / "paper_trading"
         paper_dir.mkdir(parents=True, exist_ok=True)
         from nifty_trader.paper.service import SensibullPaperTradingService
         from nifty_trader.paper.store import PaperTradeStore
+        from nifty_trader.safety.guard import DeterministicSafetyGuard
+
         self.paper_store = PaperTradeStore(db_path=paper_dir / "paper_trades.db")
+        self.safety_guard = DeterministicSafetyGuard.from_settings(self.settings, store=self.paper_store)
         self.paper_service = SensibullPaperTradingService(
             browser_agent=self.browser,
             store=self.paper_store,
+            safety_guard=self.safety_guard,
         )
 
         self.memory_store = ContextMemoryStore(storage_path=collab_dir / "context_memory.json")
@@ -372,6 +376,7 @@ class NiftyTraderRuntime:
                 "total_experiences": len(self.experience_store.list_experiences(limit=1000)),
             },
             "risk_policies": self.settings.get("risk", {}),
+            "safety_guard": self.safety_guard.get_status(),
         }
 
     async def test_brain(self, custom_scenario: Optional[str] = None) -> MarketObservationOutput:

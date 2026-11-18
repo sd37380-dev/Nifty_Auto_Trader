@@ -1,0 +1,27 @@
+# ==============================================================================
+# NIFTY Autonomous Trader — Production & Cloud Dependencies (Render / Docker)
+# ==============================================================================
+
+# Core Data Validation & Serialization
+pydantic>=2.10.0
+pyyaml>=6.0.1
+ruamel.yaml>=0.18.0
+
+# HTTP & API Clients (Zero C-compiler / slim compatible for Supabase REST)
+httpx>=0.28.0
+tenacity>=9.0.0
+python-dotenv>=1.0.0
+
+# Terminal UI & Diagnostics
+rich>=14.0.0
+
+# AI Models & Multi-Model Providers
+google-genai>=2.0.0
+openai>=1.50.0
+
+# WSGI / Production Web Server (Optional fallback)
+gunicorn>=21.2.0
+
+# Test Suite
+pytest>=8.0.0
+pytest-asyncio>=0.23.0

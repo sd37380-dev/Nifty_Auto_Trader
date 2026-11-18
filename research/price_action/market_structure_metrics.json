@@ -1,0 +1,201 @@
+{
+  "dataset_total_bars": 92605,
+  "total_sessions": 1242,
+  "swing_detection_benchmarks": {
+    "swing_3_3": {
+      "L_R": [
+        3,
+        3
+      ],
+      "total_swing_highs": 8742,
+      "total_swing_lows": 8861,
+      "mean_inter_swing_high_bars": 10.591465507379018,
+      "mean_inter_swing_low_bars": 10.45056433408578,
+      "mean_swing_size_pts": 67.76240054869685,
+      "median_swing_size_pts": 49.57500000000073,
+      "mean_swing_size_atr": 3.0342864906666387,
+      "mean_swing_duration_bars": 4.900480109739369,
+      "median_swing_duration_bars": 4.0
+    },
+    "swing_5_5": {
+      "L_R": [
+        5,
+        5
+      ],
+      "total_swing_highs": 5573,
+      "total_swing_lows": 5666,
+      "mean_inter_swing_high_bars": 16.6137832017229,
+      "mean_inter_swing_low_bars": 16.344571932921447,
+      "mean_swing_size_pts": 87.14139326570258,
+      "median_swing_size_pts": 63.29999999999927,
+      "mean_swing_size_atr": 3.8617673827075882,
+      "mean_swing_duration_bars": 7.673969350312972,
+      "median_swing_duration_bars": 6.0
+    },
+    "swing_7_7": {
+      "L_R": [
+        7,
+        7
+      ],
+      "total_swing_highs": 3999,
+      "total_swing_lows": 4064,
+      "mean_inter_swing_high_bars": 23.154577288644322,
+      "mean_inter_swing_low_bars": 22.78488801378292,
+      "mean_swing_size_pts": 104.30574004507888,
+      "median_swing_size_pts": 76.94999999999709,
+      "mean_swing_size_atr": 4.665630759737719,
+      "mean_swing_duration_bars": 10.703080390683697,
+      "median_swing_duration_bars": 9.0
+    }
+  },
+  "hh_sequence_failure_rates": {
+    "sequence_len_1": {
+      "reached_count": 1422,
+      "failed_at_k_count": 738,
+      "failure_probability_pct": 51.9,
+      "continuation_probability_pct": 48.1
+    },
+    "sequence_len_2": {
+      "reached_count": 684,
+      "failed_at_k_count": 348,
+      "failure_probability_pct": 50.88,
+      "continuation_probability_pct": 49.12
+    },
+    "sequence_len_3": {
+      "reached_count": 336,
+      "failed_at_k_count": 154,
+      "failure_probability_pct": 45.83,
+      "continuation_probability_pct": 54.17
+    },
+    "sequence_len_4": {
+      "reached_count": 182,
+      "failed_at_k_count": 89,
+      "failure_probability_pct": 48.9,
+      "continuation_probability_pct": 51.1
+    },
+    "sequence_len_5": {
+      "reached_count": 93,
+      "failed_at_k_count": 41,
+      "failure_probability_pct": 44.09,
+      "continuation_probability_pct": 55.91
+    }
+  },
+  "ll_sequence_failure_rates": {
+    "sequence_len_1": {
+      "reached_count": 1402,
+      "failed_at_k_count": 726,
+      "failure_probability_pct": 51.78,
+      "continuation_probability_pct": 48.22
+    },
+    "sequence_len_2": {
+      "reached_count": 676,
+      "failed_at_k_count": 363,
+      "failure_probability_pct": 53.7,
+      "continuation_probability_pct": 46.3
+    },
+    "sequence_len_3": {
+      "reached_count": 313,
+      "failed_at_k_count": 154,
+      "failure_probability_pct": 49.2,
+      "continuation_probability_pct": 50.8
+    },
+    "sequence_len_4": {
+      "reached_count": 159,
+      "failed_at_k_count": 85,
+      "failure_probability_pct": 53.46,
+      "continuation_probability_pct": 46.54
+    },
+    "sequence_len_5": {
+      "reached_count": 74,
+      "failed_at_k_count": 43,
+      "failure_probability_pct": 58.11,
+      "continuation_probability_pct": 41.89
+    }
+  },
+  "mean_hh_streak_length": 1.9753867791842474,
+  "median_hh_streak_length": 1.0,
+  "mean_ll_streak_length": 1.9094151212553494,
+  "median_ll_streak_length": 1.0,
+  "bos_summary": {
+    "total_bos_events": 4515,
+    "bull_bos_count": 2342,
+    "bull_bos_continuation_pct_6": 51.07,
+    "bull_bos_mean_fwd_ret_6": -0.92,
+    "bull_bos_mean_mfe_6": 28.4,
+    "bull_bos_mean_mae_6": 30.98,
+    "bull_bos_failure_pct_6": 57.26,
+    "bull_bos_retest_pct_12": 66.61,
+    "bull_bos_second_breakout_pct": 44.15,
+    "bear_bos_count": 2173,
+    "bear_bos_continuation_pct_6": 49.15,
+    "bear_bos_mean_fwd_ret_6": -0.51,
+    "bear_bos_mean_mfe_6": 35.31,
+    "bear_bos_mean_mae_6": 33.39,
+    "bear_bos_failure_pct_6": 58.03,
+    "bear_bos_retest_pct_12": 65.95,
+    "bear_bos_second_breakout_pct": 42.8
+  },
+  "sfp_summary": {
+    "total_sfp_events": 8141,
+    "bullish_sfp_count": 3920,
+    "bullish_sfp_meaningful_rev_pct": 51.58,
+    "bullish_sfp_mean_rev_ret_6": -2.43,
+    "bullish_sfp_mean_mfe_6": 29.39,
+    "bullish_sfp_mean_mae_6": 34.78,
+    "bearish_sfp_count": 4221,
+    "bearish_sfp_meaningful_rev_pct": 52.36,
+    "bearish_sfp_mean_rev_ret_6": -0.64,
+    "bearish_sfp_mean_mfe_6": 29.38,
+    "bearish_sfp_mean_mae_6": 28.61,
+    "sweep_depth_tiers": {
+      "Small (1-10 pts)": {
+        "count": 6038,
+        "meaningful_rev_pct": 51.84,
+        "mean_rev_ret_6": -0.69,
+        "mean_rev_mfe_6": 26.06,
+        "mean_rev_mae_6": 27.1
+      },
+      "Medium (10-25 pts)": {
+        "count": 1698,
+        "meaningful_rev_pct": 51.83,
+        "mean_rev_ret_6": -0.72,
+        "mean_rev_mfe_6": 32.82,
+        "mean_rev_mae_6": 34.07
+      },
+      "Large (>25 pts)": {
+        "count": 402,
+        "meaningful_rev_pct": 55.22,
+        "mean_rev_ret_6": -10.09,
+        "mean_rev_mfe_6": 64.49,
+        "mean_rev_mae_6": 76.45
+      }
+    }
+  },
+  "mtf_summary": {
+    "contradiction_rate_5m_vs_15m": 17.71,
+    "contradiction_rate_5m_vs_1h": 30.32,
+    "aligned_15m_bos_count": 3844,
+    "aligned_15m_bos_continuation_pct": 51.95,
+    "aligned_15m_bos_mean_mfe": 32.86,
+    "aligned_15m_bos_mean_mae": 30.73,
+    "counter_15m_bos_count": 671,
+    "counter_15m_bos_continuation_pct": 39.79,
+    "counter_15m_bos_mean_mfe": 25.27,
+    "counter_15m_bos_mean_mae": 40.21
+  },
+  "daily_swing_trading_persistence": {
+    "total_daily_bos": 98,
+    "bull_count": 54,
+    "bear_count": 44,
+    "ret_1d_win_pct": 55.1,
+    "ret_1d_mean_pts": -28.89,
+    "ret_3d_win_pct": 50.0,
+    "ret_3d_mean_pts": -46.4,
+    "ret_5d_win_pct": 46.94,
+    "ret_5d_mean_pts": -51.86,
+    "ret_10d_win_pct": 46.94,
+    "ret_10d_mean_pts": -115.92,
+    "mean_mfe_5d": 257.96,
+    "mean_mae_5d": 349.16
+  }
+}

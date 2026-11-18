@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>NIFTY Autonomous Trader — Full Software Architecture</title>
+<style>
+  @page {
+    size: A4 portrait;
+    margin: 18mm 15mm 18mm 15mm;
+    @bottom-right {
+      content: counter(page);
+    }
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: #1e293b;
+    line-height: 1.55;
+    font-size: 11pt;
+    margin: 0;
+    padding: 0;
+    background-color: #ffffff;
+  }
+
+  .cover-header {
+    border-bottom: 3px solid #2563eb;
+    padding-bottom: 16px;
+    margin-bottom: 24px;
+  }
+
+  .badge {
+    display: inline-block;
+    background: #eff6ff;
+    color: #1d4ed8;
+    font-weight: 700;
+    font-size: 8.5pt;
+    padding: 3px 10px;
+    border-radius: 9999px;
+    border: 1px solid #bfdbfe;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  h1 {
+    font-size: 24pt;
+    color: #0f172a;
+    margin: 10px 0 6px 0;
+    letter-spacing: -0.5px;
+    font-weight: 800;
+  }
+
+  .subtitle {
+    font-size: 13pt;
+    color: #64748b;
+    margin: 0 0 14px 0;
+    font-weight: 400;
+  }
+
+  .meta-grid {
+    display: flex;
+    justify-content: space-between;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-size: 9pt;
+    color: #475569;
+  }
+
+  .meta-item strong {
+    color: #0f172a;
+  }
+
+  h2 {
+    font-size: 15pt;
+    color: #0f172a;
+    border-bottom: 1.5px solid #e2e8f0;
+    padding-bottom: 6px;
+    margin-top: 28px;
+    margin-bottom: 14px;
+    page-break-after: avoid;
+  }
+
+  h3 {
+    font-size: 12pt;
+    color: #1e40af;
+    margin-top: 18px;
+    margin-bottom: 8px;
+    page-break-after: avoid;
+  }
+
+  p {
+    margin: 0 0 10px 0;
+    color: #334155;
+  }
+
+  .callout {
+    background: #f0fdf4;
+    border-left: 4px solid #16a34a;
+    padding: 12px 16px;
+    border-radius: 0 8px 8px 0;
+    margin: 14px 0;
+    font-size: 10pt;
+  }
+
+  .callout-title {
+    font-weight: 700;
+    color: #15803d;
+    margin-bottom: 4px;
+  }
+
+  .callout-warn {
+    background: #fffbeb;
+    border-left: 4px solid #d97706;
+    padding: 12px 16px;
+    border-radius: 0 8px 8px 0;
+    margin: 14px 0;
+    font-size: 10pt;
+  }
+
+  .callout-warn-title {
+    font-weight: 700;
+    color: #b45309;
+    margin-bottom: 4px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 14px 0;
+    font-size: 9.5pt;
+    page-break-inside: avoid;
+  }
+
+  th, td {
+    padding: 8px 12px;
+    text-align: left;
+    border-bottom: 1px solid #e2e8f0;
+  }
+
+  th {
+    background-color: #f1f5f9;
+    color: #0f172a;
+    font-weight: 700;
+    border-top: 1px solid #cbd5e1;
+    border-bottom: 2px solid #94a3b8;
+  }
+
+  tr:nth-child(even) td {
+    background-color: #f8fafc;
+  }
+
+  pre.code-block {
+    background: #0f172a;
+    color: #f8fafc;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size: 8.5pt;
+    line-height: 1.45;
+    margin: 12px 0;
+    overflow-x: auto;
+    white-space: pre;
+    page-break-inside: avoid;
+  }
+
+  .diagram-container {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 16px;
+    margin: 18px 0;
+    text-align: center;
+    page-break-inside: avoid;
+  }
+
+  .diagram-container svg {
+    max-width: 100%;
+    height: auto;
+  }
+
+  .page-break {
+    page-break-before: always;
+  }
+
+  .formula-box {
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 12px 18px;
+    margin: 12px 0;
+    text-align: center;
+    font-family: ui-monospace, monospace;
+    font-size: 11pt;
+    font-weight: 700;
+    color: #1e3a8a;
+  }
+
+  ul, ol {
+    margin: 0 0 12px 0;
+    padding-left: 22px;
+  }
+
+  li {
+    margin-bottom: 4px;
+    color: #334155;
+  }
+</style>
+</head>
+<body>
+
+<!-- Cover Header -->
+<div class="cover-header">
+  <span class="badge">SYSTEM ARCHITECTURE BLUEPRINT</span>
+  <h1>NIFTY Autonomous Trader</h1>
+  <div class="subtitle">Complete Architectural Specification — Stages 1 through 10 & Segregated Research Zone</div>
+  <div class="meta-grid">
+    <div class="meta-item"><strong>Target Asset:</strong> NIFTY 50 (F&O / Options)</div>
+    <div class="meta-item"><strong>System Version:</strong> v2.0 Enterprise Baseline</div>
+    <div class="meta-item"><strong>Architecture Date:</strong> September 2026</div>
+    <div class="meta-item"><strong>Execution Mode:</strong> Sensibull Virtual Broker (Paper)</div>
+  </div>
+</div>
+
+<!-- Section 1 -->
+<h2>1. Architectural Philosophy & Core Invariants</h2>
+<p>
+  The NIFTY Autonomous Trader is engineered as an autonomous agentic trading system governed by strict mathematical, operational, and physical segregation guarantees. Traditional trading bots often fail because they tightly couple heuristic indicators, execution code, and risk rules into brittle monolithic scripts.
+</p>
+<p>This architecture is governed by five non-negotiable principles:</p>
+<ol>
+  <li><strong>Cognitive Separation:</strong> The AI Brain (Google Gemini / ModelRouter) acts solely as an analytical intelligence layer. It never directly executes trades or modifies safety parameters.</li>
+  <li><strong>Hermes as Autonomous Operator:</strong> Hermes acts as the disciplined human trader—gathering information, cross-checking charts, scheduling observation intervals, and submitting trade proposals.</li>
+  <li><strong>Deterministic Safety Guard (Locked):</strong> Hard-coded circuit breakers (Max loss per trade, daily cumulative loss stop, maximum lot limits, and time-of-day filters) stand between the AI and broker execution. No prompt or cognitive reasoning can override these safeguards.</li>
+  <li><strong>Independent Dynamic Scoring (No Fixed Weights):</strong> In quantitative assessment, rigid indicator weights (e.g. Trend=25%, Momentum=20%, Volume=20%) are strictly prohibited. The system dynamically assigns importance weights based on real-time market regimes.</li>
+  <li><strong>Physical & Logical Zone Segregation:</strong> The Research & Intelligence Zone operates in a completely isolated silo with its own SQLite database storage. It has zero coupling with order routing or position management.</li>
+</ol>
+
+<div class="callout">
+  <div class="callout-title">Operational Safety Invariant</div>
+  Live broker trading is permanently disabled at the code and configuration level. All automated execution flows terminate inside the <strong>Sensibull Virtual Portfolio</strong> paper-trading environment.
+</div>
+
+<div class="page-break"></div>
+
+<!-- Section 2 -->
+<h2>2. End-to-End System Architecture Diagram</h2>
+<p>
+  The system consists of seven clearly delineated functional layers communicating through strongly typed Pydantic contracts and SQLite event logs:
+</p>
+
+<div class="diagram-container">
+  <svg viewBox="0 0 850 960" xmlns="http://www.w3.org/2000/svg" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+    <defs>
+      <linearGradient id="gradSensory" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#eff6ff"/><stop offset="100%" stop-color="#dbeafe"/></linearGradient>
+      <linearGradient id="gradHermes" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#f5f3ff"/><stop offset="100%" stop-color="#ede9fe"/></linearGradient>
+      <linearGradient id="gradBrain" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#fdf2f8"/><stop offset="100%" stop-color="#fce7f3"/></linearGradient>
+      <linearGradient id="gradSafety" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#fef2f2"/><stop offset="100%" stop-color="#fee2e2"/></linearGradient>
+      <linearGradient id="gradExec" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#f0fdf4"/><stop offset="100%" stop-color="#dcfce7"/></linearGradient>
+      <linearGradient id="gradMemory" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#fffbeb"/><stop offset="100%" stop-color="#fef3c7"/></linearGradient>
+      <linearGradient id="gradResearch" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#f0fdfa"/><stop offset="100%" stop-color="#ccfbf1"/></linearGradient>
+      <filter id="shadow" x="-3%" y="-3%" width="106%" height="106%"><feDropShadow dx="1" dy="2" stdDeviation="2" flood-opacity="0.08"/></filter>
+      <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+        <path d="M 0 1 L 10 5 L 0 9 z" fill="#475569"/>
+      </marker>
+      <marker id="arrow-green" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+        <path d="M 0 1 L 10 5 L 0 9 z" fill="#16a34a"/>
+      </marker>
+      <marker id="arrow-purple" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+        <path d="M 0 1 L 10 5 L 0 9 z" fill="#7c3aed"/>
+      </marker>
+    </defs>
+
+    <!-- Zone 1: Sensory Layer -->
+    <rect x="25" y="20" width="370" height="150" rx="8" fill="url(#gradSensory)" stroke="#3b82f6" stroke-width="1.5" filter="url(#shadow)"/>
+    <text x="40" y="44" font-weight="700" font-size="12" fill="#1e40af">1. SENSORY &amp; PERCEPTION LAYER</text>
+    <rect x="40" y="58" width="165" height="42" rx="5" fill="#ffffff" stroke="#93c5fd"/>
+    <text x="50" y="76" font-size="9.5" font-weight="600" fill="#1e293b">Chrome CDP Session</text>
+    <text x="50" y="90" font-size="8" fill="#64748b">Persistent Profile &amp; Port 9222</text>
+    <rect x="215" y="58" width="165" height="42" rx="5" fill="#ffffff" stroke="#93c5fd"/>
+    <text x="225" y="76" font-size="9.5" font-weight="600" fill="#1e293b">TradingView Observer</text>
+    <text x="225" y="90" font-size="8" fill="#64748b">Visual Screenshot &amp; OCR</text>
+    <rect x="40" y="112" width="165" height="42" rx="5" fill="#ffffff" stroke="#93c5fd"/>
+    <text x="50" y="130" font-size="9.5" font-weight="600" fill="#1e293b">Sensibull DOM Observer</text>
+    <text x="50" y="144" font-size="8" fill="#64748b">Option Chain &amp; PCR Matrix</text>
+    <rect x="215" y="112" width="165" height="42" rx="5" fill="#ffffff" stroke="#93c5fd"/>
+    <text x="225" y="130" font-size="9.5" font-weight="600" fill="#1e293b">Local Chart Server</text>
+    <text x="225" y="144" font-size="8" fill="#64748b">Lightweight Charts (1H/15M)</text>
+
+    <!-- Zone 2: Hermes Orchestrator -->
+    <rect x="25" y="210" width="370" height="155" rx="8" fill="url(#gradHermes)" stroke="#8b5cf6" stroke-width="1.5" filter="url(#shadow)"/>
+    <text x="40" y="234" font-weight="700" font-size="12" fill="#6d28d9">2. HERMES OPERATOR &amp; ORCHESTRATION</text>
+    <rect x="40" y="248" width="340" height="38" rx="5" fill="#ffffff" stroke="#c4b5fd"/>
+    <text x="55" y="267" font-size="9.5" font-weight="600" fill="#1e293b">Hermes Autonomous Operator Engine</text>
+    <text x="55" y="279" font-size="8" fill="#64748b">Context builder, tool caller, operational state machine</text>
+    <rect x="40" y="296" width="165" height="52" rx="5" fill="#ffffff" stroke="#c4b5fd"/>
+    <text x="50" y="316" font-size="9" font-weight="600" fill="#1e293b">Collaborative Loop</text>
+    <text x="50" y="330" font-size="8" fill="#64748b">Multi-turn inquiry with Brain</text>
+    <rect x="215" y="296" width="165" height="52" rx="5" fill="#ffffff" stroke="#c4b5fd"/>
+    <text x="225" y="316" font-size="9" font-weight="600" fill="#1e293b">Observation Scheduler</text>
+    <text x="225" y="330" font-size="8" fill="#64748b">15M/1H Candle timer</text>
+
+    <!-- Zone 3: Cognitive Layer -->
+    <rect x="445" y="210" width="380" height="155" rx="8" fill="url(#gradBrain)" stroke="#ec4899" stroke-width="1.5" filter="url(#shadow)"/>
+    <text x="460" y="234" font-weight="700" font-size="12" fill="#be185d">3. COGNITIVE REASONING LAYER (AI BRAIN)</text>
+    <rect x="460" y="248" width="350" height="38" rx="5" fill="#ffffff" stroke="#fbcfe8"/>
+    <text x="475" y="267" font-size="9.5" font-weight="600" fill="#1e293b">ModelRouter &amp; Fallback Provider Engine</text>
+    <text x="475" y="279" font-size="8" fill="#64748b">Dynamic tier routing: Gemini 2.5 Flash/Pro, OpenRouter</text>
+    <rect x="460" y="296" width="170" height="52" rx="5" fill="#ffffff" stroke="#fbcfe8"/>
+    <text x="470" y="316" font-size="9" font-weight="600" fill="#1e293b">17-State Reasoner</text>
+    <text x="470" y="330" font-size="8" fill="#64748b">NO_TRADE / WAIT / CANDIDATE</text>
+    <rect x="640" y="296" width="170" height="52" rx="5" fill="#ffffff" stroke="#fbcfe8"/>
+    <text x="650" y="316" font-size="9" font-weight="600" fill="#1e293b">Brain History DB</text>
+    <text x="650" y="330" font-size="8" fill="#64748b">Audit trace in SQLite</text>
+
+    <!-- Zone 4: Deterministic Safety Guard -->
+    <rect x="180" y="405" width="480" height="95" rx="8" fill="url(#gradSafety)" stroke="#ef4444" stroke-width="2" filter="url(#shadow)"/>
+    <text x="195" y="428" font-weight="800" font-size="12" fill="#b91c1c">4. DETERMINISTIC SAFETY GUARD (NON-BYPASSABLE)</text>
+    <rect x="195" y="440" width="140" height="45" rx="5" fill="#ffffff" stroke="#fca5a5"/>
+    <text x="205" y="458" font-size="8.5" font-weight="700" fill="#991b1b">Max Loss Stop</text>
+    <text x="205" y="472" font-size="7.5" fill="#64748b">&#8377; Cap per Trade &amp; Day</text>
+    <rect x="350" y="440" width="140" height="45" rx="5" fill="#ffffff" stroke="#fca5a5"/>
+    <text x="360" y="458" font-size="8.5" font-weight="700" fill="#991b1b">Max Lot Limits</text>
+    <text x="360" y="472" font-size="7.5" fill="#64748b">Strict Open Exposure Cap</text>
+    <rect x="505" y="440" width="140" height="45" rx="5" fill="#ffffff" stroke="#fca5a5"/>
+    <text x="515" y="458" font-size="8.5" font-weight="700" fill="#991b1b">Time-of-Day Filter</text>
+    <text x="515" y="472" font-size="7.5" fill="#64748b">No entries 9:15-9:25/15:15</text>
+
+    <!-- Zone 5: Execution & Monitoring -->
+    <rect x="25" y="535" width="370" height="135" rx="8" fill="url(#gradExec)" stroke="#10b981" stroke-width="1.5" filter="url(#shadow)"/>
+    <text x="40" y="559" font-weight="700" font-size="12" fill="#047857">5. SENSIBULL PAPER BROKER &amp; MONITORING</text>
+    <rect x="40" y="572" width="165" height="42" rx="5" fill="#ffffff" stroke="#a7f3d0"/>
+    <text x="50" y="590" font-size="9" font-weight="600" fill="#1e293b">Sensibull Virtual Broker</text>
+    <text x="50" y="603" font-size="7.5" fill="#64748b">DOM Order Execution</text>
+    <rect x="215" y="572" width="165" height="42" rx="5" fill="#ffffff" stroke="#a7f3d0"/>
+    <text x="225" y="590" font-size="9" font-weight="600" fill="#1e293b">Autonomous Position Monitor</text>
+    <text x="225" y="603" font-size="7.5" fill="#64748b">Continuous P&amp;L Tracking</text>
+    <rect x="40" y="620" width="340" height="36" rx="5" fill="#ffffff" stroke="#a7f3d0"/>
+    <text x="55" y="636" font-size="8.5" font-weight="600" fill="#1e293b">Remote &lt;-&gt; Local State Reconciler &amp; Idempotency</text>
+    <text x="55" y="647" font-size="7.5" fill="#64748b">Prevents duplicate executions and visual desync</text>
+
+    <!-- Zone 6: Performance & Experience Memory -->
+    <rect x="445" y="535" width="380" height="135" rx="8" fill="url(#gradMemory)" stroke="#f59e0b" stroke-width="1.5" filter="url(#shadow)"/>
+    <text x="460" y="559" font-weight="700" font-size="12" fill="#b45309">6. EXPERIENCE MEMORY &amp; PERFORMANCE</text>
+    <rect x="460" y="572" width="170" height="42" rx="5" fill="#ffffff" stroke="#fde68a"/>
+    <text x="470" y="590" font-size="9" font-weight="600" fill="#1e293b">Post-Trade Analyzer</text>
+    <text x="470" y="603" font-size="7.5" fill="#64748b">Thesis vs Realized Outcome</text>
+    <rect x="640" y="572" width="170" height="42" rx="5" fill="#ffffff" stroke="#fde68a"/>
+    <text x="650" y="590" font-size="9" font-weight="600" fill="#1e293b">Experience Store (SQLite)</text>
+    <text x="650" y="603" font-size="7.5" fill="#64748b">Structured trade memory</text>
+    <rect x="460" y="620" width="350" height="36" rx="5" fill="#ffffff" stroke="#fde68a"/>
+    <text x="475" y="636" font-size="8.5" font-weight="600" fill="#1e293b">Multidimensional Evaluation Metrics</text>
+    <text x="475" y="647" font-size="7.5" fill="#64748b">Win Rate, Profit Factor, Expectancy, Max Drawdown</text>
+
+    <!-- Zone 7: Isolated Research Zone -->
+    <rect x="25" y="700" width="800" height="235" rx="8" fill="url(#gradResearch)" stroke="#14b8a6" stroke-width="2" stroke-dasharray="6,4" filter="url(#shadow)"/>
+    <text x="40" y="726" font-weight="800" font-size="13" fill="#0f766e">7. HERMES RESEARCH &amp; INTELLIGENCE ZONE (COMPLETELY SEGREGATED)</text>
+    <text x="40" y="742" font-size="8.5" fill="#0d9488">Physical DB isolation in data/hermes_research/ | Dhan broker data ready | Dynamic Segment Importance</text>
+
+    <rect x="40" y="756" width="235" height="60" rx="5" fill="#ffffff" stroke="#99f6e4"/>
+    <text x="50" y="776" font-size="9.5" font-weight="700" fill="#0f766e">Dhan Data Adapter</text>
+    <text x="50" y="792" font-size="8" fill="#64748b">Mock Provider (Offline Deterministic)</text>
+    <text x="50" y="804" font-size="8" fill="#64748b">Ready for zero-redesign Live Dhan API</text>
+
+    <rect x="290" y="756" width="245" height="60" rx="5" fill="#ffffff" stroke="#99f6e4"/>
+    <text x="300" y="776" font-size="9.5" font-weight="700" fill="#0f766e">Data Engineering Zone</text>
+    <text x="300" y="792" font-size="8" fill="#64748b">OHLC Invariants &amp; Deduplication</text>
+    <text x="300" y="804" font-size="8" fill="#64748b">1M -&gt; 5M/15M/1H | Features (EMA, RSI, ATR, VWAP)</text>
+
+    <rect x="550" y="756" width="260" height="60" rx="5" fill="#ffffff" stroke="#99f6e4"/>
+    <text x="560" y="776" font-size="9.5" font-weight="700" fill="#0f766e">Empirical Research Engine</text>
+    <text x="560" y="792" font-size="8" fill="#64748b">Hypothesis Backtesting &amp; p-values</text>
+    <text x="560" y="804" font-size="8" fill="#64748b">Contradiction Search (Hunt Counter-Examples)</text>
+
+    <rect x="40" y="830" width="370" height="90" rx="5" fill="#ffffff" stroke="#99f6e4"/>
+    <text x="50" y="850" font-size="9.5" font-weight="700" fill="#0f766e">Independent Dynamic Assessment Engine</text>
+    <text x="50" y="868" font-size="8" fill="#64748b">Context-Driven Segment Selection (Trend, Momentum, OI, Risks)</text>
+    <text x="50" y="882" font-size="8" font-weight="600" fill="#0369a1">Formula: Total Score = Sum(Score_i * Imp_i) / Sum(Imp_i)</text>
+    <text x="50" y="896" font-size="7.5" fill="#dc2626">STRICT INVARIANT: No fixed or static percentage weights!</text>
+
+    <rect x="425" y="830" width="385" height="90" rx="5" fill="#ffffff" stroke="#99f6e4"/>
+    <text x="435" y="850" font-size="9.5" font-weight="700" fill="#0f766e">Research Memory &amp; Negative Knowledge</text>
+    <text x="435" y="868" font-size="8" fill="#64748b">empirical findings catalog (Win rate, statistical edge)</text>
+    <text x="435" y="882" font-size="8" font-weight="700" fill="#b91c1c">FailedHypothesis Catalog (Negative Knowledge)</text>
+    <text x="435" y="896" font-size="7.5" fill="#64748b">Prevents repeating disproven theories &amp; wasted compute</text>
+
+    <!-- Connectors -->
+    <path d="M 210 170 L 210 210" fill="none" stroke="#475569" stroke-width="1.5" marker-end="url(#arrow)"/>
+    <path d="M 395 285 L 445 285" fill="none" stroke="#7c3aed" stroke-width="2" marker-end="url(#arrow-purple)" marker-start="url(#arrow-purple)"/>
+    <path d="M 320 365 L 320 405" fill="none" stroke="#475569" stroke-width="1.5" marker-end="url(#arrow)"/>
+    <path d="M 320 500 L 210 535" fill="none" stroke="#16a34a" stroke-width="2" marker-end="url(#arrow-green)"/>
+    <path d="M 395 600 L 445 600" fill="none" stroke="#475569" stroke-width="1.5" marker-end="url(#arrow)"/>
+  </svg>
+</div>
+
+<div class="page-break"></div>
+
+<!-- Section 3 -->
+<h2>3. Detailed Subsystem Specifications</h2>
+
+<h3>3.1 Sensory &amp; Perception Layer</h3>
+<p>The sensory layer is the eyes of the autonomous trader. It interfaces directly with Chrome CDP and numerical APIs to produce unified, verified market context:</p>
+<ul>
+  <li><strong>Chrome CDP Session:</strong> Runs an isolated instance of Google Chrome attached via remote debugging port 9222. State, logins, and cookies persist across cycles in <code>data/browser_profile/</code>.</li>
+  <li><strong>TradingView Multimodal Observer:</strong> Captures high-resolution canvas screenshots of NIFTY charts alongside DOM data to enable multimodal visual reasoning by the cognitive brain.</li>
+  <li><strong>Sensibull Observer:</strong> Gathers real-time option chain matrices, Put-Call Ratio (PCR), Open Interest concentrations, and strike-level implied volatilities.</li>
+  <li><strong>Local Lightweight Chart Server:</strong> Serves a deterministic, local TradingView Lightweight Charts canvas via an internal HTTP server, eliminating external captchas, rate limits, or CDN outages.</li>
+  <li><strong>Cross-Verification Engine:</strong> Automatically checks numerical candle close prices against browser DOM text. If price divergence exceeds ₹5.00, reasoning halts with an observation conflict warning.</li>
+</ul>
+
+<h3>3.2 Hermes Orchestration &amp; Collaborative Layer</h3>
+<p>Hermes does not decide whether a trade setup is mathematically sound—that is the Brain's domain. Instead, Hermes acts as the professional human operator:</p>
+<ul>
+  <li><strong>Autonomous Event Loop:</strong> Coordinates market cadence, scheduling observation runs strictly on 15-minute and 1-hour candle completion boundaries. Between boundaries, Hermes sleeps without consuming CPU cycles.</li>
+  <li><strong>Multi-Turn Collaborative Inquiry:</strong> Executes an interactive dialogue with the Brain:
+    <ol>
+      <li>Hermes provides current market data.</li>
+      <li>Brain identifies missing context (e.g. <em>"Inspect 25300 PE Open Interest buildup"</em>).</li>
+      <li>Hermes uses browser tools to retrieve that exact evidence.</li>
+      <li>Brain synthesizes the complete picture to reach a final trade candidate or wait decision.</li>
+    </ol>
+  </li>
+  <li><strong>Operator Instruction Registry:</strong> Enables human supervision through CLI commands (<code>instruction</code>, <code>instruction-list</code>), allowing operators to inject higher-priority execution constraints.</li>
+</ul>
+
+<h3>3.3 Cognitive Reasoning Layer (AI Brain)</h3>
+<p>The Brain layer transforms multi-source perceptions into disciplined market reasoning using large language models:</p>
+<ul>
+  <li><strong>ModelRouter:</strong> Abstracts API calls across providers (Gemini 2.5 Flash, Gemini Pro, OpenRouter) with automatic fallback and retry logic.</li>
+  <li><strong>Strict Pydantic Contracts:</strong> Output is parsed into validated schemas (<code>BrainOutput</code>, <code>Direction</code>, <code>SetupStatus</code>) ensuring zero hallucinated actions.</li>
+  <li><strong>17-State Machine:</strong> Enforces disciplined progression from <code>NO_TRADE</code> &rarr; <code>WAIT</code> &rarr; <code>WATCH</code> &rarr; <code>DEVELOPING</code> &rarr; <code>CANDIDATE</code>.</li>
+  <li><strong>Brain History Store:</strong> Logs all reasoning chains, uncertainties, and model outputs into <code>data/brain_history.db</code> for complete traceability.</li>
+</ul>
+
+<h3>3.4 Deterministic Safety Guard</h3>
+<p>The Safety Guard is a non-bypassable code module locked between the cognitive layer and broker execution:</p>
+<table>
+  <thead>
+    <tr>
+      <th>Circuit Breaker</th>
+      <th>Configuration</th>
+      <th>Action on Violation</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Portfolio Daily Loss Cap</strong></td>
+      <td>₹2,000 hard stop (realized + unrealized across all instruments)</td>
+      <td>Halts entire trading system for remainder of day</td>
+    </tr>
+    <tr>
+      <td><strong>Instrument Daily Loss Cap</strong></td>
+      <td>₹1,000 max daily loss per instrument (NIFTY &amp; BANKNIFTY)</td>
+      <td>Halts trading operations on that specific instrument for the day</td>
+    </tr>
+    <tr>
+      <td><strong>Daily Trade Frequency Limit</strong></td>
+      <td>Max 3 trades/day for NIFTY, Max 3 trades/day for BANKNIFTY</td>
+      <td>Blocks subsequent trade order entries for that instrument</td>
+    </tr>
+    <tr>
+      <td><strong>Strict Position Sizing</strong></td>
+      <td>Exactly 1 lot per trade (65 qty NIFTY / 30 qty BANKNIFTY)</td>
+      <td>Instantly rejects any order requesting &gt; 1 lot</td>
+    </tr>
+    <tr>
+      <td><strong>Single Active Instrument Policy</strong></td>
+      <td>Only 1 instrument traded at a time (concurrent instruments = 1)</td>
+      <td>Rejects order in second symbol while another position is open</td>
+    </tr>
+    <tr>
+      <td><strong>Risk-to-Reward Ratio (R:R)</strong></td>
+      <td>Mandatory minimum 1:3 (3.0) reward-to-risk ratio</td>
+      <td>Rejects proposed trade plan if R:R is below 1:3</td>
+    </tr>
+    <tr>
+      <td><strong>Intraday Timing Window</strong></td>
+      <td>No new entries 09:15–09:25 or after 15:15 IST</td>
+      <td>Blocks entry; forces WAIT state</td>
+    </tr>
+    <tr>
+      <td><strong>Paper Mode Guard</strong></td>
+      <td>Strict DOM confirmation of virtual badge</td>
+      <td>Emergency abort if live broker detected</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="page-break"></div>
+
+<!-- Section 3 Cont -->
+<h3>3.5 Paper Broker &amp; Autonomous Trade Monitoring</h3>
+<p>Executes and manages approved orders inside Sensibull:</p>
+<ul>
+  <li><strong>Sensibull Paper Broker:</strong> Places virtual market and limit orders by dispatching targeted DOM events. Reconciles local trade memory with remote Sensibull ground truth.</li>
+  <li><strong>Idempotency Enforcement:</strong> Prevents duplicate orders by assigning deterministic hash keys to trade candidates.</li>
+  <li><strong>Autonomous Position Monitor:</strong> Continuously monitors open positions. When market price shifts materially, the monitor calls the Brain for reassessment (<code>CONTINUE</code>, <code>TRAIL_STOP</code>, <code>CLOSE_NOW</code>).</li>
+  <li><strong>Emergency Square-Off:</strong> Automatically executes complete position liquidation on stop-loss breach or market close (15:20 IST).</li>
+</ul>
+
+<h3>3.6 Performance Analysis &amp; Experience Memory</h3>
+<p>Analyzes closed trades to extract long-term experiential knowledge without modifying code:</p>
+<ul>
+  <li><strong>Post-Trade Analyzer:</strong> Reconstructs the trade lifecycle from entry to exit. Separates <em>Market Outcome</em>, <em>Reasoning Quality</em>, and <em>Execution Fidelity</em>.</li>
+  <li><strong>Behavioral Taxonomy:</strong> Labels trades under structural regimes (e.g., <code>TREND_CONTINUATION</code>, <code>FAILED_BREAKOUT</code>, <code>VOLATILITY_EXPANSION</code>).</li>
+  <li><strong>Cumulative Performance Metrics:</strong> Calculates historical Win Rate, Profit Factor, Expectancy, and Average Holding Duration stored in <code>data/experience.db</code>.</li>
+</ul>
+
+<!-- Section 3.7 Research Zone -->
+<h3>3.7 Segregated Research &amp; Intelligence Zone</h3>
+<p>
+  A dedicated quantitative research zone completely isolated from trading execution. It allows Hermes to formulate empirical hypotheses, backtest patterns, conduct aggressive contradiction searches, and generate dynamically weighted assessments:
+</p>
+
+<div class="formula-box">
+  Dynamic Scoring Formula:<br/>
+  Total Score = &Sigma; (Segment Score<sub>i</sub> &times; Segment Importance<sub>i</sub>) / &Sigma; Segment Importance<sub>i</sub>
+</div>
+
+<ul>
+  <li><strong>Dhan Broker Data Adapter:</strong> Features an abstract interface (<code>DhanDataAdapter</code>) and an offline synthetic provider (<code>MockDhanDataAdapter</code>) generating realistic OHLCV+OI bars, option chains, and market depth. Ready to receive live Dhan API feeds with zero architectural changes.</li>
+  <li><strong>Data Engineering Zone:</strong> Validates mathematical OHLC invariants, cleans corruptions, resamples 1M bars into 5M/15M/1H/1D bars, and computes technical feature sets (EMAs, RSI, MACD, ATR, VWAP bands, OI change %).</li>
+  <li><strong>Hermes Empirical Research Engine:</strong> Systematically tests trading hypotheses across historical data. Calculates sample sizes, win rates, profit factors, and statistical p-values.</li>
+  <li><strong>Contradiction Search:</strong> Actively hunts for counter-examples and failure regimes where candidate setups fail, deriving false positive rates.</li>
+  <li><strong>Independent Dynamic Scoring Engine:</strong> Replaces rigid indicator weights with dynamic importance values derived from the prevailing regime.</li>
+  <li><strong>Negative Knowledge Catalog:</strong> Preserves failed hypotheses in <code>research_memory.db</code> so Hermes remembers which ideas have been statistically disproven.</li>
+</ul>
+
+<!-- Section 4 -->
+<h2>4. Dedicated Data Storage Map</h2>
+<p>
+  All data persistence is cleanly segregated across specialized SQLite databases and local directories:
+</p>
+
+<pre class="code-block">data/
+|-- browser_profile/             # Dedicated Chrome user profile (session cookies, logins)
+|-- candle_cache.db              # 1H and 15M historical candlestick cache
+|-- brain_history.db             # Full trace of Brain reasoning prompts, outputs & states
+|-- agent_instructions.db        # Operator manual instructions and directives
+|-- paper_positions.db           # Sensibull paper trades, order history & position states
+|-- position_monitoring.db       # Real-time monitoring cycles, P&L traces & reassessments
+|-- experience.db                # Post-trade post-mortems, metrics & taxonomy records
+`-- hermes_research/             # STRICTLY SEGREGATED RESEARCH DATABASES
+    |-- market_data.db           # Normalized bars, raw payloads, engineered feature sets
+    |-- research.db              # Questions, pattern definitions, hypotheses, backtest results
+    |-- assessments.db           # Dynamic assessments, dynamic segment weights & scores
+    `-- research_memory.db       # Verified findings, failed hypotheses (negative knowledge)</pre>
+
+<div class="page-break"></div>
+
+---
+
+<h2>5. Command-Line Interface (CLI) Capabilities</h2>
+<p>
+  The system is completely controllable via the unified CLI (<code>nifty_trader/cli.py</code>):
+</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Command</th>
+      <th>Layer / Stage</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>python -m nifty_trader.cli status</code></td>
+      <td>System</td>
+      <td>Displays full system status, provider health, and risk policies</td>
+    </tr>
+    <tr>
+      <td><code>python -m nifty_trader.cli browser-login</code></td>
+      <td>Sensory</td>
+      <td>Launches interactive browser for secure manual login to Sensibull/TradingView</td>
+    </tr>
+    <tr>
+      <td><code>python -m nifty_trader.cli market-observe</code></td>
+      <td>Perception</td>
+      <td>Runs multi-source observation and price cross-checks</td>
+    </tr>
+    <tr>
+      <td><code>python -m nifty_trader.cli brain-analyze</code></td>
+      <td>Cognitive</td>
+      <td>Executes full market observation and triggers AI Brain reasoning</td>
+    </tr>
+    <tr>
+      <td><code>python -m nifty_trader.cli collaborate</code></td>
+      <td>Hermes-Brain</td>
+      <td>Initiates multi-turn collaborative trading inquiry</td>
+    </tr>
+    <tr>
+      <td><code>python -m nifty_trader.cli paper-order</code></td>
+      <td>Execution</td>
+      <td>Places virtual option order into Sensibull Virtual Portfolio</td>
+    </tr>
+    <tr>
+      <td><code>python -m nifty_trader.cli position-monitor</code></td>
+      <td>Monitoring</td>
+      <td>Runs autonomous position reassessment pass</td>
+    </tr>
+    <tr>
+      <td><code>python -m nifty_trader.cli performance-summary</code></td>
+      <td>Experience</td>
+      <td>Displays Win Rate, Profit Factor, and operational performance</td>
+    </tr>
+    <tr>
+      <td><code>python -m nifty_trader.cli research-run</code></td>
+      <td>Research Zone</td>
+      <td>Runs autonomous research loop (Question &rarr; Backtest &rarr; Contradiction &rarr; Assessment)</td>
+    </tr>
+    <tr>
+      <td><code>python -m nifty_trader.cli research-assessment</code></td>
+      <td>Research Zone</td>
+      <td>Displays latest dynamic assessment and segment importance weights</td>
+    </tr>
+    <tr>
+      <td><code>python -m nifty_trader.cli research-memory</code></td>
+      <td>Research Zone</td>
+      <td>Displays empirical findings and negative knowledge (failed hypotheses)</td>
+    </tr>
+    <tr>
+      <td><code>python -m nifty_trader.cli research-history</code></td>
+      <td>Research Zone</td>
+      <td>Displays lifecycle audit progression of empirical inquiries</td>
+    </tr>
+  </tbody>
+</table>
+
+</body>
+</html>

@@ -1,0 +1,244 @@
+{
+  "total_valid_days": 1184,
+  "total_sweeps_captured": 3566,
+  "proximity_volatility": {
+    "dist_50_pts": {
+      "count_bars": 40102,
+      "avg_range": 19.27,
+      "relative_volatility": 0.92
+    },
+    "dist_25_pts": {
+      "count_bars": 20799,
+      "avg_range": 19.48,
+      "relative_volatility": 0.93
+    },
+    "dist_10_pts": {
+      "count_bars": 7930,
+      "avg_range": 19.72,
+      "relative_volatility": 0.94
+    },
+    "dist_5_pts": {
+      "count_bars": 3950,
+      "avg_range": 20.06,
+      "relative_volatility": 0.96
+    },
+    "dist_0_pts": {
+      "count_bars": 16,
+      "avg_range": 19.2,
+      "relative_volatility": 0.92
+    }
+  },
+  "touch_comparison": {
+    "PDH": {
+      "first_touch": {
+        "count": 625,
+        "continuation_rate_30m": 62.08,
+        "broken_rate": 92.48,
+        "mean_ret_30m": 29.45,
+        "mean_ret_1h": 30.64,
+        "mean_eod_ret": 28.7
+      },
+      "second_touch": {
+        "count": 286,
+        "continuation_rate_30m": 48.25,
+        "broken_rate": 91.26,
+        "mean_ret_30m": -1.88,
+        "mean_ret_1h": 3.54,
+        "mean_eod_ret": -1.65
+      },
+      "third_touch": {
+        "count": 342,
+        "continuation_rate_30m": 47.66,
+        "broken_rate": 89.18,
+        "mean_ret_30m": 0.64,
+        "mean_ret_1h": 0.09,
+        "mean_eod_ret": -9.52
+      }
+    },
+    "PDL": {
+      "first_touch": {
+        "count": 559,
+        "continuation_rate_30m": 58.14,
+        "broken_rate": 93.74,
+        "mean_ret_30m": 29.71,
+        "mean_ret_1h": 32.62,
+        "mean_eod_ret": 30.47
+      },
+      "second_touch": {
+        "count": 272,
+        "continuation_rate_30m": 45.22,
+        "broken_rate": 90.44,
+        "mean_ret_30m": -5.69,
+        "mean_ret_1h": -4.5,
+        "mean_eod_ret": -12.23
+      },
+      "third_touch": {
+        "count": 317,
+        "continuation_rate_30m": 38.17,
+        "broken_rate": 89.59,
+        "mean_ret_30m": -2.51,
+        "mean_ret_1h": -5.58,
+        "mean_eod_ret": -15.94
+      }
+    }
+  },
+  "wick_sensitivity": {
+    "wick_20pct": {
+      "events_count": 2013,
+      "win_rate_30m": 52.01,
+      "win_rate_1h": 51.12,
+      "mean_fwd_30m_pts": 1.78,
+      "mean_fwd_1h_pts": 3.56,
+      "mean_mfe": 75.73,
+      "mean_mae": 61.49,
+      "mfe_mae_ratio": 1.23
+    },
+    "wick_25pct": {
+      "events_count": 1738,
+      "win_rate_30m": 51.44,
+      "win_rate_1h": 51.27,
+      "mean_fwd_30m_pts": 1.48,
+      "mean_fwd_1h_pts": 3.42,
+      "mean_mfe": 76.43,
+      "mean_mae": 62.2,
+      "mfe_mae_ratio": 1.23
+    },
+    "wick_30pct": {
+      "events_count": 1494,
+      "win_rate_30m": 51.61,
+      "win_rate_1h": 51.54,
+      "mean_fwd_30m_pts": 1.56,
+      "mean_fwd_1h_pts": 3.82,
+      "mean_mfe": 77.21,
+      "mean_mae": 62.04,
+      "mfe_mae_ratio": 1.24
+    },
+    "wick_35pct": {
+      "events_count": 1257,
+      "win_rate_30m": 51.87,
+      "win_rate_1h": 51.07,
+      "mean_fwd_30m_pts": 1.45,
+      "mean_fwd_1h_pts": 3.61,
+      "mean_mfe": 77.57,
+      "mean_mae": 62.07,
+      "mfe_mae_ratio": 1.25
+    },
+    "wick_40pct": {
+      "events_count": 1029,
+      "win_rate_30m": 52.77,
+      "win_rate_1h": 50.63,
+      "mean_fwd_30m_pts": 0.36,
+      "mean_fwd_1h_pts": 3.25,
+      "mean_mfe": 76.63,
+      "mean_mae": 62.28,
+      "mfe_mae_ratio": 1.23
+    },
+    "wick_50pct": {
+      "events_count": 695,
+      "win_rate_30m": 53.81,
+      "win_rate_1h": 51.65,
+      "mean_fwd_30m_pts": 0.83,
+      "mean_fwd_1h_pts": 2.62,
+      "mean_mfe": 73.11,
+      "mean_mae": 63.4,
+      "mfe_mae_ratio": 1.15
+    },
+    "wick_60pct": {
+      "events_count": 419,
+      "win_rate_30m": 55.85,
+      "win_rate_1h": 52.98,
+      "mean_fwd_30m_pts": 3.09,
+      "mean_fwd_1h_pts": 5.15,
+      "mean_mfe": 78.68,
+      "mean_mae": 61.12,
+      "mfe_mae_ratio": 1.29
+    }
+  },
+  "asymmetry_summary": {
+    "PDH_SWEEP_SHORT": {
+      "count": 1894,
+      "avg_penetration_pts": 10.95,
+      "avg_wick_ratio": 0.274,
+      "win_rate_30m": 50.42,
+      "win_rate_1h": 51.37,
+      "mean_fwd_30m_pts": -0.47,
+      "mean_fwd_1h_pts": 1.46,
+      "mean_mfe": 74.48,
+      "mean_mae": 60.51,
+      "mean_t1_drift": -5.99,
+      "mean_t3_drift": -9.37
+    },
+    "PDL_SWEEP_LONG": {
+      "count": 1672,
+      "avg_penetration_pts": 12.51,
+      "avg_wick_ratio": 0.301,
+      "win_rate_30m": 52.03,
+      "win_rate_1h": 51.08,
+      "mean_fwd_30m_pts": 2.2,
+      "mean_fwd_1h_pts": 3.42,
+      "mean_mfe": 75.95,
+      "mean_mae": 70.86,
+      "mean_t1_drift": -6.94,
+      "mean_t3_drift": -15.59
+    }
+  },
+  "walk_forward_stability": {
+    "Train (2021-2023)": {
+      "count": 479,
+      "win_rate_30m": 50.73,
+      "win_rate_1h": 49.48,
+      "mean_fwd_30m": -3.87,
+      "mean_fwd_1h": 1.57,
+      "mean_mfe": 68.31,
+      "mean_mae": 61.82
+    },
+    "Validation (2024)": {
+      "count": 309,
+      "win_rate_30m": 53.07,
+      "win_rate_1h": 52.43,
+      "mean_fwd_30m": 4.67,
+      "mean_fwd_1h": 8.18,
+      "mean_mfe": 88.81,
+      "mean_mae": 59.04
+    },
+    "Test (2025-2026)": {
+      "count": 469,
+      "win_rate_30m": 52.24,
+      "win_rate_1h": 51.81,
+      "mean_fwd_30m": 4.77,
+      "mean_fwd_1h": 2.69,
+      "mean_mfe": 79.62,
+      "mean_mae": 64.33
+    }
+  },
+  "time_of_day_summary": {
+    "AFTERNOON (13:30-15:00)": {
+      "count": 398,
+      "win_rate_30m": 52.26,
+      "mean_fwd_30m": 0.08,
+      "mean_mfe": 40.52,
+      "mean_mae": 37.81
+    },
+    "EARLY_MORNING (09:15-10:00)": {
+      "count": 327,
+      "win_rate_30m": 45.57,
+      "mean_fwd_30m": 0.99,
+      "mean_mfe": 98.29,
+      "mean_mae": 83.92
+    },
+    "MIDDAY (11:00-13:30)": {
+      "count": 525,
+      "win_rate_30m": 52.19,
+      "mean_fwd_30m": -0.24,
+      "mean_mfe": 83.47,
+      "mean_mae": 62.55
+    },
+    "MORNING (10:00-11:00)": {
+      "count": 244,
+      "win_rate_30m": 57.38,
+      "mean_fwd_30m": 8.59,
+      "mean_mfe": 95.33,
+      "mean_mae": 71.14
+    }
+  }
+}

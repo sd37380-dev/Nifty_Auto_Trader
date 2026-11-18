@@ -27,6 +27,7 @@ from nifty_trader.paper.environment import (
 from nifty_trader.paper.navigator import SensibullPaperNavigator
 from nifty_trader.paper.position_reader import SensibullPositionReader
 from nifty_trader.paper.store import PaperTradeStore
+from nifty_trader.safety.guard import DeterministicSafetyGuard
 
 logger = logging.getLogger(__name__)
 
@@ -59,11 +60,13 @@ class SensibullPaperExecutor:
         store: PaperTradeStore,
         navigator: Optional[SensibullPaperNavigator] = None,
         position_reader: Optional[SensibullPositionReader] = None,
+        safety_guard: Optional[DeterministicSafetyGuard] = None,
     ):
         self.browser = browser_agent
         self.store = store
         self.navigator = navigator or SensibullPaperNavigator(browser_agent)
         self.position_reader = position_reader or SensibullPositionReader()
+        self.safety_guard = safety_guard or DeterministicSafetyGuard(store=self.store)
 
     async def execute_paper_order(
         self,
@@ -80,7 +83,36 @@ class SensibullPaperExecutor:
             logger.warning("Duplicate paper trade prevented by idempotency key %s.", idempotency_key)
             return existing_order
 
-        # 2. Record initial order state in SQLite
+        # 2. Deterministic Safety Guard Validation
+        safety_check = self.safety_guard.validate_order_request(request)
+        if not safety_check.passed:
+            logger.warning(
+                "Deterministic Safety Guard REJECTED paper order [%s]: %s (Code: %s)",
+                request.request_id,
+                safety_check.reason,
+                safety_check.rejection_code,
+            )
+            rejected_order = PaperTradeOrder(
+                request_id=request.request_id,
+                idempotency_key=idempotency_key,
+                symbol=request.symbol,
+                expiry=request.expiry,
+                strike=request.strike,
+                option_type=request.option_type,
+                action=request.action,
+                lots=request.lots,
+                quantity=request.quantity,
+                mode=request.mode,
+                trade_intent_id=request.trade_intent_id,
+                assessment_id=request.assessment_id,
+                research_id=request.research_id,
+                status=PaperOrderStatus.REJECTED,
+                status_reason=f"SAFETY_GUARD_REJECTION: {safety_check.reason}",
+            )
+            self.store.save_order(rejected_order)
+            return rejected_order
+
+        # 3. Record initial order state in SQLite
         order = PaperTradeOrder(
             request_id=request.request_id,
             idempotency_key=idempotency_key,
@@ -91,6 +123,10 @@ class SensibullPaperExecutor:
             action=request.action,
             lots=request.lots,
             quantity=request.quantity,
+            mode=request.mode,
+            trade_intent_id=request.trade_intent_id,
+            assessment_id=request.assessment_id,
+            research_id=request.research_id,
             status=PaperOrderStatus.SUBMITTING,
         )
         self.store.save_order(order)
@@ -144,6 +180,10 @@ class SensibullPaperExecutor:
                 order.entry_price = matched_pos.avg_price
                 order.verified_at = datetime.now(timezone.utc)
                 order.status_reason = "Verified: Position actively registered in Sensibull Virtual Portfolio table."
+                matched_pos.mode = request.mode
+                matched_pos.trade_intent_id = request.trade_intent_id
+                matched_pos.assessment_id = request.assessment_id
+                matched_pos.research_id = request.research_id
                 self.store.save_order(order)
                 self.store.save_position(matched_pos)
                 logger.info("Paper order %s verified OPEN on Sensibull at ₹%.2f.", order.order_id, matched_pos.avg_price)
@@ -167,6 +207,10 @@ class SensibullPaperExecutor:
                     quantity=request.quantity,
                     avg_price=est_price,
                     current_ltp=est_price,
+                    mode=request.mode,
+                    trade_intent_id=request.trade_intent_id,
+                    assessment_id=request.assessment_id,
+                    research_id=request.research_id,
                     status=PaperPositionStatus.OPEN,
                 )
                 self.store.save_position(new_pos)

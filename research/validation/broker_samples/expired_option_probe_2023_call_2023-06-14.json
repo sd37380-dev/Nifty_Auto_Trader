@@ -1,0 +1,32 @@
+{
+  "requested_at_utc": "2026-09-30T14:58:19.250970+00:00",
+  "request": {
+    "exchangeSegment": "NSE_FNO",
+    "interval": "5",
+    "securityId": 13,
+    "instrument": "OPTIDX",
+    "expiryFlag": "MONTH",
+    "expiryCode": 1,
+    "strike": "ATM",
+    "drvOptionType": "CALL",
+    "requiredData": [
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume",
+      "oi",
+      "strike",
+      "spot",
+      "iv"
+    ],
+    "fromDate": "2023-06-14",
+    "toDate": "2023-06-14"
+  },
+  "http_status": 401,
+  "response": {
+    "errorType": "Invalid_Authentication",
+    "errorCode": "DH-901",
+    "errorMessage": "Client ID or user generated access token is invalid or expired."
+  }
+}

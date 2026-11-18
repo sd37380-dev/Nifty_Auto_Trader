@@ -1,0 +1,29 @@
+[
+  {
+    "memory_id": "mem_69d315dc",
+    "setup_type": "breakout_failure",
+    "timeframe": "15M",
+    "observed_characteristics": "Low volume candle push at resistance",
+    "historical_outcome": "Sharp reversal within 30 minutes",
+    "lessons": "Wait for high-volume follow through",
+    "relevance_score": 0.9,
+    "created_at": "2026-09-29T18:08:09.208839Z",
+    "tags": [
+      "resistance",
+      "fakeout"
+    ]
+  },
+  {
+    "memory_id": "mem_b5c9d622",
+    "setup_type": "range_bounce",
+    "timeframe": "1H",
+    "observed_characteristics": "Support test at round number",
+    "historical_outcome": "Successful bounce towards mid-range",
+    "lessons": "Check PCR support",
+    "relevance_score": 0.6,
+    "created_at": "2026-09-29T18:08:09.208858Z",
+    "tags": [
+      "support"
+    ]
+  }
+]

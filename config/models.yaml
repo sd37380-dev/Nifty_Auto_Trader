@@ -5,61 +5,66 @@
 
 routing:
   fast_observe:
-    provider: gemini
-    model: gemini-3.5-flash-lite
+    provider: nvidia
+    model: nvidia/nemotron-3-ultra-550b-a55b
     temperature: 0.1
     fallback:
-      provider: openrouter
-      model: google/gemini-2.5-flash
+      provider: gemini
+      model: gemini-2.5-flash
 
   market_analysis:
-    provider: gemini
-    model: gemini-3.5-flash-lite
+    provider: nvidia
+    model: nvidia/nemotron-3-ultra-550b-a55b
     temperature: 0.2
     fallback:
-      provider: openrouter
-      model: anthropic/claude-3.5-sonnet
+      provider: gemini
+      model: gemini-2.5-flash
 
   setup_confirmation:
-    provider: gemini
-    model: gemini-3.5-flash-lite
+    provider: nvidia
+    model: nvidia/nemotron-3-ultra-550b-a55b
     temperature: 0.1
     fallback:
-      provider: openrouter
-      model: anthropic/claude-3.7-sonnet
+      provider: gemini
+      model: gemini-2.5-flash
 
   research:
-    provider: gemini
-    model: gemini-3.5-flash-lite
+    provider: nvidia
+    model: nvidia/nemotron-3-ultra-550b-a55b
     temperature: 0.3
     fallback:
-      provider: openrouter
-      model: perplexity/sonar
+      provider: gemini
+      model: gemini-2.5-flash
 
   post_mortem:
-    provider: gemini
-    model: gemini-3.5-flash-lite
+    provider: nvidia
+    model: nvidia/nemotron-3-ultra-550b-a55b
     temperature: 0.2
     fallback:
-      provider: openrouter
-      model: deepseek/deepseek-r1
+      provider: gemini
+      model: gemini-2.5-flash
 
   strategy_improvement:
-    provider: gemini
-    model: gemini-3.5-flash-lite
+    provider: nvidia
+    model: nvidia/nemotron-3-ultra-550b-a55b
     temperature: 0.3
     fallback:
-      provider: openrouter
-      model: anthropic/claude-3.7-sonnet
+      provider: gemini
+      model: gemini-2.5-flash
 
 providers:
+  nvidia:
+    api_key_env: NVIDIA_API_KEY
+    base_url: https://integrate.api.nvidia.com/v1
+    default_model: nvidia/nemotron-3-ultra-550b-a55b
+
   gemini:
     api_key_env: GEMINI_API_KEY
-    default_model: gemini-3.5-flash-lite
+    default_model: gemini-2.5-flash
 
   openrouter:
     api_key_env: OPENROUTER_API_KEY
-    default_model: anthropic/claude-3.5-sonnet
+    default_model: nvidia/nemotron-3-ultra-550b-a55b
 
   openai:
     api_key_env: OPENAI_API_KEY

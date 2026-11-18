@@ -1,0 +1,188 @@
+{
+  "probe_started_at_utc": "2026-09-30T14:54:12.171811+00:00",
+  "years_tested": [
+    2022,
+    2023,
+    2024,
+    2025,
+    2026
+  ],
+  "option_probes": {
+    "2022_CALL": {
+      "year": 2022,
+      "date": "2022-01-12",
+      "type": "CALL",
+      "status_code": 401,
+      "bars_count": 0,
+      "oi_count": 0,
+      "response_keys": []
+    },
+    "2022_PUT": {
+      "year": 2022,
+      "date": "2022-01-12",
+      "type": "PUT",
+      "status_code": 401,
+      "bars_count": 0,
+      "oi_count": 0,
+      "response_keys": []
+    },
+    "2023_CALL": {
+      "year": 2023,
+      "date": "2023-06-14",
+      "type": "CALL",
+      "status_code": 401,
+      "bars_count": 0,
+      "oi_count": 0,
+      "response_keys": []
+    },
+    "2023_PUT": {
+      "year": 2023,
+      "date": "2023-06-14",
+      "type": "PUT",
+      "status_code": 401,
+      "bars_count": 0,
+      "oi_count": 0,
+      "response_keys": []
+    },
+    "2024_CALL": {
+      "year": 2024,
+      "date": "2024-07-10",
+      "type": "CALL",
+      "status_code": 401,
+      "bars_count": 0,
+      "oi_count": 0,
+      "response_keys": []
+    },
+    "2024_PUT": {
+      "year": 2024,
+      "date": "2024-07-10",
+      "type": "PUT",
+      "status_code": 401,
+      "bars_count": 0,
+      "oi_count": 0,
+      "response_keys": []
+    },
+    "2025_CALL": {
+      "year": 2025,
+      "date": "2025-05-14",
+      "type": "CALL",
+      "status_code": 401,
+      "bars_count": 0,
+      "oi_count": 0,
+      "response_keys": []
+    },
+    "2025_PUT": {
+      "year": 2025,
+      "date": "2025-05-14",
+      "type": "PUT",
+      "status_code": 401,
+      "bars_count": 0,
+      "oi_count": 0,
+      "response_keys": []
+    },
+    "2026_CALL": {
+      "year": 2026,
+      "date": "2026-09-10",
+      "type": "CALL",
+      "status_code": 401,
+      "bars_count": 0,
+      "oi_count": 0,
+      "response_keys": []
+    },
+    "2026_PUT": {
+      "year": 2026,
+      "date": "2026-09-10",
+      "type": "PUT",
+      "status_code": 401,
+      "bars_count": 0,
+      "oi_count": 0,
+      "response_keys": []
+    }
+  },
+  "futures_probes": {
+    "2022": {
+      "year": 2022,
+      "date": "2022-01-12",
+      "security_id": "48704",
+      "status_code": 401,
+      "bars_returned": 0
+    },
+    "2023": {
+      "year": 2023,
+      "date": "2023-06-14",
+      "security_id": "48704",
+      "status_code": 401,
+      "bars_returned": 0
+    },
+    "2024": {
+      "year": 2024,
+      "date": "2024-07-10",
+      "security_id": "48704",
+      "status_code": 401,
+      "bars_returned": 0
+    },
+    "2025": {
+      "year": 2025,
+      "date": "2025-05-14",
+      "security_id": "48704",
+      "status_code": 401,
+      "bars_returned": 0
+    },
+    "2026": {
+      "year": 2026,
+      "date": "2026-09-10",
+      "security_id": "48704",
+      "status_code": 401,
+      "bars_returned": 0
+    },
+    "trial_/charts/rollingfuture": 404,
+    "trial_/charts/expiredfuture": 404,
+    "trial_/charts/historicalfutures": 404
+  },
+  "field_support_matrix": {
+    "timestamp": false,
+    "underlying": false,
+    "expiry": false,
+    "strike": false,
+    "drvOptionType (CE/PE)": false,
+    "instrument/security ID": false,
+    "LTP/Close": false,
+    "OHLC": false,
+    "volume": false,
+    "OI": false,
+    "change OI": false
+  },
+  "contract_identity_findings": {
+    "securityId_param_accepted": "Only underlying securityId (13), not contract ID",
+    "response_contains_contract_id": false,
+    "response_contains_actual_expiry": false,
+    "response_contains_trading_symbol": false,
+    "can_derive_expiry_from_identifier": false,
+    "contract_identity_established": false
+  },
+  "chain_reconstruction_test": {
+    "link_1_historical_futures_price": "FAILED - Dhan /charts/intraday returns 0 bars for expired 2024 contract",
+    "link_2_futures_atm_nearest_50": "FAILED - No Futures price to anchor ATM",
+    "link_3_atm_pm_5_strikes": "PARTIAL - Rolling options uses spot-relative offsets (ATM\u00b15), not Futures",
+    "link_4_exact_historical_expiry": "FAILED - Rolling options omits expiry date entirely",
+    "link_5_ce_pe_contract_identity": "FAILED - Rolling options omits option security_id / contract identity",
+    "link_6_timestamped_oi": "AVAILABLE - Rolling options provides timestamped OI array relative to spot",
+    "link_7_oi_support_resistance": "FAILED - Cannot compute strike-level support/resistance without knowing exact expiry and fixed contract strikes"
+  },
+  "timestamp_alignment_test": {},
+  "instrument_master": {
+    "total_rows": 204649,
+    "nifty_futidx_count": 3,
+    "nifty_futidx_expiries": [
+      "2026-10-27",
+      "2026-11-23",
+      "2026-12-29"
+    ],
+    "expired_contracts_in_master": 0
+  },
+  "classification": "DHAN INSUFFICIENT",
+  "rationale": "Dhan is classified as DHAN INSUFFICIENT for the strategy backtest because: (1) Five-year historical NIFTY Futures data for expired contracts is completely absent (historical intraday endpoint only supports active contracts, returning 0 bars for expired contracts); (2) Historical expired options are available ONLY through /charts/rollingoption, which returns spot-relative rolling strikes and completely lacks actual expiry dates, option contract IDs, and change_oi; (3) The strategy's frozen requirements dictate that ATM must be anchored to historical NIFTY Futures (nearest 50) with ATM\u00b15 strikes for an exact known expiry, which is structurally impossible to reconstruct from Dhan's API alone.",
+  "probe_finished_at_utc": "2026-09-30T14:58:38.556134+00:00",
+  "requests_attempted": 19,
+  "retries": 0
+}

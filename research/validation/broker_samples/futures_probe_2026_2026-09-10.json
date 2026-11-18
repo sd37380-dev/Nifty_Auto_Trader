@@ -1,0 +1,18 @@
+{
+  "requested_at_utc": "2026-09-30T14:58:34.818657+00:00",
+  "request": {
+    "securityId": "48704",
+    "exchangeSegment": "NSE_FNO",
+    "instrument": "FUTIDX",
+    "interval": "5",
+    "oi": true,
+    "fromDate": "2026-09-10 09:15:00",
+    "toDate": "2026-09-10 15:30:00"
+  },
+  "http_status": 401,
+  "response": {
+    "errorType": "Invalid_Authentication",
+    "errorCode": "DH-901",
+    "errorMessage": "Client ID or user generated access token is invalid or expired."
+  }
+}

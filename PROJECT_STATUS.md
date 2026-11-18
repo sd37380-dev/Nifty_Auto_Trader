@@ -24,6 +24,7 @@
 | **Stage 8** | **Sensibull Paper-Trading Execution & State Synchronization** | **STAGE 8 — COMPLETE & LOCKED ✅** |
 | **Stage 9** | **Autonomous Trade Monitoring & Position Management** | **STAGE 9 — COMPLETE & LOCKED ✅** |
 | **Stage 10** | **Performance Analysis & Experience Memory** | **STAGE 10 — COMPLETE & LOCKED ✅** |
+| **Research Zone** | **Hermes Data Research Zone (Isolated Quantitative Lab)** | **RESEARCH ZONE — COMPLETE & LOCKED ✅** |
 | **Package 11** | Post-Trade Post-Mortem & Mistake Analysis | Planned |
 | **Package 12** | Strategy Learning Laboratory | Planned |
 | **Package 13** | Backtesting & Historical Validation | Planned |
@@ -139,4 +140,41 @@
 8. **Descriptive Performance Metrics (`nifty_trader/experience/metrics.py`)**: Calculates verified trading statistics (win rate, profit factor, drawdown, median P&L) and operational counts (reassessments, wait frequency, conflicts) without composite strategy scores.
 9. **Interactive CLI & Operational Tooling (`nifty_trader/cli.py`)**: Added `experience-analyze`, `experience-show`, `experience-search`, `performance-summary`, and `performance-trades`.
 10. **Verification**: 202 of 202 unit & integration tests passing (100% pass rate). Stage 10 COMPLETE & LOCKED ✅.
+
+---
+
+## Hermes Data Research Zone Milestones Achieved (Quantitative Lab)
+
+1. **Complete Physical & Logical Isolation**: Standalone quantitative research environment segregated from main trading decision and execution pipelines; zero order placement capabilities.
+2. **Dhan Broker Data Ready (`nifty_trader/research_zone/dhan_adapter.py`)**: Abstract `DhanDataAdapter` with an offline deterministic `MockDhanDataAdapter` generating synthetic OHLCV+OI bars, option chain matrices (PCR, Greeks, Max Pain), and 5-depth orderbook. Prepared for zero-redesign plug-in of future live Dhan API feeds without live API key requirements at this stage.
+3. **Data Engineering Zone (`nifty_trader/research_zone/data_engineering.py`)**: Invariant validation ($L \le O, C \le H$), corrupted bar rejection, deduplication, multi-timeframe resampling ($1\text{M} \rightarrow 5\text{M}, 15\text{M}, 1\text{H}, 1\text{D}$), and rich indicator calculation (EMA 9/20/50/200, RSI 14, MACD 12/26/9, ATR 14, VWAP with $\pm 1.5$ StdDev bands, Volume 20-SMA ratio, OI change %, regime classification).
+4. **Data Quality Telemetry (`DataQualityReport`)**: Automated assessment of time-continuity, gap events, and completeness ratings (`EXCELLENT`, `GOOD`, `DEGRADED`, `CRITICAL`).
+5. **Cognitive Research Engine (`nifty_trader/research_zone/research_engine.py`)**: Structured empirical question formulation, pattern specification, falsifiable hypothesis generation, and backtesting (sample size, win rate, profit factor, max drawdown, binomial p-values).
+6. **Aggressive Contradiction Search**: Actively searches for counter-examples, failure regimes, and false positive rates to challenge candidate setups; automatically spawns targeted follow-up research questions.
+7. **Independent Dynamic Scoring Engine (`nifty_trader/research_zone/assessment.py`)**: Strictly enforces the dynamic importance invariant (NO fixed or static percentage weights):
+   $$\text{Total Score} = \frac{\sum_{i=1}^n \left(\text{Segment Score}_i \times \text{Segment Importance}_i\right)}{\sum_{i=1}^n \text{Segment Importance}_i}$$
+   Dynamically weights segments based on active regime (trending vs consolidating vs volatile) and bounds scores to $[-100.0, +100.0]$.
+8. **Negative Knowledge Preservation (`nifty_trader/research_zone/memory.py`)**: Stores `FailedHypothesis` records as first-class empirical findings in `data/hermes_research/research_memory.db`, automatically detecting and warning against disproven theories in future inquiries.
+9. **Dedicated Storage Architecture (`nifty_trader/research_zone/storage.py`)**: Windows-safe SQLite context managers segregating `market_data.db`, `research.db`, `assessments.db`, and `research_memory.db` in `data/hermes_research/`.
+10. **Interactive CLI & Documentation**: Added `research` namespace (`status`, `dataset`, `run`, `assessment`, `history`, `memory`) in `nifty_trader/cli.py` and dedicated docs in `docs/research/`.
+11. **Verification**: 212 of 212 unit & integration tests passing (100% pass rate). Research Zone COMPLETE & LOCKED ✅.
+
+---
+
+## Deterministic Safety Guard Milestones Achieved (Locked Non-Bypassable Risk Engine)
+
+1. **Portfolio-Wide Daily Loss Circuit Breaker**: Hard cap of ₹2,000 maximum cumulative daily loss across all instruments (realized + unrealized). If reached, all trading is immediately halted for the session.
+2. **Per-Instrument Daily Loss Hard Limit**: Hard stop of ₹1,000 maximum daily loss for NIFTY, and ₹1,000 maximum daily loss for BANKNIFTY.
+3. **Daily Trade Frequency Limit**: Maximum 3 executed trades per day for NIFTY, and maximum 3 executed trades per day for BANKNIFTY.
+4. **Strict 1-Lot Position Sizing**: Exactly 1 lot per trade (`max_lots = 1`, `lots = 1`). Auto-computes standard quantities: 65 qty for NIFTY, 30 qty for BANKNIFTY. Any order requesting $> 1$ lot is deterministically rejected.
+5. **Single Active Instrument Constraint**: The system only allows 1 instrument to have open positions at a time. Placing an order in BANKNIFTY while a NIFTY position is open (or vice versa) is immediately rejected.
+6. **Mandatory 1:3 Risk-to-Reward (R:R) Invariant**: Evaluates proposed stop loss and target prices; rejects any trade plan where the reward-to-risk ratio is below 1:3.0.
+7. **Paper-Broker Level Pre-Execution Interception (`nifty_trader/paper/executor.py`)**: The `DeterministicSafetyGuard` validates every incoming order before any browser interaction occurs. Violating orders are logged as `REJECTED` in SQLite with explicit safety codes.
+8. **Interactive CLI & Dashboard Integration**:
+   - `nifty-trader status` displays live Safety Guard circuit breakers and active instrument policies.
+   - `nifty-trader paper-order` supports `--symbol`, `--stop-loss`, `--target`, and enforces the 1-lot ceiling and 1:3 R:R.
+   - Real-time Webview Dashboard (`nifty-trader dashboard`) displays the locked safety specifications and live instrument status.
+9. **Documentation & PDFs Synchronized**: Recompiled `docs/NIFTY_AUTONOMOUS_TRADER_FEATURES_GUIDE.pdf` and `docs/NIFTY_AUTONOMOUS_TRADER_SOFTWARE_ARCHITECTURE.pdf`.
+10. **Verification**: 223 of 223 unit & integration tests passing (100% pass rate). Deterministic Safety Guard COMPLETE & LOCKED ✅.
+
 

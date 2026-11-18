@@ -62,17 +62,26 @@ class PaperTradeOrderRequest(BaseModel):
     option_type: PaperOptionType
     action: PaperAction = PaperAction.BUY
     lots: int = 1
-    quantity: int = 25  # NIFTY lot size
+    quantity: Optional[int] = None
     limit_price: Optional[float] = None
     stop_loss_price: Optional[float] = None
     target_price: Optional[float] = None
     source_candidate_id: Optional[str] = None
+    mode: str = "EXISTING_SYSTEM"
+    trade_intent_id: Optional[str] = None
+    assessment_id: Optional[str] = None
+    research_id: Optional[str] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+    def model_post_init(self, __context: Any) -> None:
+        if self.quantity is None or self.quantity <= 0:
+            lot_multiplier = 30 if "BANKNIFTY" in self.symbol.upper() else 65
+            self.quantity = self.lots * lot_multiplier
 
     @property
     def idempotency_key(self) -> str:
         """Deterministic SHA-256 fingerprint preventing duplicate submissions."""
-        content = f"{self.symbol}_{self.expiry}_{self.strike}_{self.option_type.value}_{self.action.value}_{self.lots}"
+        content = f"{self.mode}_{self.symbol}_{self.expiry}_{self.strike}_{self.option_type.value}_{self.action.value}_{self.lots}"
         return hashlib.sha256(content.encode("utf-8")).hexdigest()[:16]
 
 
@@ -89,6 +98,10 @@ class PaperTradeOrder(BaseModel):
     lots: int
     quantity: int
     entry_price: Optional[float] = None
+    mode: str = "EXISTING_SYSTEM"
+    trade_intent_id: Optional[str] = None
+    assessment_id: Optional[str] = None
+    research_id: Optional[str] = None
     status: PaperOrderStatus = PaperOrderStatus.PENDING
     status_reason: Optional[str] = None
     pre_execution_screenshot: Optional[str] = None
@@ -109,6 +122,10 @@ class PaperPosition(BaseModel):
     quantity: int = 25
     avg_price: float
     current_ltp: float
+    mode: str = "EXISTING_SYSTEM"
+    trade_intent_id: Optional[str] = None
+    assessment_id: Optional[str] = None
+    research_id: Optional[str] = None
     unrealized_pnl: float = 0.0
     pnl_percentage: float = 0.0
     realized_pnl: float = 0.0

@@ -197,7 +197,7 @@ class SensibullPositionReader:
                     option_type=opt_type,
                     action=PaperAction.BUY,
                     lots=1,
-                    quantity=25,
+                    quantity=65,
                     avg_price=100.0,
                     current_ltp=100.0,
                     unrealized_pnl=0.0,
