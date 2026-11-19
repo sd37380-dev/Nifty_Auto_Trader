@@ -362,6 +362,20 @@ class LevelStrategyManager:
                     trig.triggered_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
                     trig.executed_trade_id = pending_info["pending_id"]
                     executed_events.append(pending_info)
+
+                    # Persist status to SQLite
+                    conn = sqlite3.connect(str(self.db_path))
+                    try:
+                        with conn:
+                            conn.execute("""
+                                UPDATE level_triggers
+                                SET status='TRIGGERED', triggered_at=?, executed_trade_id=?
+                                WHERE trigger_id=?
+                            """, (trig.triggered_at, trig.executed_trade_id, trig.trigger_id))
+                    except Exception as db_err:
+                        logger.warning("Could not persist trigger status in DB: %s", db_err)
+                    finally:
+                        conn.close()
                 except Exception as arm_err:
                     logger.warning("Error arming 15m pending trade, falling back to direct exec: %s", arm_err)
                     exec_info = self._execute_level_trade(trig, spot_price, trigger_reason)
