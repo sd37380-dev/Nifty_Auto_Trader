@@ -438,8 +438,8 @@ class MarketNewsService:
         except Exception:
             pass
 
-        # Telegram Alert: Dispatch instant alert for sudden big / high-impact news
-        if int(important) == 1 or score >= 4:
+        # Telegram Alert: News alerts disabled (only trade alerts are sent to Telegram)
+        if (int(important) == 1 or score >= 4) and os.environ.get("TELEGRAM_ENABLE_NEWS_ALERTS", "false").lower() in ("true", "1", "yes"):
             try:
                 from nifty_trader.notifications.telegram_service import get_telegram_service
                 get_telegram_service(self.root_dir).send_big_news_alert({

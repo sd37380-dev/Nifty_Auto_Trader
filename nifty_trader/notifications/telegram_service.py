@@ -50,6 +50,8 @@ class TelegramNotificationService:
         self._executor = ThreadPoolExecutor(max_workers=3, thread_name_prefix="telegram_alert")
         self._sent_news_ids = set()
         self._load_sent_news_ids()
+        # News alerts to Telegram disabled by default (only trade alerts sent)
+        self.enable_news_alerts = os.environ.get("TELEGRAM_ENABLE_NEWS_ALERTS", "false").lower() in ("true", "1", "yes")
 
     @property
     def is_configured(self) -> bool:
@@ -164,7 +166,8 @@ class TelegramNotificationService:
             "📡 <b>Alerts Enabled:</b>\n"
             "• Level Reach & Breakout Alerts\n"
             "• 15-Minute Trade Intent & Auto-Execution\n"
-            "• Breaking Indian Market News & Catalysts\n\n"
+            "• Trade Confirmations & Execution Status\n"
+            "• <i>(Market News: Disabled — Only Trade Alerts Active)</i>\n\n"
             "🚀 <i>Running on Render / Local Engine</i>"
         )
         try:
@@ -299,7 +302,14 @@ class TelegramNotificationService:
         return self.send_message(msg)
 
     def send_big_news_alert(self, item: Dict[str, Any]) -> bool:
-        """Sends an instant alert for high impact / important Indian market news."""
+        """
+        Sends an instant alert for high impact / important Indian market news.
+        Disabled: Only trade alerts are sent via Telegram. Can be overridden with TELEGRAM_ENABLE_NEWS_ALERTS=true.
+        """
+        if not getattr(self, "enable_news_alerts", False):
+            logger.debug("Telegram news alert skipped: news alerts disabled (only trade alerts active).")
+            return False
+
         news_id = item.get("id", "")
         if news_id and news_id in self._sent_news_ids:
             return False  # Already dispatched
