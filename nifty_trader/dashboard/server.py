@@ -1737,12 +1737,12 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; background: rgba(0,0,0,0.25); padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border);">
       <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
         <span style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 700;">Symbols:</span>
-        <button type="button" class="btn tv-sym-btn" onclick="switchTradingViewSymbol('INDEX:NIFTY', this)" style="background: var(--accent); color: white; padding: 4px 11px; font-size: 0.76rem; font-weight: 700; border-radius: 4px; border: 1px solid var(--accent);">NIFTY 50</button>
-        <button type="button" class="btn tv-sym-btn" onclick="switchTradingViewSymbol('INDEX:CNXBAN', this)" style="background: #1e293b; color: var(--text-secondary); padding: 4px 11px; font-size: 0.76rem; font-weight: 700; border-radius: 4px; border: 1px solid var(--border);">BANKNIFTY</button>
-        <button type="button" class="btn tv-sym-btn" onclick="switchTradingViewSymbol('INDEX:CNXFIN', this)" style="background: #1e293b; color: var(--text-secondary); padding: 4px 11px; font-size: 0.76rem; font-weight: 700; border-radius: 4px; border: 1px solid var(--border);">FINNIFTY</button>
-        <button type="button" class="btn tv-sym-btn" onclick="switchTradingViewSymbol('INDEX:MIDCPNIFTY', this)" style="background: #1e293b; color: var(--text-secondary); padding: 4px 11px; font-size: 0.76rem; font-weight: 700; border-radius: 4px; border: 1px solid var(--border);">MIDCPNIFTY</button>
-        <button type="button" class="btn tv-sym-btn" onclick="switchTradingViewSymbol('INDEX:SENSEX', this)" style="background: #1e293b; color: var(--text-secondary); padding: 4px 11px; font-size: 0.76rem; font-weight: 700; border-radius: 4px; border: 1px solid var(--border);">SENSEX</button>
-        <button type="button" class="btn tv-sym-btn" onclick="switchTradingViewSymbol('INDEX:INDIAVIX', this)" style="background: #1e293b; color: var(--text-secondary); padding: 4px 11px; font-size: 0.76rem; font-weight: 700; border-radius: 4px; border: 1px solid var(--border);">INDIA VIX</button>
+        <button type="button" class="btn tv-sym-btn" onclick="switchTradingViewSymbol('NSE:NIFTY', this)" style="background: var(--accent); color: white; padding: 4px 11px; font-size: 0.76rem; font-weight: 700; border-radius: 4px; border: 1px solid var(--accent);">NIFTY 50</button>
+        <button type="button" class="btn tv-sym-btn" onclick="switchTradingViewSymbol('NSE:BANKNIFTY', this)" style="background: #1e293b; color: var(--text-secondary); padding: 4px 11px; font-size: 0.76rem; font-weight: 700; border-radius: 4px; border: 1px solid var(--border);">BANKNIFTY</button>
+        <button type="button" class="btn tv-sym-btn" onclick="switchTradingViewSymbol('NSE:FINNIFTY', this)" style="background: #1e293b; color: var(--text-secondary); padding: 4px 11px; font-size: 0.76rem; font-weight: 700; border-radius: 4px; border: 1px solid var(--border);">FINNIFTY</button>
+        <button type="button" class="btn tv-sym-btn" onclick="switchTradingViewSymbol('NSE:MIDCPNIFTY', this)" style="background: #1e293b; color: var(--text-secondary); padding: 4px 11px; font-size: 0.76rem; font-weight: 700; border-radius: 4px; border: 1px solid var(--border);">MIDCPNIFTY</button>
+        <button type="button" class="btn tv-sym-btn" onclick="switchTradingViewSymbol('BSE:SENSEX', this)" style="background: #1e293b; color: var(--text-secondary); padding: 4px 11px; font-size: 0.76rem; font-weight: 700; border-radius: 4px; border: 1px solid var(--border);">SENSEX</button>
+        <button type="button" class="btn tv-sym-btn" onclick="switchTradingViewSymbol('NSE:INDIAVIX', this)" style="background: #1e293b; color: var(--text-secondary); padding: 4px 11px; font-size: 0.76rem; font-weight: 700; border-radius: 4px; border: 1px solid var(--border);">INDIA VIX</button>
       </div>
 
       <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
@@ -3700,7 +3700,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   // -------------------------------------------------------------
   // TRADINGVIEW ADVANCED LIVE CHART CONTROLLER
   // -------------------------------------------------------------
-  let _tvCurrentSymbol = 'INDEX:NIFTY';
+  let _tvCurrentSymbol = 'NSE:NIFTY';
   let _tvCurrentInterval = '5';
   let _tvWidgetInstance = null;
 
