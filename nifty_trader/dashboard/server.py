@@ -1733,20 +1733,21 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     </div>
 
     <!-- Notice about NSE Licensing -->
-    <div style="font-size: 0.73rem; color: #fbbf24; background: rgba(217, 119, 6, 0.12); border: 1px solid rgba(217, 119, 6, 0.3); border-radius: 6px; padding: 6px 12px; margin-bottom: 10px;">
-      ℹ️ <strong>NSE Policy Note:</strong> NSE strictly blocks free third-party embeds of cash indices (<code>NSE:NIFTY</code> &amp; <code>NSE:BANKNIFTY</code>). For live charts inside this dashboard, use <strong>IN50 (NIFTY 50 Tracker)</strong>, <strong>NIFTY BeES</strong>, or click <strong>🚀 Open Full NIFTY 50 ↗</strong> above for the full unblocked TradingView app!
+    <div style="font-size: 0.74rem; color: #fbbf24; background: rgba(217, 119, 6, 0.12); border: 1px solid rgba(217, 119, 6, 0.3); border-radius: 6px; padding: 7px 14px; margin-bottom: 10px; line-height: 1.5;">
+      💡 <strong>Why NSE:NIFTY shows &quot;Only available on TradingView&quot;:</strong> The National Stock Exchange of India (NSE) legally prohibits 3rd-party websites and external embeds from displaying cash index feeds (<code>NSE:NIFTY</code> &amp; <code>NSE:BANKNIFTY</code>).
+      <br>&bull; <strong>To view charts directly inside this dashboard tab:</strong> Use <strong>NIFTY BeES</strong> (mirrors Nifty 50 1:1 tick-by-tick), <strong>BANK BeES</strong> (mirrors Bank Nifty 1:1), <strong>SENSEX</strong>, or heavyweights like <strong>RELIANCE</strong>.
+      <br>&bull; <strong>To view the official spot index:</strong> Click <strong>🚀 Open Full NIFTY 50 ↗</strong> or <strong>🏦 Open Full BANKNIFTY ↗</strong> above to launch the unblocked TradingView app window!
     </div>
 
     <!-- Symbol & Timeframe Switcher Bar -->
     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; background: rgba(0,0,0,0.25); padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border);">
       <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
-        <span style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 700;">Symbols:</span>
-        <button type="button" class="btn tv-sym-btn" onclick="switchTradingViewSymbol('CAPITALCOM:IN50', this)" style="background: var(--accent); color: white; padding: 4px 11px; font-size: 0.76rem; font-weight: 700; border-radius: 4px; border: 1px solid var(--accent);">IN50 (NIFTY 50)</button>
-        <button type="button" class="btn tv-sym-btn" onclick="switchTradingViewSymbol('NSE:NIFTYBEES', this)" style="background: #1e293b; color: var(--text-secondary); padding: 4px 11px; font-size: 0.76rem; font-weight: 700; border-radius: 4px; border: 1px solid var(--border);">NIFTY BeES (Spot)</button>
-        <button type="button" class="btn tv-sym-btn" onclick="switchTradingViewSymbol('NSE:BANKBEES', this)" style="background: #1e293b; color: var(--text-secondary); padding: 4px 11px; font-size: 0.76rem; font-weight: 700; border-radius: 4px; border: 1px solid var(--border);">BANK BeES (Spot)</button>
+        <span style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 700;">Live Presets:</span>
+        <button type="button" class="btn tv-sym-btn" onclick="switchTradingViewSymbol('NSE:NIFTYBEES', this)" style="background: var(--accent); color: white; padding: 4px 11px; font-size: 0.76rem; font-weight: 700; border-radius: 4px; border: 1px solid var(--accent);">NIFTY BeES (Tracks NIFTY 50)</button>
+        <button type="button" class="btn tv-sym-btn" onclick="switchTradingViewSymbol('NSE:BANKBEES', this)" style="background: #1e293b; color: var(--text-secondary); padding: 4px 11px; font-size: 0.76rem; font-weight: 700; border-radius: 4px; border: 1px solid var(--border);">BANK BeES (Tracks BANKNIFTY)</button>
+        <button type="button" class="btn tv-sym-btn" onclick="switchTradingViewSymbol('BSE:SENSEX', this)" style="background: #1e293b; color: var(--text-secondary); padding: 4px 11px; font-size: 0.76rem; font-weight: 700; border-radius: 4px; border: 1px solid var(--border);">SENSEX</button>
         <button type="button" class="btn tv-sym-btn" onclick="switchTradingViewSymbol('NSE:RELIANCE', this)" style="background: #1e293b; color: var(--text-secondary); padding: 4px 11px; font-size: 0.76rem; font-weight: 700; border-radius: 4px; border: 1px solid var(--border);">RELIANCE</button>
         <button type="button" class="btn tv-sym-btn" onclick="switchTradingViewSymbol('NSE:HDFCBANK', this)" style="background: #1e293b; color: var(--text-secondary); padding: 4px 11px; font-size: 0.76rem; font-weight: 700; border-radius: 4px; border: 1px solid var(--border);">HDFCBANK</button>
-        <button type="button" class="btn tv-sym-btn" onclick="switchTradingViewSymbol('BSE:SENSEX', this)" style="background: #1e293b; color: var(--text-secondary); padding: 4px 11px; font-size: 0.76rem; font-weight: 700; border-radius: 4px; border: 1px solid var(--border);">SENSEX</button>
       </div>
 
       <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
@@ -1771,7 +1772,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   <!-- Chart Embed Container -->
   <div class="card" style="padding: 0; overflow: hidden; border-radius: 8px; border: 1px solid var(--border); height: 750px; background: #0f172a; position: relative;">
     <iframe id="tv-advanced-chart-iframe" 
-            src="https://s.tradingview.com/widgetembed/?symbol=CAPITALCOM%3AIN50&interval=5&theme=dark&style=1&timezone=Asia%2FKolkata&locale=in&hideideas=1" 
+            src="https://s.tradingview.com/widgetembed/?symbol=NSE%3ANIFTYBEES&interval=5&theme=dark&style=1&timezone=Asia%2FKolkata&locale=in&hideideas=1" 
             style="width: 100%; height: 100%; min-height: 720px; border: none; display: block;" 
             allowtransparency="true" 
             scrolling="no" 
@@ -3706,7 +3707,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   // -------------------------------------------------------------
   // TRADINGVIEW ADVANCED LIVE CHART CONTROLLER
   // -------------------------------------------------------------
-  let _tvCurrentSymbol = 'CAPITALCOM:IN50';
+  let _tvCurrentSymbol = 'NSE:NIFTYBEES';
   let _tvCurrentInterval = '5';
   let _tvWidgetInstance = null;
 
@@ -3771,7 +3772,13 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     const input = document.getElementById('tv-custom-symbol-input');
     if (!input || !input.value.trim()) return;
     let sym = input.value.trim().toUpperCase();
-    if (!sym.includes(':')) {
+    if (sym === 'NIFTY' || sym === 'NSE:NIFTY') {
+      alert('Note: NSE explicitly blocks raw cash index "NSE:NIFTY" inside embedded iframes. Switching to "NSE:NIFTYBEES" (which mirrors NIFTY 50 spot tick-by-tick). To view the official unblocked index, click "🚀 Open Full NIFTY 50 ↗" above.');
+      sym = 'NSE:NIFTYBEES';
+    } else if (sym === 'BANKNIFTY' || sym === 'NSE:BANKNIFTY') {
+      alert('Note: NSE explicitly blocks raw cash index "NSE:BANKNIFTY" inside embedded iframes. Switching to "NSE:BANKBEES" (which mirrors BANKNIFTY spot tick-by-tick). To view the official unblocked index, click "🏦 Open Full BANKNIFTY ↗" above.');
+      sym = 'NSE:BANKBEES';
+    } else if (!sym.includes(':')) {
       sym = 'NSE:' + sym;
     }
     _tvCurrentSymbol = sym;
