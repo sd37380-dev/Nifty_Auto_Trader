@@ -1752,11 +1752,13 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 8px; background: rgba(0,0,0,0.25); padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border);">
       <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
         <span style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 700;">Symbols:</span>
-        <button type="button" class="btn nc-sym-btn" onclick="selectChartSymbol('NIFTY', this)" style="background: var(--accent); color: white; padding: 4px 11px; font-size: 0.76rem; font-weight: 700; border-radius: 4px; border: 1px solid var(--accent);">NIFTY 50 (Spot)</button>
-        <button type="button" class="btn nc-sym-btn" onclick="selectChartSymbol('BANKNIFTY', this)" style="background: #1e293b; color: var(--text-secondary); padding: 4px 11px; font-size: 0.76rem; font-weight: 700; border-radius: 4px; border: 1px solid var(--border);">BANKNIFTY (Spot)</button>
-        <button type="button" class="btn nc-sym-btn" onclick="selectChartSymbol('SENSEX', this)" style="background: #1e293b; color: var(--text-secondary); padding: 4px 11px; font-size: 0.76rem; font-weight: 700; border-radius: 4px; border: 1px solid var(--border);">SENSEX</button>
-        <button type="button" class="btn nc-sym-btn" onclick="selectChartSymbol('RELIANCE', this)" style="background: #1e293b; color: var(--text-secondary); padding: 4px 11px; font-size: 0.76rem; font-weight: 700; border-radius: 4px; border: 1px solid var(--border);">RELIANCE</button>
-        <button type="button" class="btn nc-sym-btn" onclick="selectChartSymbol('HDFCBANK', this)" style="background: #1e293b; color: var(--text-secondary); padding: 4px 11px; font-size: 0.76rem; font-weight: 700; border-radius: 4px; border: 1px solid var(--border);">HDFCBANK</button>
+        <button type="button" class="btn nc-sym-btn" onclick="selectChartSymbol('NIFTY', this)" style="background: var(--accent); color: white; padding: 4px 10px; font-size: 0.75rem; font-weight: 700; border-radius: 4px; border: 1px solid var(--accent);">NIFTY 50</button>
+        <button type="button" class="btn nc-sym-btn" onclick="selectChartSymbol('BANKNIFTY', this)" style="background: #1e293b; color: var(--text-secondary); padding: 4px 10px; font-size: 0.75rem; font-weight: 700; border-radius: 4px; border: 1px solid var(--border);">BANKNIFTY</button>
+        <button type="button" class="btn nc-sym-btn" onclick="selectChartSymbol('SENSEX', this)" style="background: #1e293b; color: var(--text-secondary); padding: 4px 10px; font-size: 0.75rem; font-weight: 700; border-radius: 4px; border: 1px solid var(--border);">SENSEX</button>
+        <button type="button" class="btn nc-sym-btn" onclick="selectChartSymbol('RELIANCE', this)" style="background: #1e293b; color: var(--text-secondary); padding: 4px 10px; font-size: 0.75rem; font-weight: 700; border-radius: 4px; border: 1px solid var(--border);">RELIANCE</button>
+        <button type="button" class="btn nc-sym-btn" onclick="selectChartSymbol('AAPL', this)" style="background: #1e293b; color: var(--text-secondary); padding: 4px 10px; font-size: 0.75rem; font-weight: 700; border-radius: 4px; border: 1px solid var(--border);" title="Apple Inc (Global NASDAQ)">AAPL</button>
+        <button type="button" class="btn nc-sym-btn" onclick="selectChartSymbol('BTCUSD', this)" style="background: #1e293b; color: var(--text-secondary); padding: 4px 10px; font-size: 0.75rem; font-weight: 700; border-radius: 4px; border: 1px solid var(--border);" title="Bitcoin / USDT (Crypto)">BTC/USD</button>
+        <button type="button" class="btn nc-sym-btn" onclick="selectChartSymbol('GOLD', this)" style="background: #1e293b; color: var(--text-secondary); padding: 4px 10px; font-size: 0.75rem; font-weight: 700; border-radius: 4px; border: 1px solid var(--border);" title="Gold Spot (Commodity)">GOLD</button>
       </div>
 
       <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
@@ -1770,7 +1772,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 
         <!-- Custom Symbol Input -->
         <div style="display: flex; gap: 4px; align-items: center;">
-          <input type="text" id="chart-custom-symbol-input" placeholder="e.g. TCS" style="background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border); border-radius: 4px; padding: 4px 8px; font-size: 0.75rem; width: 100px; text-transform: uppercase;">
+          <input type="text" id="chart-custom-symbol-input" placeholder="e.g. NVDA, TCS" style="background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border); border-radius: 4px; padding: 4px 8px; font-size: 0.75rem; width: 110px; text-transform: uppercase;">
           <button type="button" onclick="loadCustomChartSymbol()" class="btn" style="background: var(--accent); color: white; padding: 4px 10px; font-size: 0.74rem; font-weight: 700; border: none; border-radius: 4px; cursor: pointer;">Load</button>
         </div>
 
@@ -1795,13 +1797,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 
   <!-- TradingView Cloud Widget (Hidden by default, available on toggle) -->
   <div id="cloud-widget-wrapper" class="card" style="display: none; padding: 0; overflow: hidden; border-radius: 8px; border: 1px solid var(--border); height: 720px; background: #0f172a; position: relative;">
-    <iframe id="tv-advanced-chart-iframe" 
-            src="" 
-            style="width: 100%; height: 100%; min-height: 720px; border: none; display: block;" 
-            allowtransparency="true" 
-            scrolling="no" 
-            allowfullscreen>
-    </iframe>
+    <div id="tradingview-cloud-widget-box" style="width: 100%; height: 100%; min-height: 720px;"></div>
   </div>
 </div>
 
@@ -3758,7 +3754,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     if (_chartEngineMode === 'native') {
       initNativeChart();
     } else {
-      updateTradingViewIframe();
+      loadTradingViewCloudWidget(_tvCurrentSymbol, _tvCurrentInterval);
     }
   }
 
@@ -3769,6 +3765,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     const wrapNative = document.getElementById('native-chart-wrapper');
     const wrapCloud = document.getElementById('cloud-widget-wrapper');
     const headerNative = document.getElementById('native-chart-header');
+    const liveBadge = document.getElementById('chart-live-badge');
 
     if (mode === 'native') {
       if (btnNative) { btnNative.style.background = 'var(--accent)'; btnNative.style.color = 'white'; }
@@ -3776,6 +3773,10 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       if (wrapNative) wrapNative.style.display = 'block';
       if (wrapCloud) wrapCloud.style.display = 'none';
       if (headerNative) headerNative.style.display = 'flex';
+      if (liveBadge) {
+        liveBadge.className = 'badge badge-green';
+        liveBadge.innerText = '🟢 LIVE NSE SPOT FEED';
+      }
       initNativeChart();
       if (_lwChart) {
         const c = document.getElementById('tv-native-chart-canvas');
@@ -3787,7 +3788,11 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       if (wrapNative) wrapNative.style.display = 'none';
       if (wrapCloud) wrapCloud.style.display = 'block';
       if (headerNative) headerNative.style.display = 'none';
-      updateTradingViewIframe();
+      if (liveBadge) {
+        liveBadge.className = 'badge badge-blue';
+        liveBadge.innerText = '🌐 TRADINGVIEW CLOUD ENGINE (Global & Studies Active)';
+      }
+      loadTradingViewCloudWidget(_tvCurrentSymbol, _tvCurrentInterval);
     }
   }
 
@@ -3978,7 +3983,15 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 
   function selectChartSymbol(sym, btn) {
     _lwSymbol = sym;
-    _tvCurrentSymbol = sym === 'NIFTY' ? 'NSE:NIFTYBEES' : (sym === 'BANKNIFTY' ? 'NSE:BANKBEES' : (sym.includes(':') ? sym : 'NSE:' + sym));
+    let tvSym = sym;
+    if (sym === 'NIFTY') tvSym = 'NSE:NIFTYBEES';
+    else if (sym === 'BANKNIFTY') tvSym = 'NSE:BANKBEES';
+    else if (sym === 'AAPL') tvSym = 'NASDAQ:AAPL';
+    else if (sym === 'BTCUSD') tvSym = 'BINANCE:BTCUSDT';
+    else if (sym === 'GOLD') tvSym = 'TVC:GOLD';
+    else if (!sym.includes(':')) tvSym = 'NSE:' + sym;
+    _tvCurrentSymbol = tvSym;
+
     document.querySelectorAll('.nc-sym-btn').forEach(b => {
       b.style.background = '#1e293b';
       b.style.color = 'var(--text-secondary)';
@@ -3989,12 +4002,12 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       btn.style.color = 'white';
       btn.style.border = '1px solid var(--accent)';
     }
-    const overlay = document.getElementById('nc-loading-overlay');
-    if (overlay && _chartEngineMode === 'native') overlay.style.display = 'flex';
     if (_chartEngineMode === 'native') {
+      const overlay = document.getElementById('nc-loading-overlay');
+      if (overlay) overlay.style.display = 'flex';
       fetchNativeCandles();
     } else {
-      updateTradingViewIframe();
+      loadTradingViewCloudWidget(_tvCurrentSymbol, _tvCurrentInterval);
     }
   }
 
@@ -4019,7 +4032,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     if (_chartEngineMode === 'native') {
       fetchNativeCandles();
     } else {
-      updateTradingViewIframe();
+      loadTradingViewCloudWidget(_tvCurrentSymbol, _tvCurrentInterval);
     }
   }
 
@@ -4027,28 +4040,106 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     const input = document.getElementById('chart-custom-symbol-input');
     if (!input || !input.value.trim()) return;
     const sym = input.value.trim().toUpperCase();
-    selectChartSymbol(sym, null);
+    if (_chartEngineMode === 'cloud') {
+      let targetSym = sym;
+      const globalPrefixes = {
+        'AAPL': 'NASDAQ:AAPL',
+        'TSLA': 'NASDAQ:TSLA',
+        'NVDA': 'NASDAQ:NVDA',
+        'MSFT': 'NASDAQ:MSFT',
+        'AMZN': 'NASDAQ:AMZN',
+        'GOOGL': 'NASDAQ:GOOGL',
+        'BTCUSD': 'BINANCE:BTCUSDT',
+        'BTC': 'BINANCE:BTCUSDT',
+        'ETH': 'BINANCE:ETHUSDT',
+        'GOLD': 'TVC:GOLD',
+        'SILVER': 'TVC:SILVER',
+        'CRUDEOIL': 'TVC:USOIL',
+        'EURUSD': 'FX:EURUSD',
+        'GBPUSD': 'FX:GBPUSD',
+        'USDINR': 'FX_IDC:USDINR'
+      };
+      if (!targetSym.includes(':')) {
+        targetSym = globalPrefixes[targetSym] || ('NSE:' + targetSym);
+      }
+      _tvCurrentSymbol = targetSym;
+      loadTradingViewCloudWidget(_tvCurrentSymbol, _tvCurrentInterval);
+    } else {
+      selectChartSymbol(sym, null);
+    }
   }
 
-  function updateTradingViewIframe() {
-    const iframe = document.getElementById('tv-advanced-chart-iframe');
-    if (!iframe) return;
-    const config = {
-      autosize: true,
-      symbol: _tvCurrentSymbol,
-      interval: _tvCurrentInterval,
-      timezone: "Asia/Kolkata",
-      theme: "dark",
-      style: "1",
-      locale: "in",
-      enable_publishing: false,
-      allow_symbol_change: true,
-      calendar: false,
-      support_host: "https://www.tradingview.com"
-    };
-    const targetUrl = `https://www.tradingview-widget.com/embed-widget/advanced-chart/?locale=in#${encodeURIComponent(JSON.stringify(config))}`;
-    if (iframe.src !== targetUrl) {
-      iframe.src = targetUrl;
+  function loadTradingViewCloudWidget(sym, intv) {
+    const box = document.getElementById('tradingview-cloud-widget-box');
+    if (!box) return;
+
+    if (typeof TradingView === 'undefined' || !TradingView.widget) {
+      setTimeout(() => loadTradingViewCloudWidget(sym, intv), 200);
+      return;
+    }
+
+    let targetSym = sym || _tvCurrentSymbol || 'NSE:NIFTYBEES';
+    if (targetSym === 'NIFTY' || targetSym === 'NSE:NIFTY') targetSym = 'NSE:NIFTYBEES';
+    if (targetSym === 'BANKNIFTY' || targetSym === 'NSE:BANKNIFTY') targetSym = 'NSE:BANKBEES';
+    if (!targetSym.includes(':')) {
+      const globalPrefixes = {
+        'AAPL': 'NASDAQ:AAPL',
+        'TSLA': 'NASDAQ:TSLA',
+        'NVDA': 'NASDAQ:NVDA',
+        'MSFT': 'NASDAQ:MSFT',
+        'BTCUSD': 'BINANCE:BTCUSDT',
+        'BTC': 'BINANCE:BTCUSDT',
+        'ETH': 'BINANCE:ETHUSDT',
+        'GOLD': 'TVC:GOLD',
+        'SILVER': 'TVC:SILVER',
+        'CRUDEOIL': 'TVC:USOIL',
+        'EURUSD': 'FX:EURUSD',
+        'USDINR': 'FX_IDC:USDINR'
+      };
+      targetSym = globalPrefixes[targetSym] || ('NSE:' + targetSym);
+    }
+    _tvCurrentSymbol = targetSym;
+
+    let targetInterval = intv || _tvCurrentInterval || '5';
+    const tvMap = { '1m': '1', '5m': '5', '15m': '15', '1h': '60', '1d': 'D' };
+    if (tvMap[targetInterval]) targetInterval = tvMap[targetInterval];
+
+    box.innerHTML = '';
+    const widgetDiv = document.createElement('div');
+    const containerId = 'tv_cloud_embed_' + Math.floor(Math.random() * 100000);
+    widgetDiv.id = containerId;
+    widgetDiv.style.width = '100%';
+    widgetDiv.style.height = '100%';
+    widgetDiv.style.minHeight = '720px';
+    box.appendChild(widgetDiv);
+
+    try {
+      _tvWidgetInstance = new TradingView.widget({
+        autosize: true,
+        symbol: targetSym,
+        interval: targetInterval,
+        timezone: "Asia/Kolkata",
+        theme: "dark",
+        style: "1",
+        locale: "in",
+        toolbar_bg: "#0f172a",
+        enable_publishing: false,
+        allow_symbol_change: true,
+        withdateranges: true,
+        hide_side_toolbar: false,
+        save_image: true,
+        details: true,
+        hotlist: true,
+        calendar: true,
+        studies: [
+          "STD;EMA",
+          "STD;RSI"
+        ],
+        container_id: containerId
+      });
+    } catch (e) {
+      console.error('Error mounting TradingView Cloud widget:', e);
+      box.innerHTML = `<div style="padding:20px; color:#ef4444;">Error loading TradingView Widget: ${e.message}</div>`;
     }
   }
 
