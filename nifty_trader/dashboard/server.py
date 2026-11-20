@@ -595,6 +595,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     }
   }
 </style>
+<script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
 </head>
 <body>
 
@@ -741,6 +742,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   <button class="nav-tab active" onclick="switchTab('tab-overview', this)">System Overview</button>
   <button class="nav-tab" onclick="switchTab('tab-simulator', this)">⚡ Option Paper Simulator</button>
   <button class="nav-tab" onclick="switchTab('tab-option-chain', this)" id="nav-btn-option-chain">📊 NSE Option Chain &amp; Trade</button>
+  <button class="nav-tab" onclick="switchTab('tab-charts', this)" id="nav-btn-charts">📈 TradingView Live Charts</button>
   <button class="nav-tab" onclick="switchTab('tab-news', this)" id="nav-btn-news">📰 Market News &amp; Impact <span id="nav-news-count-badge" class="badge badge-green" style="font-size: 0.65rem; padding: 1px 6px; margin-left: 4px;">--</span></button>
   <button class="nav-tab" onclick="switchTab('tab-telegram', this)" id="nav-btn-telegram">📱 Telegram &amp; 15-Min Execution <span id="nav-pending-badge" class="badge badge-yellow" style="font-size: 0.65rem; padding: 1px 6px; margin-left: 4px; display: none;">0</span></button>
   <button class="nav-tab" onclick="switchTab('tab-brain', this)">AI Brain Reasoning</button>
@@ -1694,6 +1696,84 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   </div>
 </div>
 
+<!-- Tab: TradingView Live Charts & Web Hub -->
+<div id="tab-charts" class="tab-content">
+  <!-- Chart Controls & Web Quick-Bar -->
+  <div class="card" style="margin-bottom: 16px; border-left: 4px solid #38bdf8; background: linear-gradient(135deg, rgba(56, 189, 248, 0.08) 0%, rgba(19, 27, 46, 0.95) 100%);">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 12px;">
+      <div>
+        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+          <span style="font-size: 1.25rem; font-weight: 800; color: var(--text-primary);">📈 TradingView Interactive Live Charts</span>
+          <span class="badge badge-green" style="background: rgba(16, 185, 129, 0.2); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.4);">LIVE PRO FEED</span>
+          <span class="badge badge-blue">REAL-TIME CANDLESTICKS</span>
+        </div>
+        <div style="font-size: 0.80rem; color: var(--text-secondary); margin-top: 3px;">
+          Full-featured TradingView chart with EMA (9/20/50/200), RSI, Volume, drawing tools, and multi-timeframe analysis.
+        </div>
+      </div>
+
+      <!-- Quick Web Links (1-Click External Browser / Window) -->
+      <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
+        <span style="font-size: 0.72rem; color: var(--text-secondary); margin-right: 2px;">🌐 Quick Browse:</span>
+        <a href="https://www.tradingview.com/chart/?symbol=NSE%3ANIFTY" target="_blank" rel="noopener noreferrer" class="btn" style="background: #1e293b; color: #38bdf8; border: 1px solid #0284c7; padding: 4px 10px; font-size: 0.74rem; text-decoration: none; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px;">
+          TradingView ↗
+        </a>
+        <a href="https://www.niftytrader.in/option-chain" target="_blank" rel="noopener noreferrer" class="btn" style="background: #1e293b; color: #f59e0b; border: 1px solid #d97706; padding: 4px 10px; font-size: 0.74rem; text-decoration: none; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px;">
+          NiftyTrader ↗
+        </a>
+        <a href="https://web.sensibull.com/option-chain" target="_blank" rel="noopener noreferrer" class="btn" style="background: #1e293b; color: #a78bfa; border: 1px solid #7c3aed; padding: 4px 10px; font-size: 0.74rem; text-decoration: none; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px;">
+          Sensibull ↗
+        </a>
+        <a href="https://chartink.com/screener" target="_blank" rel="noopener noreferrer" class="btn" style="background: #1e293b; color: #10b981; border: 1px solid #059669; padding: 4px 10px; font-size: 0.74rem; text-decoration: none; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px;">
+          Chartink ↗
+        </a>
+        <a href="https://www.nseindia.com" target="_blank" rel="noopener noreferrer" class="btn" style="background: #1e293b; color: #f43f5e; border: 1px solid #e11d48; padding: 4px 10px; font-size: 0.74rem; text-decoration: none; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px;">
+          NSE India ↗
+        </a>
+      </div>
+    </div>
+
+    <!-- Symbol & Timeframe Switcher Bar -->
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; background: rgba(0,0,0,0.25); padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border);">
+      <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+        <span style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 700;">Symbols:</span>
+        <button type="button" class="btn tv-sym-btn" onclick="switchTradingViewSymbol('INDEX:NIFTY', this)" style="background: var(--accent); color: white; padding: 4px 11px; font-size: 0.76rem; font-weight: 700; border-radius: 4px; border: 1px solid var(--accent);">NIFTY 50</button>
+        <button type="button" class="btn tv-sym-btn" onclick="switchTradingViewSymbol('INDEX:CNXBAN', this)" style="background: #1e293b; color: var(--text-secondary); padding: 4px 11px; font-size: 0.76rem; font-weight: 700; border-radius: 4px; border: 1px solid var(--border);">BANKNIFTY</button>
+        <button type="button" class="btn tv-sym-btn" onclick="switchTradingViewSymbol('INDEX:CNXFIN', this)" style="background: #1e293b; color: var(--text-secondary); padding: 4px 11px; font-size: 0.76rem; font-weight: 700; border-radius: 4px; border: 1px solid var(--border);">FINNIFTY</button>
+        <button type="button" class="btn tv-sym-btn" onclick="switchTradingViewSymbol('INDEX:MIDCPNIFTY', this)" style="background: #1e293b; color: var(--text-secondary); padding: 4px 11px; font-size: 0.76rem; font-weight: 700; border-radius: 4px; border: 1px solid var(--border);">MIDCPNIFTY</button>
+        <button type="button" class="btn tv-sym-btn" onclick="switchTradingViewSymbol('INDEX:SENSEX', this)" style="background: #1e293b; color: var(--text-secondary); padding: 4px 11px; font-size: 0.76rem; font-weight: 700; border-radius: 4px; border: 1px solid var(--border);">SENSEX</button>
+        <button type="button" class="btn tv-sym-btn" onclick="switchTradingViewSymbol('INDEX:INDIAVIX', this)" style="background: #1e293b; color: var(--text-secondary); padding: 4px 11px; font-size: 0.76rem; font-weight: 700; border-radius: 4px; border: 1px solid var(--border);">INDIA VIX</button>
+      </div>
+
+      <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+        <!-- Custom Symbol Input -->
+        <div style="display: flex; gap: 4px; align-items: center;">
+          <input type="text" id="tv-custom-symbol-input" placeholder="e.g. RELIANCE" style="background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border); border-radius: 4px; padding: 4px 8px; font-size: 0.75rem; width: 130px; text-transform: uppercase;">
+          <button type="button" onclick="loadCustomTradingViewSymbol()" class="btn" style="background: var(--accent); color: white; padding: 4px 10px; font-size: 0.74rem; font-weight: 700; border: none; border-radius: 4px; cursor: pointer;">Load</button>
+        </div>
+
+        <!-- Interval buttons -->
+        <span style="font-size: 0.75rem; color: var(--text-secondary); margin-left: 4px; font-weight: 700;">Timeframe:</span>
+        <button type="button" class="btn tv-int-btn" onclick="switchTradingViewInterval('1', this)" style="background: #1e293b; color: var(--text-secondary); padding: 3px 8px; font-size: 0.74rem; border-radius: 4px; border: 1px solid var(--border);">1m</button>
+        <button type="button" class="btn tv-int-btn" onclick="switchTradingViewInterval('3', this)" style="background: #1e293b; color: var(--text-secondary); padding: 3px 8px; font-size: 0.74rem; border-radius: 4px; border: 1px solid var(--border);">3m</button>
+        <button type="button" class="btn tv-int-btn" onclick="switchTradingViewInterval('5', this)" style="background: var(--accent); color: white; padding: 3px 8px; font-size: 0.74rem; border-radius: 4px; border: 1px solid var(--accent); font-weight: 700;">5m</button>
+        <button type="button" class="btn tv-int-btn" onclick="switchTradingViewInterval('15', this)" style="background: #1e293b; color: var(--text-secondary); padding: 3px 8px; font-size: 0.74rem; border-radius: 4px; border: 1px solid var(--border);">15m</button>
+        <button type="button" class="btn tv-int-btn" onclick="switchTradingViewInterval('60', this)" style="background: #1e293b; color: var(--text-secondary); padding: 3px 8px; font-size: 0.74rem; border-radius: 4px; border: 1px solid var(--border);">1h</button>
+        <button type="button" class="btn tv-int-btn" onclick="switchTradingViewInterval('D', this)" style="background: #1e293b; color: var(--text-secondary); padding: 3px 8px; font-size: 0.74rem; border-radius: 4px; border: 1px solid var(--border);">1D</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chart Embed Container -->
+  <div class="card" style="padding: 0; overflow: hidden; border-radius: 8px; border: 1px solid var(--border); height: 750px; background: #0f172a; position: relative;">
+    <div id="tv-advanced-chart-box" style="height: 100%; width: 100%;">
+      <div style="display: flex; height: 100%; justify-content: center; align-items: center; color: var(--text-secondary); font-size: 0.88rem;">
+        Click <strong>TradingView Live Charts</strong> tab to load real-time candlestick matrix...
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Tab News: Dedicated Market News & Impact Hub -->
 <div id="tab-news" class="tab-content">
   <!-- Header Card -->
@@ -2016,6 +2096,9 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       localStorage.setItem('nt_active_tab', tabId); 
       if (tabId === 'tab-option-chain' && typeof fetchOptionChain === 'function') {
         fetchOptionChain();
+      }
+      if (tabId === 'tab-charts' && typeof initTradingViewChart === 'function') {
+        initTradingViewChart();
       }
     } catch (e) {}
   }
@@ -3612,6 +3695,114 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     } finally {
       if (btnSubmit) btnSubmit.innerText = '🚀 Instant Execution';
     }
+  }
+
+  // -------------------------------------------------------------
+  // TRADINGVIEW ADVANCED LIVE CHART CONTROLLER
+  // -------------------------------------------------------------
+  let _tvCurrentSymbol = 'INDEX:NIFTY';
+  let _tvCurrentInterval = '5';
+  let _tvWidgetInstance = null;
+
+  function initTradingViewChart() {
+    const box = document.getElementById('tv-advanced-chart-box');
+    if (!box) return;
+
+    if (typeof TradingView === 'undefined') {
+      const script = document.createElement('script');
+      script.src = 'https://s3.tradingview.com/tv.js';
+      script.async = true;
+      script.onload = () => createTradingViewWidget();
+      document.head.appendChild(script);
+    } else {
+      createTradingViewWidget();
+    }
+  }
+
+  function createTradingViewWidget() {
+    if (typeof TradingView === 'undefined') return;
+    const box = document.getElementById('tv-advanced-chart-box');
+    if (!box) return;
+    box.innerHTML = '';
+
+    try {
+      _tvWidgetInstance = new TradingView.widget({
+        "autosize": true,
+        "symbol": _tvCurrentSymbol,
+        "interval": _tvCurrentInterval,
+        "timezone": "Asia/Kolkata",
+        "theme": "dark",
+        "style": "1",
+        "locale": "en",
+        "toolbar_bg": "#0f172a",
+        "enable_publishing": false,
+        "withdateranges": true,
+        "hide_side_toolbar": false,
+        "allow_symbol_change": true,
+        "details": true,
+        "hotlist": true,
+        "calendar": true,
+        "show_popup_button": true,
+        "popup_width": "1000",
+        "popup_height": "650",
+        "container_id": "tv-advanced-chart-box",
+        "studies": [
+          "MASimple@tv-basicstudies",
+          "RSI@tv-basicstudies",
+          "Volume@tv-basicstudies"
+        ]
+      });
+    } catch (e) {
+      console.error('TradingView widget initialization error:', e);
+    }
+  }
+
+  function switchTradingViewSymbol(symbol, btn) {
+    _tvCurrentSymbol = symbol;
+    document.querySelectorAll('.tv-sym-btn').forEach(b => {
+      b.style.background = '#1e293b';
+      b.style.color = 'var(--text-secondary)';
+      b.style.border = '1px solid var(--border)';
+    });
+    if (btn) {
+      btn.style.background = 'var(--accent)';
+      btn.style.color = 'white';
+      btn.style.border = '1px solid var(--accent)';
+    }
+    createTradingViewWidget();
+  }
+
+  function switchTradingViewInterval(interval, btn) {
+    _tvCurrentInterval = interval;
+    document.querySelectorAll('.tv-int-btn').forEach(b => {
+      b.style.background = '#1e293b';
+      b.style.color = 'var(--text-secondary)';
+      b.style.border = '1px solid var(--border)';
+      b.style.fontWeight = 'normal';
+    });
+    if (btn) {
+      btn.style.background = 'var(--accent)';
+      btn.style.color = 'white';
+      btn.style.border = '1px solid var(--accent)';
+      btn.style.fontWeight = '700';
+    }
+    createTradingViewWidget();
+  }
+
+  function loadCustomTradingViewSymbol() {
+    const input = document.getElementById('tv-custom-symbol-input');
+    if (!input || !input.value.trim()) return;
+    let sym = input.value.trim().toUpperCase();
+    if (!sym.includes(':')) {
+      sym = 'NSE:' + sym;
+    }
+    _tvCurrentSymbol = sym;
+    document.querySelectorAll('.tv-sym-btn').forEach(b => {
+      b.style.background = '#1e293b';
+      b.style.color = 'var(--text-secondary)';
+      b.style.border = '1px solid var(--border)';
+    });
+    createTradingViewWidget();
   }
 
   function filterSpotTable(sym) {
