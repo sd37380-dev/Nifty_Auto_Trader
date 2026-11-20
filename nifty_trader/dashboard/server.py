@@ -20,6 +20,8 @@ import sqlite3
 import threading
 import time
 from typing import Any, Dict, List, Optional
+import urllib.parse
+import urllib.request
 import webbrowser
 
 logger = logging.getLogger(__name__)
@@ -596,6 +598,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   }
 </style>
 <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+<script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
 </head>
 <body>
 
@@ -1699,80 +1702,101 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 <!-- Tab: TradingView Live Charts & Web Hub -->
 <div id="tab-charts" class="tab-content">
   <!-- Chart Controls & Web Quick-Bar -->
-  <div class="card" style="margin-bottom: 16px; border-left: 4px solid #38bdf8; background: linear-gradient(135deg, rgba(56, 189, 248, 0.08) 0%, rgba(19, 27, 46, 0.95) 100%);">
-    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 12px;">
+  <!-- Header Card with Control & Modes -->
+  <div class="card" style="margin-bottom: 14px; border-left: 4px solid var(--accent); background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(19, 27, 46, 0.95) 100%);">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
       <div>
         <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-          <span style="font-size: 1.25rem; font-weight: 800; color: var(--text-primary);">📈 TradingView Interactive Live Charts</span>
-          <span class="badge badge-green" style="background: rgba(16, 185, 129, 0.2); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.4);">LIVE PRO FEED</span>
-          <span class="badge badge-blue">REAL-TIME CANDLESTICKS</span>
+          <span style="font-size: 1.25rem; font-weight: 800; color: var(--text-primary);">📈 Real-Time Candlestick &amp; Technical Analysis Hub</span>
+          <span class="badge badge-green" id="chart-live-badge">🟢 LIVE NSE FEED</span>
+          <span class="badge badge-blue" id="chart-interval-badge">5M TIMEFRAME</span>
         </div>
         <div style="font-size: 0.80rem; color: var(--text-secondary); margin-top: 3px;">
-          Full-featured TradingView chart with EMA (9/20/50/200), RSI, Volume, drawing tools, and multi-timeframe analysis.
+          Direct Unrestricted Spot Candlesticks for NIFTY 50 &amp; BANKNIFTY powered by TradingView Charts Engine with EMA 9/20, Volume &amp; Live OHLCV.
         </div>
       </div>
 
-      <!-- Quick Web Links & Dedicated App Launchers -->
-      <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
-        <button type="button" onclick="openTradingViewAppWindow('NSE:NIFTY')" class="btn" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: white; padding: 5px 12px; font-size: 0.75rem; font-weight: 800; border: 1px solid #38bdf8; border-radius: 4px; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;" title="Open real unblocked NIFTY 50 on TradingView in dedicated app window">
-          🚀 Open Full NIFTY 50 ↗
+      <!-- Mode Switcher & Quick Launchers -->
+      <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+        <div style="display: flex; background: rgba(0,0,0,0.4); border: 1px solid var(--border); border-radius: 6px; padding: 2px;">
+          <button type="button" id="btn-chart-mode-native" onclick="setChartEngineMode('native')" class="btn" style="background: var(--accent); color: white; padding: 5px 12px; font-size: 0.75rem; font-weight: 700; border-radius: 4px; border: none; cursor: pointer;">
+            📊 Native Spot Chart (Nifty/BankNifty)
+          </button>
+          <button type="button" id="btn-chart-mode-cloud" onclick="setChartEngineMode('cloud')" class="btn" style="background: transparent; color: var(--text-secondary); padding: 5px 12px; font-size: 0.75rem; font-weight: 700; border-radius: 4px; border: none; cursor: pointer;">
+            🌐 TradingView Cloud Widget
+          </button>
+        </div>
+        <button type="button" onclick="openTradingViewAppWindow('NSE:NIFTY')" class="btn" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: white; padding: 5px 12px; font-size: 0.75rem; font-weight: 800; border: 1px solid #38bdf8; border-radius: 4px; cursor: pointer;" title="Open in separate TradingView window">
+          🚀 Open in App Window ↗
         </button>
-        <button type="button" onclick="openTradingViewAppWindow('NSE:BANKNIFTY')" class="btn" style="background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%); color: white; padding: 5px 12px; font-size: 0.75rem; font-weight: 800; border: 1px solid #a78bfa; border-radius: 4px; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;" title="Open real unblocked BANKNIFTY on TradingView in dedicated app window">
-          🏦 Open Full BANKNIFTY ↗
-        </button>
-        <a href="https://www.niftytrader.in/option-chain" target="_blank" rel="noopener noreferrer" class="btn" style="background: #1e293b; color: #f59e0b; border: 1px solid #d97706; padding: 4px 10px; font-size: 0.74rem; text-decoration: none; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px;">
-          NiftyTrader ↗
-        </a>
-        <a href="https://web.sensibull.com/option-chain" target="_blank" rel="noopener noreferrer" class="btn" style="background: #1e293b; color: #a78bfa; border: 1px solid #7c3aed; padding: 4px 10px; font-size: 0.74rem; text-decoration: none; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px;">
-          Sensibull ↗
-        </a>
-        <a href="https://chartink.com/screener" target="_blank" rel="noopener noreferrer" class="btn" style="background: #1e293b; color: #10b981; border: 1px solid #059669; padding: 4px 10px; font-size: 0.74rem; text-decoration: none; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px;">
-          Chartink ↗
-        </a>
       </div>
     </div>
 
-    <!-- Notice about NSE Licensing -->
-    <div style="font-size: 0.74rem; color: #fbbf24; background: rgba(217, 119, 6, 0.12); border: 1px solid rgba(217, 119, 6, 0.3); border-radius: 6px; padding: 7px 14px; margin-bottom: 10px; line-height: 1.5;">
-      💡 <strong>Why NSE:NIFTY shows &quot;Only available on TradingView&quot;:</strong> The National Stock Exchange of India (NSE) legally prohibits 3rd-party websites and external embeds from displaying cash index feeds (<code>NSE:NIFTY</code> &amp; <code>NSE:BANKNIFTY</code>).
-      <br>&bull; <strong>To view charts directly inside this dashboard tab:</strong> Use <strong>NIFTY BeES</strong> (mirrors Nifty 50 1:1 tick-by-tick), <strong>BANK BeES</strong> (mirrors Bank Nifty 1:1), <strong>SENSEX</strong>, or heavyweights like <strong>RELIANCE</strong>.
-      <br>&bull; <strong>To view the official spot index:</strong> Click <strong>🚀 Open Full NIFTY 50 ↗</strong> or <strong>🏦 Open Full BANKNIFTY ↗</strong> above to launch the unblocked TradingView app window!
+    <!-- Ticker Summary & OHLCV Bar (For Native Engine) -->
+    <div id="native-chart-header" style="margin-top: 10px; padding: 8px 12px; background: rgba(15, 23, 42, 0.7); border: 1px solid var(--border); border-radius: 6px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+      <div style="display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;">
+        <span id="nc-symbol-title" style="font-size: 1.15rem; font-weight: 800; color: #38bdf8;">NIFTY 50 (Spot)</span>
+        <span id="nc-current-price" style="font-size: 1.25rem; font-weight: 800; color: var(--text-primary);">₹--</span>
+        <span id="nc-price-change" style="font-size: 0.85rem; font-weight: 700; color: var(--text-secondary);">--</span>
+      </div>
+      <div style="display: flex; gap: 12px; font-size: 0.78rem; color: var(--text-secondary); font-family: monospace;" id="nc-ohlcv-bar">
+        <span>O: <strong id="nc-open" style="color: var(--text-primary);">--</strong></span>
+        <span>H: <strong id="nc-high" style="color: #10b981;">--</strong></span>
+        <span>L: <strong id="nc-low" style="color: #ef4444;">--</strong></span>
+        <span>C: <strong id="nc-close" style="color: var(--text-primary);">--</strong></span>
+        <span>Vol: <strong id="nc-vol" style="color: #cbd5e1;">--</strong></span>
+      </div>
     </div>
 
     <!-- Symbol & Timeframe Switcher Bar -->
-    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; background: rgba(0,0,0,0.25); padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border);">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 8px; background: rgba(0,0,0,0.25); padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border);">
       <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
-        <span style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 700;">Live Presets:</span>
-        <button type="button" class="btn tv-sym-btn" onclick="switchTradingViewSymbol('NSE:NIFTYBEES', this)" style="background: var(--accent); color: white; padding: 4px 11px; font-size: 0.76rem; font-weight: 700; border-radius: 4px; border: 1px solid var(--accent);">NIFTY BeES (Tracks NIFTY 50)</button>
-        <button type="button" class="btn tv-sym-btn" onclick="switchTradingViewSymbol('NSE:BANKBEES', this)" style="background: #1e293b; color: var(--text-secondary); padding: 4px 11px; font-size: 0.76rem; font-weight: 700; border-radius: 4px; border: 1px solid var(--border);">BANK BeES (Tracks BANKNIFTY)</button>
-        <button type="button" class="btn tv-sym-btn" onclick="switchTradingViewSymbol('BSE:SENSEX', this)" style="background: #1e293b; color: var(--text-secondary); padding: 4px 11px; font-size: 0.76rem; font-weight: 700; border-radius: 4px; border: 1px solid var(--border);">SENSEX</button>
-        <button type="button" class="btn tv-sym-btn" onclick="switchTradingViewSymbol('NSE:RELIANCE', this)" style="background: #1e293b; color: var(--text-secondary); padding: 4px 11px; font-size: 0.76rem; font-weight: 700; border-radius: 4px; border: 1px solid var(--border);">RELIANCE</button>
-        <button type="button" class="btn tv-sym-btn" onclick="switchTradingViewSymbol('NSE:HDFCBANK', this)" style="background: #1e293b; color: var(--text-secondary); padding: 4px 11px; font-size: 0.76rem; font-weight: 700; border-radius: 4px; border: 1px solid var(--border);">HDFCBANK</button>
+        <span style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 700;">Symbols:</span>
+        <button type="button" class="btn nc-sym-btn" onclick="selectChartSymbol('NIFTY', this)" style="background: var(--accent); color: white; padding: 4px 11px; font-size: 0.76rem; font-weight: 700; border-radius: 4px; border: 1px solid var(--accent);">NIFTY 50 (Spot)</button>
+        <button type="button" class="btn nc-sym-btn" onclick="selectChartSymbol('BANKNIFTY', this)" style="background: #1e293b; color: var(--text-secondary); padding: 4px 11px; font-size: 0.76rem; font-weight: 700; border-radius: 4px; border: 1px solid var(--border);">BANKNIFTY (Spot)</button>
+        <button type="button" class="btn nc-sym-btn" onclick="selectChartSymbol('SENSEX', this)" style="background: #1e293b; color: var(--text-secondary); padding: 4px 11px; font-size: 0.76rem; font-weight: 700; border-radius: 4px; border: 1px solid var(--border);">SENSEX</button>
+        <button type="button" class="btn nc-sym-btn" onclick="selectChartSymbol('RELIANCE', this)" style="background: #1e293b; color: var(--text-secondary); padding: 4px 11px; font-size: 0.76rem; font-weight: 700; border-radius: 4px; border: 1px solid var(--border);">RELIANCE</button>
+        <button type="button" class="btn nc-sym-btn" onclick="selectChartSymbol('HDFCBANK', this)" style="background: #1e293b; color: var(--text-secondary); padding: 4px 11px; font-size: 0.76rem; font-weight: 700; border-radius: 4px; border: 1px solid var(--border);">HDFCBANK</button>
       </div>
 
       <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+        <!-- Indicators Toggle -->
+        <label style="font-size: 0.75rem; color: #facc15; display: inline-flex; align-items: center; gap: 4px; cursor: pointer;">
+          <input type="checkbox" id="nc-toggle-ema9" checked onchange="toggleEmaLines()"> EMA 9
+        </label>
+        <label style="font-size: 0.75rem; color: #38bdf8; display: inline-flex; align-items: center; gap: 4px; cursor: pointer;">
+          <input type="checkbox" id="nc-toggle-ema20" checked onchange="toggleEmaLines()"> EMA 20
+        </label>
+
         <!-- Custom Symbol Input -->
         <div style="display: flex; gap: 4px; align-items: center;">
-          <input type="text" id="tv-custom-symbol-input" placeholder="e.g. RELIANCE" style="background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border); border-radius: 4px; padding: 4px 8px; font-size: 0.75rem; width: 130px; text-transform: uppercase;">
-          <button type="button" onclick="loadCustomTradingViewSymbol()" class="btn" style="background: var(--accent); color: white; padding: 4px 10px; font-size: 0.74rem; font-weight: 700; border: none; border-radius: 4px; cursor: pointer;">Load</button>
+          <input type="text" id="chart-custom-symbol-input" placeholder="e.g. TCS" style="background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border); border-radius: 4px; padding: 4px 8px; font-size: 0.75rem; width: 100px; text-transform: uppercase;">
+          <button type="button" onclick="loadCustomChartSymbol()" class="btn" style="background: var(--accent); color: white; padding: 4px 10px; font-size: 0.74rem; font-weight: 700; border: none; border-radius: 4px; cursor: pointer;">Load</button>
         </div>
 
         <!-- Interval buttons -->
         <span style="font-size: 0.75rem; color: var(--text-secondary); margin-left: 4px; font-weight: 700;">Timeframe:</span>
-        <button type="button" class="btn tv-int-btn" onclick="switchTradingViewInterval('1', this)" style="background: #1e293b; color: var(--text-secondary); padding: 3px 8px; font-size: 0.74rem; border-radius: 4px; border: 1px solid var(--border);">1m</button>
-        <button type="button" class="btn tv-int-btn" onclick="switchTradingViewInterval('3', this)" style="background: #1e293b; color: var(--text-secondary); padding: 3px 8px; font-size: 0.74rem; border-radius: 4px; border: 1px solid var(--border);">3m</button>
-        <button type="button" class="btn tv-int-btn" onclick="switchTradingViewInterval('5', this)" style="background: var(--accent); color: white; padding: 3px 8px; font-size: 0.74rem; border-radius: 4px; border: 1px solid var(--accent); font-weight: 700;">5m</button>
-        <button type="button" class="btn tv-int-btn" onclick="switchTradingViewInterval('15', this)" style="background: #1e293b; color: var(--text-secondary); padding: 3px 8px; font-size: 0.74rem; border-radius: 4px; border: 1px solid var(--border);">15m</button>
-        <button type="button" class="btn tv-int-btn" onclick="switchTradingViewInterval('60', this)" style="background: #1e293b; color: var(--text-secondary); padding: 3px 8px; font-size: 0.74rem; border-radius: 4px; border: 1px solid var(--border);">1h</button>
-        <button type="button" class="btn tv-int-btn" onclick="switchTradingViewInterval('D', this)" style="background: #1e293b; color: var(--text-secondary); padding: 3px 8px; font-size: 0.74rem; border-radius: 4px; border: 1px solid var(--border);">1D</button>
+        <button type="button" class="btn nc-int-btn" onclick="selectChartInterval('1m', this)" style="background: #1e293b; color: var(--text-secondary); padding: 3px 8px; font-size: 0.74rem; border-radius: 4px; border: 1px solid var(--border);">1m</button>
+        <button type="button" class="btn nc-int-btn" onclick="selectChartInterval('5m', this)" style="background: var(--accent); color: white; padding: 3px 8px; font-size: 0.74rem; border-radius: 4px; border: 1px solid var(--accent); font-weight: 700;">5m</button>
+        <button type="button" class="btn nc-int-btn" onclick="selectChartInterval('15m', this)" style="background: #1e293b; color: var(--text-secondary); padding: 3px 8px; font-size: 0.74rem; border-radius: 4px; border: 1px solid var(--border);">15m</button>
+        <button type="button" class="btn nc-int-btn" onclick="selectChartInterval('1h', this)" style="background: #1e293b; color: var(--text-secondary); padding: 3px 8px; font-size: 0.74rem; border-radius: 4px; border: 1px solid var(--border);">1h</button>
+        <button type="button" class="btn nc-int-btn" onclick="selectChartInterval('1d', this)" style="background: #1e293b; color: var(--text-secondary); padding: 3px 8px; font-size: 0.74rem; border-radius: 4px; border: 1px solid var(--border);">1D</button>
       </div>
     </div>
   </div>
 
-  <!-- Chart Embed Container -->
-  <div class="card" style="padding: 0; overflow: hidden; border-radius: 8px; border: 1px solid var(--border); height: 750px; background: #0f172a; position: relative;">
+  <!-- Native Engine Canvas Container -->
+  <div id="native-chart-wrapper" class="card" style="padding: 0; overflow: hidden; border-radius: 8px; border: 1px solid var(--border); height: 720px; background: #0f172a; position: relative;">
+    <div id="tv-native-chart-canvas" style="width: 100%; height: 100%;"></div>
+    <div id="nc-loading-overlay" style="position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(15,23,42,0.85); display: flex; align-items: center; justify-content: center; z-index: 10; color: #38bdf8; font-weight: 700; font-size: 0.95rem;">
+      ⏳ Fetching Real-Time Candlestick Feed...
+    </div>
+  </div>
+
+  <!-- TradingView Cloud Widget (Hidden by default, available on toggle) -->
+  <div id="cloud-widget-wrapper" class="card" style="display: none; padding: 0; overflow: hidden; border-radius: 8px; border: 1px solid var(--border); height: 720px; background: #0f172a; position: relative;">
     <iframe id="tv-advanced-chart-iframe" 
-            src="https://www.tradingview-widget.com/embed-widget/advanced-chart/?locale=in#%7B%22autosize%22%3Atrue%2C%22symbol%22%3A%22NSE%3ANIFTYBEES%22%2C%22interval%22%3A%225%22%2C%22timezone%22%3A%22Asia%2FKolkata%22%2C%22theme%22%3A%22dark%22%2C%22style%22%3A%221%22%2C%22locale%22%3A%22in%22%2C%22enable_publishing%22%3Afalse%2C%22allow_symbol_change%22%3Atrue%2C%22calendar%22%3Afalse%2C%22support_host%22%3A%22https%3A%2F%2Fwww.tradingview.com%22%7D" 
+            src="" 
             style="width: 100%; height: 100%; min-height: 720px; border: none; display: block;" 
             allowtransparency="true" 
             scrolling="no" 
@@ -3705,11 +3729,20 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   }
 
   // -------------------------------------------------------------
-  // TRADINGVIEW ADVANCED LIVE CHART CONTROLLER
+  // TRADINGVIEW LIVE CANDLESTICK & ADVANCED CHART CONTROLLER
   // -------------------------------------------------------------
+  let _chartEngineMode = 'native'; // 'native' (TradingView Lightweight Charts) or 'cloud' (TradingView iframe)
+  let _lwChart = null;
+  let _lwCandleSeries = null;
+  let _lwVolumeSeries = null;
+  let _lwEma9Series = null;
+  let _lwEma20Series = null;
+  let _lwSymbol = 'NIFTY';
+  let _lwInterval = '5m';
+  let _lwRefreshTimer = null;
+
   let _tvCurrentSymbol = 'NSE:NIFTYBEES';
   let _tvCurrentInterval = '5';
-  let _tvWidgetInstance = null;
 
   function openTradingViewAppWindow(symbol = 'NSE:NIFTY') {
     const symParam = encodeURIComponent(symbol);
@@ -3722,7 +3755,279 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   }
 
   function initTradingViewChart() {
-    updateTradingViewIframe();
+    if (_chartEngineMode === 'native') {
+      initNativeChart();
+    } else {
+      updateTradingViewIframe();
+    }
+  }
+
+  function setChartEngineMode(mode) {
+    _chartEngineMode = mode;
+    const btnNative = document.getElementById('btn-chart-mode-native');
+    const btnCloud = document.getElementById('btn-chart-mode-cloud');
+    const wrapNative = document.getElementById('native-chart-wrapper');
+    const wrapCloud = document.getElementById('cloud-widget-wrapper');
+    const headerNative = document.getElementById('native-chart-header');
+
+    if (mode === 'native') {
+      if (btnNative) { btnNative.style.background = 'var(--accent)'; btnNative.style.color = 'white'; }
+      if (btnCloud) { btnCloud.style.background = 'transparent'; btnCloud.style.color = 'var(--text-secondary)'; }
+      if (wrapNative) wrapNative.style.display = 'block';
+      if (wrapCloud) wrapCloud.style.display = 'none';
+      if (headerNative) headerNative.style.display = 'flex';
+      initNativeChart();
+      if (_lwChart) {
+        const c = document.getElementById('tv-native-chart-canvas');
+        if (c) _lwChart.applyOptions({ width: c.clientWidth, height: c.clientHeight });
+      }
+    } else {
+      if (btnNative) { btnNative.style.background = 'transparent'; btnNative.style.color = 'var(--text-secondary)'; }
+      if (btnCloud) { btnCloud.style.background = 'var(--accent)'; btnCloud.style.color = 'white'; }
+      if (wrapNative) wrapNative.style.display = 'none';
+      if (wrapCloud) wrapCloud.style.display = 'block';
+      if (headerNative) headerNative.style.display = 'none';
+      updateTradingViewIframe();
+    }
+  }
+
+  function calculateEMA(data, period) {
+    const k = 2 / (period + 1);
+    let emaArray = [];
+    let prevEma = null;
+    for (let i = 0; i < data.length; i++) {
+      const val = data[i].close;
+      if (i < period - 1) {
+        // waiting for enough bars
+      } else if (i === period - 1) {
+        let sum = 0;
+        for (let j = 0; j < period; j++) sum += data[j].close;
+        prevEma = sum / period;
+        emaArray.push({ time: data[i].time, value: Math.round(prevEma * 100) / 100 });
+      } else {
+        prevEma = (val - prevEma) * k + prevEma;
+        emaArray.push({ time: data[i].time, value: Math.round(prevEma * 100) / 100 });
+      }
+    }
+    return emaArray;
+  }
+
+  function updateOhlcvDisplay(o, h, l, c, v) {
+    const elO = document.getElementById('nc-open');
+    const elH = document.getElementById('nc-high');
+    const elL = document.getElementById('nc-low');
+    const elC = document.getElementById('nc-close');
+    const elV = document.getElementById('nc-vol');
+    if (elO) elO.innerText = Number(o || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 });
+    if (elH) elH.innerText = Number(h || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 });
+    if (elL) elL.innerText = Number(l || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 });
+    if (elC) elC.innerText = Number(c || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 });
+    if (elV) elV.innerText = Number(v || 0).toLocaleString('en-IN');
+  }
+
+  function toggleEmaLines() {
+    const show9 = document.getElementById('nc-toggle-ema9')?.checked;
+    const show20 = document.getElementById('nc-toggle-ema20')?.checked;
+    if (_lwEma9Series) _lwEma9Series.applyOptions({ visible: !!show9 });
+    if (_lwEma20Series) _lwEma20Series.applyOptions({ visible: !!show20 });
+  }
+
+  function initNativeChart() {
+    const container = document.getElementById('tv-native-chart-canvas');
+    if (!container) return;
+    if (typeof LightweightCharts === 'undefined') {
+      setTimeout(initNativeChart, 250);
+      return;
+    }
+    if (!_lwChart) {
+      _lwChart = LightweightCharts.createChart(container, {
+        width: container.clientWidth || 1000,
+        height: container.clientHeight || 700,
+        layout: {
+          background: { color: '#0f172a' },
+          textColor: '#94a3b8',
+          fontSize: 12,
+        },
+        grid: {
+          vertLines: { color: 'rgba(30, 41, 59, 0.5)' },
+          horzLines: { color: 'rgba(30, 41, 59, 0.5)' },
+        },
+        crosshair: {
+          mode: LightweightCharts.CrosshairMode.Normal,
+        },
+        rightPriceScale: {
+          borderColor: '#1e293b',
+          scaleMargins: { top: 0.1, bottom: 0.22 },
+        },
+        timeScale: {
+          borderColor: '#1e293b',
+          timeVisible: true,
+          secondsVisible: false,
+        },
+      });
+
+      _lwCandleSeries = _lwChart.addCandlestickSeries({
+        upColor: '#10b981',
+        downColor: '#ef4444',
+        borderUpColor: '#10b981',
+        borderDownColor: '#ef4444',
+        wickUpColor: '#10b981',
+        wickDownColor: '#ef4444',
+      });
+
+      _lwVolumeSeries = _lwChart.addHistogramSeries({
+        color: '#38bdf8',
+        priceFormat: { type: 'volume' },
+        priceScaleId: '',
+        scaleMargins: { top: 0.82, bottom: 0 },
+      });
+
+      _lwEma9Series = _lwChart.addLineSeries({
+        color: '#facc15',
+        lineWidth: 2,
+        title: 'EMA 9',
+      });
+
+      _lwEma20Series = _lwChart.addLineSeries({
+        color: '#38bdf8',
+        lineWidth: 2,
+        title: 'EMA 20',
+      });
+
+      _lwChart.subscribeCrosshairMove(param => {
+        if (!param || !param.time || !param.seriesData) return;
+        const candle = param.seriesData.get(_lwCandleSeries);
+        const vol = param.seriesData.get(_lwVolumeSeries);
+        if (candle) {
+          updateOhlcvDisplay(candle.open, candle.high, candle.low, candle.close, vol ? vol.value : 0);
+        }
+      });
+
+      window.addEventListener('resize', () => {
+        if (_lwChart && container) {
+          _lwChart.applyOptions({ width: container.clientWidth, height: container.clientHeight });
+        }
+      });
+    }
+
+    fetchNativeCandles();
+    if (_lwRefreshTimer) clearInterval(_lwRefreshTimer);
+    _lwRefreshTimer = setInterval(fetchNativeCandles, 15000);
+  }
+
+  async function fetchNativeCandles() {
+    const overlay = document.getElementById('nc-loading-overlay');
+    try {
+      const res = await fetch(`/api/chart/candles?symbol=${encodeURIComponent(_lwSymbol)}&interval=${encodeURIComponent(_lwInterval)}`);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const data = await res.json();
+      if (data.status !== 'ok' || !data.candles || data.candles.length === 0) {
+        throw new Error(data.error || 'No candle records');
+      }
+
+      if (overlay) overlay.style.display = 'none';
+
+      const candles = data.candles.map(c => ({
+        time: c.time,
+        open: c.open,
+        high: c.high,
+        low: c.low,
+        close: c.close
+      }));
+
+      const volumes = data.candles.map(c => ({
+        time: c.time,
+        value: c.volume || 0,
+        color: c.close >= c.open ? 'rgba(16, 185, 129, 0.4)' : 'rgba(239, 68, 68, 0.4)'
+      }));
+
+      _lwCandleSeries.setData(candles);
+      _lwVolumeSeries.setData(volumes);
+
+      const ema9 = calculateEMA(candles, 9);
+      const ema20 = calculateEMA(candles, 20);
+      _lwEma9Series.setData(ema9);
+      _lwEma20Series.setData(ema20);
+
+      const last = candles[candles.length - 1];
+      const prev = data.previousClose || candles[0].open;
+      const diff = last.close - prev;
+      const pct = prev > 0 ? ((diff / prev) * 100).toFixed(2) : '0.00';
+      const symTitle = data.symbol === 'NIFTY' ? 'NIFTY 50 (Spot)' : (data.symbol === 'BANKNIFTY' ? 'BANKNIFTY (Spot)' : data.symbol);
+
+      const titleEl = document.getElementById('nc-symbol-title');
+      const priceEl = document.getElementById('nc-current-price');
+      const changeEl = document.getElementById('nc-price-change');
+
+      if (titleEl) titleEl.innerText = symTitle;
+      if (priceEl) priceEl.innerText = '₹' + last.close.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+      if (changeEl) {
+        changeEl.innerText = (diff >= 0 ? '+' : '') + diff.toFixed(2) + ' (' + (diff >= 0 ? '+' : '') + pct + '%)';
+        changeEl.style.color = diff >= 0 ? '#10b981' : '#ef4444';
+      }
+
+      updateOhlcvDisplay(last.open, last.high, last.low, last.close, data.candles[data.candles.length - 1].volume || 0);
+    } catch (err) {
+      console.error('Error fetching candles:', err);
+      if (overlay) {
+        overlay.style.display = 'flex';
+        overlay.innerHTML = `<span style="color:#ef4444;">⚠️ Candlestick Feed Error: ${err.message}. Retrying in 15s...</span>`;
+      }
+    }
+  }
+
+  function selectChartSymbol(sym, btn) {
+    _lwSymbol = sym;
+    _tvCurrentSymbol = sym === 'NIFTY' ? 'NSE:NIFTYBEES' : (sym === 'BANKNIFTY' ? 'NSE:BANKBEES' : (sym.includes(':') ? sym : 'NSE:' + sym));
+    document.querySelectorAll('.nc-sym-btn').forEach(b => {
+      b.style.background = '#1e293b';
+      b.style.color = 'var(--text-secondary)';
+      b.style.border = '1px solid var(--border)';
+    });
+    if (btn) {
+      btn.style.background = 'var(--accent)';
+      btn.style.color = 'white';
+      btn.style.border = '1px solid var(--accent)';
+    }
+    const overlay = document.getElementById('nc-loading-overlay');
+    if (overlay && _chartEngineMode === 'native') overlay.style.display = 'flex';
+    if (_chartEngineMode === 'native') {
+      fetchNativeCandles();
+    } else {
+      updateTradingViewIframe();
+    }
+  }
+
+  function selectChartInterval(intv, btn) {
+    _lwInterval = intv;
+    const tvMap = { '1m': '1', '5m': '5', '15m': '15', '1h': '60', '1d': 'D' };
+    _tvCurrentInterval = tvMap[intv] || '5';
+    document.querySelectorAll('.nc-int-btn').forEach(b => {
+      b.style.background = '#1e293b';
+      b.style.color = 'var(--text-secondary)';
+      b.style.border = '1px solid var(--border)';
+      b.style.fontWeight = 'normal';
+    });
+    if (btn) {
+      btn.style.background = 'var(--accent)';
+      btn.style.color = 'white';
+      btn.style.border = '1px solid var(--accent)';
+      btn.style.fontWeight = '700';
+    }
+    const intvBadge = document.getElementById('chart-interval-badge');
+    if (intvBadge) intvBadge.innerText = intv.toUpperCase() + ' TIMEFRAME';
+    if (_chartEngineMode === 'native') {
+      fetchNativeCandles();
+    } else {
+      updateTradingViewIframe();
+    }
+  }
+
+  function loadCustomChartSymbol() {
+    const input = document.getElementById('chart-custom-symbol-input');
+    if (!input || !input.value.trim()) return;
+    const sym = input.value.trim().toUpperCase();
+    selectChartSymbol(sym, null);
   }
 
   function updateTradingViewIframe() {
@@ -3745,60 +4050,6 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     if (iframe.src !== targetUrl) {
       iframe.src = targetUrl;
     }
-  }
-
-  function switchTradingViewSymbol(symbol, btn) {
-    _tvCurrentSymbol = symbol;
-    document.querySelectorAll('.tv-sym-btn').forEach(b => {
-      b.style.background = '#1e293b';
-      b.style.color = 'var(--text-secondary)';
-      b.style.border = '1px solid var(--border)';
-    });
-    if (btn) {
-      btn.style.background = 'var(--accent)';
-      btn.style.color = 'white';
-      btn.style.border = '1px solid var(--accent)';
-    }
-    updateTradingViewIframe();
-  }
-
-  function switchTradingViewInterval(interval, btn) {
-    _tvCurrentInterval = interval;
-    document.querySelectorAll('.tv-int-btn').forEach(b => {
-      b.style.background = '#1e293b';
-      b.style.color = 'var(--text-secondary)';
-      b.style.border = '1px solid var(--border)';
-      b.style.fontWeight = 'normal';
-    });
-    if (btn) {
-      btn.style.background = 'var(--accent)';
-      btn.style.color = 'white';
-      btn.style.border = '1px solid var(--accent)';
-      btn.style.fontWeight = '700';
-    }
-    updateTradingViewIframe();
-  }
-
-  function loadCustomTradingViewSymbol() {
-    const input = document.getElementById('tv-custom-symbol-input');
-    if (!input || !input.value.trim()) return;
-    let sym = input.value.trim().toUpperCase();
-    if (sym === 'NIFTY' || sym === 'NSE:NIFTY') {
-      alert('Note: NSE explicitly blocks raw cash index "NSE:NIFTY" inside embedded iframes. Switching to "NSE:NIFTYBEES" (which mirrors NIFTY 50 spot tick-by-tick). To view the official unblocked index, click "🚀 Open Full NIFTY 50 ↗" above.');
-      sym = 'NSE:NIFTYBEES';
-    } else if (sym === 'BANKNIFTY' || sym === 'NSE:BANKNIFTY') {
-      alert('Note: NSE explicitly blocks raw cash index "NSE:BANKNIFTY" inside embedded iframes. Switching to "NSE:BANKBEES" (which mirrors BANKNIFTY spot tick-by-tick). To view the official unblocked index, click "🏦 Open Full BANKNIFTY ↗" above.');
-      sym = 'NSE:BANKBEES';
-    } else if (!sym.includes(':')) {
-      sym = 'NSE:' + sym;
-    }
-    _tvCurrentSymbol = sym;
-    document.querySelectorAll('.tv-sym-btn').forEach(b => {
-      b.style.background = '#1e293b';
-      b.style.color = 'var(--text-secondary)';
-      b.style.border = '1px solid var(--border)';
-    });
-    updateTradingViewIframe();
   }
 
   function filterSpotTable(sym) {
@@ -4365,6 +4616,111 @@ class DashboardHTTPRequestHandler(BaseHTTPRequestHandler):
                 self.send_header("Content-Type", "application/json")
                 self.end_headers()
                 self.wfile.write(json.dumps({"error": str(ex)}).encode("utf-8"))
+            return
+        elif self.path.startswith("/api/chart/candles"):
+            try:
+                from urllib.parse import parse_qs, urlparse
+                parsed = urlparse(self.path)
+                params = parse_qs(parsed.query)
+                sym = params.get("symbol", ["NIFTY"])[0].upper().strip()
+                intv = params.get("interval", ["5m"])[0].strip()
+                rng = params.get("range", [""])[0].strip()
+
+                valid_intervals = {"1m", "2m", "5m", "15m", "30m", "60m", "1h", "1d"}
+                if intv not in valid_intervals:
+                    intv = "5m"
+
+                if not rng:
+                    if intv in {"1m", "2m"}:
+                        rng = "1d"
+                    elif intv in {"5m", "15m", "30m"}:
+                        rng = "5d"
+                    elif intv in {"60m", "1h"}:
+                        rng = "1mo"
+                    elif intv == "1d":
+                        rng = "6mo"
+
+                ticker_map = {
+                    "NIFTY": "^NSEI",
+                    "NIFTY50": "^NSEI",
+                    "NIFTY 50": "^NSEI",
+                    "NSE:NIFTY": "^NSEI",
+                    "BANKNIFTY": "^NSEBANK",
+                    "BANK NIFTY": "^NSEBANK",
+                    "NSE:BANKNIFTY": "^NSEBANK",
+                    "SENSEX": "^BSESN",
+                    "BSE:SENSEX": "^BSESN",
+                    "RELIANCE": "RELIANCE.NS",
+                    "NSE:RELIANCE": "RELIANCE.NS",
+                    "HDFCBANK": "HDFCBANK.NS",
+                    "NSE:HDFCBANK": "HDFCBANK.NS",
+                    "TCS": "TCS.NS",
+                    "INFY": "INFY.NS",
+                    "ICICIBANK": "ICICIBANK.NS",
+                    "SBIN": "SBIN.NS",
+                }
+                ticker = ticker_map.get(sym)
+                if not ticker:
+                    if sym.startswith("NSE:"):
+                        ticker = sym[4:] + ".NS"
+                    elif sym.startswith("BSE:"):
+                        ticker = sym[4:] + ".BO"
+                    elif "." not in sym and "^" not in sym:
+                        ticker = sym + ".NS"
+                    else:
+                        ticker = sym
+
+                url = f"https://query1.finance.yahoo.com/v8/finance/chart/{ticker}?interval={intv}&range={rng}"
+                req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"})
+                with urllib.request.urlopen(req, timeout=10) as resp:
+                    raw_data = json.loads(resp.read().decode("utf-8"))
+                    result = raw_data["chart"]["result"][0]
+                    meta = result.get("meta", {})
+                    timestamps = result.get("timestamp", [])
+                    quotes = result.get("indicators", {}).get("quote", [{}])[0]
+                    opens = quotes.get("open", [])
+                    highs = quotes.get("high", [])
+                    lows = quotes.get("low", [])
+                    closes = quotes.get("close", [])
+                    volumes = quotes.get("volume", [])
+                    candles = []
+                    for i in range(len(timestamps)):
+                        t = timestamps[i]
+                        o = opens[i] if i < len(opens) else None
+                        h = highs[i] if i < len(highs) else None
+                        l = lows[i] if i < len(lows) else None
+                        c = closes[i] if i < len(closes) else None
+                        v = volumes[i] if i < len(volumes) else 0
+                        if o is not None and h is not None and l is not None and c is not None:
+                            candles.append({
+                                "time": t,
+                                "open": round(o, 2),
+                                "high": round(h, 2),
+                                "low": round(l, 2),
+                                "close": round(c, 2),
+                                "volume": v or 0
+                            })
+                    payload = {
+                        "status": "ok",
+                        "symbol": sym,
+                        "ticker": ticker,
+                        "interval": intv,
+                        "range": rng,
+                        "currency": meta.get("currency", "INR"),
+                        "regularMarketPrice": meta.get("regularMarketPrice", candles[-1]["close"] if candles else 0),
+                        "previousClose": meta.get("chartPreviousClose") or meta.get("previousClose") or (candles[0]["open"] if candles else 0),
+                        "candles": candles
+                    }
+                    self.send_response(200)
+                    self.send_header("Content-Type", "application/json")
+                    self.send_header("Cache-Control", "no-cache")
+                    self.end_headers()
+                    self.wfile.write(json.dumps(payload).encode("utf-8"))
+            except Exception as ex:
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": "error", "error": str(ex)}).encode("utf-8"))
             return
         elif self.path == "/" or self.path == "/index.html":
             self.send_response(200)
