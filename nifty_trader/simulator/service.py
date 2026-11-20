@@ -271,6 +271,15 @@ class SimulatorBackgroundService:
             self.recent_trades = loaded
             net_total = sum(t.net_pnl for t in loaded)
             self.current_capital = round(self.initial_capital + net_total, 2)
+
+            # 3. Load Open Active Position
+            try:
+                pos_row = conn.execute("SELECT data FROM sim_active_position WHERE id = 1").fetchone()
+                if pos_row and pos_row["data"]:
+                    pos_data = json.loads(pos_row["data"])
+                    self.active_position = OptionPosition(**pos_data)
+            except Exception as pos_err:
+                logger.debug("Active position load fallback: %s", pos_err)
         finally:
             conn.close()
 
@@ -748,6 +757,81 @@ class SimulatorBackgroundService:
                 )
 
         self.update_report_files()
+
+    def update_active_position_with_spot(
+        self,
+        symbol: str,
+        spot_price: float,
+        high: Optional[float] = None,
+        low: Optional[float] = None,
+    ) -> Optional[TradeResult]:
+        """
+        Updates live MTM P&L, current premium, and evaluates Stop Loss / Target
+        for the currently open option position using latest spot market data.
+        """
+        if self.active_position is None:
+            return None
+
+        # Check symbol match (e.g. NIFTY 50 vs NIFTY)
+        pos_sym = self.active_position.symbol.strip().upper()
+        upd_sym = symbol.strip().upper()
+        if pos_sym != upd_sym and not (("NIFTY" in pos_sym and "BANK" not in pos_sym) and ("NIFTY" in upd_sym and "BANK" not in upd_sym)):
+            if not ("BANK" in pos_sym and "BANK" in upd_sym):
+                return None
+
+        is_ce = (self.active_position.option_type == "CE")
+        delta = 0.50 if is_ce else -0.50
+        spot_move = (spot_price - self.active_position.entry_spot) * delta
+        current_prem = max(1.0, round(self.active_position.entry_premium + spot_move, 2))
+
+        self.active_position.current_premium = current_prem
+        self.active_position.mtm_pnl = round(
+            (current_prem - self.active_position.entry_premium) * self.active_position.qty, 2
+        )
+
+        # Check trailing SL
+        if self.active_position.trailing_sl and current_prem > self.active_position.highest_premium:
+            gain = current_prem - self.active_position.highest_premium
+            if gain >= self.active_position.trail_step:
+                self.active_position.highest_premium = current_prem
+                self.active_position.sl_price = max(
+                    self.active_position.sl_price,
+                    round(current_prem - self.active_position.trail_step, 2)
+                )
+
+        # Evaluate Exit: Check SL and Target
+        exit_reason = None
+        exit_price = current_prem
+        if current_prem <= self.active_position.sl_price:
+            exit_reason = ExitReason.STOP_LOSS
+            exit_price = self.active_position.sl_price
+        elif current_prem >= self.active_position.target_price:
+            exit_reason = ExitReason.TARGET
+            exit_price = self.active_position.target_price
+
+        if exit_reason:
+            sim = NiftyOptionSimulator(lot_size=self.lot_size, default_lots=self.lots)
+            candle_series = pd.Series({
+                "time_str": datetime.now(timezone.utc).strftime("%H:%M"),
+                "date": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+                "spot_close": spot_price,
+            })
+            exit_res = sim._execute_exit(
+                self.active_position,
+                candle_series,
+                exit_price,
+                exit_reason,
+                getattr(self.active_position, "rule_name", "Level_Strategy"),
+            )
+            self._save_trade(exit_res)
+            self.active_position = None
+            self._save_active_pos(None)
+            self.last_chart_verdict = f"POSITION CLOSED: {exit_res.exit_reason.value} (Net P&L: Rs. {exit_res.net_pnl:+,.2f})"
+            self.update_report_files()
+            return exit_res
+        else:
+            self._save_active_pos(self.active_position)
+            return None
 
     def _save_trade(self, t: TradeResult):
         """Persists completed trade to SQLite, appends to log, and updates markdown report."""

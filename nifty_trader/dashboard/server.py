@@ -4288,8 +4288,10 @@ class DashboardHTTPRequestHandler(BaseHTTPRequestHandler):
             try:
                 from nifty_trader.simulator.level_strategy import get_level_strategy_manager
                 from nifty_trader.market_data.spot_service import get_spot_service
+                from nifty_trader.simulator.service import get_simulator_service
                 spot_data = get_spot_service().latest_spots
                 mgr = get_level_strategy_manager()
+                sim_svc = get_simulator_service()
                 all_exec = []
                 for sym, rec in spot_data.items():
                     events = mgr.evaluate_spot_update(
@@ -4300,6 +4302,12 @@ class DashboardHTTPRequestHandler(BaseHTTPRequestHandler):
                         day_open=rec.get("open_price"),
                     )
                     all_exec.extend(events)
+                    sim_svc.update_active_position_with_spot(
+                        symbol=sym,
+                        spot_price=rec["spot_price"],
+                        high=rec.get("high_price"),
+                        low=rec.get("low_price"),
+                    )
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json")
                 self.end_headers()

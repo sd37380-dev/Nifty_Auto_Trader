@@ -386,6 +386,20 @@ class NSESpotService:
         except Exception as lvl_err:
             logger.debug("Level trigger evaluation notice: %s", lvl_err)
 
+        # Update open simulator active position MTM & SL/Target with latest spot prices
+        try:
+            from nifty_trader.simulator.service import get_simulator_service
+            sim_svc = get_simulator_service()
+            for sym, rec in records.items():
+                sim_svc.update_active_position_with_spot(
+                    symbol=sym,
+                    spot_price=rec["spot_price"],
+                    high=rec.get("high_price"),
+                    low=rec.get("low_price"),
+                )
+        except Exception as sim_err:
+            logger.debug("Sim active position spot update notice: %s", sim_err)
+
         logger.info(
             "Multi-instrument spot fetched (%s): NIFTY=₹%.2f, BANKNIFTY=₹%.2f, GIFT=₹%.2f",
             tag,

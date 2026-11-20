@@ -324,63 +324,15 @@ class LevelStrategyManager:
                         level_price=lvl,
                         condition=cond,
                         trigger_reason=trigger_reason,
-                        action_note=f"Trade criteria matched for {trig.option_type}. Armed 15-minute countdown before auto-execution.",
+                        action_note=f"Trade criteria matched for {trig.option_type}. Auto-executing paper trade immediately in simulator.",
                     )
                 except Exception as tele_err:
                     logger.debug("Telegram level alert skipped: %s", tele_err)
 
-                # 2. Arm 15-minute confirmation countdown trade (explained to Telegram & auto-executed in 15 min)
-                try:
-                    from nifty_trader.notifications.telegram_service import get_pending_trade_manager
-                    mgr = get_pending_trade_manager(self.root_dir)
-                    step = 100 if "BANK" in trig.instrument else 50
-                    strike = int(round(spot_price / step) * step) if trig.strike_mode == "ATM" else int(float(trig.strike_mode))
-                    pct_factor = 0.006 if "BANK" in trig.instrument else 0.0075
-                    base_prem = round(spot_price * pct_factor, 2)
-                    sl_pts = trig.sl_val if trig.sl_type == "POINTS" else 20.0
-                    tgt_pts = trig.target_val if trig.target_type == "POINTS" else 40.0
-
-                    reasoning_text = (
-                        f"Spot price reached key technical level ₹{lvl:,.2f} on {trig.instrument} satisfying condition '{cond}'.\n"
-                        f"Breakout context: {trigger_reason}.\n"
-                        f"Execution Strategy: Buying {trig.strike_mode} {strike} {trig.option_type} with 1:2 risk-reward ratio."
-                    )
-
-                    pending_info = mgr.arm_trade(
-                        symbol=trig.instrument,
-                        strike=strike,
-                        option_type=trig.option_type,
-                        lots=trig.lots,
-                        premium=base_prem,
-                        spot_price=spot_price,
-                        sl_points=sl_pts,
-                        target_points=tgt_pts,
-                        reasoning=reasoning_text,
-                    )
-
-                    trig.status = "TRIGGERED"
-                    trig.triggered_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
-                    trig.executed_trade_id = pending_info["pending_id"]
-                    executed_events.append(pending_info)
-
-                    # Persist status to SQLite
-                    conn = sqlite3.connect(str(self.db_path))
-                    try:
-                        with conn:
-                            conn.execute("""
-                                UPDATE level_triggers
-                                SET status='TRIGGERED', triggered_at=?, executed_trade_id=?
-                                WHERE trigger_id=?
-                            """, (trig.triggered_at, trig.executed_trade_id, trig.trigger_id))
-                    except Exception as db_err:
-                        logger.warning("Could not persist trigger status in DB: %s", db_err)
-                    finally:
-                        conn.close()
-                except Exception as arm_err:
-                    logger.warning("Error arming 15m pending trade, falling back to direct exec: %s", arm_err)
-                    exec_info = self._execute_level_trade(trig, spot_price, trigger_reason)
-                    if exec_info:
-                        executed_events.append(exec_info)
+                # 2. Directly execute trade into simulator
+                exec_info = self._execute_level_trade(trig, spot_price, trigger_reason)
+                if exec_info:
+                    executed_events.append(exec_info)
 
         return executed_events
 
@@ -489,6 +441,13 @@ class LevelStrategyManager:
                     """, (now_str, trade_id, trig.trigger_id))
             finally:
                 conn.close()
+
+            # Dual persistence: sync updated trigger state to Supabase Cloud
+            try:
+                from nifty_trader.core.supabase_adapter import get_supabase_adapter
+                get_supabase_adapter(self.root_dir).sync_level_trigger(asdict(trig))
+            except Exception:
+                pass
 
             log_msg = (
                 f"[{now_str}] 🎯 [CUSTOM LEVEL STRATEGY TRIGGERED] Trigger '{trig.trigger_id}' hit! "
