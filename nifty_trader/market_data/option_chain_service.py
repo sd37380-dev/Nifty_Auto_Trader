@@ -18,6 +18,7 @@ from datetime import datetime, timedelta, timezone
 import json
 import logging
 import math
+import os
 from pathlib import Path
 import threading
 import time
@@ -73,6 +74,40 @@ class NSEOptionChainService:
             logger.debug("Could not refresh NSE cookies: %s", e)
         return False
 
+    def fetch_live_chain_from_niftytrader(self, symbol: str = "NIFTY") -> Optional[Dict[str, Any]]:
+        """
+        Fetches live option chain from NiftyTrader Web API using Bearer Token & x-api-key.
+        """
+        sym = "banknifty" if "BANK" in symbol.upper() else "nifty"
+        url = f"https://webapi.niftytrader.in/webapi/option/option-chain-data?symbol={sym}&exchange=nse"
+
+        bearer_token = os.getenv("NIFTYTRADER_BEARER_TOKEN", "").strip()
+        api_key = os.getenv("NIFTYTRADER_API_KEY", "").strip()
+
+        headers = {
+            "Authorization": f"Bearer {bearer_token}",
+            "x-api-key": api_key,
+            "Accept": "application/json, text/plain, */*",
+            "Accept-Encoding": "gzip, deflate",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36",
+            "Referer": "https://www.niftytrader.in/",
+            "Origin": "https://www.niftytrader.in",
+        }
+
+        try:
+            resp = self.client.get(url, headers=headers)
+            if resp.status_code == 200:
+                data = resp.json()
+                if data.get("result") == 1 and data.get("resultData"):
+                    return data["resultData"]
+                else:
+                    logger.warning("NiftyTrader API returned non-success: %s", data.get("resultMessage"))
+            else:
+                logger.warning("NiftyTrader API HTTP %d", resp.status_code)
+        except Exception as ex:
+            logger.warning("NiftyTrader API query error: %s", ex)
+        return None
+
     def fetch_live_chain_from_nse(self, symbol: str = "NIFTY") -> Optional[Dict[str, Any]]:
         """Attempts to fetch raw option chain from official NSE API."""
         sym = "NIFTY" if "BANK" not in symbol.upper() else "BANKNIFTY"
@@ -119,7 +154,7 @@ class NSEOptionChainService:
         self,
         symbol: str = "NIFTY",
         spot_price: Optional[float] = None,
-        strike_count: int = 15,
+        strike_count: int = 7,
     ) -> Dict[str, Any]:
         """
         Generates deterministic, highly realistic option chain based on current spot
@@ -262,7 +297,19 @@ class NSEOptionChainService:
         if not force_refresh and sym in self._cache and (now - self._cache_time.get(sym, 0) < 15.0):
             return self._cache[sym]
 
-        # 1. Try Live NSE Fetch
+        # 1. Try Live NiftyTrader Web API Fetch (Real Live Option Matrix with Greeks & Full Depth)
+        nt_raw = self.fetch_live_chain_from_niftytrader(sym)
+        if nt_raw and "opDatas" in nt_raw and len(nt_raw["opDatas"]) > 0:
+            try:
+                processed = self._process_niftytrader_raw_data(nt_raw, sym, expiry)
+                if processed and len(processed.get("strikes", [])) > 0:
+                    self._cache[sym] = processed
+                    self._cache_time[sym] = now
+                    return processed
+            except Exception as e:
+                logger.warning("Failed processing NiftyTrader live data: %s", e)
+
+        # 2. Try Live NSE Fetch
         raw = self.fetch_live_chain_from_nse(sym)
         if raw and "records" in raw and "data" in raw["records"]:
             try:
@@ -274,11 +321,201 @@ class NSEOptionChainService:
             except Exception as e:
                 logger.debug("Failed processing live NSE data: %s", e)
 
-        # 2. Fallback to Real-Spot Option Pricing Matrix
+        # 3. Fallback to Real-Spot Option Pricing Matrix
         synthetic = self.generate_synthetic_option_chain(sym)
         self._cache[sym] = synthetic
         self._cache_time[sym] = now
         return synthetic
+
+    def _process_niftytrader_raw_data(
+        self,
+        raw_data: Dict[str, Any],
+        symbol: str,
+        target_expiry: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """
+        Transforms live NiftyTrader Web API option chain into structured dashboard representation.
+        """
+        op_datas = raw_data.get("opDatas", [])
+        if not op_datas:
+            return {}
+
+        op_totals = raw_data.get("opTotals", {}).get("total_calls_puts", {})
+        is_bank = "BANK" in symbol.upper()
+        step = 100 if is_bank else 50
+
+        # Extract spot price from first strike record or fallback to spot service
+        spot = 0.0
+        for item in op_datas:
+            if item.get("index_close"):
+                spot = float(item["index_close"])
+                break
+        if spot <= 0:
+            spot = self.get_current_spot(symbol)
+
+        atm_strike = int(round(spot / step) * step)
+
+        # Expiry formatting
+        expiry_raw = op_datas[0].get("expiry_date", "")
+        try:
+            exp_dt = datetime.fromisoformat(expiry_raw.replace("Z", ""))
+            expiry_str = exp_dt.strftime("%d-%b-%Y").upper()
+        except Exception:
+            expiry_str = expiry_raw[:10] if expiry_raw else "CURRENT"
+
+        # Total Open Interest
+        total_call_oi = int(op_totals.get("total_calls_oi") or sum(int(r.get("calls_oi") or 0) for r in op_datas))
+        total_put_oi = int(op_totals.get("total_puts_oi") or sum(int(r.get("puts_oi") or 0) for r in op_datas))
+
+        # PCR & Sentiment
+        pcr = round(total_put_oi / max(1, total_call_oi), 2)
+        sentiment = (
+            "BULLISH (Put Writing Strong)"
+            if pcr > 1.15
+            else ("BEARISH (Call Writing Heavy)" if pcr < 0.85 else "NEUTRAL (Rangebound)")
+        )
+
+        # Calculate Max Pain across all available strikes
+        min_loss = float("inf")
+        max_pain_strike = atm_strike
+        for cand in op_datas:
+            c_strike = float(cand.get("strike_price") or 0)
+            if c_strike <= 0:
+                continue
+            loss = 0.0
+            for it in op_datas:
+                s = float(it.get("strike_price") or 0)
+                c_oi = float(it.get("calls_oi") or 0)
+                p_oi = float(it.get("puts_oi") or 0)
+                if s < c_strike:
+                    loss += (c_strike - s) * c_oi
+                elif s > c_strike:
+                    loss += (s - c_strike) * p_oi
+            if loss < min_loss:
+                min_loss = loss
+                max_pain_strike = int(c_strike)
+
+        # Sort strikes by strike_price and slice strictly ATM ± 7 strikes (15 strikes total)
+        sorted_datas = sorted(op_datas, key=lambda x: float(x.get("strike_price") or 0))
+
+        # Find closest strike to ATM
+        atm_index = 0
+        min_atm_diff = float("inf")
+        for i, row in enumerate(sorted_datas):
+            strike_val = float(row.get("strike_price") or 0)
+            diff = abs(strike_val - atm_strike)
+            if diff < min_atm_diff:
+                min_atm_diff = diff
+                atm_index = i
+
+        start_idx = max(0, atm_index - 7)
+        end_idx = min(len(sorted_datas), atm_index + 8)
+        selected_datas = sorted_datas[start_idx:end_idx]
+
+        strikes_data: List[Dict[str, Any]] = []
+
+        for row in selected_datas:
+            strike = int(float(row.get("strike_price") or 0))
+            if strike <= 0:
+                continue
+
+            is_atm = (strike == atm_strike)
+            ce_ltp = float(row.get("calls_ltp") or 0.0)
+            pe_ltp = float(row.get("puts_ltp") or 0.0)
+            ce_chg = float(row.get("calls_net_change") or 0.0)
+            pe_chg = float(row.get("puts_net_change") or 0.0)
+            ce_oi = int(row.get("calls_oi") or 0)
+            pe_oi = int(row.get("puts_oi") or 0)
+            ce_chg_oi = int(row.get("calls_change_oi") or 0)
+            pe_chg_oi = int(row.get("puts_change_oi") or 0)
+
+            # Strike level PCR
+            strike_pcr = float(row.get("pcr") or (pe_oi / ce_oi if ce_oi > 0 else 0.0))
+
+            ce_builtup = str(row.get("calls_builtup") or "").strip()
+            pe_builtup = str(row.get("puts_builtup") or "").strip()
+
+            if not ce_builtup or ce_builtup.lower() in ("no conclusion", "none", "null", "--", ""):
+                if ce_chg > 0 and ce_chg_oi > 0:
+                    ce_builtup = "Long Buildup"
+                elif ce_chg < 0 and ce_chg_oi > 0:
+                    ce_builtup = "Short Buildup"
+                elif ce_chg > 0 and ce_chg_oi < 0:
+                    ce_builtup = "Short Covering"
+                elif ce_chg < 0 and ce_chg_oi < 0:
+                    ce_builtup = "Long Unwinding"
+                else:
+                    ce_builtup = "Neutral"
+
+            if not pe_builtup or pe_builtup.lower() in ("no conclusion", "none", "null", "--", ""):
+                if pe_chg > 0 and pe_chg_oi > 0:
+                    pe_builtup = "Long Buildup"
+                elif pe_chg < 0 and pe_chg_oi > 0:
+                    pe_builtup = "Short Buildup"
+                elif pe_chg > 0 and pe_chg_oi < 0:
+                    pe_builtup = "Short Covering"
+                elif pe_chg < 0 and pe_chg_oi < 0:
+                    pe_builtup = "Long Unwinding"
+                else:
+                    pe_builtup = "Neutral"
+
+            strikes_data.append({
+                "strike": strike,
+                "is_atm": is_atm,
+                "pcr": round(strike_pcr, 2),
+                "ce": {
+                    "ltp": ce_ltp,
+                    "change": ce_chg,
+                    "oi": ce_oi,
+                    "change_in_oi": ce_chg_oi,
+                    "volume": int(row.get("calls_volume") or 0),
+                    "iv": float(row.get("calls_iv") or 0.0),
+                    "bid": float(row.get("calls_bid_price") or 0.0),
+                    "ask": float(row.get("calls_offer_price") or row.get("calls_ask_price") or 0.0),
+                    "is_itm": strike < spot,
+                    "builtup": ce_builtup,
+                    "delta": float(row.get("call_delta") or 0.0),
+                    "gamma": float(row.get("call_gamma") or 0.0),
+                    "vega": float(row.get("call_vega") or 0.0),
+                    "theta": float(row.get("call_theta") or 0.0),
+                    "rho": float(row.get("call_rho") or 0.0),
+                },
+                "pe": {
+                    "ltp": pe_ltp,
+                    "change": pe_chg,
+                    "oi": pe_oi,
+                    "change_in_oi": pe_chg_oi,
+                    "volume": int(row.get("puts_volume") or 0),
+                    "iv": float(row.get("puts_iv") or 0.0),
+                    "bid": float(row.get("puts_bid_price") or 0.0),
+                    "ask": float(row.get("puts_offer_price") or row.get("puts_ask_price") or 0.0),
+                    "is_itm": strike > spot,
+                    "builtup": pe_builtup,
+                    "delta": float(row.get("put_delta") or 0.0),
+                    "gamma": float(row.get("put_gamma") or 0.0),
+                    "vega": float(row.get("put_vega") or 0.0),
+                    "theta": float(row.get("put_theta") or 0.0),
+                    "rho": float(row.get("put_rho") or 0.0),
+                },
+            })
+
+        now_ist = datetime.now(IST)
+        return {
+            "symbol": symbol,
+            "spot_price": round(spot, 2),
+            "atm_strike": atm_strike,
+            "expiry": expiry_str,
+            "expiry_dates": [expiry_str],
+            "pcr": pcr,
+            "sentiment": sentiment,
+            "max_pain": max_pain_strike,
+            "total_call_oi": total_call_oi,
+            "total_put_oi": total_put_oi,
+            "lot_size": 30 if is_bank else 65,
+            "updated_at": now_ist.strftime("%Y-%m-%d %H:%M:%S IST"),
+            "data_source": "NiftyTrader Live API (Real Options Matrix)",
+            "strikes": strikes_data,
+        }
 
     def _process_nse_raw_data(
         self,
@@ -388,6 +625,7 @@ class NSEOptionChainService:
         target_points: float = 40.0,
         trailing_sl: bool = True,
         trail_step: float = 15.0,
+        action: str = "BUY",
     ) -> Dict[str, Any]:
         """
         Executes a direct paper trade from the Option Chain into SimulatorBackgroundService.
@@ -401,6 +639,7 @@ class NSEOptionChainService:
         lot_size = 30 if is_bank else 65
         qty = lots * lot_size
         opt_type = option_type.upper()
+        act = action.upper()
 
         # If premium is not provided, look it up in chain
         if not premium or premium <= 0:
@@ -417,8 +656,12 @@ class NSEOptionChainService:
         now_str = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
         trade_id = f"oc_{int(time.time() * 1000) % 1000000}"
 
-        sl_price = max(1.0, round(premium - sl_points, 2))
-        target_price = round(premium + target_points, 2)
+        if act == "SELL":
+            sl_price = round(premium + sl_points, 2)
+            target_price = round(max(0.5, premium - target_points), 2)
+        else:
+            sl_price = max(1.0, round(premium - sl_points, 2))
+            target_price = round(premium + target_points, 2)
 
         pos = OptionPosition(
             trade_id=trade_id,

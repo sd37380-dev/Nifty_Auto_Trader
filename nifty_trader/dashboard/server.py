@@ -388,6 +388,10 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   .oc-btn-ce:hover { background: var(--green); color: black; }
   .oc-btn-pe { background: rgba(239, 68, 68, 0.2); color: var(--red); border: 1px solid rgba(239, 68, 68, 0.4); border-radius: 4px; padding: 2px 8px; font-weight: 700; font-size: 0.72rem; cursor: pointer; }
   .oc-btn-pe:hover { background: var(--red); color: white; }
+  .oc-btn-buy { background: rgba(16, 185, 129, 0.22); color: var(--green); border: 1px solid rgba(16, 185, 129, 0.5); border-radius: 4px; padding: 2px 7px; font-weight: 800; font-size: 0.68rem; cursor: pointer; transition: all 0.12s; }
+  .oc-btn-buy:hover { background: var(--green); color: black; }
+  .oc-btn-sell { background: rgba(239, 68, 68, 0.22); color: var(--red); border: 1px solid rgba(239, 68, 68, 0.5); border-radius: 4px; padding: 2px 7px; font-weight: 800; font-size: 0.68rem; cursor: pointer; transition: all 0.12s; }
+  .oc-btn-sell:hover { background: var(--red); color: white; }
   .ticker-pill-item {
     display: inline-flex;
     align-items: center;
@@ -1489,6 +1493,9 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         <button class="btn" onclick="fetchOptionChain(true)" style="background: var(--green); color: black; border: none; font-weight: 700; padding: 6px 14px; border-radius: 6px; cursor: pointer;">
           🔄 Refresh Chain
         </button>
+        <button class="btn" onclick="openNiftyTraderKeyModal()" style="background: #1e293b; color: #fbbf24; border: 1px solid #d97706; font-weight: 700; padding: 6px 14px; border-radius: 6px; cursor: pointer;" title="Update NiftyTrader API Key or Token">
+          🔑 Update API Key
+        </button>
       </div>
     </div>
   </div>
@@ -1542,27 +1549,27 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         </tr>
         <tr style="background: #182238; font-size: 0.72rem; color: var(--text-secondary);">
           <!-- Calls headers -->
-          <th style="padding: 6px;">TRADE</th>
+          <th style="padding: 6px; min-width: 105px;">TRADE</th>
+          <th title="OI Buildup Signal">OI BUILDUP</th>
           <th title="Open Interest">OI</th>
-          <th title="Change in Open Interest">CHG OI</th>
-          <th title="Total Traded Volume">VOLUME</th>
+          <th title="Change in Open Interest">CHANGE OI</th>
           <th title="Implied Volatility">IV</th>
+          <th title="Put-Call Ratio for Strike">PCR</th>
           <th title="Last Traded Price" style="color: var(--text-primary); font-weight: 800;">LTP (₹)</th>
-          <th title="Net Change">CHG</th>
           <!-- Strike Header -->
-          <th style="background: #1e293b; color: #f8fafc; font-weight: 800; border-left: 1px solid #374151; border-right: 1px solid #374151;">STRIKE</th>
+          <th style="background: #1e293b; color: #f8fafc; font-weight: 800; border-left: 1px solid #374151; border-right: 1px solid #374151; min-width: 95px;">STRIKE</th>
           <!-- Puts headers -->
-          <th title="Net Change">CHG</th>
           <th title="Last Traded Price" style="color: var(--text-primary); font-weight: 800;">LTP (₹)</th>
+          <th title="Put-Call Ratio for Strike">PCR</th>
           <th title="Implied Volatility">IV</th>
-          <th title="Total Traded Volume">VOLUME</th>
-          <th title="Change in Open Interest">CHG OI</th>
+          <th title="Change in Open Interest">CHANGE OI</th>
           <th title="Open Interest">OI</th>
-          <th style="padding: 6px;">TRADE</th>
+          <th title="OI Buildup Signal">OI BUILDUP</th>
+          <th style="padding: 6px; min-width: 105px;">TRADE</th>
         </tr>
       </thead>
       <tbody id="oc-table-body">
-        <tr><td colspan="15" style="text-align: center; color: var(--text-secondary); padding: 40px;">Loading Live NSE Option Chain...</td></tr>
+        <tr><td colspan="15" style="text-align: center; color: var(--text-secondary); padding: 40px;">Loading Live NiftyTrader Option Chain...</td></tr>
       </tbody>
     </table>
   </div>
@@ -1634,6 +1641,54 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         <button type="button" onclick="submitOptionTrade(event, 'instant')" id="oc-modal-submit-btn" class="btn" style="background: var(--green); color: black; border: none; font-weight: 800; padding: 7px 20px; font-size: 0.88rem;">
           🚀 Instant Execution
         </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- NiftyTrader API Key & Bearer Token Modal -->
+<div id="nt-key-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 2600; justify-content: center; align-items: center; padding: 20px;">
+  <div style="background: var(--bg-card); border: 2px solid #d97706; border-radius: 12px; max-width: 560px; width: 100%; padding: 24px; box-shadow: 0 16px 48px rgba(0,0,0,0.9);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 12px;">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span style="font-size: 1.3rem;">🔑</span>
+        <strong style="font-size: 1.15rem; color: var(--text-primary);">NiftyTrader API Key &amp; Token Settings</strong>
+      </div>
+      <button onclick="closeNiftyTraderKeyModal()" style="background: transparent; border: none; color: var(--text-secondary); font-size: 1.4rem; cursor: pointer;">&times;</button>
+    </div>
+
+    <!-- Instructions / One-liner helper -->
+    <div style="background: rgba(217, 119, 6, 0.1); border: 1px solid rgba(217, 119, 6, 0.3); border-radius: 8px; padding: 12px; margin-bottom: 16px;">
+      <div style="font-size: 0.76rem; color: #fbbf24; font-weight: 700; margin-bottom: 4px;">⚡ 2-Second Console Helper for Tomorrow's Key:</div>
+      <div style="font-size: 0.72rem; color: var(--text-secondary); margin-bottom: 6px;">
+        In NiftyTrader, press <strong>F12 &rarr; Console</strong>, run this code to copy your daily key in 1 second:
+      </div>
+      <div style="display: flex; gap: 6px;">
+        <input type="text" readonly id="nt-console-helper-code" value='JSON.parse(localStorage.getItem("niftytrader-api-key-cache-v1")).apiKey' style="background: #0f172a; color: #38bdf8; border: 1px solid #334155; border-radius: 4px; padding: 5px 8px; font-size: 0.70rem; font-family: monospace; width: 100%;">
+        <button type="button" onclick="copyConsoleHelperCode()" style="background: var(--accent); color: white; border: none; border-radius: 4px; padding: 5px 12px; font-size: 0.72rem; font-weight: 700; cursor: pointer; white-space: nowrap;">📋 Copy</button>
+      </div>
+    </div>
+
+    <form onsubmit="saveNiftyTraderKeys(event)">
+      <div style="margin-bottom: 14px;">
+        <label style="font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); display: block; margin-bottom: 6px;">
+          x-api-key (Rotates daily at 06:30 AM IST) *
+        </label>
+        <input type="text" id="nt-input-api-key" placeholder="Paste your fresh x-api-key here..." required style="background: var(--bg-main); color: var(--text-primary); border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; font-size: 0.82rem; font-family: monospace; width: 100%;">
+      </div>
+
+      <div style="margin-bottom: 18px;">
+        <label style="font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); display: block; margin-bottom: 6px;">
+          Bearer JWT Token (Valid for 30 days &mdash; only change if expired)
+        </label>
+        <textarea id="nt-input-bearer" rows="3" placeholder="Leave empty to keep current active Bearer token..." style="background: var(--bg-main); color: var(--text-primary); border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; font-size: 0.76rem; font-family: monospace; width: 100%; resize: vertical;"></textarea>
+      </div>
+
+      <div id="nt-key-status-msg" style="display: none; font-size: 0.80rem; padding: 8px 12px; border-radius: 6px; margin-bottom: 14px;"></div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 10px;">
+        <button type="button" onclick="closeNiftyTraderKeyModal()" class="btn" style="background: #334155; color: white; padding: 8px 16px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer;">Cancel</button>
+        <button type="submit" id="nt-key-save-btn" class="btn" style="background: var(--green); color: black; padding: 8px 18px; border: none; border-radius: 6px; font-weight: 800; cursor: pointer;">💾 Save &amp; Test Live Key</button>
       </div>
     </form>
   </div>
@@ -3190,7 +3245,38 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       `).join('');
     }
 
-    // 3. Option Chain Matrix Table
+    // Helper for Buildup Badge
+    function getBuildupBadge(buildup, optType) {
+      if (!buildup || buildup === 'No Conclusion' || buildup === '--' || buildup === 'Neutral') {
+        return `<span style="color: #64748b; font-size: 0.68rem;">--</span>`;
+      }
+      const b = buildup.toLowerCase();
+      let bg = 'rgba(100, 116, 139, 0.15)';
+      let color = '#94a3b8';
+      let border = 'rgba(100, 116, 139, 0.3)';
+
+      if (b.includes('call buying') || b.includes('put writing') || (b.includes('long buildup') && optType === 'CE') || (b.includes('short buildup') && optType === 'PE')) {
+        bg = 'rgba(16, 185, 129, 0.18)';
+        color = '#10b981';
+        border = 'rgba(16, 185, 129, 0.4)';
+      } else if (b.includes('call writing') || b.includes('put buying') || (b.includes('short buildup') && optType === 'CE') || (b.includes('long buildup') && optType === 'PE')) {
+        bg = 'rgba(239, 68, 68, 0.18)';
+        color = '#ef4444';
+        border = 'rgba(239, 68, 68, 0.4)';
+      } else if (b.includes('short covering')) {
+        bg = 'rgba(6, 182, 212, 0.18)';
+        color = '#06b6d4';
+        border = 'rgba(6, 182, 212, 0.4)';
+      } else if (b.includes('long unwinding') || b.includes('covering')) {
+        bg = 'rgba(245, 158, 11, 0.18)';
+        color = '#f59e0b';
+        border = 'rgba(245, 158, 11, 0.4)';
+      }
+
+      return `<span style="background: ${bg}; color: ${color}; border: 1px solid ${border}; padding: 2px 6px; border-radius: 4px; font-size: 0.67rem; font-weight: 700; white-space: nowrap; display: inline-block;">${buildup}</span>`;
+    }
+
+    // 3. Option Chain Matrix Table (ATM ± 7 Strikes with exact requested fields)
     const tbody = document.getElementById('oc-table-body');
     if (!tbody || !chain.strikes) return;
 
@@ -3203,50 +3289,70 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       const rowClass = isAtm ? 'oc-atm-row' : '';
       const ceItmClass = ce.is_itm ? 'oc-itm-ce' : '';
       const peItmClass = pe.is_itm ? 'oc-itm-pe' : '';
+      const pcrVal = row.pcr != null ? Number(row.pcr).toFixed(2) : '--';
+      const pcrColor = (row.pcr >= 1.15) ? 'var(--green)' : ((row.pcr <= 0.85) ? 'var(--red)' : '#94a3b8');
 
       return `
         <tr class="${rowClass}">
-          <!-- CE Trade Action Button -->
-          <td class="${ceItmClass}" style="border-right: 1px solid var(--border);">
-            <button onclick="openOptionTradeModal(${strike}, 'CE', ${ce.ltp})" class="oc-btn-ce" title="Execute Paper Trade BUY ${chain.symbol} ${strike} CE">
-              🟢 BUY CE
-            </button>
+          <!-- CE Direct Buy / Sell Actions -->
+          <td class="${ceItmClass}" style="border-right: 1px solid var(--border); white-space: nowrap;">
+            <div style="display: flex; gap: 4px; justify-content: center;">
+              <button onclick="openOptionTradeModal(${strike}, 'CE', ${ce.ltp}, 'BUY')" class="oc-btn-buy" title="Direct BUY ${chain.symbol} ${strike} CE">BUY</button>
+              <button onclick="openOptionTradeModal(${strike}, 'CE', ${ce.ltp}, 'SELL')" class="oc-btn-sell" title="Direct SELL ${chain.symbol} ${strike} CE">SELL</button>
+            </div>
           </td>
+          <!-- CE OI Buildup -->
+          <td class="${ceItmClass}">${getBuildupBadge(ce.builtup, 'CE')}</td>
+          <!-- CE OI -->
           <td class="${ceItmClass}">${(ce.oi || 0).toLocaleString('en-IN')}</td>
-          <td class="${ceItmClass}" style="color: ${ce.change_in_oi >= 0 ? 'var(--green)' : 'var(--red)'};">${ce.change_in_oi >= 0 ? '+' : ''}${(ce.change_in_oi || 0).toLocaleString('en-IN')}</td>
-          <td class="${ceItmClass}" style="color: var(--text-secondary);">${(ce.volume || 0).toLocaleString('en-IN')}</td>
+          <!-- CE Change OI -->
+          <td class="${ceItmClass}" style="color: ${ce.change_in_oi >= 0 ? 'var(--green)' : 'var(--red)'}; font-weight: 600;">
+            ${ce.change_in_oi >= 0 ? '+' : ''}${(ce.change_in_oi || 0).toLocaleString('en-IN')}
+          </td>
+          <!-- CE IV -->
           <td class="${ceItmClass}" style="color: #60a5fa;">${(ce.iv || 0).toFixed(1)}%</td>
-          <td class="${ceItmClass}" style="font-weight: 800; color: #f8fafc; font-size: 0.88rem;">₹${(ce.ltp || 0).toFixed(2)}</td>
-          <td class="${ceItmClass}" style="color: ${ce.change >= 0 ? 'var(--green)' : 'var(--red)'}; font-size: 0.76rem; border-right: 2px solid #374151;">
-            ${ce.change >= 0 ? '+' : ''}${(ce.change || 0).toFixed(2)}
+          <!-- CE PCR -->
+          <td class="${ceItmClass}" style="color: ${pcrColor}; font-weight: 700;">${pcrVal}</td>
+          <!-- CE LTP -->
+          <td class="${ceItmClass}" style="font-weight: 800; color: #f8fafc; font-size: 0.88rem; border-right: 2px solid #374151;">
+            ₹${(ce.ltp || 0).toFixed(2)}
           </td>
 
-          <!-- Center Strike Column -->
+          <!-- Center Strike Column (ATM Highlighted) -->
           <td style="background: #1e293b; color: #ffffff; font-weight: 800; font-size: 0.92rem; border-left: 1px solid #374151; border-right: 1px solid #374151;">
             ${isAtm ? `<span class="oc-atm-strike">⚡ ${strike}</span>` : strike}
           </td>
 
-          <!-- PE Data Columns -->
-          <td class="${peItmClass}" style="color: ${pe.change >= 0 ? 'var(--green)' : 'var(--red)'}; font-size: 0.76rem; border-left: 2px solid #374151;">
-            ${pe.change >= 0 ? '+' : ''}${(pe.change || 0).toFixed(2)}
+          <!-- PE LTP -->
+          <td class="${peItmClass}" style="font-weight: 800; color: #f8fafc; font-size: 0.88rem; border-left: 2px solid #374151;">
+            ₹${(pe.ltp || 0).toFixed(2)}
           </td>
-          <td class="${peItmClass}" style="font-weight: 800; color: #f8fafc; font-size: 0.88rem;">₹${(pe.ltp || 0).toFixed(2)}</td>
+          <!-- PE PCR -->
+          <td class="${peItmClass}" style="color: ${pcrColor}; font-weight: 700;">${pcrVal}</td>
+          <!-- PE IV -->
           <td class="${peItmClass}" style="color: #60a5fa;">${(pe.iv || 0).toFixed(1)}%</td>
-          <td class="${peItmClass}" style="color: var(--text-secondary);">${(pe.volume || 0).toLocaleString('en-IN')}</td>
-          <td class="${peItmClass}" style="color: ${pe.change_in_oi >= 0 ? 'var(--green)' : 'var(--red)'};">${pe.change_in_oi >= 0 ? '+' : ''}${(pe.change_in_oi || 0).toLocaleString('en-IN')}</td>
+          <!-- PE Change OI -->
+          <td class="${peItmClass}" style="color: ${pe.change_in_oi >= 0 ? 'var(--green)' : 'var(--red)'}; font-weight: 600;">
+            ${pe.change_in_oi >= 0 ? '+' : ''}${(pe.change_in_oi || 0).toLocaleString('en-IN')}
+          </td>
+          <!-- PE OI -->
           <td class="${peItmClass}">${(pe.oi || 0).toLocaleString('en-IN')}</td>
-          <!-- PE Trade Action Button -->
-          <td class="${peItmClass}" style="border-left: 1px solid var(--border);">
-            <button onclick="openOptionTradeModal(${strike}, 'PE', ${pe.ltp})" class="oc-btn-pe" title="Execute Paper Trade BUY ${chain.symbol} ${strike} PE">
-              🔴 BUY PE
-            </button>
+          <!-- PE OI Buildup -->
+          <td class="${peItmClass}">${getBuildupBadge(pe.builtup, 'PE')}</td>
+          <!-- PE Direct Buy / Sell Actions -->
+          <td class="${peItmClass}" style="border-left: 1px solid var(--border); white-space: nowrap;">
+            <div style="display: flex; gap: 4px; justify-content: center;">
+              <button onclick="openOptionTradeModal(${strike}, 'PE', ${pe.ltp}, 'BUY')" class="oc-btn-buy" title="Direct BUY ${chain.symbol} ${strike} PE">BUY</button>
+              <button onclick="openOptionTradeModal(${strike}, 'PE', ${pe.ltp}, 'SELL')" class="oc-btn-sell" title="Direct SELL ${chain.symbol} ${strike} PE">SELL</button>
+            </div>
           </td>
         </tr>
       `;
     }).join('');
   }
 
-  function openOptionTradeModal(strike, optType, ltp) {
+  function openOptionTradeModal(strike, optType, ltp, action) {
+    action = action || 'BUY';
     const sym = window._currentOcSymbol || 'NIFTY';
     const lotSize = sym === 'BANKNIFTY' ? 30 : 65;
     const spot = window._currentOcData ? window._currentOcData.spot_price : 0;
@@ -3256,12 +3362,19 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     document.getElementById('oc-trade-type').value = optType;
 
     const modalTitle = document.getElementById('oc-modal-title');
-    if (modalTitle) modalTitle.innerText = `${sym} ${strike} ${optType}`;
+    if (modalTitle) modalTitle.innerText = `${action} ${sym} ${strike} ${optType}`;
 
     const badge = document.getElementById('oc-modal-type-badge');
     if (badge) {
-      badge.innerText = `BUY ${optType}`;
-      badge.className = optType === 'CE' ? 'badge badge-green' : 'badge badge-red';
+      badge.innerText = `${action} ${optType}`;
+      badge.className = action === 'BUY' ? 'badge badge-green' : 'badge badge-red';
+    }
+
+    const btnSubmit = document.getElementById('oc-modal-submit-btn');
+    if (btnSubmit) {
+      btnSubmit.innerText = action === 'BUY' ? `⚡ Execute BUY Paper Trade` : `⚡ Execute SELL Paper Trade`;
+      btnSubmit.style.background = action === 'BUY' ? 'var(--green)' : 'var(--red)';
+      btnSubmit.style.color = action === 'BUY' ? 'black' : 'white';
     }
 
     const ltpEl = document.getElementById('oc-modal-ltp');
@@ -3273,7 +3386,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     const qtyMul = document.getElementById('oc-modal-qty-multiplier');
     if (qtyMul) qtyMul.innerText = lotSize;
 
-    window._activeTradeModalParams = { sym, strike, optType, ltp, lotSize, spot };
+    window._activeTradeModalParams = { sym, strike, optType, ltp, lotSize, spot, action };
     updateOptionMarginDisplay();
 
     const modal = document.getElementById('oc-trade-modal');
@@ -3294,15 +3407,100 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 
     const totalQty = lots * p.lotSize;
     const margin = totalQty * p.ltp;
+    const isSell = p.action === 'SELL';
 
     const marginEl = document.getElementById('oc-modal-margin');
     if (marginEl) marginEl.innerText = `₹${margin.toLocaleString('en-IN', {minimumFractionDigits: 2})}`;
 
     const slCalc = document.getElementById('oc-modal-sl-calc');
-    if (slCalc) slCalc.innerText = `SL Price: ₹${Math.max(1, p.ltp - slPts).toFixed(2)}`;
+    if (slCalc) slCalc.innerText = `SL Price: ₹${(isSell ? p.ltp + slPts : Math.max(1, p.ltp - slPts)).toFixed(2)}`;
 
     const tgtCalc = document.getElementById('oc-modal-tgt-calc');
-    if (tgtCalc) tgtCalc.innerText = `Target Price: ₹${(p.ltp + tgtPts).toFixed(2)}`;
+    if (tgtCalc) tgtCalc.innerText = `Target Price: ₹${(isSell ? Math.max(1, p.ltp - tgtPts) : p.ltp + tgtPts).toFixed(2)}`;
+  }
+
+  // --- NiftyTrader Key Management Modal Helpers ---
+  function openNiftyTraderKeyModal() {
+    const modal = document.getElementById('nt-key-modal');
+    if (modal) modal.style.display = 'flex';
+    fetch('/api/niftytrader/config')
+      .then(r => r.json())
+      .then(d => {
+        if (d.status === 'ok') {
+          if (d.api_key) document.getElementById('nt-input-api-key').value = d.api_key;
+          if (d.bearer_token) document.getElementById('nt-input-bearer').value = d.bearer_token;
+        }
+      })
+      .catch(() => {});
+  }
+
+  function closeNiftyTraderKeyModal() {
+    const modal = document.getElementById('nt-key-modal');
+    if (modal) modal.style.display = 'none';
+  }
+
+  function copyConsoleHelperCode() {
+    const inp = document.getElementById('nt-console-helper-code');
+    if (inp) {
+      inp.select();
+      navigator.clipboard.writeText(inp.value);
+      alert('📋 Copied console code! In NiftyTrader, press F12 -> Console -> Paste and run it to get your fresh key.');
+    }
+  }
+
+  async function saveNiftyTraderKeys(e) {
+    e.preventDefault();
+    const apiKey = document.getElementById('nt-input-api-key').value.trim();
+    const bearer = document.getElementById('nt-input-bearer').value.trim();
+    const saveBtn = document.getElementById('nt-key-save-btn');
+    const msgEl = document.getElementById('nt-key-status-msg');
+
+    if (!apiKey) {
+      alert('Please enter a valid x-api-key');
+      return;
+    }
+
+    if (saveBtn) saveBtn.innerText = 'TESTING & SAVING...';
+    if (msgEl) {
+      msgEl.style.display = 'block';
+      msgEl.style.background = 'rgba(59, 130, 246, 0.15)';
+      msgEl.style.color = '#60a5fa';
+      msgEl.innerText = 'Verifying key against NiftyTrader live API...';
+    }
+
+    try {
+      const res = await fetch('/api/niftytrader/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ api_key: apiKey, bearer_token: bearer })
+      });
+      const data = await res.json();
+      if (data.status === 'ok') {
+        if (msgEl) {
+          msgEl.style.background = 'rgba(16, 185, 129, 0.2)';
+          msgEl.style.color = 'var(--green)';
+          msgEl.innerText = '✅ ' + (data.message || 'Key verified and saved successfully!');
+        }
+        setTimeout(() => {
+          closeNiftyTraderKeyModal();
+          fetchOptionChain(true);
+        }, 1200);
+      } else {
+        if (msgEl) {
+          msgEl.style.background = 'rgba(239, 68, 68, 0.2)';
+          msgEl.style.color = 'var(--red)';
+          msgEl.innerText = '❌ Verification Failed: ' + (data.message || 'Key rejected by API');
+        }
+      }
+    } catch (err) {
+      if (msgEl) {
+        msgEl.style.background = 'rgba(239, 68, 68, 0.2)';
+        msgEl.style.color = 'var(--red)';
+        msgEl.innerText = '❌ Error saving key: ' + err;
+      }
+    } finally {
+      if (saveBtn) saveBtn.innerText = '💾 Save & Test Live Key';
+    }
   }
 
   async function submitOptionTrade(e, mode = 'instant') {
@@ -3361,6 +3559,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         symbol: p.sym,
         strike: p.strike,
         option_type: p.optType,
+        action: p.action || 'BUY',
         lots: lots,
         premium: p.ltp,
         sl_points: slPts,
@@ -4389,6 +4588,24 @@ class DashboardHTTPRequestHandler(BaseHTTPRequestHandler):
                 self.send_header("Content-Type", "application/json")
                 self.end_headers()
                 self.wfile.write(json.dumps({"status": "error", "message": str(ex)}).encode("utf-8"))
+        elif self.path == "/api/niftytrader/config":
+            try:
+                import os
+                api_key = os.getenv("NIFTYTRADER_API_KEY", "")
+                bearer = os.getenv("NIFTYTRADER_BEARER_TOKEN", "")
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({
+                    "status": "ok",
+                    "api_key": api_key,
+                    "bearer_token": bearer,
+                }).encode("utf-8"))
+            except Exception as ex:
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": "error", "message": str(ex)}).encode("utf-8"))
         elif self.path == "/api/data":
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
@@ -4427,11 +4644,70 @@ class DashboardHTTPRequestHandler(BaseHTTPRequestHandler):
                     target_points=float(data.get("target_points", 40.0)),
                     trailing_sl=bool(data.get("trailing_sl", True)),
                     trail_step=float(data.get("trail_step", 15.0)),
+                    action=data.get("action", "BUY"),
                 )
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json")
                 self.end_headers()
                 self.wfile.write(json.dumps(res).encode("utf-8"))
+            except Exception as ex:
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": "error", "message": str(ex)}).encode("utf-8"))
+        elif self.path == "/api/niftytrader/config":
+            try:
+                content_length = int(self.headers.get("Content-Length", 0))
+                body = self.rfile.read(content_length).decode("utf-8")
+                data = json.loads(body)
+                api_key = data.get("api_key", "").strip()
+                bearer_token = data.get("bearer_token", "").strip()
+
+                import os
+                from pathlib import Path
+                if api_key:
+                    os.environ["NIFTYTRADER_API_KEY"] = api_key
+                if bearer_token:
+                    os.environ["NIFTYTRADER_BEARER_TOKEN"] = bearer_token
+
+                # Update .env file permanently
+                env_path = Path("D:/AI_Trading/nifty-autonomous-trader/.env")
+                if env_path.exists():
+                    try:
+                        content = env_path.read_text(encoding="utf-8")
+                        import re
+                        if api_key:
+                            content = re.sub(r"NIFTYTRADER_API_KEY=.*", f"NIFTYTRADER_API_KEY={api_key}", content)
+                        if bearer_token:
+                            content = re.sub(r"NIFTYTRADER_BEARER_TOKEN=.*", f"NIFTYTRADER_BEARER_TOKEN={bearer_token}", content)
+                        env_path.write_text(content, encoding="utf-8")
+                    except Exception as env_err:
+                        logger.warning("Could not update .env file: %s", env_err)
+
+                # Clear cache and verify key immediately
+                from nifty_trader.market_data.option_chain_service import get_option_chain_service
+                ocs = get_option_chain_service()
+                ocs._cache.clear()
+                ocs._cache_time.clear()
+
+                test_raw = ocs.fetch_live_chain_from_niftytrader("NIFTY")
+                if test_raw and "opDatas" in test_raw:
+                    strikes_count = len(test_raw["opDatas"])
+                    self.send_response(200)
+                    self.send_header("Content-Type", "application/json")
+                    self.end_headers()
+                    self.wfile.write(json.dumps({
+                        "status": "ok",
+                        "message": f"Verified successfully! Retrieved {strikes_count} live strikes."
+                    }).encode("utf-8"))
+                else:
+                    self.send_response(400)
+                    self.send_header("Content-Type", "application/json")
+                    self.end_headers()
+                    self.wfile.write(json.dumps({
+                        "status": "error",
+                        "message": "NiftyTrader rejected the key. Please verify your x-api-key."
+                    }).encode("utf-8"))
             except Exception as ex:
                 self.send_response(500)
                 self.send_header("Content-Type", "application/json")
