@@ -1770,11 +1770,13 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 
   <!-- Chart Embed Container -->
   <div class="card" style="padding: 0; overflow: hidden; border-radius: 8px; border: 1px solid var(--border); height: 750px; background: #0f172a; position: relative;">
-    <div id="tv-advanced-chart-box" style="height: 100%; width: 100%;">
-      <div style="display: flex; height: 100%; justify-content: center; align-items: center; color: var(--text-secondary); font-size: 0.88rem;">
-        Click <strong>TradingView Live Charts</strong> tab to load real-time candlestick matrix...
-      </div>
-    </div>
+    <iframe id="tv-advanced-chart-iframe" 
+            src="https://s.tradingview.com/widgetembed/?symbol=CAPITALCOM%3AIN50&interval=5&theme=dark&style=1&timezone=Asia%2FKolkata&locale=in&hideideas=1" 
+            style="width: 100%; height: 100%; min-height: 720px; border: none; display: block;" 
+            allowtransparency="true" 
+            scrolling="no" 
+            allowfullscreen>
+    </iframe>
   </div>
 </div>
 
@@ -3719,55 +3721,17 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   }
 
   function initTradingViewChart() {
-    const box = document.getElementById('tv-advanced-chart-box');
-    if (!box) return;
-
-    if (typeof TradingView === 'undefined') {
-      const script = document.createElement('script');
-      script.src = 'https://s3.tradingview.com/tv.js';
-      script.async = true;
-      script.onload = () => createTradingViewWidget();
-      document.head.appendChild(script);
-    } else {
-      createTradingViewWidget();
-    }
+    updateTradingViewIframe();
   }
 
-  function createTradingViewWidget() {
-    if (typeof TradingView === 'undefined') return;
-    const box = document.getElementById('tv-advanced-chart-box');
-    if (!box) return;
-    box.innerHTML = '';
-
-    try {
-      _tvWidgetInstance = new TradingView.widget({
-        "autosize": true,
-        "symbol": _tvCurrentSymbol,
-        "interval": _tvCurrentInterval,
-        "timezone": "Asia/Kolkata",
-        "theme": "dark",
-        "style": "1",
-        "locale": "en",
-        "toolbar_bg": "#0f172a",
-        "enable_publishing": false,
-        "withdateranges": true,
-        "hide_side_toolbar": false,
-        "allow_symbol_change": true,
-        "details": true,
-        "hotlist": true,
-        "calendar": true,
-        "show_popup_button": true,
-        "popup_width": "1000",
-        "popup_height": "650",
-        "container_id": "tv-advanced-chart-box",
-        "studies": [
-          "MASimple@tv-basicstudies",
-          "RSI@tv-basicstudies",
-          "Volume@tv-basicstudies"
-        ]
-      });
-    } catch (e) {
-      console.error('TradingView widget initialization error:', e);
+  function updateTradingViewIframe() {
+    const iframe = document.getElementById('tv-advanced-chart-iframe');
+    if (!iframe) return;
+    const sym = encodeURIComponent(_tvCurrentSymbol);
+    const intv = encodeURIComponent(_tvCurrentInterval);
+    const targetUrl = `https://s.tradingview.com/widgetembed/?symbol=${sym}&interval=${intv}&theme=dark&style=1&timezone=Asia%2FKolkata&locale=in&hideideas=1`;
+    if (iframe.src !== targetUrl) {
+      iframe.src = targetUrl;
     }
   }
 
@@ -3783,7 +3747,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       btn.style.color = 'white';
       btn.style.border = '1px solid var(--accent)';
     }
-    createTradingViewWidget();
+    updateTradingViewIframe();
   }
 
   function switchTradingViewInterval(interval, btn) {
@@ -3800,7 +3764,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       btn.style.border = '1px solid var(--accent)';
       btn.style.fontWeight = '700';
     }
-    createTradingViewWidget();
+    updateTradingViewIframe();
   }
 
   function loadCustomTradingViewSymbol() {
@@ -3816,7 +3780,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       b.style.color = 'var(--text-secondary)';
       b.style.border = '1px solid var(--border)';
     });
-    createTradingViewWidget();
+    updateTradingViewIframe();
   }
 
   function filterSpotTable(sym) {
