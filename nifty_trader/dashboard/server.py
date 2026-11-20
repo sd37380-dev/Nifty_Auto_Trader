@@ -596,8 +596,34 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       font-size: 16px !important; /* Prevents auto-zoom on iOS Safari */
     }
   }
+
+  /* Fullscreen Viewport Styling */
+  #main-charts-viewport:fullscreen,
+  #main-charts-viewport:-webkit-full-screen,
+  .viewport-fullscreen-fallback {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    z-index: 999999 !important;
+    background: #090d16 !important;
+    padding: 12px !important;
+    box-sizing: border-box !important;
+    overflow-y: auto !important;
+  }
+  #main-charts-viewport:fullscreen #native-chart-wrapper,
+  #main-charts-viewport:-webkit-full-screen #native-chart-wrapper,
+  .viewport-fullscreen-fallback #native-chart-wrapper {
+    height: calc(100vh - 120px) !important;
+  }
+  #main-charts-viewport:fullscreen .quad-cell,
+  #main-charts-viewport:-webkit-full-screen .quad-cell,
+  .viewport-fullscreen-fallback .quad-cell {
+    height: calc(50vh - 28px) !important;
+    min-height: 280px !important;
+  }
 </style>
-<script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
 <script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
 </head>
 <body>
@@ -1707,99 +1733,427 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
       <div>
         <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-          <span style="font-size: 1.25rem; font-weight: 800; color: var(--text-primary);">📈 Real-Time Candlestick &amp; Technical Analysis Hub</span>
+          <span style="font-size: 1.25rem; font-weight: 800; color: var(--text-primary);">📈 Multi-Chart Technical Analysis Hub</span>
           <span class="badge badge-green" id="chart-live-badge">🟢 LIVE NSE FEED</span>
           <span class="badge badge-blue" id="chart-interval-badge">5M TIMEFRAME</span>
         </div>
         <div style="font-size: 0.80rem; color: var(--text-secondary); margin-top: 3px;">
-          Direct Unrestricted Spot Candlesticks for NIFTY 50 &amp; BANKNIFTY powered by TradingView Charts Engine with EMA 9/20, Volume &amp; Live OHLCV.
+          Direct Unrestricted Spot Candlesticks for NIFTY 50, BANKNIFTY &amp; GIFT NIFTY with Single &amp; 4-Chart Quad Views.
         </div>
       </div>
 
-      <!-- Mode Switcher & Quick Launchers -->
+      <!-- View Switcher & Action Tools -->
       <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
         <div style="display: flex; background: rgba(0,0,0,0.4); border: 1px solid var(--border); border-radius: 6px; padding: 2px;">
-          <button type="button" id="btn-chart-mode-native" onclick="setChartEngineMode('native')" class="btn" style="background: var(--accent); color: white; padding: 5px 12px; font-size: 0.75rem; font-weight: 700; border-radius: 4px; border: none; cursor: pointer;">
-            📊 Native Spot Chart (Nifty/BankNifty)
+          <button type="button" id="btn-view-single" onclick="setChartLayoutView('single')" class="btn" style="background: var(--accent); color: white; padding: 5px 12px; font-size: 0.75rem; font-weight: 700; border-radius: 4px; border: none; cursor: pointer;">
+            🔲 Single Tab View
           </button>
-          <button type="button" id="btn-chart-mode-cloud" onclick="setChartEngineMode('cloud')" class="btn" style="background: transparent; color: var(--text-secondary); padding: 5px 12px; font-size: 0.75rem; font-weight: 700; border-radius: 4px; border: none; cursor: pointer;">
-            🌐 TradingView Cloud Widget
+          <button type="button" id="btn-view-quad" onclick="setChartLayoutView('quad')" class="btn" style="background: transparent; color: var(--text-secondary); padding: 5px 12px; font-size: 0.75rem; font-weight: 700; border-radius: 4px; border: none; cursor: pointer;">
+            ⊞ 4-Chart Quad View
           </button>
         </div>
+        <button type="button" onclick="toggleChartFullscreen()" class="btn" style="background: #1e293b; color: #38bdf8; padding: 5px 12px; font-size: 0.75rem; font-weight: 800; border: 1px solid #38bdf8; border-radius: 4px; cursor: pointer;" title="Toggle Fullscreen on chart view">
+          ⛶ Fullscreen
+        </button>
         <button type="button" onclick="openTradingViewAppWindow('NSE:NIFTY')" class="btn" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: white; padding: 5px 12px; font-size: 0.75rem; font-weight: 800; border: 1px solid #38bdf8; border-radius: 4px; cursor: pointer;" title="Open in separate TradingView window">
-          🚀 Open in App Window ↗
+          🚀 External TV ↗
         </button>
       </div>
     </div>
 
-    <!-- Ticker Summary & OHLCV Bar (For Native Engine) -->
-    <div id="native-chart-header" style="margin-top: 10px; padding: 8px 12px; background: rgba(15, 23, 42, 0.7); border: 1px solid var(--border); border-radius: 6px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-      <div style="display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;">
-        <span id="nc-symbol-title" style="font-size: 1.15rem; font-weight: 800; color: #38bdf8;">NIFTY 50 (Spot)</span>
-        <span id="nc-current-price" style="font-size: 1.25rem; font-weight: 800; color: var(--text-primary);">₹--</span>
-        <span id="nc-price-change" style="font-size: 0.85rem; font-weight: 700; color: var(--text-secondary);">--</span>
+    <!-- 4 Tabs Row: NIFTY 50, BANKNIFTY, GIFT NIFTY, Dropdown (Any one) -->
+    <div id="single-chart-tabs-bar" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 10px; border-bottom: 2px solid rgba(255,255,255,0.08); padding-bottom: 8px;">
+      <!-- The 4 Tabs -->
+      <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+        <button type="button" id="tab-btn-nifty" class="btn nc-main-tab-btn" onclick="selectSingleTab('NIFTY', this)" style="background: var(--accent); color: white; padding: 5px 12px; font-size: 0.78rem; font-weight: 800; border-radius: 6px; border: 1px solid var(--accent); cursor: pointer;">
+          📊 NIFTY 50
+        </button>
+        <button type="button" id="tab-btn-banknifty" class="btn nc-main-tab-btn" onclick="selectSingleTab('BANKNIFTY', this)" style="background: #1e293b; color: var(--text-secondary); padding: 5px 12px; font-size: 0.78rem; font-weight: 700; border-radius: 6px; border: 1px solid var(--border); cursor: pointer;">
+          🏦 BANKNIFTY
+        </button>
+        <button type="button" id="tab-btn-gift" class="btn nc-main-tab-btn" onclick="selectSingleTab('GIFT NIFTY', this)" style="background: #1e293b; color: var(--text-secondary); padding: 5px 12px; font-size: 0.78rem; font-weight: 700; border-radius: 6px; border: 1px solid var(--border); cursor: pointer;">
+          🌐 GIFT NIFTY
+        </button>
+        <button type="button" id="tab-btn-custom" class="btn nc-main-tab-btn" onclick="selectSingleTab('CUSTOM', this)" style="background: #1e293b; color: var(--text-secondary); padding: 5px 12px; font-size: 0.78rem; font-weight: 700; border-radius: 6px; border: 1px solid var(--border); cursor: pointer;">
+          🔍 Custom Symbol
+        </button>
       </div>
-      <div style="display: flex; gap: 12px; font-size: 0.78rem; color: var(--text-secondary); font-family: monospace;" id="nc-ohlcv-bar">
-        <span>O: <strong id="nc-open" style="color: var(--text-primary);">--</strong></span>
-        <span>H: <strong id="nc-high" style="color: #10b981;">--</strong></span>
-        <span>L: <strong id="nc-low" style="color: #ef4444;">--</strong></span>
-        <span>C: <strong id="nc-close" style="color: var(--text-primary);">--</strong></span>
-        <span>Vol: <strong id="nc-vol" style="color: #cbd5e1;">--</strong></span>
+
+      <!-- Quick Dropdown Selection & Interval -->
+      <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+        <span style="font-size: 0.74rem; color: var(--text-secondary); font-weight: 700;">Select:</span>
+        <select id="single-chart-symbol-dropdown" onchange="onSymbolDropdownChange(this.value)" style="background: #1e293b; color: #38bdf8; border: 1px solid #38bdf8; border-radius: 4px; padding: 3px 8px; font-size: 0.76rem; font-weight: 700; cursor: pointer;">
+          <option value="NIFTY">📊 NIFTY 50</option>
+          <option value="BANKNIFTY">🏦 BANKNIFTY</option>
+          <option value="GIFT NIFTY">🌐 GIFT NIFTY</option>
+          <option value="SENSEX">📈 BSE SENSEX</option>
+          <option value="FINNIFTY">💼 FINNIFTY</option>
+          <option value="MIDCPNIFTY">⚡ MIDCAP NIFTY</option>
+          <option value="RELIANCE">🏢 RELIANCE</option>
+          <option value="HDFCBANK">🏛️ HDFCBANK</option>
+          <option value="TCS">💻 TCS</option>
+          <option value="INFY">💻 INFY</option>
+          <option value="ICICIBANK">💳 ICICIBANK</option>
+          <option value="SBIN">🏦 SBIN</option>
+          <option value="AAPL">🍏 AAPL (NASDAQ)</option>
+          <option value="BTCUSD">₿ BTC/USD</option>
+          <option value="GOLD">🥇 GOLD Spot</option>
+        </select>
+        <input type="text" id="chart-custom-symbol-input" placeholder="TICKER" style="background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border); border-radius: 4px; padding: 3px 6px; font-size: 0.74rem; width: 80px; text-transform: uppercase;">
+        <button type="button" onclick="loadCustomChartSymbol()" class="btn" style="background: var(--accent); color: white; padding: 3px 8px; font-size: 0.72rem; font-weight: 700; border: none; border-radius: 4px; cursor: pointer;">Load</button>
+
+        <span style="font-size: 0.74rem; color: var(--text-secondary); margin-left: 4px; font-weight: 700;">TF:</span>
+        <button type="button" class="btn nc-int-btn" onclick="selectChartInterval('5m', this)" style="background: var(--accent); color: white; padding: 2px 6px; font-size: 0.72rem; border-radius: 4px; border: 1px solid var(--accent); font-weight: 700;">5m</button>
+        <button type="button" class="btn nc-int-btn" onclick="selectChartInterval('15m', this)" style="background: #1e293b; color: var(--text-secondary); padding: 2px 6px; font-size: 0.72rem; border-radius: 4px; border: 1px solid var(--border);">15m</button>
+        <button type="button" class="btn nc-int-btn" onclick="selectChartInterval('1h', this)" style="background: #1e293b; color: var(--text-secondary); padding: 2px 6px; font-size: 0.72rem; border-radius: 4px; border: 1px solid var(--border);">1h</button>
+        <button type="button" class="btn nc-int-btn" onclick="selectChartInterval('4h', this)" style="background: #1e293b; color: var(--text-secondary); padding: 2px 6px; font-size: 0.72rem; border-radius: 4px; border: 1px solid var(--border);">4h</button>
+        <button type="button" class="btn nc-int-btn" onclick="selectChartInterval('1d', this)" style="background: #1e293b; color: var(--text-secondary); padding: 2px 6px; font-size: 0.72rem; border-radius: 4px; border: 1px solid var(--border);">1D</button>
+        <button type="button" class="btn nc-int-btn" onclick="selectChartInterval('1w', this)" style="background: #1e293b; color: var(--text-secondary); padding: 2px 6px; font-size: 0.72rem; border-radius: 4px; border: 1px solid var(--border);">1W</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Chart Viewport: Handles both Single View & Quad 4-Chart View -->
+  <div id="main-charts-viewport" style="position: relative;">
+    <!-- Single View Container -->
+    <div id="single-chart-view-container">
+
+    <!-- Interactive Chart Toolbar & Technical Indicator Suite -->
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 8px; background: rgba(15, 23, 42, 0.85); padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border);">
+      <!-- Chart Styles -->
+      <div style="display: flex; gap: 4px; align-items: center; flex-wrap: wrap;">
+        <span style="font-size: 0.72rem; color: var(--text-secondary); font-weight: 700; margin-right: 2px;">STYLE:</span>
+        <button type="button" class="btn nc-style-btn" id="btn-style-candles" onclick="setChartType('candles', this)" style="background: var(--accent); color: white; padding: 3px 8px; font-size: 0.72rem; font-weight: 700; border-radius: 4px; border: 1px solid var(--accent);">🕯️ Candles</button>
+        <button type="button" class="btn nc-style-btn" id="btn-style-ha" onclick="setChartType('heikinashi', this)" style="background: #1e293b; color: var(--text-secondary); padding: 3px 8px; font-size: 0.72rem; border-radius: 4px; border: 1px solid var(--border);">🏮 Heikin-Ashi</button>
+        <button type="button" class="btn nc-style-btn" id="btn-style-line" onclick="setChartType('line', this)" style="background: #1e293b; color: var(--text-secondary); padding: 3px 8px; font-size: 0.72rem; border-radius: 4px; border: 1px solid var(--border);">📈 Line</button>
+        <button type="button" class="btn nc-style-btn" id="btn-style-area" onclick="setChartType('area', this)" style="background: #1e293b; color: var(--text-secondary); padding: 3px 8px; font-size: 0.72rem; border-radius: 4px; border: 1px solid var(--border);">📊 Area</button>
+      </div>
+
+      <!-- Technical Indicators -->
+      <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+        <span style="font-size: 0.72rem; color: var(--text-secondary); font-weight: 700;">INDICATORS:</span>
+        <label style="font-size: 0.72rem; color: #10b981; font-weight: 700; display: inline-flex; align-items: center; gap: 3px; cursor: pointer;" title="Toggle Volume Bars on/off">
+          <input type="checkbox" id="nc-toggle-vol" checked onchange="toggleIndicator('vol')"> Volume
+        </label>
+        <label style="font-size: 0.72rem; color: #facc15; font-weight: 700; display: inline-flex; align-items: center; gap: 3px; cursor: pointer;">
+          <input type="checkbox" id="nc-toggle-ema9" checked onchange="toggleIndicator('ema9')"> EMA 9
+        </label>
+        <label style="font-size: 0.72rem; color: #38bdf8; font-weight: 700; display: inline-flex; align-items: center; gap: 3px; cursor: pointer;">
+          <input type="checkbox" id="nc-toggle-ema20" checked onchange="toggleIndicator('ema20')"> EMA 20
+        </label>
+        <label style="font-size: 0.72rem; color: #fb923c; font-weight: 700; display: inline-flex; align-items: center; gap: 3px; cursor: pointer;">
+          <input type="checkbox" id="nc-toggle-ema50" onchange="toggleIndicator('ema50')"> EMA 50
+        </label>
+        <label style="font-size: 0.72rem; color: #c084fc; font-weight: 700; display: inline-flex; align-items: center; gap: 3px; cursor: pointer;">
+          <input type="checkbox" id="nc-toggle-sma200" onchange="toggleIndicator('sma200')"> SMA 200
+        </label>
+        <label style="font-size: 0.72rem; color: #f43f5e; font-weight: 700; display: inline-flex; align-items: center; gap: 3px; cursor: pointer;">
+          <input type="checkbox" id="nc-toggle-vwap" onchange="toggleIndicator('vwap')"> VWAP
+        </label>
+        <label style="font-size: 0.72rem; color: #60a5fa; font-weight: 700; display: inline-flex; align-items: center; gap: 3px; cursor: pointer;">
+          <input type="checkbox" id="nc-toggle-bb" onchange="toggleIndicator('bb')"> Bollinger
+        </label>
+        <label style="font-size: 0.72rem; color: #a855f7; font-weight: 700; display: inline-flex; align-items: center; gap: 3px; cursor: pointer;">
+          <input type="checkbox" id="nc-toggle-rsi" onchange="toggleIndicator('rsi')"> RSI (14)
+        </label>
+      </div>
+
+      <!-- Drawing & Chart Tools -->
+      <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+        <button type="button" class="btn" id="btn-toggle-draw-tools" onclick="toggleDrawingPanel()" style="background: #0284c7; color: white; padding: 3px 10px; font-size: 0.72rem; font-weight: 700; border-radius: 4px; border: 1px solid #38bdf8; cursor: pointer;" title="Open Manual S/R Line & Zone Draw Studio">
+          ✏️ Draw Tools ▼
+        </button>
+        <button type="button" class="btn" onclick="openQuickSrPrompt()" style="background: #1e293b; color: #38bdf8; padding: 3px 8px; font-size: 0.72rem; font-weight: 700; border-radius: 4px; border: 1px solid #38bdf8; cursor: pointer;" title="Quick add S/R line">
+          ➕ S/R Line
+        </button>
+        <button type="button" class="btn" onclick="openQuickZonePrompt()" style="background: #1e293b; color: #10b981; padding: 3px 8px; font-size: 0.72rem; font-weight: 700; border-radius: 4px; border: 1px solid #10b981; cursor: pointer;" title="Quick add Supply/Demand zone">
+          🟩 Zone
+        </button>
+        <button type="button" class="btn" onclick="clearAllDrawings()" style="background: #1e293b; color: var(--text-secondary); padding: 3px 8px; font-size: 0.72rem; border-radius: 4px; border: 1px solid var(--border); cursor: pointer;" title="Clear all drawn lines and zones">
+          🗑️ Clear
+        </button>
+        <button type="button" class="btn" onclick="resetChartZoom()" style="background: #1e293b; color: var(--text-secondary); padding: 3px 8px; font-size: 0.72rem; border-radius: 4px; border: 1px solid var(--border); cursor: pointer;" title="Auto-scale & Fit content">
+          🔄 Fit
+        </button>
+        <button type="button" class="btn" onclick="takeChartSnapshot()" style="background: #1e293b; color: var(--text-secondary); padding: 3px 8px; font-size: 0.72rem; border-radius: 4px; border: 1px solid var(--border); cursor: pointer;" title="Download PNG screenshot">
+          📷 Snapshot
+        </button>
+        <button type="button" class="btn" onclick="toggleChartFullscreen()" style="background: #1e293b; color: var(--text-secondary); padding: 3px 8px; font-size: 0.72rem; border-radius: 4px; border: 1px solid var(--border); cursor: pointer;" title="Toggle fullscreen view">
+          ⛶
+        </button>
       </div>
     </div>
 
-    <!-- Symbol & Timeframe Switcher Bar -->
-    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 8px; background: rgba(0,0,0,0.25); padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border);">
-      <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
-        <span style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 700;">Symbols:</span>
-        <button type="button" class="btn nc-sym-btn" onclick="selectChartSymbol('NIFTY', this)" style="background: var(--accent); color: white; padding: 4px 10px; font-size: 0.75rem; font-weight: 700; border-radius: 4px; border: 1px solid var(--accent);">NIFTY 50</button>
-        <button type="button" class="btn nc-sym-btn" onclick="selectChartSymbol('BANKNIFTY', this)" style="background: #1e293b; color: var(--text-secondary); padding: 4px 10px; font-size: 0.75rem; font-weight: 700; border-radius: 4px; border: 1px solid var(--border);">BANKNIFTY</button>
-        <button type="button" class="btn nc-sym-btn" onclick="selectChartSymbol('SENSEX', this)" style="background: #1e293b; color: var(--text-secondary); padding: 4px 10px; font-size: 0.75rem; font-weight: 700; border-radius: 4px; border: 1px solid var(--border);">SENSEX</button>
-        <button type="button" class="btn nc-sym-btn" onclick="selectChartSymbol('RELIANCE', this)" style="background: #1e293b; color: var(--text-secondary); padding: 4px 10px; font-size: 0.75rem; font-weight: 700; border-radius: 4px; border: 1px solid var(--border);">RELIANCE</button>
-        <button type="button" class="btn nc-sym-btn" onclick="selectChartSymbol('AAPL', this)" style="background: #1e293b; color: var(--text-secondary); padding: 4px 10px; font-size: 0.75rem; font-weight: 700; border-radius: 4px; border: 1px solid var(--border);" title="Apple Inc (Global NASDAQ)">AAPL</button>
-        <button type="button" class="btn nc-sym-btn" onclick="selectChartSymbol('BTCUSD', this)" style="background: #1e293b; color: var(--text-secondary); padding: 4px 10px; font-size: 0.75rem; font-weight: 700; border-radius: 4px; border: 1px solid var(--border);" title="Bitcoin / USDT (Crypto)">BTC/USD</button>
-        <button type="button" class="btn nc-sym-btn" onclick="selectChartSymbol('GOLD', this)" style="background: #1e293b; color: var(--text-secondary); padding: 4px 10px; font-size: 0.75rem; font-weight: 700; border-radius: 4px; border: 1px solid var(--border);" title="Gold Spot (Commodity)">GOLD</button>
+    <!-- Collapsible Drawing Studio Panel: Manual S/R Lines & Supply/Demand Zones -->
+    <div id="chart-drawing-panel" style="display: none; margin-top: 8px; background: rgba(15, 23, 42, 0.95); padding: 12px; border-radius: 6px; border: 1px solid #0284c7; box-shadow: 0 4px 15px rgba(0,0,0,0.4);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid var(--border); padding-bottom: 6px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-weight: 800; font-size: 0.88rem; color: #38bdf8;">📐 Custom Drawings: S/R Lines &amp; Supply/Demand Zones</span>
+          <span style="font-size: 0.72rem; color: var(--text-secondary);">Manual price levels with auto-persistence</span>
+        </div>
+        <div style="display: flex; gap: 6px;">
+          <button type="button" id="btn-click-to-draw-sr" onclick="toggleClickToDrawMode()" class="btn" style="background: #1e293b; color: #facc15; border: 1px solid #facc15; padding: 3px 8px; font-size: 0.72rem; font-weight: 700; border-radius: 4px; cursor: pointer;">
+            🎯 Click-to-Drop S/R
+          </button>
+          <button type="button" onclick="clearAllDrawings()" class="btn" style="background: #1e293b; color: #ef4444; border: 1px solid var(--border); padding: 3px 8px; font-size: 0.72rem; font-weight: 700; border-radius: 4px; cursor: pointer;">
+            🗑️ Clear All
+          </button>
+          <button type="button" onclick="toggleDrawingPanel(false)" class="btn" style="background: #1e293b; color: var(--text-secondary); border: 1px solid var(--border); padding: 3px 8px; font-size: 0.72rem; border-radius: 4px; cursor: pointer;">
+            ✕ Close
+          </button>
+        </div>
       </div>
 
-      <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-        <!-- Indicators Toggle -->
-        <label style="font-size: 0.75rem; color: #facc15; display: inline-flex; align-items: center; gap: 4px; cursor: pointer;">
-          <input type="checkbox" id="nc-toggle-ema9" checked onchange="toggleEmaLines()"> EMA 9
-        </label>
-        <label style="font-size: 0.75rem; color: #38bdf8; display: inline-flex; align-items: center; gap: 4px; cursor: pointer;">
-          <input type="checkbox" id="nc-toggle-ema20" checked onchange="toggleEmaLines()"> EMA 20
-        </label>
-
-        <!-- Custom Symbol Input -->
-        <div style="display: flex; gap: 4px; align-items: center;">
-          <input type="text" id="chart-custom-symbol-input" placeholder="e.g. NVDA, TCS" style="background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border); border-radius: 4px; padding: 4px 8px; font-size: 0.75rem; width: 110px; text-transform: uppercase;">
-          <button type="button" onclick="loadCustomChartSymbol()" class="btn" style="background: var(--accent); color: white; padding: 4px 10px; font-size: 0.74rem; font-weight: 700; border: none; border-radius: 4px; cursor: pointer;">Load</button>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 14px;">
+        <!-- Left: Manual S/R Line Form -->
+        <div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 6px; border: 1px solid var(--border);">
+          <div style="font-size: 0.78rem; font-weight: 700; color: #38bdf8; margin-bottom: 8px;">
+            📏 Manual Support / Resistance Line
+          </div>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: flex-end;">
+            <div style="flex: 1; min-width: 90px;">
+              <label style="font-size: 0.68rem; color: var(--text-secondary); display: block;">Price (₹)</label>
+              <input type="number" step="0.05" id="draw-sr-price" placeholder="e.g. 24200" style="width: 100%; background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border); border-radius: 4px; padding: 4px 6px; font-size: 0.75rem;">
+            </div>
+            <div style="width: 85px;">
+              <label style="font-size: 0.68rem; color: var(--text-secondary); display: block;">Type</label>
+              <select id="draw-sr-type" style="width: 100%; background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border); border-radius: 4px; padding: 4px 4px; font-size: 0.75rem;">
+                <option value="#10b981">🟢 Support</option>
+                <option value="#ef4444">🔴 Resistance</option>
+                <option value="#38bdf8">🔵 Key Level</option>
+                <option value="#facc15">🟡 Pivot</option>
+              </select>
+            </div>
+            <div style="flex: 1; min-width: 90px;">
+              <label style="font-size: 0.68rem; color: var(--text-secondary); display: block;">Label / Note</label>
+              <input type="text" id="draw-sr-label" placeholder="e.g. Day High" style="width: 100%; background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border); border-radius: 4px; padding: 4px 6px; font-size: 0.75rem;">
+            </div>
+            <button type="button" onclick="submitManualSrLine()" class="btn" style="background: var(--accent); color: white; border: none; padding: 5px 12px; font-size: 0.75rem; font-weight: 700; border-radius: 4px; cursor: pointer; height: 28px;">
+              ➕ Add Line
+            </button>
+            <button type="button" onclick="useCurrentPriceForSr()" class="btn" style="background: #1e293b; color: var(--text-secondary); border: 1px solid var(--border); padding: 5px 8px; font-size: 0.70rem; border-radius: 4px; cursor: pointer; height: 28px;" title="Use current market price">
+              🎯 Last
+            </button>
+          </div>
         </div>
 
-        <!-- Interval buttons -->
-        <span style="font-size: 0.75rem; color: var(--text-secondary); margin-left: 4px; font-weight: 700;">Timeframe:</span>
-        <button type="button" class="btn nc-int-btn" onclick="selectChartInterval('1m', this)" style="background: #1e293b; color: var(--text-secondary); padding: 3px 8px; font-size: 0.74rem; border-radius: 4px; border: 1px solid var(--border);">1m</button>
-        <button type="button" class="btn nc-int-btn" onclick="selectChartInterval('5m', this)" style="background: var(--accent); color: white; padding: 3px 8px; font-size: 0.74rem; border-radius: 4px; border: 1px solid var(--accent); font-weight: 700;">5m</button>
-        <button type="button" class="btn nc-int-btn" onclick="selectChartInterval('15m', this)" style="background: #1e293b; color: var(--text-secondary); padding: 3px 8px; font-size: 0.74rem; border-radius: 4px; border: 1px solid var(--border);">15m</button>
-        <button type="button" class="btn nc-int-btn" onclick="selectChartInterval('1h', this)" style="background: #1e293b; color: var(--text-secondary); padding: 3px 8px; font-size: 0.74rem; border-radius: 4px; border: 1px solid var(--border);">1h</button>
-        <button type="button" class="btn nc-int-btn" onclick="selectChartInterval('1d', this)" style="background: #1e293b; color: var(--text-secondary); padding: 3px 8px; font-size: 0.74rem; border-radius: 4px; border: 1px solid var(--border);">1D</button>
+        <!-- Right: Manual Supply / Demand Zone Form -->
+        <div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 6px; border: 1px solid var(--border);">
+          <div style="font-size: 0.78rem; font-weight: 700; color: #10b981; margin-bottom: 8px;">
+            🟩 Manual Supply &amp; Demand Zone
+          </div>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: flex-end;">
+            <div style="flex: 1; min-width: 80px;">
+              <label style="font-size: 0.68rem; color: var(--text-secondary); display: block;">Top Price (₹)</label>
+              <input type="number" step="0.05" id="draw-zone-top" placeholder="e.g. 24250" style="width: 100%; background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border); border-radius: 4px; padding: 4px 6px; font-size: 0.75rem;">
+            </div>
+            <div style="flex: 1; min-width: 80px;">
+              <label style="font-size: 0.68rem; color: var(--text-secondary); display: block;">Bottom Price (₹)</label>
+              <input type="number" step="0.05" id="draw-zone-bottom" placeholder="e.g. 24180" style="width: 100%; background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border); border-radius: 4px; padding: 4px 6px; font-size: 0.75rem;">
+            </div>
+            <div style="width: 95px;">
+              <label style="font-size: 0.68rem; color: var(--text-secondary); display: block;">Zone Type</label>
+              <select id="draw-zone-type" style="width: 100%; background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border); border-radius: 4px; padding: 4px 4px; font-size: 0.75rem;">
+                <option value="demand">🟢 Demand (Sup)</option>
+                <option value="supply">🔴 Supply (Res)</option>
+                <option value="liquidity">🟣 Liquidity</option>
+                <option value="value">🟡 Value Area</option>
+              </select>
+            </div>
+            <div style="flex: 1; min-width: 80px;">
+              <label style="font-size: 0.68rem; color: var(--text-secondary); display: block;">Zone Label</label>
+              <input type="text" id="draw-zone-label" placeholder="e.g. 15m Demand" style="width: 100%; background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border); border-radius: 4px; padding: 4px 6px; font-size: 0.75rem;">
+            </div>
+            <button type="button" onclick="submitManualZone()" class="btn" style="background: #10b981; color: black; border: none; padding: 5px 12px; font-size: 0.75rem; font-weight: 700; border-radius: 4px; cursor: pointer; height: 28px;">
+              ➕ Add Zone
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Active Drawings List -->
+      <div id="chart-active-drawings-list" style="margin-top: 10px; display: flex; gap: 6px; flex-wrap: wrap; align-items: center; font-size: 0.72rem;">
+        <span style="color: var(--text-secondary); font-weight: 700;">Active:</span>
+        <span id="chart-drawings-empty-msg" style="color: var(--text-secondary); font-style: italic;">No active drawings for this symbol yet.</span>
       </div>
     </div>
   </div>
 
   <!-- Native Engine Canvas Container -->
-  <div id="native-chart-wrapper" class="card" style="padding: 0; overflow: hidden; border-radius: 8px; border: 1px solid var(--border); height: 720px; background: #0f172a; position: relative;">
-    <div id="tv-native-chart-canvas" style="width: 100%; height: 100%;"></div>
+  <div id="native-chart-wrapper" class="card" style="padding: 0; overflow: hidden; border-radius: 8px; border: 1px solid var(--border); height: 740px; background: #0f172a; position: relative; display: flex; flex-direction: column;">
+    <div id="tv-main-chart-box" style="position: relative; width: 100%; flex: 1; min-height: 400px;">
+      <div id="tv-native-chart-canvas" style="width: 100%; height: 100%;"></div>
+      <canvas id="tv-drawings-canvas" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2;"></canvas>
+    </div>
+    <div id="tv-rsi-container" style="display: none; height: 160px; border-top: 1px solid var(--border); position: relative; background: #0b0f19;">
+      <div style="position: absolute; top: 4px; left: 10px; z-index: 5; font-size: 0.72rem; font-weight: 700; color: #a855f7;">
+        RSI (14): <span id="nc-rsi-val" style="color: #cbd5e1;">--</span>
+      </div>
+      <div id="tv-rsi-chart-canvas" style="width: 100%; height: 100%;"></div>
+    </div>
     <div id="nc-loading-overlay" style="position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(15,23,42,0.85); display: flex; align-items: center; justify-content: center; z-index: 10; color: #38bdf8; font-weight: 700; font-size: 0.95rem;">
       ⏳ Fetching Real-Time Candlestick Feed...
     </div>
   </div>
 
-  <!-- TradingView Cloud Widget (Hidden by default, available on toggle) -->
-  <div id="cloud-widget-wrapper" class="card" style="display: none; padding: 0; overflow: hidden; border-radius: 8px; border: 1px solid var(--border); height: 720px; background: #0f172a; position: relative;">
-    <div id="tradingview-cloud-widget-box" style="width: 100%; height: 100%; min-height: 720px;"></div>
-  </div>
-</div>
+    </div> <!-- Close #single-chart-view-container -->
+
+    <!-- 4-Chart Quad View Container (2x2 Grid) -->
+    <div id="quad-chart-view-container" style="display: none; width: 100%;">
+      <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; width: 100%;">
+        <!-- Cell 0 (Default: NIFTY 50) -->
+        <div class="card quad-cell" id="quad-cell-0" style="padding: 6px; border-radius: 8px; background: #0f172a; border: 1px solid var(--border); display: flex; flex-direction: column; height: 385px; position: relative;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; flex-wrap: wrap; gap: 4px; background: rgba(0,0,0,0.3); padding: 4px 6px; border-radius: 4px;">
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <select id="quad-symbol-0" onchange="changeQuadSymbol(0, this.value)" style="background: #1e293b; color: #38bdf8; border: 1px solid #38bdf8; border-radius: 4px; padding: 2px 6px; font-size: 0.72rem; font-weight: 700; cursor: pointer;">
+                <option value="NIFTY" selected>📊 NIFTY 50</option>
+                <option value="BANKNIFTY">🏦 BANKNIFTY</option>
+                <option value="GIFT NIFTY">🌐 GIFT NIFTY</option>
+                <option value="SENSEX">📈 BSE SENSEX</option>
+                <option value="FINNIFTY">💼 FINNIFTY</option>
+                <option value="MIDCPNIFTY">⚡ MIDCAP NIFTY</option>
+                <option value="RELIANCE">🏢 RELIANCE</option>
+                <option value="HDFCBANK">🏛️ HDFCBANK</option>
+                <option value="TCS">💻 TCS</option>
+                <option value="INFY">💻 INFY</option>
+                <option value="ICICIBANK">💳 ICICIBANK</option>
+                <option value="SBIN">🏦 SBIN</option>
+                <option value="AAPL">🍏 AAPL</option>
+                <option value="BTCUSD">₿ BTC/USD</option>
+                <option value="GOLD">🥇 GOLD</option>
+              </select>
+              <span id="quad-price-0" style="font-size: 0.74rem; font-weight: 800; color: #10b981;">--</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 3px;">
+              <button type="button" class="btn quad-tf-btn-0" onclick="changeQuadInterval(0, '5m', this)" style="background: var(--accent); color: white; padding: 1px 4px; font-size: 0.65rem; font-weight: 700; border: 1px solid var(--accent); border-radius: 3px;">5m</button>
+              <button type="button" class="btn quad-tf-btn-0" onclick="changeQuadInterval(0, '15m', this)" style="background: #1e293b; color: var(--text-secondary); padding: 1px 4px; font-size: 0.65rem; border: 1px solid var(--border); border-radius: 3px;">15m</button>
+              <button type="button" class="btn quad-tf-btn-0" onclick="changeQuadInterval(0, '1h', this)" style="background: #1e293b; color: var(--text-secondary); padding: 1px 4px; font-size: 0.65rem; border: 1px solid var(--border); border-radius: 3px;">1h</button>
+              <button type="button" class="btn quad-tf-btn-0" onclick="changeQuadInterval(0, '4h', this)" style="background: #1e293b; color: var(--text-secondary); padding: 1px 4px; font-size: 0.65rem; border: 1px solid var(--border); border-radius: 3px;">4h</button>
+              <button type="button" class="btn quad-tf-btn-0" onclick="changeQuadInterval(0, '1d', this)" style="background: #1e293b; color: var(--text-secondary); padding: 1px 4px; font-size: 0.65rem; border: 1px solid var(--border); border-radius: 3px;">1D</button>
+              <button type="button" class="btn quad-tf-btn-0" onclick="changeQuadInterval(0, '1w', this)" style="background: #1e293b; color: var(--text-secondary); padding: 1px 4px; font-size: 0.65rem; border: 1px solid var(--border); border-radius: 3px;">1W</button>
+              <button type="button" onclick="soloQuadChart(0)" class="btn" style="background: #0284c7; color: white; padding: 1px 6px; font-size: 0.66rem; font-weight: 700; border: none; border-radius: 3px; cursor: pointer; margin-left: 2px;" title="Maximize in Single View">🔲 Solo</button>
+            </div>
+          </div>
+          <div id="quad-chart-canvas-0" style="width: 100%; flex: 1; min-height: 250px;"></div>
+          <div id="quad-loading-0" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15,23,42,0.8); display: flex; align-items: center; justify-content: center; z-index: 5; font-size: 0.75rem; color: #38bdf8;">⏳ Loading...</div>
+        </div>
+
+        <!-- Cell 1 (Default: BANKNIFTY) -->
+        <div class="card quad-cell" id="quad-cell-1" style="padding: 6px; border-radius: 8px; background: #0f172a; border: 1px solid var(--border); display: flex; flex-direction: column; height: 385px; position: relative;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; flex-wrap: wrap; gap: 4px; background: rgba(0,0,0,0.3); padding: 4px 6px; border-radius: 4px;">
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <select id="quad-symbol-1" onchange="changeQuadSymbol(1, this.value)" style="background: #1e293b; color: #38bdf8; border: 1px solid #38bdf8; border-radius: 4px; padding: 2px 6px; font-size: 0.72rem; font-weight: 700; cursor: pointer;">
+                <option value="NIFTY">📊 NIFTY 50</option>
+                <option value="BANKNIFTY" selected>🏦 BANKNIFTY</option>
+                <option value="GIFT NIFTY">🌐 GIFT NIFTY</option>
+                <option value="SENSEX">📈 BSE SENSEX</option>
+                <option value="FINNIFTY">💼 FINNIFTY</option>
+                <option value="MIDCPNIFTY">⚡ MIDCAP NIFTY</option>
+                <option value="RELIANCE">🏢 RELIANCE</option>
+                <option value="HDFCBANK">🏛️ HDFCBANK</option>
+                <option value="TCS">💻 TCS</option>
+                <option value="INFY">💻 INFY</option>
+                <option value="ICICIBANK">💳 ICICIBANK</option>
+                <option value="SBIN">🏦 SBIN</option>
+                <option value="AAPL">🍏 AAPL</option>
+                <option value="BTCUSD">₿ BTC/USD</option>
+                <option value="GOLD">🥇 GOLD</option>
+              </select>
+              <span id="quad-price-1" style="font-size: 0.74rem; font-weight: 800; color: #10b981;">--</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 3px;">
+              <button type="button" class="btn quad-tf-btn-1" onclick="changeQuadInterval(1, '5m', this)" style="background: var(--accent); color: white; padding: 1px 4px; font-size: 0.65rem; font-weight: 700; border: 1px solid var(--accent); border-radius: 3px;">5m</button>
+              <button type="button" class="btn quad-tf-btn-1" onclick="changeQuadInterval(1, '15m', this)" style="background: #1e293b; color: var(--text-secondary); padding: 1px 4px; font-size: 0.65rem; border: 1px solid var(--border); border-radius: 3px;">15m</button>
+              <button type="button" class="btn quad-tf-btn-1" onclick="changeQuadInterval(1, '1h', this)" style="background: #1e293b; color: var(--text-secondary); padding: 1px 4px; font-size: 0.65rem; border: 1px solid var(--border); border-radius: 3px;">1h</button>
+              <button type="button" class="btn quad-tf-btn-1" onclick="changeQuadInterval(1, '4h', this)" style="background: #1e293b; color: var(--text-secondary); padding: 1px 4px; font-size: 0.65rem; border: 1px solid var(--border); border-radius: 3px;">4h</button>
+              <button type="button" class="btn quad-tf-btn-1" onclick="changeQuadInterval(1, '1d', this)" style="background: #1e293b; color: var(--text-secondary); padding: 1px 4px; font-size: 0.65rem; border: 1px solid var(--border); border-radius: 3px;">1D</button>
+              <button type="button" class="btn quad-tf-btn-1" onclick="changeQuadInterval(1, '1w', this)" style="background: #1e293b; color: var(--text-secondary); padding: 1px 4px; font-size: 0.65rem; border: 1px solid var(--border); border-radius: 3px;">1W</button>
+              <button type="button" onclick="soloQuadChart(1)" class="btn" style="background: #0284c7; color: white; padding: 1px 6px; font-size: 0.66rem; font-weight: 700; border: none; border-radius: 3px; cursor: pointer; margin-left: 2px;" title="Maximize in Single View">🔲 Solo</button>
+            </div>
+          </div>
+          <div id="quad-chart-canvas-1" style="width: 100%; flex: 1; min-height: 250px;"></div>
+          <div id="quad-loading-1" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15,23,42,0.8); display: flex; align-items: center; justify-content: center; z-index: 5; font-size: 0.75rem; color: #38bdf8;">⏳ Loading...</div>
+        </div>
+
+        <!-- Cell 2 (Default: GIFT NIFTY) -->
+        <div class="card quad-cell" id="quad-cell-2" style="padding: 6px; border-radius: 8px; background: #0f172a; border: 1px solid var(--border); display: flex; flex-direction: column; height: 385px; position: relative;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; flex-wrap: wrap; gap: 4px; background: rgba(0,0,0,0.3); padding: 4px 6px; border-radius: 4px;">
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <select id="quad-symbol-2" onchange="changeQuadSymbol(2, this.value)" style="background: #1e293b; color: #38bdf8; border: 1px solid #38bdf8; border-radius: 4px; padding: 2px 6px; font-size: 0.72rem; font-weight: 700; cursor: pointer;">
+                <option value="NIFTY">📊 NIFTY 50</option>
+                <option value="BANKNIFTY">🏦 BANKNIFTY</option>
+                <option value="GIFT NIFTY" selected>🌐 GIFT NIFTY</option>
+                <option value="SENSEX">📈 BSE SENSEX</option>
+                <option value="FINNIFTY">💼 FINNIFTY</option>
+                <option value="MIDCPNIFTY">⚡ MIDCAP NIFTY</option>
+                <option value="RELIANCE">🏢 RELIANCE</option>
+                <option value="HDFCBANK">🏛️ HDFCBANK</option>
+                <option value="TCS">💻 TCS</option>
+                <option value="INFY">💻 INFY</option>
+                <option value="ICICIBANK">💳 ICICIBANK</option>
+                <option value="SBIN">🏦 SBIN</option>
+                <option value="AAPL">🍏 AAPL</option>
+                <option value="BTCUSD">₿ BTC/USD</option>
+                <option value="GOLD">🥇 GOLD</option>
+              </select>
+              <span id="quad-price-2" style="font-size: 0.74rem; font-weight: 800; color: #10b981;">--</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 3px;">
+              <button type="button" class="btn quad-tf-btn-2" onclick="changeQuadInterval(2, '5m', this)" style="background: var(--accent); color: white; padding: 1px 4px; font-size: 0.65rem; font-weight: 700; border: 1px solid var(--accent); border-radius: 3px;">5m</button>
+              <button type="button" class="btn quad-tf-btn-2" onclick="changeQuadInterval(2, '15m', this)" style="background: #1e293b; color: var(--text-secondary); padding: 1px 4px; font-size: 0.65rem; border: 1px solid var(--border); border-radius: 3px;">15m</button>
+              <button type="button" class="btn quad-tf-btn-2" onclick="changeQuadInterval(2, '1h', this)" style="background: #1e293b; color: var(--text-secondary); padding: 1px 4px; font-size: 0.65rem; border: 1px solid var(--border); border-radius: 3px;">1h</button>
+              <button type="button" class="btn quad-tf-btn-2" onclick="changeQuadInterval(2, '4h', this)" style="background: #1e293b; color: var(--text-secondary); padding: 1px 4px; font-size: 0.65rem; border: 1px solid var(--border); border-radius: 3px;">4h</button>
+              <button type="button" class="btn quad-tf-btn-2" onclick="changeQuadInterval(2, '1d', this)" style="background: #1e293b; color: var(--text-secondary); padding: 1px 4px; font-size: 0.65rem; border: 1px solid var(--border); border-radius: 3px;">1D</button>
+              <button type="button" class="btn quad-tf-btn-2" onclick="changeQuadInterval(2, '1w', this)" style="background: #1e293b; color: var(--text-secondary); padding: 1px 4px; font-size: 0.65rem; border: 1px solid var(--border); border-radius: 3px;">1W</button>
+              <button type="button" onclick="soloQuadChart(2)" class="btn" style="background: #0284c7; color: white; padding: 1px 6px; font-size: 0.66rem; font-weight: 700; border: none; border-radius: 3px; cursor: pointer; margin-left: 2px;" title="Maximize in Single View">🔲 Solo</button>
+            </div>
+          </div>
+          <div id="quad-chart-canvas-2" style="width: 100%; flex: 1; min-height: 250px;"></div>
+          <div id="quad-loading-2" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15,23,42,0.8); display: flex; align-items: center; justify-content: center; z-index: 5; font-size: 0.75rem; color: #38bdf8;">⏳ Loading...</div>
+        </div>
+
+        <!-- Cell 3 (Default: SENSEX) -->
+        <div class="card quad-cell" id="quad-cell-3" style="padding: 6px; border-radius: 8px; background: #0f172a; border: 1px solid var(--border); display: flex; flex-direction: column; height: 385px; position: relative;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; flex-wrap: wrap; gap: 4px; background: rgba(0,0,0,0.3); padding: 4px 6px; border-radius: 4px;">
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <select id="quad-symbol-3" onchange="changeQuadSymbol(3, this.value)" style="background: #1e293b; color: #38bdf8; border: 1px solid #38bdf8; border-radius: 4px; padding: 2px 6px; font-size: 0.72rem; font-weight: 700; cursor: pointer;">
+                <option value="NIFTY">📊 NIFTY 50</option>
+                <option value="BANKNIFTY">🏦 BANKNIFTY</option>
+                <option value="GIFT NIFTY">🌐 GIFT NIFTY</option>
+                <option value="SENSEX" selected>📈 BSE SENSEX</option>
+                <option value="FINNIFTY">💼 FINNIFTY</option>
+                <option value="MIDCPNIFTY">⚡ MIDCAP NIFTY</option>
+                <option value="RELIANCE">🏢 RELIANCE</option>
+                <option value="HDFCBANK">🏛️ HDFCBANK</option>
+                <option value="TCS">💻 TCS</option>
+                <option value="INFY">💻 INFY</option>
+                <option value="ICICIBANK">💳 ICICIBANK</option>
+                <option value="SBIN">🏦 SBIN</option>
+                <option value="AAPL">🍏 AAPL</option>
+                <option value="BTCUSD">₿ BTC/USD</option>
+                <option value="GOLD">🥇 GOLD</option>
+              </select>
+              <span id="quad-price-3" style="font-size: 0.74rem; font-weight: 800; color: #10b981;">--</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 3px;">
+              <button type="button" class="btn quad-tf-btn-3" onclick="changeQuadInterval(3, '5m', this)" style="background: var(--accent); color: white; padding: 1px 4px; font-size: 0.65rem; font-weight: 700; border: 1px solid var(--accent); border-radius: 3px;">5m</button>
+              <button type="button" class="btn quad-tf-btn-3" onclick="changeQuadInterval(3, '15m', this)" style="background: #1e293b; color: var(--text-secondary); padding: 1px 4px; font-size: 0.65rem; border: 1px solid var(--border); border-radius: 3px;">15m</button>
+              <button type="button" class="btn quad-tf-btn-3" onclick="changeQuadInterval(3, '1h', this)" style="background: #1e293b; color: var(--text-secondary); padding: 1px 4px; font-size: 0.65rem; border: 1px solid var(--border); border-radius: 3px;">1h</button>
+              <button type="button" class="btn quad-tf-btn-3" onclick="changeQuadInterval(3, '4h', this)" style="background: #1e293b; color: var(--text-secondary); padding: 1px 4px; font-size: 0.65rem; border: 1px solid var(--border); border-radius: 3px;">4h</button>
+              <button type="button" class="btn quad-tf-btn-3" onclick="changeQuadInterval(3, '1d', this)" style="background: #1e293b; color: var(--text-secondary); padding: 1px 4px; font-size: 0.65rem; border: 1px solid var(--border); border-radius: 3px;">1D</button>
+              <button type="button" class="btn quad-tf-btn-3" onclick="changeQuadInterval(3, '1w', this)" style="background: #1e293b; color: var(--text-secondary); padding: 1px 4px; font-size: 0.65rem; border: 1px solid var(--border); border-radius: 3px;">1W</button>
+              <button type="button" onclick="soloQuadChart(3)" class="btn" style="background: #0284c7; color: white; padding: 1px 6px; font-size: 0.66rem; font-weight: 700; border: none; border-radius: 3px; cursor: pointer; margin-left: 2px;" title="Maximize in Single View">🔲 Solo</button>
+            </div>
+          </div>
+          <div id="quad-chart-canvas-3" style="width: 100%; flex: 1; min-height: 250px;"></div>
+          <div id="quad-loading-3" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15,23,42,0.8); display: flex; align-items: center; justify-content: center; z-index: 5; font-size: 0.75rem; color: #38bdf8;">⏳ Loading...</div>
+        </div>
+      </div>
+    </div> <!-- Close #quad-chart-view-container -->
+
+  </div> <!-- Close #main-charts-viewport -->
+
+</div> <!-- Close #tab-charts -->
 
 <!-- Tab News: Dedicated Market News & Impact Hub -->
 <div id="tab-news" class="tab-content">
@@ -3725,20 +4079,41 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   }
 
   // -------------------------------------------------------------
-  // TRADINGVIEW LIVE CANDLESTICK & ADVANCED CHART CONTROLLER
+  // NATIVE SPOT CANDLESTICK & ADVANCED CHART CONTROLLER
   // -------------------------------------------------------------
-  let _chartEngineMode = 'native'; // 'native' (TradingView Lightweight Charts) or 'cloud' (TradingView iframe)
+  let _currentLayoutView = 'single';
+  let _quadCharts = [null, null, null, null];
+  let _quadCandleSeries = [null, null, null, null];
+  let _quadVolumeSeries = [null, null, null, null];
+  let _quadSymbols = ['NIFTY', 'BANKNIFTY', 'GIFT NIFTY', 'SENSEX'];
+  let _quadIntervals = ['5m', '5m', '5m', '5m'];
+  let _quadRefreshTimer = null;
+
   let _lwChart = null;
   let _lwCandleSeries = null;
+  let _lwLineSeries = null;
+  let _lwAreaSeries = null;
   let _lwVolumeSeries = null;
   let _lwEma9Series = null;
   let _lwEma20Series = null;
+  let _lwEma50Series = null;
+  let _lwSma200Series = null;
+  let _lwVwapSeries = null;
+  let _lwBbUpperSeries = null;
+  let _lwBbMidSeries = null;
+  let _lwBbLowerSeries = null;
+
+  let _lwRsiChart = null;
+  let _lwRsiSeries = null;
+
+  let _cachedCandles = [];
+  let _lastCandle = null;
+  let _currentChartType = 'candles';
+  let _srPriceLines = [];
+
   let _lwSymbol = 'NIFTY';
   let _lwInterval = '5m';
   let _lwRefreshTimer = null;
-
-  let _tvCurrentSymbol = 'NSE:NIFTYBEES';
-  let _tvCurrentInterval = '5';
 
   function openTradingViewAppWindow(symbol = 'NSE:NIFTY') {
     const symParam = encodeURIComponent(symbol);
@@ -3751,59 +4126,19 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   }
 
   function initTradingViewChart() {
-    if (_chartEngineMode === 'native') {
-      initNativeChart();
-    } else {
-      loadTradingViewCloudWidget(_tvCurrentSymbol, _tvCurrentInterval);
-    }
+    initNativeChart();
   }
 
-  function setChartEngineMode(mode) {
-    _chartEngineMode = mode;
-    const btnNative = document.getElementById('btn-chart-mode-native');
-    const btnCloud = document.getElementById('btn-chart-mode-cloud');
-    const wrapNative = document.getElementById('native-chart-wrapper');
-    const wrapCloud = document.getElementById('cloud-widget-wrapper');
-    const headerNative = document.getElementById('native-chart-header');
-    const liveBadge = document.getElementById('chart-live-badge');
-
-    if (mode === 'native') {
-      if (btnNative) { btnNative.style.background = 'var(--accent)'; btnNative.style.color = 'white'; }
-      if (btnCloud) { btnCloud.style.background = 'transparent'; btnCloud.style.color = 'var(--text-secondary)'; }
-      if (wrapNative) wrapNative.style.display = 'block';
-      if (wrapCloud) wrapCloud.style.display = 'none';
-      if (headerNative) headerNative.style.display = 'flex';
-      if (liveBadge) {
-        liveBadge.className = 'badge badge-green';
-        liveBadge.innerText = '🟢 LIVE NSE SPOT FEED';
-      }
-      initNativeChart();
-      if (_lwChart) {
-        const c = document.getElementById('tv-native-chart-canvas');
-        if (c) _lwChart.applyOptions({ width: c.clientWidth, height: c.clientHeight });
-      }
-    } else {
-      if (btnNative) { btnNative.style.background = 'transparent'; btnNative.style.color = 'var(--text-secondary)'; }
-      if (btnCloud) { btnCloud.style.background = 'var(--accent)'; btnCloud.style.color = 'white'; }
-      if (wrapNative) wrapNative.style.display = 'none';
-      if (wrapCloud) wrapCloud.style.display = 'block';
-      if (headerNative) headerNative.style.display = 'none';
-      if (liveBadge) {
-        liveBadge.className = 'badge badge-blue';
-        liveBadge.innerText = '🌐 TRADINGVIEW CLOUD ENGINE (Global & Studies Active)';
-      }
-      loadTradingViewCloudWidget(_tvCurrentSymbol, _tvCurrentInterval);
-    }
-  }
-
+  // --- Technical Indicator Mathematical Models ---
   function calculateEMA(data, period) {
+    if (!data || data.length === 0) return [];
     const k = 2 / (period + 1);
     let emaArray = [];
     let prevEma = null;
     for (let i = 0; i < data.length; i++) {
       const val = data[i].close;
       if (i < period - 1) {
-        // waiting for enough bars
+        // accumulating
       } else if (i === period - 1) {
         let sum = 0;
         for (let j = 0; j < period; j++) sum += data[j].close;
@@ -3815,6 +4150,112 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       }
     }
     return emaArray;
+  }
+
+  function calculateSMA(data, period) {
+    if (!data || data.length === 0) return [];
+    let sma = [];
+    let sum = 0;
+    for (let i = 0; i < data.length; i++) {
+      sum += data[i].close;
+      if (i >= period) sum -= data[i - period].close;
+      if (i >= period - 1) {
+        sma.push({ time: data[i].time, value: Math.round((sum / period) * 100) / 100 });
+      }
+    }
+    return sma;
+  }
+
+  function calculateVWAP(data) {
+    if (!data || data.length === 0) return [];
+    let vwap = [];
+    let cumVol = 0;
+    let cumVolPrice = 0;
+    let lastDay = null;
+    for (let i = 0; i < data.length; i++) {
+      const d = new Date(data[i].time * 1000);
+      const day = d.getUTCDate();
+      if (lastDay !== null && day !== lastDay) {
+        cumVol = 0;
+        cumVolPrice = 0;
+      }
+      lastDay = day;
+      const typical = (data[i].high + data[i].low + data[i].close) / 3;
+      const vol = data[i].volume || 1;
+      cumVolPrice += typical * vol;
+      cumVol += vol;
+      vwap.push({ time: data[i].time, value: Math.round((cumVolPrice / (cumVol || 1)) * 100) / 100 });
+    }
+    return vwap;
+  }
+
+  function calculateBollingerBands(data, period = 20, mult = 2) {
+    if (!data || data.length < period) return { upper: [], middle: [], lower: [] };
+    let upper = [], middle = [], lower = [];
+    for (let i = period - 1; i < data.length; i++) {
+      let sum = 0;
+      for (let j = 0; j < period; j++) sum += data[i - j].close;
+      const mean = sum / period;
+      let varSum = 0;
+      for (let j = 0; j < period; j++) varSum += Math.pow(data[i - j].close - mean, 2);
+      const stdDev = Math.sqrt(varSum / period);
+      upper.push({ time: data[i].time, value: Math.round((mean + mult * stdDev) * 100) / 100 });
+      middle.push({ time: data[i].time, value: Math.round(mean * 100) / 100 });
+      lower.push({ time: data[i].time, value: Math.round((mean - mult * stdDev) * 100) / 100 });
+    }
+    return { upper, middle, lower };
+  }
+
+  function calculateRSI(data, period = 14) {
+    if (!data || data.length <= period) return [];
+    let rsiArray = [];
+    let gains = 0, losses = 0;
+    for (let i = 1; i <= period; i++) {
+      const change = data[i].close - data[i - 1].close;
+      if (change > 0) gains += change;
+      else losses -= change;
+    }
+    let avgGain = gains / period;
+    let avgLoss = losses / period;
+    let rs = avgLoss === 0 ? 100 : avgGain / avgLoss;
+    let rsi = avgLoss === 0 ? 100 : (100 - (100 / (1 + rs)));
+    rsiArray.push({ time: data[period].time, value: Math.round(rsi * 100) / 100 });
+
+    for (let i = period + 1; i < data.length; i++) {
+      const change = data[i].close - data[i - 1].close;
+      const gain = change > 0 ? change : 0;
+      const loss = change < 0 ? -change : 0;
+      avgGain = (avgGain * (period - 1) + gain) / period;
+      avgLoss = (avgLoss * (period - 1) + loss) / period;
+      rs = avgLoss === 0 ? 100 : avgGain / avgLoss;
+      rsi = avgLoss === 0 ? 100 : (100 - (100 / (1 + rs)));
+      rsiArray.push({ time: data[i].time, value: Math.round(rsi * 100) / 100 });
+    }
+    return rsiArray;
+  }
+
+  function calculateHeikinAshi(candles) {
+    if (!candles || candles.length === 0) return [];
+    let ha = [];
+    let prevOpen = candles[0].open;
+    let prevClose = candles[0].close;
+    for (let i = 0; i < candles.length; i++) {
+      const c = candles[i];
+      const haClose = (c.open + c.high + c.low + c.close) / 4;
+      const haOpen = i === 0 ? (c.open + c.close) / 2 : (prevOpen + prevClose) / 2;
+      const haHigh = Math.max(c.high, haOpen, haClose);
+      const haLow = Math.min(c.low, haOpen, haClose);
+      ha.push({
+        time: c.time,
+        open: Math.round(haOpen * 100) / 100,
+        high: Math.round(haHigh * 100) / 100,
+        low: Math.round(haLow * 100) / 100,
+        close: Math.round(haClose * 100) / 100,
+      });
+      prevOpen = haOpen;
+      prevClose = haClose;
+    }
+    return ha;
   }
 
   function updateOhlcvDisplay(o, h, l, c, v) {
@@ -3830,11 +4271,667 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     if (elV) elV.innerText = Number(v || 0).toLocaleString('en-IN');
   }
 
-  function toggleEmaLines() {
-    const show9 = document.getElementById('nc-toggle-ema9')?.checked;
-    const show20 = document.getElementById('nc-toggle-ema20')?.checked;
-    if (_lwEma9Series) _lwEma9Series.applyOptions({ visible: !!show9 });
-    if (_lwEma20Series) _lwEma20Series.applyOptions({ visible: !!show20 });
+  function resizeCharts() {
+    const mainCont = document.getElementById('tv-native-chart-canvas');
+    if (_lwChart && mainCont && mainCont.clientHeight > 0) {
+      _lwChart.applyOptions({ width: mainCont.clientWidth, height: mainCont.clientHeight });
+    }
+    const rsiCont = document.getElementById('tv-rsi-chart-canvas');
+    if (_lwRsiChart && rsiCont && rsiCont.clientHeight > 0) {
+      _lwRsiChart.applyOptions({ width: rsiCont.clientWidth, height: rsiCont.clientHeight });
+    }
+    resizeQuadCharts();
+  }
+
+  function setChartType(type, btn) {
+    _currentChartType = type;
+    document.querySelectorAll('.nc-style-btn').forEach(b => {
+      b.style.background = '#1e293b';
+      b.style.color = 'var(--text-secondary)';
+      b.style.border = '1px solid var(--border)';
+      b.style.fontWeight = 'normal';
+    });
+    if (btn) {
+      btn.style.background = 'var(--accent)';
+      btn.style.color = 'white';
+      btn.style.border = '1px solid var(--accent)';
+      btn.style.fontWeight = '700';
+    }
+
+    const isCandle = type === 'candles' || type === 'heikinashi';
+    const isLine = type === 'line';
+    const isArea = type === 'area';
+
+    if (_lwCandleSeries) _lwCandleSeries.applyOptions({ visible: isCandle });
+    if (_lwLineSeries) _lwLineSeries.applyOptions({ visible: isLine });
+    if (_lwAreaSeries) _lwAreaSeries.applyOptions({ visible: isArea });
+
+    if (_cachedCandles && _cachedCandles.length > 0) {
+      applyCandleDataToSeries();
+    }
+  }
+
+  function toggleIndicator(ind) {
+    const chk = document.getElementById('nc-toggle-' + ind);
+    const show = chk ? chk.checked : false;
+
+    if (ind === 'vol') {
+      if (_lwVolumeSeries) _lwVolumeSeries.applyOptions({ visible: show });
+      if (_quadVolumeSeries) {
+        _quadVolumeSeries.forEach(s => {
+          if (s) s.applyOptions({ visible: show });
+        });
+      }
+    }
+
+    if (ind === 'ema9' && _lwEma9Series) _lwEma9Series.applyOptions({ visible: show });
+    if (ind === 'ema20' && _lwEma20Series) _lwEma20Series.applyOptions({ visible: show });
+    if (ind === 'ema50' && _lwEma50Series) _lwEma50Series.applyOptions({ visible: show });
+    if (ind === 'sma200' && _lwSma200Series) _lwSma200Series.applyOptions({ visible: show });
+    if (ind === 'vwap' && _lwVwapSeries) _lwVwapSeries.applyOptions({ visible: show });
+
+    if (ind === 'bb') {
+      if (_lwBbUpperSeries) _lwBbUpperSeries.applyOptions({ visible: show });
+      if (_lwBbMidSeries) _lwBbMidSeries.applyOptions({ visible: show });
+      if (_lwBbLowerSeries) _lwBbLowerSeries.applyOptions({ visible: show });
+    }
+
+    if (ind === 'rsi') {
+      const rsiCont = document.getElementById('tv-rsi-container');
+      if (rsiCont) {
+        rsiCont.style.display = show ? 'block' : 'none';
+        if (show) {
+          if (!_lwRsiChart) initRsiChart();
+          if (_cachedCandles && _cachedCandles.length > 0) {
+            const rsiData = calculateRSI(_cachedCandles, 14);
+            if (_lwRsiSeries) _lwRsiSeries.setData(rsiData);
+          }
+        }
+        setTimeout(resizeCharts, 50);
+      }
+    }
+  }
+
+  let _customLines = []; // { id, price, label, color, style, pLineRef }
+  let _customZones = []; // { id, topPrice, bottomPrice, label, type, fillColor, borderColor, topRef, bottomRef }
+  let _clickToDrawSrMode = false;
+
+  function toggleDrawingPanel(forceState) {
+    const p = document.getElementById('chart-drawing-panel');
+    const b = document.getElementById('btn-toggle-draw-tools');
+    if (!p) return;
+    const show = typeof forceState === 'boolean' ? forceState : (p.style.display === 'none' || !p.style.display);
+    p.style.display = show ? 'block' : 'none';
+    if (b) b.innerText = show ? '✏️ Draw Tools ▲' : '✏️ Draw Tools ▼';
+    if (show && _lastCandle) {
+      const priceInput = document.getElementById('draw-sr-price');
+      if (priceInput && !priceInput.value) {
+        priceInput.value = _lastCandle.close.toFixed(2);
+      }
+      const topInput = document.getElementById('draw-zone-top');
+      const btmInput = document.getElementById('draw-zone-bottom');
+      if (topInput && !topInput.value) topInput.value = (_lastCandle.close + 25).toFixed(2);
+      if (btmInput && !btmInput.value) btmInput.value = (_lastCandle.close - 25).toFixed(2);
+    }
+  }
+
+  function openQuickSrPrompt() {
+    toggleDrawingPanel(true);
+    const p = document.getElementById('draw-sr-price');
+    if (p) {
+      if (_lastCandle) p.value = _lastCandle.close.toFixed(2);
+      p.focus();
+    }
+  }
+
+  function openQuickZonePrompt() {
+    toggleDrawingPanel(true);
+    const top = document.getElementById('draw-zone-top');
+    const btm = document.getElementById('draw-zone-bottom');
+    if (_lastCandle) {
+      if (top) top.value = (_lastCandle.close + 30).toFixed(2);
+      if (btm) btm.value = (_lastCandle.close - 30).toFixed(2);
+    }
+    if (top) top.focus();
+  }
+
+  function useCurrentPriceForSr() {
+    if (_lastCandle) {
+      const p = document.getElementById('draw-sr-price');
+      if (p) p.value = _lastCandle.close.toFixed(2);
+    }
+  }
+
+  function toggleClickToDrawMode(forceState) {
+    _clickToDrawSrMode = typeof forceState === 'boolean' ? forceState : !_clickToDrawSrMode;
+    const btn = document.getElementById('btn-click-to-draw-sr');
+    if (btn) {
+      if (_clickToDrawSrMode) {
+        btn.style.background = '#facc15';
+        btn.style.color = 'black';
+        btn.innerText = '🎯 Click Chart to Drop S/R';
+      } else {
+        btn.style.background = '#1e293b';
+        btn.style.color = '#facc15';
+        btn.innerText = '🎯 Click-to-Drop S/R';
+      }
+    }
+  }
+
+  function handleChartClick(param) {
+    if (!_clickToDrawSrMode || !param || !param.point) return;
+    const activeSeries = _lwCandleSeries || _lwLineSeries;
+    if (!activeSeries) return;
+    const price = activeSeries.coordinateToPrice(param.point.y);
+    if (price && !isNaN(price)) {
+      addCustomSrLine({
+        price: Math.round(price * 100) / 100,
+        color: '#38bdf8',
+        label: 'S/R Level',
+        style: 'dashed'
+      });
+      toggleClickToDrawMode(false);
+    }
+  }
+
+  function submitManualSrLine() {
+    const priceInput = document.getElementById('draw-sr-price');
+    if (!priceInput || !priceInput.value) {
+      alert('Please enter a valid price for the S/R line.');
+      return;
+    }
+    const price = parseFloat(priceInput.value);
+    if (isNaN(price) || price <= 0) {
+      alert('Please enter a positive numeric price.');
+      return;
+    }
+    const typeSelect = document.getElementById('draw-sr-type');
+    const color = typeSelect ? typeSelect.value : '#38bdf8';
+    const labelInput = document.getElementById('draw-sr-label');
+    const label = labelInput && labelInput.value.trim() ? labelInput.value.trim() : 'S/R Level';
+
+    addCustomSrLine({ price, color, label, style: 'dashed' });
+    if (labelInput) labelInput.value = '';
+  }
+
+  function addCustomSrLine(lineObj) {
+    const lineId = 'sr_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+    const activeSeries = _lwCandleSeries || _lwLineSeries;
+    let pLineRef = null;
+    if (activeSeries) {
+      pLineRef = activeSeries.createPriceLine({
+        price: Number(lineObj.price),
+        color: lineObj.color || '#38bdf8',
+        lineWidth: 2,
+        lineStyle: lineObj.style === 'solid' ? LightweightCharts.LineStyle.Solid : LightweightCharts.LineStyle.Dashed,
+        axisLabelVisible: true,
+        title: (lineObj.label || 'S/R') + ' ' + Number(lineObj.price).toFixed(2),
+      });
+    }
+    _customLines.push({
+      id: lineId,
+      price: Number(lineObj.price),
+      color: lineObj.color || '#38bdf8',
+      label: lineObj.label || 'S/R Level',
+      style: lineObj.style || 'dashed',
+      pLineRef: pLineRef
+    });
+    saveDrawingsToStorage();
+    renderDrawingsList();
+  }
+
+  function submitManualZone() {
+    const topInput = document.getElementById('draw-zone-top');
+    const btmInput = document.getElementById('draw-zone-bottom');
+    if (!topInput || !topInput.value || !btmInput || !btmInput.value) {
+      alert('Please enter both Top and Bottom price levels for the zone.');
+      return;
+    }
+    const rawTop = parseFloat(topInput.value);
+    const rawBtm = parseFloat(btmInput.value);
+    if (isNaN(rawTop) || isNaN(rawBtm) || rawTop <= 0 || rawBtm <= 0) {
+      alert('Please enter valid positive numbers for zone prices.');
+      return;
+    }
+    const topPrice = Math.max(rawTop, rawBtm);
+    const bottomPrice = Math.min(rawTop, rawBtm);
+
+    const typeSelect = document.getElementById('draw-zone-type');
+    const zType = typeSelect ? typeSelect.value : 'demand';
+    const labelInput = document.getElementById('draw-zone-label');
+    const label = labelInput && labelInput.value.trim() ? labelInput.value.trim() : (zType === 'demand' ? 'Demand Zone' : 'Supply Zone');
+
+    let fillColor = 'rgba(16, 185, 129, 0.22)';
+    let borderColor = '#10b981';
+    if (zType === 'supply') {
+      fillColor = 'rgba(239, 68, 68, 0.22)';
+      borderColor = '#ef4444';
+    } else if (zType === 'liquidity') {
+      fillColor = 'rgba(168, 85, 247, 0.22)';
+      borderColor = '#c084fc';
+    } else if (zType === 'value') {
+      fillColor = 'rgba(250, 204, 21, 0.22)';
+      borderColor = '#facc15';
+    }
+
+    addCustomZone({
+      topPrice,
+      bottomPrice,
+      type: zType,
+      label,
+      fillColor,
+      borderColor
+    });
+
+    if (labelInput) labelInput.value = '';
+  }
+
+  function addCustomZone(zoneObj) {
+    const zoneId = 'zone_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+    const activeSeries = _lwCandleSeries || _lwLineSeries;
+    let topRef = null, bottomRef = null;
+    if (activeSeries) {
+      topRef = activeSeries.createPriceLine({
+        price: Number(zoneObj.topPrice),
+        color: zoneObj.borderColor,
+        lineWidth: 1,
+        lineStyle: LightweightCharts.LineStyle.Dotted,
+        axisLabelVisible: true,
+        title: (zoneObj.label || 'Top') + ' ' + Number(zoneObj.topPrice).toFixed(2),
+      });
+      bottomRef = activeSeries.createPriceLine({
+        price: Number(zoneObj.bottomPrice),
+        color: zoneObj.borderColor,
+        lineWidth: 1,
+        lineStyle: LightweightCharts.LineStyle.Dotted,
+        axisLabelVisible: true,
+        title: 'Btm ' + Number(zoneObj.bottomPrice).toFixed(2),
+      });
+    }
+    _customZones.push({
+      id: zoneId,
+      topPrice: Number(zoneObj.topPrice),
+      bottomPrice: Number(zoneObj.bottomPrice),
+      type: zoneObj.type,
+      label: zoneObj.label,
+      fillColor: zoneObj.fillColor,
+      borderColor: zoneObj.borderColor,
+      topRef: topRef,
+      bottomRef: bottomRef
+    });
+    saveDrawingsToStorage();
+    renderDrawingsList();
+    renderCustomZones();
+  }
+
+  function deleteDrawing(id) {
+    const activeSeries = _lwCandleSeries || _lwLineSeries;
+    const lIdx = _customLines.findIndex(l => l.id === id);
+    if (lIdx !== -1) {
+      if (activeSeries && _customLines[lIdx].pLineRef) {
+        try { activeSeries.removePriceLine(_customLines[lIdx].pLineRef); } catch (e) {}
+      }
+      _customLines.splice(lIdx, 1);
+    }
+    const zIdx = _customZones.findIndex(z => z.id === id);
+    if (zIdx !== -1) {
+      if (activeSeries) {
+        if (_customZones[zIdx].topRef) {
+          try { activeSeries.removePriceLine(_customZones[zIdx].topRef); } catch (e) {}
+        }
+        if (_customZones[zIdx].bottomRef) {
+          try { activeSeries.removePriceLine(_customZones[zIdx].bottomRef); } catch (e) {}
+        }
+      }
+      _customZones.splice(zIdx, 1);
+    }
+    saveDrawingsToStorage();
+    renderDrawingsList();
+    renderCustomZones();
+  }
+
+  function clearAllDrawings() {
+    const activeSeries = _lwCandleSeries || _lwLineSeries;
+    if (activeSeries) {
+      _customLines.forEach(l => {
+        if (l.pLineRef) {
+          try { activeSeries.removePriceLine(l.pLineRef); } catch (e) {}
+        }
+      });
+      _customZones.forEach(z => {
+        if (z.topRef) {
+          try { activeSeries.removePriceLine(z.topRef); } catch (e) {}
+        }
+        if (z.bottomRef) {
+          try { activeSeries.removePriceLine(z.bottomRef); } catch (e) {}
+        }
+      });
+    }
+    _customLines = [];
+    _customZones = [];
+    saveDrawingsToStorage();
+    renderDrawingsList();
+    renderCustomZones();
+  }
+
+  function renderDrawingsList() {
+    const cont = document.getElementById('chart-active-drawings-list');
+    if (!cont) return;
+    const emptyMsg = document.getElementById('chart-drawings-empty-msg');
+    
+    cont.querySelectorAll('.nc-draw-badge').forEach(el => el.remove());
+
+    if (_customLines.length === 0 && _customZones.length === 0) {
+      if (emptyMsg) emptyMsg.style.display = 'inline';
+      return;
+    }
+    if (emptyMsg) emptyMsg.style.display = 'none';
+
+    _customLines.forEach(l => {
+      const badge = document.createElement('div');
+      badge.className = 'nc-draw-badge';
+      badge.style.display = 'inline-flex';
+      badge.style.alignItems = 'center';
+      badge.style.gap = '5px';
+      badge.style.background = 'rgba(0,0,0,0.5)';
+      badge.style.border = `1px solid ${l.color}`;
+      badge.style.color = l.color;
+      badge.style.borderRadius = '4px';
+      badge.style.padding = '2px 6px';
+      badge.style.fontSize = '0.70rem';
+      badge.style.fontWeight = '700';
+      badge.innerHTML = `<span>📏 ${l.label}: ₹${l.price.toFixed(2)}</span><button type="button" onclick="deleteDrawing('${l.id}')" style="background:transparent;border:none;color:#ef4444;cursor:pointer;font-weight:bold;padding:0 2px;">✕</button>`;
+      cont.appendChild(badge);
+    });
+
+    _customZones.forEach(z => {
+      const badge = document.createElement('div');
+      badge.className = 'nc-draw-badge';
+      badge.style.display = 'inline-flex';
+      badge.style.alignItems = 'center';
+      badge.style.gap = '5px';
+      badge.style.background = 'rgba(0,0,0,0.5)';
+      badge.style.border = `1px solid ${z.borderColor}`;
+      badge.style.color = z.borderColor;
+      badge.style.borderRadius = '4px';
+      badge.style.padding = '2px 6px';
+      badge.style.fontSize = '0.70rem';
+      badge.style.fontWeight = '700';
+      badge.innerHTML = `<span>🟩 ${z.label}: ₹${z.bottomPrice.toFixed(2)} - ₹${z.topPrice.toFixed(2)}</span><button type="button" onclick="deleteDrawing('${z.id}')" style="background:transparent;border:none;color:#ef4444;cursor:pointer;font-weight:bold;padding:0 2px;">✕</button>`;
+      cont.appendChild(badge);
+    });
+  }
+
+  function renderCustomZones() {
+    const canvas = document.getElementById('tv-drawings-canvas');
+    if (!canvas || !_lwCandleSeries) return;
+    const rect = canvas.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) return;
+
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+    ctx.clearRect(0, 0, rect.width, rect.height);
+
+    const chartWidth = Math.max(0, rect.width - 55);
+
+    _customZones.forEach(zone => {
+      const yTop = _lwCandleSeries.priceToCoordinate(zone.topPrice);
+      const yBottom = _lwCandleSeries.priceToCoordinate(zone.bottomPrice);
+      if (yTop === null || yBottom === null) return;
+
+      const minY = Math.min(yTop, yBottom);
+      const height = Math.abs(yBottom - yTop);
+
+      ctx.fillStyle = zone.fillColor || 'rgba(16, 185, 129, 0.2)';
+      ctx.fillRect(0, minY, chartWidth, height);
+
+      ctx.strokeStyle = zone.borderColor || '#10b981';
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      ctx.moveTo(0, minY);
+      ctx.lineTo(chartWidth, minY);
+      ctx.moveTo(0, minY + height);
+      ctx.lineTo(chartWidth, minY + height);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      const labelText = `${zone.label || 'Zone'} [${zone.bottomPrice.toFixed(1)} - ${zone.topPrice.toFixed(1)}]`;
+      ctx.font = 'bold 10px Inter, sans-serif';
+      const textWidth = ctx.measureText(labelText).width;
+
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.90)';
+      ctx.fillRect(10, minY + 3, textWidth + 12, 16);
+      ctx.strokeStyle = zone.borderColor || '#10b981';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(10, minY + 3, textWidth + 12, 16);
+
+      ctx.fillStyle = zone.borderColor || '#10b981';
+      ctx.fillText(labelText, 16, minY + 15);
+    });
+  }
+
+  function saveDrawingsToStorage() {
+    try {
+      const dataToSave = {
+        lines: _customLines.map(l => ({ id: l.id, price: l.price, color: l.color, label: l.label, style: l.style })),
+        zones: _customZones.map(z => ({
+          id: z.id,
+          topPrice: z.topPrice,
+          bottomPrice: z.bottomPrice,
+          type: z.type,
+          label: z.label,
+          fillColor: z.fillColor,
+          borderColor: z.borderColor
+        }))
+      };
+      localStorage.setItem('nifty_drawings_' + _lwSymbol, JSON.stringify(dataToSave));
+    } catch (e) {
+      console.warn('Could not save drawings to localStorage:', e);
+    }
+  }
+
+  function loadDrawingsFromStorage(sym) {
+    const activeSeries = _lwCandleSeries || _lwLineSeries;
+    if (activeSeries) {
+      _customLines.forEach(l => {
+        if (l.pLineRef) {
+          try { activeSeries.removePriceLine(l.pLineRef); } catch (e) {}
+        }
+      });
+      _customZones.forEach(z => {
+        if (z.topRef) {
+          try { activeSeries.removePriceLine(z.topRef); } catch (e) {}
+        }
+        if (z.bottomRef) {
+          try { activeSeries.removePriceLine(z.bottomRef); } catch (e) {}
+        }
+      });
+    }
+    _customLines = [];
+    _customZones = [];
+
+    try {
+      const raw = localStorage.getItem('nifty_drawings_' + sym);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed.lines && Array.isArray(parsed.lines)) {
+          parsed.lines.forEach(l => {
+            let pRef = null;
+            if (activeSeries) {
+              pRef = activeSeries.createPriceLine({
+                price: Number(l.price),
+                color: l.color,
+                lineWidth: 2,
+                lineStyle: LightweightCharts.LineStyle.Dashed,
+                axisLabelVisible: true,
+                title: (l.label || 'S/R') + ' ' + Number(l.price).toFixed(2),
+              });
+            }
+            _customLines.push({ ...l, pLineRef: pRef });
+          });
+        }
+        if (parsed.zones && Array.isArray(parsed.zones)) {
+          parsed.zones.forEach(z => {
+            let topRef = null, bottomRef = null;
+            if (activeSeries) {
+              topRef = activeSeries.createPriceLine({
+                price: Number(z.topPrice),
+                color: z.borderColor,
+                lineWidth: 1,
+                lineStyle: LightweightCharts.LineStyle.Dotted,
+                axisLabelVisible: true,
+                title: (z.label || 'Top') + ' ' + Number(z.topPrice).toFixed(2),
+              });
+              bottomRef = activeSeries.createPriceLine({
+                price: Number(z.bottomPrice),
+                color: z.borderColor,
+                lineWidth: 1,
+                lineStyle: LightweightCharts.LineStyle.Dotted,
+                axisLabelVisible: true,
+                title: 'Btm ' + Number(z.bottomPrice).toFixed(2),
+              });
+            }
+            _customZones.push({ ...z, topRef: topRef, bottomRef: bottomRef });
+          });
+        }
+      }
+    } catch (e) {
+      console.warn('Could not load drawings from localStorage:', e);
+    }
+    renderDrawingsList();
+    renderCustomZones();
+  }
+
+  function addSupportResistanceLine(price) {
+    const targetPrice = price || (_lastCandle ? _lastCandle.close : null);
+    if (!targetPrice) return;
+    addCustomSrLine({ price: targetPrice, color: '#38bdf8', label: 'S/R Level', style: 'dashed' });
+  }
+
+  function clearSupportResistanceLines() {
+    clearAllDrawings();
+  }
+
+  function resetChartZoom() {
+    if (_lwChart) _lwChart.timeScale().fitContent();
+    if (_lwRsiChart) _lwRsiChart.timeScale().fitContent();
+    setTimeout(renderCustomZones, 50);
+  }
+
+  function takeChartSnapshot() {
+    if (!_lwChart) return;
+    try {
+      const canvas = _lwChart.takeScreenshot();
+      const link = document.createElement('a');
+      link.download = `${_lwSymbol}_${_lwInterval}_Chart.png`;
+      link.href = canvas.toDataURL();
+      link.click();
+    } catch (err) {
+      console.error('Snapshot error:', err);
+      alert('Unable to export chart image: ' + err.message);
+    }
+  }
+
+  function toggleChartFullscreen() {
+    const elem = document.getElementById('native-chart-wrapper');
+    if (!elem) return;
+    if (!document.fullscreenElement) {
+      elem.requestFullscreen().catch(err => {
+        alert(`Error enabling fullscreen: ${err.message}`);
+      });
+    } else {
+      document.exitFullscreen();
+    }
+  }
+
+  document.addEventListener('fullscreenchange', () => {
+    setTimeout(resizeCharts, 100);
+  });
+
+  function initRsiChart() {
+    const container = document.getElementById('tv-rsi-chart-canvas');
+    if (!container || _lwRsiChart) return;
+    if (typeof LightweightCharts === 'undefined') return;
+
+    _lwRsiChart = LightweightCharts.createChart(container, {
+      width: container.clientWidth || 1000,
+      height: container.clientHeight || 160,
+      layout: {
+        background: { color: '#0b0f19' },
+        textColor: '#94a3b8',
+        fontSize: 11,
+      },
+      grid: {
+        vertLines: { color: 'rgba(30, 41, 59, 0.4)' },
+        horzLines: { color: 'rgba(30, 41, 59, 0.4)' },
+      },
+      crosshair: {
+        mode: LightweightCharts.CrosshairMode.Normal,
+      },
+      rightPriceScale: {
+        borderColor: '#1e293b',
+        scaleMargins: { top: 0.1, bottom: 0.1 },
+      },
+      timeScale: {
+        borderColor: '#1e293b',
+        timeVisible: true,
+        secondsVisible: false,
+      },
+    });
+
+    _lwRsiSeries = _lwRsiChart.addLineSeries({
+      color: '#a855f7',
+      lineWidth: 2,
+      title: 'RSI',
+    });
+
+    _lwRsiSeries.createPriceLine({
+      price: 70,
+      color: 'rgba(239, 68, 68, 0.7)',
+      lineWidth: 1,
+      lineStyle: LightweightCharts.LineStyle.Dotted,
+      axisLabelVisible: true,
+      title: '70 OB',
+    });
+
+    _lwRsiSeries.createPriceLine({
+      price: 50,
+      color: 'rgba(148, 163, 184, 0.4)',
+      lineWidth: 1,
+      lineStyle: LightweightCharts.LineStyle.Dashed,
+      axisLabelVisible: false,
+    });
+
+    _lwRsiSeries.createPriceLine({
+      price: 30,
+      color: 'rgba(16, 185, 129, 0.7)',
+      lineWidth: 1,
+      lineStyle: LightweightCharts.LineStyle.Dotted,
+      axisLabelVisible: true,
+      title: '30 OS',
+    });
+
+    if (_lwChart) {
+      _lwChart.timeScale().subscribeVisibleLogicalRangeChange(range => {
+        if (_lwRsiChart && range) _lwRsiChart.timeScale().setVisibleLogicalRange(range);
+      });
+      _lwRsiChart.timeScale().subscribeVisibleLogicalRangeChange(range => {
+        if (_lwChart && range) _lwChart.timeScale().setVisibleLogicalRange(range);
+      });
+    }
+
+    _lwRsiChart.subscribeCrosshairMove(param => {
+      if (!param || !param.time || !param.seriesData) return;
+      const val = param.seriesData.get(_lwRsiSeries);
+      const valEl = document.getElementById('nc-rsi-val');
+      if (val && valEl) {
+        valEl.innerText = (val.value || val).toFixed(1);
+      }
+    });
   }
 
   function initNativeChart() {
@@ -3880,44 +4977,178 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         wickDownColor: '#ef4444',
       });
 
+      _lwLineSeries = _lwChart.addLineSeries({
+        color: '#38bdf8',
+        lineWidth: 2,
+        title: 'Price',
+        visible: false,
+      });
+
+      _lwAreaSeries = _lwChart.addAreaSeries({
+        topColor: 'rgba(56, 189, 248, 0.4)',
+        bottomColor: 'rgba(56, 189, 248, 0.02)',
+        lineColor: '#38bdf8',
+        lineWidth: 2,
+        title: 'Price',
+        visible: false,
+      });
+
+      const isVolVisible = document.getElementById('nc-toggle-vol') ? document.getElementById('nc-toggle-vol').checked : true;
       _lwVolumeSeries = _lwChart.addHistogramSeries({
         color: '#38bdf8',
         priceFormat: { type: 'volume' },
         priceScaleId: '',
         scaleMargins: { top: 0.82, bottom: 0 },
+        visible: isVolVisible,
       });
 
       _lwEma9Series = _lwChart.addLineSeries({
         color: '#facc15',
         lineWidth: 2,
         title: 'EMA 9',
+        visible: true,
       });
 
       _lwEma20Series = _lwChart.addLineSeries({
         color: '#38bdf8',
         lineWidth: 2,
         title: 'EMA 20',
+        visible: true,
+      });
+
+      _lwEma50Series = _lwChart.addLineSeries({
+        color: '#fb923c',
+        lineWidth: 2,
+        title: 'EMA 50',
+        visible: false,
+      });
+
+      _lwSma200Series = _lwChart.addLineSeries({
+        color: '#c084fc',
+        lineWidth: 2,
+        title: 'SMA 200',
+        visible: false,
+      });
+
+      _lwVwapSeries = _lwChart.addLineSeries({
+        color: '#f43f5e',
+        lineWidth: 2,
+        title: 'VWAP',
+        visible: false,
+      });
+
+      _lwBbUpperSeries = _lwChart.addLineSeries({
+        color: '#60a5fa',
+        lineWidth: 1,
+        lineStyle: LightweightCharts.LineStyle.Dashed,
+        title: 'BB Upper',
+        visible: false,
+      });
+
+      _lwBbMidSeries = _lwChart.addLineSeries({
+        color: '#3b82f6',
+        lineWidth: 1,
+        title: 'BB Mid',
+        visible: false,
+      });
+
+      _lwBbLowerSeries = _lwChart.addLineSeries({
+        color: '#60a5fa',
+        lineWidth: 1,
+        lineStyle: LightweightCharts.LineStyle.Dashed,
+        title: 'BB Lower',
+        visible: false,
       });
 
       _lwChart.subscribeCrosshairMove(param => {
         if (!param || !param.time || !param.seriesData) return;
         const candle = param.seriesData.get(_lwCandleSeries);
+        const line = param.seriesData.get(_lwLineSeries);
+        const area = param.seriesData.get(_lwAreaSeries);
         const vol = param.seriesData.get(_lwVolumeSeries);
         if (candle) {
           updateOhlcvDisplay(candle.open, candle.high, candle.low, candle.close, vol ? vol.value : 0);
+        } else if (line || area) {
+          const val = (line ? line.value : (area ? area.value : 0));
+          updateOhlcvDisplay(val, val, val, val, vol ? vol.value : 0);
         }
       });
 
-      window.addEventListener('resize', () => {
-        if (_lwChart && container) {
-          _lwChart.applyOptions({ width: container.clientWidth, height: container.clientHeight });
-        }
-      });
+      _lwChart.subscribeClick(param => handleChartClick(param));
+      _lwChart.timeScale().subscribeVisibleLogicalRangeChange(() => renderCustomZones());
+
+      const canvasBox = document.getElementById('tv-main-chart-box');
+      if (canvasBox) {
+        canvasBox.addEventListener('mousemove', () => requestAnimationFrame(renderCustomZones));
+        canvasBox.addEventListener('wheel', () => setTimeout(renderCustomZones, 20));
+        canvasBox.addEventListener('mouseup', () => setTimeout(renderCustomZones, 20));
+      }
+
+      window.addEventListener('resize', resizeCharts);
+      loadDrawingsFromStorage(_lwSymbol);
+    } else {
+      resizeCharts();
     }
 
     fetchNativeCandles();
     if (_lwRefreshTimer) clearInterval(_lwRefreshTimer);
     _lwRefreshTimer = setInterval(fetchNativeCandles, 15000);
+  }
+
+  function applyCandleDataToSeries() {
+    if (!_cachedCandles || _cachedCandles.length === 0) return;
+
+    const standardCandles = _cachedCandles.map(c => ({
+      time: c.time,
+      open: c.open,
+      high: c.high,
+      low: c.low,
+      close: c.close
+    }));
+
+    const lineData = _cachedCandles.map(c => ({
+      time: c.time,
+      value: c.close
+    }));
+
+    if (_currentChartType === 'heikinashi') {
+      const haCandles = calculateHeikinAshi(standardCandles);
+      if (_lwCandleSeries) _lwCandleSeries.setData(haCandles);
+    } else {
+      if (_lwCandleSeries) _lwCandleSeries.setData(standardCandles);
+    }
+
+    if (_lwLineSeries) _lwLineSeries.setData(lineData);
+    if (_lwAreaSeries) _lwAreaSeries.setData(lineData);
+
+    const volumes = _cachedCandles.map(c => ({
+      time: c.time,
+      value: c.volume || 0,
+      color: c.close >= c.open ? 'rgba(16, 185, 129, 0.4)' : 'rgba(239, 68, 68, 0.4)'
+    }));
+    if (_lwVolumeSeries) _lwVolumeSeries.setData(volumes);
+
+    if (_lwEma9Series) _lwEma9Series.setData(calculateEMA(standardCandles, 9));
+    if (_lwEma20Series) _lwEma20Series.setData(calculateEMA(standardCandles, 20));
+    if (_lwEma50Series) _lwEma50Series.setData(calculateEMA(standardCandles, 50));
+    if (_lwSma200Series) _lwSma200Series.setData(calculateSMA(standardCandles, 200));
+    if (_lwVwapSeries) _lwVwapSeries.setData(calculateVWAP(_cachedCandles));
+
+    const bb = calculateBollingerBands(standardCandles, 20, 2);
+    if (_lwBbUpperSeries) _lwBbUpperSeries.setData(bb.upper);
+    if (_lwBbMidSeries) _lwBbMidSeries.setData(bb.middle);
+    if (_lwBbLowerSeries) _lwBbLowerSeries.setData(bb.lower);
+
+    if (_lwRsiSeries) {
+      const rsiData = calculateRSI(standardCandles, 14);
+      _lwRsiSeries.setData(rsiData);
+      if (rsiData.length > 0) {
+        const lastRsi = rsiData[rsiData.length - 1].value;
+        const rsiEl = document.getElementById('nc-rsi-val');
+        if (rsiEl) rsiEl.innerText = lastRsi.toFixed(1);
+      }
+    }
+    setTimeout(renderCustomZones, 30);
   }
 
   async function fetchNativeCandles() {
@@ -3932,30 +5163,13 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 
       if (overlay) overlay.style.display = 'none';
 
-      const candles = data.candles.map(c => ({
-        time: c.time,
-        open: c.open,
-        high: c.high,
-        low: c.low,
-        close: c.close
-      }));
+      _cachedCandles = data.candles;
+      _lastCandle = data.candles[data.candles.length - 1];
 
-      const volumes = data.candles.map(c => ({
-        time: c.time,
-        value: c.volume || 0,
-        color: c.close >= c.open ? 'rgba(16, 185, 129, 0.4)' : 'rgba(239, 68, 68, 0.4)'
-      }));
+      applyCandleDataToSeries();
 
-      _lwCandleSeries.setData(candles);
-      _lwVolumeSeries.setData(volumes);
-
-      const ema9 = calculateEMA(candles, 9);
-      const ema20 = calculateEMA(candles, 20);
-      _lwEma9Series.setData(ema9);
-      _lwEma20Series.setData(ema20);
-
-      const last = candles[candles.length - 1];
-      const prev = data.previousClose || candles[0].open;
+      const last = _lastCandle;
+      const prev = data.previousClose || _cachedCandles[0].open;
       const diff = last.close - prev;
       const pct = prev > 0 ? ((diff / prev) * 100).toFixed(2) : '0.00';
       const symTitle = data.symbol === 'NIFTY' ? 'NIFTY 50 (Spot)' : (data.symbol === 'BANKNIFTY' ? 'BANKNIFTY (Spot)' : data.symbol);
@@ -3971,7 +5185,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         changeEl.style.color = diff >= 0 ? '#10b981' : '#ef4444';
       }
 
-      updateOhlcvDisplay(last.open, last.high, last.low, last.close, data.candles[data.candles.length - 1].volume || 0);
+      updateOhlcvDisplay(last.open, last.high, last.low, last.close, last.volume || 0);
     } catch (err) {
       console.error('Error fetching candles:', err);
       if (overlay) {
@@ -3981,17 +5195,71 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     }
   }
 
+  function selectSingleTab(sym, btn) {
+    document.querySelectorAll('.nc-main-tab-btn').forEach(b => {
+      b.style.background = '#1e293b';
+      b.style.color = 'var(--text-secondary)';
+      b.style.border = '1px solid var(--border)';
+    });
+    if (btn) {
+      btn.style.background = 'var(--accent)';
+      btn.style.color = 'white';
+      btn.style.border = '1px solid var(--accent)';
+    }
+
+    if (sym === 'CUSTOM') {
+      const input = document.getElementById('chart-custom-symbol-input');
+      if (input) {
+        input.focus();
+        if (input.value.trim()) {
+          selectChartSymbol(input.value.trim().toUpperCase(), null);
+        }
+      }
+      return;
+    }
+
+    const dropdown = document.getElementById('single-chart-symbol-dropdown');
+    if (dropdown) dropdown.value = sym;
+    selectChartSymbol(sym, null);
+  }
+
+  function onSymbolDropdownChange(val) {
+    const tabNifty = document.getElementById('tab-btn-nifty');
+    const tabBank = document.getElementById('tab-btn-banknifty');
+    const tabGift = document.getElementById('tab-btn-gift');
+    const tabCustom = document.getElementById('tab-btn-custom');
+
+    document.querySelectorAll('.nc-main-tab-btn').forEach(b => {
+      b.style.background = '#1e293b';
+      b.style.color = 'var(--text-secondary)';
+      b.style.border = '1px solid var(--border)';
+    });
+
+    if (val === 'NIFTY' && tabNifty) {
+      tabNifty.style.background = 'var(--accent)';
+      tabNifty.style.color = 'white';
+      tabNifty.style.border = '1px solid var(--accent)';
+    } else if (val === 'BANKNIFTY' && tabBank) {
+      tabBank.style.background = 'var(--accent)';
+      tabBank.style.color = 'white';
+      tabBank.style.border = '1px solid var(--accent)';
+    } else if (val === 'GIFT NIFTY' && tabGift) {
+      tabGift.style.background = 'var(--accent)';
+      tabGift.style.color = 'white';
+      tabGift.style.border = '1px solid var(--accent)';
+    } else if (tabCustom) {
+      tabCustom.style.background = 'var(--accent)';
+      tabCustom.style.color = 'white';
+      tabCustom.style.border = '1px solid var(--accent)';
+      const input = document.getElementById('chart-custom-symbol-input');
+      if (input) input.value = val;
+    }
+
+    selectChartSymbol(val, null);
+  }
+
   function selectChartSymbol(sym, btn) {
     _lwSymbol = sym;
-    let tvSym = sym;
-    if (sym === 'NIFTY') tvSym = 'NSE:NIFTYBEES';
-    else if (sym === 'BANKNIFTY') tvSym = 'NSE:BANKBEES';
-    else if (sym === 'AAPL') tvSym = 'NASDAQ:AAPL';
-    else if (sym === 'BTCUSD') tvSym = 'BINANCE:BTCUSDT';
-    else if (sym === 'GOLD') tvSym = 'TVC:GOLD';
-    else if (!sym.includes(':')) tvSym = 'NSE:' + sym;
-    _tvCurrentSymbol = tvSym;
-
     document.querySelectorAll('.nc-sym-btn').forEach(b => {
       b.style.background = '#1e293b';
       b.style.color = 'var(--text-secondary)';
@@ -4002,19 +5270,23 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       btn.style.color = 'white';
       btn.style.border = '1px solid var(--accent)';
     }
-    if (_chartEngineMode === 'native') {
-      const overlay = document.getElementById('nc-loading-overlay');
-      if (overlay) overlay.style.display = 'flex';
-      fetchNativeCandles();
-    } else {
-      loadTradingViewCloudWidget(_tvCurrentSymbol, _tvCurrentInterval);
+    const dropdown = document.getElementById('single-chart-symbol-dropdown');
+    if (dropdown) {
+      for (let opt of dropdown.options) {
+        if (opt.value === sym) {
+          dropdown.value = sym;
+          break;
+        }
+      }
     }
+    const overlay = document.getElementById('nc-loading-overlay');
+    if (overlay) overlay.style.display = 'flex';
+    loadDrawingsFromStorage(_lwSymbol);
+    fetchNativeCandles();
   }
 
   function selectChartInterval(intv, btn) {
     _lwInterval = intv;
-    const tvMap = { '1m': '1', '5m': '5', '15m': '15', '1h': '60', '1d': 'D' };
-    _tvCurrentInterval = tvMap[intv] || '5';
     document.querySelectorAll('.nc-int-btn').forEach(b => {
       b.style.background = '#1e293b';
       b.style.color = 'var(--text-secondary)';
@@ -4028,118 +5300,248 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       btn.style.fontWeight = '700';
     }
     const intvBadge = document.getElementById('chart-interval-badge');
-    if (intvBadge) intvBadge.innerText = intv.toUpperCase() + ' TIMEFRAME';
-    if (_chartEngineMode === 'native') {
-      fetchNativeCandles();
-    } else {
-      loadTradingViewCloudWidget(_tvCurrentSymbol, _tvCurrentInterval);
+    if (intvBadge) {
+      let label = intv.toUpperCase();
+      if (intv === '1w' || intv === '1wk') label = '1 WEEK';
+      intvBadge.innerText = label + ' TIMEFRAME';
     }
+    fetchNativeCandles();
   }
 
   function loadCustomChartSymbol() {
     const input = document.getElementById('chart-custom-symbol-input');
     if (!input || !input.value.trim()) return;
     const sym = input.value.trim().toUpperCase();
-    if (_chartEngineMode === 'cloud') {
-      let targetSym = sym;
-      const globalPrefixes = {
-        'AAPL': 'NASDAQ:AAPL',
-        'TSLA': 'NASDAQ:TSLA',
-        'NVDA': 'NASDAQ:NVDA',
-        'MSFT': 'NASDAQ:MSFT',
-        'AMZN': 'NASDAQ:AMZN',
-        'GOOGL': 'NASDAQ:GOOGL',
-        'BTCUSD': 'BINANCE:BTCUSDT',
-        'BTC': 'BINANCE:BTCUSDT',
-        'ETH': 'BINANCE:ETHUSDT',
-        'GOLD': 'TVC:GOLD',
-        'SILVER': 'TVC:SILVER',
-        'CRUDEOIL': 'TVC:USOIL',
-        'EURUSD': 'FX:EURUSD',
-        'GBPUSD': 'FX:GBPUSD',
-        'USDINR': 'FX_IDC:USDINR'
-      };
-      if (!targetSym.includes(':')) {
-        targetSym = globalPrefixes[targetSym] || ('NSE:' + targetSym);
+    onSymbolDropdownChange(sym);
+  }
+
+  function setChartLayoutView(view) {
+    _currentLayoutView = view;
+    const singleCont = document.getElementById('single-chart-view-container');
+    const quadCont = document.getElementById('quad-chart-view-container');
+    const singleTabsBar = document.getElementById('single-chart-tabs-bar');
+    const btnSingle = document.getElementById('btn-view-single');
+    const btnQuad = document.getElementById('btn-view-quad');
+
+    if (view === 'single') {
+      if (singleCont) singleCont.style.display = 'block';
+      if (quadCont) quadCont.style.display = 'none';
+      if (singleTabsBar) singleTabsBar.style.display = 'flex';
+      if (btnSingle) {
+        btnSingle.style.background = 'var(--accent)';
+        btnSingle.style.color = 'white';
       }
-      _tvCurrentSymbol = targetSym;
-      loadTradingViewCloudWidget(_tvCurrentSymbol, _tvCurrentInterval);
+      if (btnQuad) {
+        btnQuad.style.background = 'transparent';
+        btnQuad.style.color = 'var(--text-secondary)';
+      }
+      setTimeout(resizeCharts, 50);
     } else {
-      selectChartSymbol(sym, null);
+      if (singleCont) singleCont.style.display = 'none';
+      if (quadCont) quadCont.style.display = 'block';
+      if (singleTabsBar) singleTabsBar.style.display = 'none';
+      if (btnQuad) {
+        btnQuad.style.background = 'var(--accent)';
+        btnQuad.style.color = 'white';
+      }
+      if (btnSingle) {
+        btnSingle.style.background = 'transparent';
+        btnSingle.style.color = 'var(--text-secondary)';
+      }
+      initQuadCharts();
+      setTimeout(resizeQuadCharts, 50);
+      fetchAllQuadCharts();
+      if (!_quadRefreshTimer) {
+        _quadRefreshTimer = setInterval(fetchAllQuadCharts, 15000);
+      }
     }
   }
 
-  function loadTradingViewCloudWidget(sym, intv) {
-    const box = document.getElementById('tradingview-cloud-widget-box');
-    if (!box) return;
+  function toggleChartFullscreen() {
+    const vp = document.getElementById('main-charts-viewport');
+    if (!vp) return;
+    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+      if (vp.requestFullscreen) {
+        vp.requestFullscreen().catch(err => {
+          vp.classList.toggle('viewport-fullscreen-fallback');
+          onFullscreenStateChange();
+        });
+      } else if (vp.webkitRequestFullscreen) {
+        vp.webkitRequestFullscreen();
+      } else {
+        vp.classList.toggle('viewport-fullscreen-fallback');
+        onFullscreenStateChange();
+      }
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      } else if (document.webkitExitFullscreen) {
+        document.webkitExitFullscreen();
+      }
+      vp.classList.remove('viewport-fullscreen-fallback');
+    }
+  }
 
-    if (typeof TradingView === 'undefined' || !TradingView.widget) {
-      setTimeout(() => loadTradingViewCloudWidget(sym, intv), 200);
+  function onFullscreenStateChange() {
+    const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement || (document.getElementById('main-charts-viewport') && document.getElementById('main-charts-viewport').classList.contains('viewport-fullscreen-fallback')));
+    const vp = document.getElementById('main-charts-viewport');
+    if (vp) {
+      if (isFs) vp.classList.add('in-fullscreen-mode');
+      else vp.classList.remove('in-fullscreen-mode');
+    }
+    setTimeout(() => {
+      resizeCharts();
+      resizeQuadCharts();
+    }, 150);
+  }
+
+  document.addEventListener('fullscreenchange', onFullscreenStateChange);
+  document.addEventListener('webkitfullscreenchange', onFullscreenStateChange);
+
+  function initQuadCharts() {
+    if (typeof LightweightCharts === 'undefined') {
+      setTimeout(initQuadCharts, 250);
       return;
     }
 
-    let targetSym = sym || _tvCurrentSymbol || 'NSE:NIFTYBEES';
-    if (targetSym === 'NIFTY' || targetSym === 'NSE:NIFTY') targetSym = 'NSE:NIFTYBEES';
-    if (targetSym === 'BANKNIFTY' || targetSym === 'NSE:BANKNIFTY') targetSym = 'NSE:BANKBEES';
-    if (!targetSym.includes(':')) {
-      const globalPrefixes = {
-        'AAPL': 'NASDAQ:AAPL',
-        'TSLA': 'NASDAQ:TSLA',
-        'NVDA': 'NASDAQ:NVDA',
-        'MSFT': 'NASDAQ:MSFT',
-        'BTCUSD': 'BINANCE:BTCUSDT',
-        'BTC': 'BINANCE:BTCUSDT',
-        'ETH': 'BINANCE:ETHUSDT',
-        'GOLD': 'TVC:GOLD',
-        'SILVER': 'TVC:SILVER',
-        'CRUDEOIL': 'TVC:USOIL',
-        'EURUSD': 'FX:EURUSD',
-        'USDINR': 'FX_IDC:USDINR'
-      };
-      targetSym = globalPrefixes[targetSym] || ('NSE:' + targetSym);
+    for (let i = 0; i < 4; i++) {
+      const container = document.getElementById(`quad-chart-canvas-${i}`);
+      if (!container || _quadCharts[i]) continue;
+
+      const chart = LightweightCharts.createChart(container, {
+        layout: {
+          background: { type: 'solid', color: '#090d16' },
+          textColor: '#94a3b8',
+          fontSize: 10,
+          fontFamily: 'Inter, -apple-system, sans-serif',
+        },
+        grid: {
+          vertLines: { color: 'rgba(255, 255, 255, 0.04)' },
+          horzLines: { color: 'rgba(255, 255, 255, 0.04)' },
+        },
+        crosshair: {
+          mode: LightweightCharts.CrosshairMode.Normal,
+          vertLine: { color: 'rgba(56, 189, 248, 0.4)', width: 1, style: 2 },
+          horzLine: { color: 'rgba(56, 189, 248, 0.4)', width: 1, style: 2 },
+        },
+        rightPriceScale: {
+          borderColor: 'rgba(255, 255, 255, 0.1)',
+          scaleMargins: { top: 0.1, bottom: 0.2 },
+          autoScale: true,
+        },
+        timeScale: {
+          borderColor: 'rgba(255, 255, 255, 0.1)',
+          timeVisible: true,
+          secondsVisible: false,
+        },
+      });
+
+      const candleSeries = chart.addCandlestickSeries({
+        upColor: '#10b981',
+        downColor: '#ef4444',
+        borderUpColor: '#10b981',
+        borderDownColor: '#ef4444',
+        wickUpColor: '#10b981',
+        wickDownColor: '#ef4444',
+      });
+
+      const isVolVisible = document.getElementById('nc-toggle-vol') ? document.getElementById('nc-toggle-vol').checked : true;
+      const volumeSeries = chart.addHistogramSeries({
+        priceFormat: { type: 'volume' },
+        priceScaleId: '',
+        scaleMargins: { top: 0.82, bottom: 0 },
+        visible: isVolVisible,
+      });
+
+      _quadCharts[i] = chart;
+      _quadCandleSeries[i] = candleSeries;
+      _quadVolumeSeries[i] = volumeSeries;
     }
-    _tvCurrentSymbol = targetSym;
+  }
 
-    let targetInterval = intv || _tvCurrentInterval || '5';
-    const tvMap = { '1m': '1', '5m': '5', '15m': '15', '1h': '60', '1d': 'D' };
-    if (tvMap[targetInterval]) targetInterval = tvMap[targetInterval];
+  function resizeQuadCharts() {
+    for (let i = 0; i < 4; i++) {
+      const chart = _quadCharts[i];
+      const cont = document.getElementById(`quad-chart-canvas-${i}`);
+      if (chart && cont && cont.clientHeight > 0) {
+        chart.applyOptions({ width: cont.clientWidth, height: cont.clientHeight });
+      }
+    }
+  }
 
-    box.innerHTML = '';
-    const widgetDiv = document.createElement('div');
-    const containerId = 'tv_cloud_embed_' + Math.floor(Math.random() * 100000);
-    widgetDiv.id = containerId;
-    widgetDiv.style.width = '100%';
-    widgetDiv.style.height = '100%';
-    widgetDiv.style.minHeight = '720px';
-    box.appendChild(widgetDiv);
+  function changeQuadSymbol(idx, sym) {
+    _quadSymbols[idx] = sym;
+    fetchQuadCandles(idx);
+  }
+
+  function changeQuadInterval(idx, intv, btn) {
+    _quadIntervals[idx] = intv;
+    document.querySelectorAll(`.quad-tf-btn-${idx}`).forEach(b => {
+      b.style.background = '#1e293b';
+      b.style.color = 'var(--text-secondary)';
+      b.style.border = '1px solid var(--border)';
+      b.style.fontWeight = 'normal';
+    });
+    if (btn) {
+      btn.style.background = 'var(--accent)';
+      btn.style.color = 'white';
+      btn.style.border = '1px solid var(--accent)';
+      btn.style.fontWeight = '700';
+    }
+    fetchQuadCandles(idx);
+  }
+
+  function soloQuadChart(idx) {
+    const sym = _quadSymbols[idx];
+    setChartLayoutView('single');
+    const dropdown = document.getElementById('single-chart-symbol-dropdown');
+    if (dropdown) dropdown.value = sym;
+    onSymbolDropdownChange(sym);
+  }
+
+  async function fetchQuadCandles(idx) {
+    const sym = _quadSymbols[idx];
+    const intv = _quadIntervals[idx];
+    const chart = _quadCharts[idx];
+    const cSeries = _quadCandleSeries[idx];
+    const vSeries = _quadVolumeSeries[idx];
+    const priceEl = document.getElementById(`quad-price-${idx}`);
+    const overlay = document.getElementById(`quad-loading-${idx}`);
+
+    if (overlay) overlay.style.display = 'flex';
 
     try {
-      _tvWidgetInstance = new TradingView.widget({
-        autosize: true,
-        symbol: targetSym,
-        interval: targetInterval,
-        timezone: "Asia/Kolkata",
-        theme: "dark",
-        style: "1",
-        locale: "in",
-        toolbar_bg: "#0f172a",
-        enable_publishing: false,
-        allow_symbol_change: true,
-        withdateranges: true,
-        hide_side_toolbar: false,
-        save_image: true,
-        details: true,
-        hotlist: true,
-        calendar: true,
-        studies: [
-          "STD;EMA",
-          "STD;RSI"
-        ],
-        container_id: containerId
-      });
-    } catch (e) {
-      console.error('Error mounting TradingView Cloud widget:', e);
-      box.innerHTML = `<div style="padding:20px; color:#ef4444;">Error loading TradingView Widget: ${e.message}</div>`;
+      const resp = await fetch(`/api/chart/candles?symbol=${encodeURIComponent(sym)}&interval=${intv}`);
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const data = await resp.json();
+      if (!data.candles || data.candles.length === 0) throw new Error('No candle data returned');
+
+      if (cSeries) cSeries.setData(data.candles);
+      if (vSeries && data.volumes) vSeries.setData(data.volumes);
+
+      const last = data.candles[data.candles.length - 1];
+      const first = data.candles[0];
+      const chg = last.close - first.open;
+      const chgPct = (chg / first.open) * 100;
+      const isUp = chg >= 0;
+
+      if (priceEl) {
+        priceEl.innerHTML = `₹${Number(last.close).toLocaleString('en-IN', { minimumFractionDigits: 2 })} <span style="color:${isUp ? '#10b981' : '#ef4444'}; font-size: 0.70rem;">(${isUp ? '+' : ''}${chgPct.toFixed(2)}%)</span>`;
+      }
+      if (overlay) overlay.style.display = 'none';
+      if (chart) chart.timeScale().fitContent();
+    } catch (err) {
+      console.warn(`Quad chart ${idx} fetch error:`, err);
+      if (overlay) {
+        overlay.innerHTML = `<span style="color:#ef4444; font-size: 0.7rem;">⚠️ Error</span>`;
+      }
+    }
+  }
+
+  function fetchAllQuadCharts() {
+    if (_currentLayoutView !== 'quad') return;
+    for (let i = 0; i < 4; i++) {
+      fetchQuadCandles(i);
     }
   }
 
@@ -4717,9 +6119,12 @@ class DashboardHTTPRequestHandler(BaseHTTPRequestHandler):
                 intv = params.get("interval", ["5m"])[0].strip()
                 rng = params.get("range", [""])[0].strip()
 
-                valid_intervals = {"1m", "2m", "5m", "15m", "30m", "60m", "1h", "1d"}
+                valid_intervals = {"1m", "2m", "5m", "15m", "30m", "60m", "1h", "4h", "1d", "1w", "1wk"}
                 if intv not in valid_intervals:
                     intv = "5m"
+
+                # Map 1w to 1wk for Yahoo Finance chart endpoint
+                yahoo_intv = "1wk" if intv in ("1w", "1wk") else intv
 
                 if not rng:
                     if intv in {"1m", "2m"}:
@@ -4728,9 +6133,14 @@ class DashboardHTTPRequestHandler(BaseHTTPRequestHandler):
                         rng = "5d"
                     elif intv in {"60m", "1h"}:
                         rng = "1mo"
+                    elif intv == "4h":
+                        rng = "1y"
                     elif intv == "1d":
-                        rng = "6mo"
+                        rng = "2y"
+                    elif intv in {"1w", "1wk"}:
+                        rng = "5y"
 
+                is_gift = sym in ("GIFT", "GIFTNIFTY", "GIFT NIFTY", "GIFT_NIFTY", "NSEIX:NIFTY1!")
                 ticker_map = {
                     "NIFTY": "^NSEI",
                     "NIFTY50": "^NSEI",
@@ -4741,6 +6151,8 @@ class DashboardHTTPRequestHandler(BaseHTTPRequestHandler):
                     "NSE:BANKNIFTY": "^NSEBANK",
                     "SENSEX": "^BSESN",
                     "BSE:SENSEX": "^BSESN",
+                    "FINNIFTY": "NIFTY_FIN_SERVICE.NS",
+                    "MIDCPNIFTY": "NIFTY_MID_SELECT.NS",
                     "RELIANCE": "RELIANCE.NS",
                     "NSE:RELIANCE": "RELIANCE.NS",
                     "HDFCBANK": "HDFCBANK.NS",
@@ -4749,8 +6161,11 @@ class DashboardHTTPRequestHandler(BaseHTTPRequestHandler):
                     "INFY": "INFY.NS",
                     "ICICIBANK": "ICICIBANK.NS",
                     "SBIN": "SBIN.NS",
+                    "AAPL": "AAPL",
+                    "BTCUSD": "BTC-USD",
+                    "GOLD": "GC=F",
                 }
-                ticker = ticker_map.get(sym)
+                ticker = "^NSEI" if is_gift else ticker_map.get(sym)
                 if not ticker:
                     if sym.startswith("NSE:"):
                         ticker = sym[4:] + ".NS"
@@ -4761,7 +6176,7 @@ class DashboardHTTPRequestHandler(BaseHTTPRequestHandler):
                     else:
                         ticker = sym
 
-                url = f"https://query1.finance.yahoo.com/v8/finance/chart/{ticker}?interval={intv}&range={rng}"
+                url = f"https://query1.finance.yahoo.com/v8/finance/chart/{ticker}?interval={yahoo_intv}&range={rng}"
                 req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"})
                 with urllib.request.urlopen(req, timeout=10) as resp:
                     raw_data = json.loads(resp.read().decode("utf-8"))
@@ -4791,6 +6206,27 @@ class DashboardHTTPRequestHandler(BaseHTTPRequestHandler):
                                 "close": round(c, 2),
                                 "volume": v or 0
                             })
+                    if is_gift:
+                        gift_spot = 0.0
+                        try:
+                            import sqlite3
+                            db_file = "data/market/nse_spot_data.db"
+                            if os.path.exists(db_file):
+                                with sqlite3.connect(db_file) as s_conn:
+                                    s_r = s_conn.cursor().execute("SELECT spot_price FROM nse_spot_records WHERE symbol='GIFT NIFTY' ORDER BY id DESC LIMIT 1").fetchone()
+                                    if s_r:
+                                        gift_spot = float(s_r[0])
+                        except Exception:
+                            pass
+                        if gift_spot > 0 and candles:
+                            offset = gift_spot - candles[-1]["close"]
+                            for c in candles:
+                                c["open"] = round(c["open"] + offset, 2)
+                                c["high"] = round(c["high"] + offset, 2)
+                                c["low"] = round(c["low"] + offset, 2)
+                                c["close"] = round(c["close"] + offset, 2)
+                            meta["regularMarketPrice"] = round(candles[-1]["close"], 2)
+
                     payload = {
                         "status": "ok",
                         "symbol": sym,
