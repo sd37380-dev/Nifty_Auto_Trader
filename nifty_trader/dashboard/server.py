@@ -1772,7 +1772,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   <!-- Chart Embed Container -->
   <div class="card" style="padding: 0; overflow: hidden; border-radius: 8px; border: 1px solid var(--border); height: 750px; background: #0f172a; position: relative;">
     <iframe id="tv-advanced-chart-iframe" 
-            src="https://s.tradingview.com/widgetembed/?symbol=NSE%3ANIFTYBEES&interval=5&theme=dark&style=1&timezone=Asia%2FKolkata&locale=in&hideideas=1" 
+            src="https://www.tradingview-widget.com/embed-widget/advanced-chart/?locale=in#%7B%22autosize%22%3Atrue%2C%22symbol%22%3A%22NSE%3ANIFTYBEES%22%2C%22interval%22%3A%225%22%2C%22timezone%22%3A%22Asia%2FKolkata%22%2C%22theme%22%3A%22dark%22%2C%22style%22%3A%221%22%2C%22locale%22%3A%22in%22%2C%22enable_publishing%22%3Afalse%2C%22allow_symbol_change%22%3Atrue%2C%22calendar%22%3Afalse%2C%22support_host%22%3A%22https%3A%2F%2Fwww.tradingview.com%22%7D" 
             style="width: 100%; height: 100%; min-height: 720px; border: none; display: block;" 
             allowtransparency="true" 
             scrolling="no" 
@@ -3728,9 +3728,20 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   function updateTradingViewIframe() {
     const iframe = document.getElementById('tv-advanced-chart-iframe');
     if (!iframe) return;
-    const sym = encodeURIComponent(_tvCurrentSymbol);
-    const intv = encodeURIComponent(_tvCurrentInterval);
-    const targetUrl = `https://s.tradingview.com/widgetembed/?symbol=${sym}&interval=${intv}&theme=dark&style=1&timezone=Asia%2FKolkata&locale=in&hideideas=1`;
+    const config = {
+      autosize: true,
+      symbol: _tvCurrentSymbol,
+      interval: _tvCurrentInterval,
+      timezone: "Asia/Kolkata",
+      theme: "dark",
+      style: "1",
+      locale: "in",
+      enable_publishing: false,
+      allow_symbol_change: true,
+      calendar: false,
+      support_host: "https://www.tradingview.com"
+    };
+    const targetUrl = `https://www.tradingview-widget.com/embed-widget/advanced-chart/?locale=in#${encodeURIComponent(JSON.stringify(config))}`;
     if (iframe.src !== targetUrl) {
       iframe.src = targetUrl;
     }
