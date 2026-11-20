@@ -1712,12 +1712,14 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         </div>
       </div>
 
-      <!-- Quick Web Links (1-Click External Browser / Window) -->
+      <!-- Quick Web Links & Dedicated App Launchers -->
       <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
-        <span style="font-size: 0.72rem; color: var(--text-secondary); margin-right: 2px;">🌐 Quick Browse:</span>
-        <a href="https://www.tradingview.com/chart/?symbol=NSE%3ANIFTY" target="_blank" rel="noopener noreferrer" class="btn" style="background: #1e293b; color: #38bdf8; border: 1px solid #0284c7; padding: 4px 10px; font-size: 0.74rem; text-decoration: none; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px;">
-          TradingView ↗
-        </a>
+        <button type="button" onclick="openTradingViewAppWindow('NSE:NIFTY')" class="btn" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: white; padding: 5px 12px; font-size: 0.75rem; font-weight: 800; border: 1px solid #38bdf8; border-radius: 4px; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;" title="Open real unblocked NIFTY 50 on TradingView in dedicated app window">
+          🚀 Open Full NIFTY 50 ↗
+        </button>
+        <button type="button" onclick="openTradingViewAppWindow('NSE:BANKNIFTY')" class="btn" style="background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%); color: white; padding: 5px 12px; font-size: 0.75rem; font-weight: 800; border: 1px solid #a78bfa; border-radius: 4px; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;" title="Open real unblocked BANKNIFTY on TradingView in dedicated app window">
+          🏦 Open Full BANKNIFTY ↗
+        </button>
         <a href="https://www.niftytrader.in/option-chain" target="_blank" rel="noopener noreferrer" class="btn" style="background: #1e293b; color: #f59e0b; border: 1px solid #d97706; padding: 4px 10px; font-size: 0.74rem; text-decoration: none; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px;">
           NiftyTrader ↗
         </a>
@@ -1727,23 +1729,24 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         <a href="https://chartink.com/screener" target="_blank" rel="noopener noreferrer" class="btn" style="background: #1e293b; color: #10b981; border: 1px solid #059669; padding: 4px 10px; font-size: 0.74rem; text-decoration: none; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px;">
           Chartink ↗
         </a>
-        <a href="https://www.nseindia.com" target="_blank" rel="noopener noreferrer" class="btn" style="background: #1e293b; color: #f43f5e; border: 1px solid #e11d48; padding: 4px 10px; font-size: 0.74rem; text-decoration: none; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px;">
-          NSE India ↗
-        </a>
       </div>
+    </div>
+
+    <!-- Notice about NSE Licensing -->
+    <div style="font-size: 0.73rem; color: #fbbf24; background: rgba(217, 119, 6, 0.12); border: 1px solid rgba(217, 119, 6, 0.3); border-radius: 6px; padding: 6px 12px; margin-bottom: 10px;">
+      ℹ️ <strong>NSE Policy Note:</strong> NSE strictly blocks free third-party embeds of cash indices (<code>NSE:NIFTY</code> &amp; <code>NSE:BANKNIFTY</code>). For live charts inside this dashboard, use <strong>IN50 (NIFTY 50 Tracker)</strong>, <strong>NIFTY BeES</strong>, or click <strong>🚀 Open Full NIFTY 50 ↗</strong> above for the full unblocked TradingView app!
     </div>
 
     <!-- Symbol & Timeframe Switcher Bar -->
     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; background: rgba(0,0,0,0.25); padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border);">
       <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
         <span style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 700;">Symbols:</span>
-        <button type="button" class="btn tv-sym-btn" onclick="switchTradingViewSymbol('NSE:NIFTY1!', this)" style="background: var(--accent); color: white; padding: 4px 11px; font-size: 0.76rem; font-weight: 700; border-radius: 4px; border: 1px solid var(--accent);">NIFTY Futures</button>
+        <button type="button" class="btn tv-sym-btn" onclick="switchTradingViewSymbol('CAPITALCOM:IN50', this)" style="background: var(--accent); color: white; padding: 4px 11px; font-size: 0.76rem; font-weight: 700; border-radius: 4px; border: 1px solid var(--accent);">IN50 (NIFTY 50)</button>
         <button type="button" class="btn tv-sym-btn" onclick="switchTradingViewSymbol('NSE:NIFTYBEES', this)" style="background: #1e293b; color: var(--text-secondary); padding: 4px 11px; font-size: 0.76rem; font-weight: 700; border-radius: 4px; border: 1px solid var(--border);">NIFTY BeES (Spot)</button>
-        <button type="button" class="btn tv-sym-btn" onclick="switchTradingViewSymbol('NSE:BANKNIFTY1!', this)" style="background: #1e293b; color: var(--text-secondary); padding: 4px 11px; font-size: 0.76rem; font-weight: 700; border-radius: 4px; border: 1px solid var(--border);">BANKNIFTY Futures</button>
         <button type="button" class="btn tv-sym-btn" onclick="switchTradingViewSymbol('NSE:BANKBEES', this)" style="background: #1e293b; color: var(--text-secondary); padding: 4px 11px; font-size: 0.76rem; font-weight: 700; border-radius: 4px; border: 1px solid var(--border);">BANK BeES (Spot)</button>
-        <button type="button" class="btn tv-sym-btn" onclick="switchTradingViewSymbol('NSE:FINNIFTY1!', this)" style="background: #1e293b; color: var(--text-secondary); padding: 4px 11px; font-size: 0.76rem; font-weight: 700; border-radius: 4px; border: 1px solid var(--border);">FINNIFTY</button>
         <button type="button" class="btn tv-sym-btn" onclick="switchTradingViewSymbol('NSE:RELIANCE', this)" style="background: #1e293b; color: var(--text-secondary); padding: 4px 11px; font-size: 0.76rem; font-weight: 700; border-radius: 4px; border: 1px solid var(--border);">RELIANCE</button>
         <button type="button" class="btn tv-sym-btn" onclick="switchTradingViewSymbol('NSE:HDFCBANK', this)" style="background: #1e293b; color: var(--text-secondary); padding: 4px 11px; font-size: 0.76rem; font-weight: 700; border-radius: 4px; border: 1px solid var(--border);">HDFCBANK</button>
+        <button type="button" class="btn tv-sym-btn" onclick="switchTradingViewSymbol('BSE:SENSEX', this)" style="background: #1e293b; color: var(--text-secondary); padding: 4px 11px; font-size: 0.76rem; font-weight: 700; border-radius: 4px; border: 1px solid var(--border);">SENSEX</button>
       </div>
 
       <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
@@ -3701,9 +3704,19 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   // -------------------------------------------------------------
   // TRADINGVIEW ADVANCED LIVE CHART CONTROLLER
   // -------------------------------------------------------------
-  let _tvCurrentSymbol = 'NSE:NIFTY1!';
+  let _tvCurrentSymbol = 'CAPITALCOM:IN50';
   let _tvCurrentInterval = '5';
   let _tvWidgetInstance = null;
+
+  function openTradingViewAppWindow(symbol = 'NSE:NIFTY') {
+    const symParam = encodeURIComponent(symbol);
+    const url = `https://in.tradingview.com/chart/?symbol=${symParam}`;
+    const w = Math.min(1440, window.screen.availWidth || 1366);
+    const h = Math.min(900, window.screen.availHeight || 768);
+    const left = Math.max(0, (window.screen.availWidth - w) / 2);
+    const top = Math.max(0, (window.screen.availHeight - h) / 2);
+    window.open(url, 'TradingViewWorkspace_' + symbol.replace(/[^a-zA-Z0-9]/g, '_'), `width=${w},height=${h},top=${top},left=${left},menubar=no,toolbar=no,status=no,directories=no,resizable=yes`);
+  }
 
   function initTradingViewChart() {
     const box = document.getElementById('tv-advanced-chart-box');
