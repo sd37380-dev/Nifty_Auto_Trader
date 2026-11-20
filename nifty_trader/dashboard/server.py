@@ -1550,7 +1550,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         <tr style="background: #182238; font-size: 0.72rem; color: var(--text-secondary);">
           <!-- Calls headers -->
           <th style="padding: 6px; min-width: 105px;">TRADE</th>
-          <th title="OI Buildup Signal">OI BUILDUP</th>
+          <th title="OI Buildup Signal" style="min-width: 105px; white-space: nowrap;">OI BUILDUP</th>
           <th title="Open Interest">OI</th>
           <th title="Change in Open Interest">CHANGE OI</th>
           <th title="Implied Volatility">IV</th>
@@ -1564,7 +1564,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
           <th title="Implied Volatility">IV</th>
           <th title="Change in Open Interest">CHANGE OI</th>
           <th title="Open Interest">OI</th>
-          <th title="OI Buildup Signal">OI BUILDUP</th>
+          <th title="OI Buildup Signal" style="min-width: 105px; white-space: nowrap;">OI BUILDUP</th>
           <th style="padding: 6px; min-width: 105px;">TRADE</th>
         </tr>
       </thead>
@@ -2012,7 +2012,12 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       });
     }
 
-    try { localStorage.setItem('nt_active_tab', tabId); } catch (e) {}
+    try { 
+      localStorage.setItem('nt_active_tab', tabId); 
+      if (tabId === 'tab-option-chain' && typeof fetchOptionChain === 'function') {
+        fetchOptionChain();
+      }
+    } catch (e) {}
   }
 
   // -------------------------------------------------------------
@@ -3245,35 +3250,53 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       `).join('');
     }
 
-    // Helper for Buildup Badge
-    function getBuildupBadge(buildup, optType) {
-      if (!buildup || buildup === 'No Conclusion' || buildup === '--' || buildup === 'Neutral') {
-        return `<span style="color: #64748b; font-size: 0.68rem;">--</span>`;
+    // Helper for Buildup Badge: Displays actual raw buildup data fetched from NiftyTrader
+    function getBuildupBadge(itemOrBuildup, optType) {
+      let bText = '';
+      if (typeof itemOrBuildup === 'object' && itemOrBuildup !== null) {
+        bText = String(itemOrBuildup.builtup || itemOrBuildup.buildup || '').trim();
+      } else if (typeof itemOrBuildup === 'string') {
+        bText = itemOrBuildup.trim();
       }
-      const b = buildup.toLowerCase();
-      let bg = 'rgba(100, 116, 139, 0.15)';
+
+      if (!bText || bText === '--' || bText === 'undefined' || bText === 'null') {
+        return `<span style="color: #64748b; font-size: 0.70rem;">--</span>`;
+      }
+      if (bText.toLowerCase() === 'no conclusion') {
+        return `<span style="color: #64748b; font-size: 0.68rem; font-style: italic;">No Conclusion</span>`;
+      }
+
+      const b = bText.toLowerCase();
+      let bg = 'rgba(100, 116, 139, 0.2)';
       let color = '#94a3b8';
-      let border = 'rgba(100, 116, 139, 0.3)';
+      let border = 'rgba(100, 116, 139, 0.4)';
 
-      if (b.includes('call buying') || b.includes('put writing') || (b.includes('long buildup') && optType === 'CE') || (b.includes('short buildup') && optType === 'PE')) {
-        bg = 'rgba(16, 185, 129, 0.18)';
+      // Green for Call Buying, Put Writing, Long Buildup
+      if (b.includes('call buying') || b.includes('put writing') || b.includes('long buildup')) {
+        bg = 'rgba(16, 185, 129, 0.22)';
         color = '#10b981';
-        border = 'rgba(16, 185, 129, 0.4)';
-      } else if (b.includes('call writing') || b.includes('put buying') || (b.includes('short buildup') && optType === 'CE') || (b.includes('long buildup') && optType === 'PE')) {
-        bg = 'rgba(239, 68, 68, 0.18)';
+        border = 'rgba(16, 185, 129, 0.5)';
+      } 
+      // Red for Call Writing, Put Buying, Short Buildup
+      else if (b.includes('call writing') || b.includes('put buying') || b.includes('short buildup')) {
+        bg = 'rgba(239, 68, 68, 0.22)';
         color = '#ef4444';
-        border = 'rgba(239, 68, 68, 0.4)';
-      } else if (b.includes('short covering')) {
-        bg = 'rgba(6, 182, 212, 0.18)';
+        border = 'rgba(239, 68, 68, 0.5)';
+      } 
+      // Cyan for Short Covering
+      else if (b.includes('short covering')) {
+        bg = 'rgba(6, 182, 212, 0.22)';
         color = '#06b6d4';
-        border = 'rgba(6, 182, 212, 0.4)';
-      } else if (b.includes('long unwinding') || b.includes('covering')) {
-        bg = 'rgba(245, 158, 11, 0.18)';
+        border = 'rgba(6, 182, 212, 0.5)';
+      } 
+      // Amber/Gold for Long Covering / Long Unwinding
+      else if (b.includes('long covering') || b.includes('long unwinding') || b.includes('unwinding')) {
+        bg = 'rgba(245, 158, 11, 0.22)';
         color = '#f59e0b';
-        border = 'rgba(245, 158, 11, 0.4)';
+        border = 'rgba(245, 158, 11, 0.5)';
       }
 
-      return `<span style="background: ${bg}; color: ${color}; border: 1px solid ${border}; padding: 2px 6px; border-radius: 4px; font-size: 0.67rem; font-weight: 700; white-space: nowrap; display: inline-block;">${buildup}</span>`;
+      return `<span style="background: ${bg}; color: ${color}; border: 1px solid ${border}; padding: 3px 8px; border-radius: 4px; font-size: 0.70rem; font-weight: 800; white-space: nowrap; display: inline-block; letter-spacing: 0.2px;">${bText}</span>`;
     }
 
     // 3. Option Chain Matrix Table (ATM ± 7 Strikes with exact requested fields)
@@ -3302,7 +3325,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
             </div>
           </td>
           <!-- CE OI Buildup -->
-          <td class="${ceItmClass}">${getBuildupBadge(ce.builtup, 'CE')}</td>
+          <td class="${ceItmClass}" style="min-width: 105px; white-space: nowrap;">${getBuildupBadge(ce, 'CE')}</td>
           <!-- CE OI -->
           <td class="${ceItmClass}">${(ce.oi || 0).toLocaleString('en-IN')}</td>
           <!-- CE Change OI -->
@@ -3338,7 +3361,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
           <!-- PE OI -->
           <td class="${peItmClass}">${(pe.oi || 0).toLocaleString('en-IN')}</td>
           <!-- PE OI Buildup -->
-          <td class="${peItmClass}">${getBuildupBadge(pe.builtup, 'PE')}</td>
+          <td class="${peItmClass}" style="min-width: 105px; white-space: nowrap;">${getBuildupBadge(pe, 'PE')}</td>
           <!-- PE Direct Buy / Sell Actions -->
           <td class="${peItmClass}" style="border-left: 1px solid var(--border); white-space: nowrap;">
             <div style="display: flex; gap: 4px; justify-content: center;">

@@ -81,8 +81,14 @@ class NSEOptionChainService:
         sym = "banknifty" if "BANK" in symbol.upper() else "nifty"
         url = f"https://webapi.niftytrader.in/webapi/option/option-chain-data?symbol={sym}&exchange=nse"
 
-        bearer_token = os.getenv("NIFTYTRADER_BEARER_TOKEN", "").strip()
-        api_key = os.getenv("NIFTYTRADER_API_KEY", "").strip()
+        bearer_token = (
+            os.getenv("NIFTYTRADER_BEARER_TOKEN", "").strip()
+            or "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjEzNDk2ODAiLCJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL3JvbGUiOiIwIiwiU2Vzc2lvbklkIjoiNjQ2NiIsImV4cCI6MTc5Nzc1NTkyNCwiaXNzIjoicHJvZC1uaWZ0eXRyYWRlci5pbiIsImF1ZCI6InByb2QtbmlmdHl0cmFkZXIuaW4ifQ.dJXGpCXUrRGia7f1J3jCTmH6gPeQ6ovsXhX5HdtA494"
+        )
+        api_key = (
+            os.getenv("NIFTYTRADER_API_KEY", "").strip()
+            or "MTc5NTIyMjgwMA.7e6uJRfiEdK2UgKlusvIi3nL_lXnVJ58exSkRTHztgQ"
+        )
 
         headers = {
             "Authorization": f"Bearer {bearer_token}",
@@ -210,12 +216,15 @@ class NSEOptionChainService:
             total_call_oi += ce_oi
             total_put_oi += pe_oi
 
+            ce_chg = round((ce_ltp * 0.04) * (1 if spot >= strike else -1), 2)
+            pe_chg = round((pe_ltp * 0.04) * (1 if spot <= strike else -1), 2)
+
             strikes_data.append({
                 "strike": strike,
                 "is_atm": (strike == atm_strike),
                 "ce": {
                     "ltp": ce_ltp,
-                    "change": round((ce_ltp * 0.04) * (1 if spot >= strike else -1), 2),
+                    "change": ce_chg,
                     "oi": ce_oi,
                     "change_in_oi": ce_chg_oi,
                     "volume": ce_oi * 4,
@@ -223,10 +232,12 @@ class NSEOptionChainService:
                     "bid": round(max(0.05, ce_ltp - 0.5), 2),
                     "ask": round(ce_ltp + 0.5, 2),
                     "is_itm": strike < spot,
+                    "builtup": "--",
+                    "buildup": "--",
                 },
                 "pe": {
                     "ltp": pe_ltp,
-                    "change": round((pe_ltp * 0.04) * (1 if spot <= strike else -1), 2),
+                    "change": pe_chg,
                     "oi": pe_oi,
                     "change_in_oi": pe_chg_oi,
                     "volume": pe_oi * 4,
@@ -234,6 +245,8 @@ class NSEOptionChainService:
                     "bid": round(max(0.05, pe_ltp - 0.5), 2),
                     "ask": round(pe_ltp + 0.5, 2),
                     "is_itm": strike > spot,
+                    "builtup": "--",
+                    "buildup": "--",
                 },
             })
 
@@ -432,32 +445,9 @@ class NSEOptionChainService:
             # Strike level PCR
             strike_pcr = float(row.get("pcr") or (pe_oi / ce_oi if ce_oi > 0 else 0.0))
 
+            # Actual buildup data fetched directly from NiftyTrader option chain
             ce_builtup = str(row.get("calls_builtup") or "").strip()
             pe_builtup = str(row.get("puts_builtup") or "").strip()
-
-            if not ce_builtup or ce_builtup.lower() in ("no conclusion", "none", "null", "--", ""):
-                if ce_chg > 0 and ce_chg_oi > 0:
-                    ce_builtup = "Long Buildup"
-                elif ce_chg < 0 and ce_chg_oi > 0:
-                    ce_builtup = "Short Buildup"
-                elif ce_chg > 0 and ce_chg_oi < 0:
-                    ce_builtup = "Short Covering"
-                elif ce_chg < 0 and ce_chg_oi < 0:
-                    ce_builtup = "Long Unwinding"
-                else:
-                    ce_builtup = "Neutral"
-
-            if not pe_builtup or pe_builtup.lower() in ("no conclusion", "none", "null", "--", ""):
-                if pe_chg > 0 and pe_chg_oi > 0:
-                    pe_builtup = "Long Buildup"
-                elif pe_chg < 0 and pe_chg_oi > 0:
-                    pe_builtup = "Short Buildup"
-                elif pe_chg > 0 and pe_chg_oi < 0:
-                    pe_builtup = "Short Covering"
-                elif pe_chg < 0 and pe_chg_oi < 0:
-                    pe_builtup = "Long Unwinding"
-                else:
-                    pe_builtup = "Neutral"
 
             strikes_data.append({
                 "strike": strike,
@@ -474,6 +464,7 @@ class NSEOptionChainService:
                     "ask": float(row.get("calls_offer_price") or row.get("calls_ask_price") or 0.0),
                     "is_itm": strike < spot,
                     "builtup": ce_builtup,
+                    "buildup": ce_builtup,
                     "delta": float(row.get("call_delta") or 0.0),
                     "gamma": float(row.get("call_gamma") or 0.0),
                     "vega": float(row.get("call_vega") or 0.0),
@@ -491,6 +482,7 @@ class NSEOptionChainService:
                     "ask": float(row.get("puts_offer_price") or row.get("puts_ask_price") or 0.0),
                     "is_itm": strike > spot,
                     "builtup": pe_builtup,
+                    "buildup": pe_builtup,
                     "delta": float(row.get("put_delta") or 0.0),
                     "gamma": float(row.get("put_gamma") or 0.0),
                     "vega": float(row.get("put_vega") or 0.0),
@@ -593,7 +585,33 @@ class NSEOptionChainService:
                     "is_itm": strike > spot,
                 }
 
-        strikes_sorted = [rows_map[k] for k in sorted(rows_map.keys())]
+        strikes_sorted = []
+        for k in sorted(rows_map.keys()):
+            row = rows_map[k]
+            ce = row["ce"]
+            pe = row["pe"]
+            ce["builtup"] = "--"
+            ce["buildup"] = "--"
+            pe["builtup"] = "--"
+            pe["buildup"] = "--"
+            ce_oi_val = ce.get("oi") or 0
+            pe_oi_val = pe.get("oi") or 0
+            row["pcr"] = round(pe_oi_val / ce_oi_val, 2) if ce_oi_val > 0 else 0.0
+            strikes_sorted.append(row)
+
+        # Slice strictly to ATM ± 7 strikes (15 total)
+        atm_idx = 0
+        min_diff = float("inf")
+        for i, item in enumerate(strikes_sorted):
+            diff = abs(item["strike"] - atm_strike)
+            if diff < min_diff:
+                min_diff = diff
+                atm_idx = i
+
+        start_idx = max(0, atm_idx - 7)
+        end_idx = min(len(strikes_sorted), atm_idx + 8)
+        strikes_sliced = strikes_sorted[start_idx:end_idx]
+
         pcr = round(total_put_oi / max(1, total_call_oi), 2)
         sentiment = "BULLISH (Call Support Strong)" if pcr > 1.15 else ("BEARISH (Call Writing Heavy)" if pcr < 0.85 else "NEUTRAL (Rangebound)")
 
@@ -611,7 +629,7 @@ class NSEOptionChainService:
             "lot_size": 30 if is_bank else 65,
             "updated_at": datetime.now(IST).strftime("%Y-%m-%d %H:%M:%S IST"),
             "data_source": "NSE Live Option Chain API",
-            "strikes": strikes_sorted,
+            "strikes": strikes_sliced,
         }
 
     def execute_option_chain_paper_trade(
