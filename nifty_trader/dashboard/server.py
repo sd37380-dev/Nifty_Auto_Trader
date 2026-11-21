@@ -814,6 +814,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   <button class="nav-tab" onclick="switchTab('tab-simulator', this)">⚡ Option Paper Simulator</button>
   <button class="nav-tab" onclick="switchTab('tab-option-chain', this)" id="nav-btn-option-chain">📊 NSE Option Chain &amp; Trade</button>
   <button class="nav-tab" onclick="switchTab('tab-charts', this)" id="nav-btn-charts">📈 TradingView Live Charts</button>
+  <button class="nav-tab" onclick="switchTab('tab-backtest', this)" id="nav-btn-backtest">🧪 Automated Backtest</button>
   <button class="nav-tab" onclick="switchTab('tab-news', this)" id="nav-btn-news">📰 Market News &amp; Impact <span id="nav-news-count-badge" class="badge badge-green" style="font-size: 0.65rem; padding: 1px 6px; margin-left: 4px;">--</span></button>
   <button class="nav-tab" onclick="switchTab('tab-telegram', this)" id="nav-btn-telegram">📱 Telegram &amp; 15-Min Execution <span id="nav-pending-badge" class="badge badge-yellow" style="font-size: 0.65rem; padding: 1px 6px; margin-left: 4px; display: none;">0</span></button>
   <button class="nav-tab" onclick="switchTab('tab-brain', this)">AI Brain Reasoning</button>
@@ -2967,6 +2968,354 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   </div>
 </div>
 
+<!-- Tab: Automated Backtest -->
+<div id="tab-backtest" class="tab-content" style="display: none;">
+  <!-- Header Card -->
+  <div class="card" style="margin-bottom: 18px; background: linear-gradient(135deg, rgba(59, 130, 246, 0.10) 0%, rgba(19, 27, 46, 0.95) 100%); border-left: 4px solid var(--accent);">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+      <div>
+        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+          <h2 style="font-size: 1.25rem; font-weight: 800; color: var(--text-primary); margin: 0;">🧪 Quantitative Strategy Backtest Studio</h2>
+          <span class="badge badge-blue">MULTI-YEAR HISTORICAL VALIDATION</span>
+          <span class="badge badge-green">0-LOOKAHEAD BAR OPEN EXECUTION</span>
+        </div>
+        <p style="font-size: 0.82rem; color: var(--text-secondary); margin-top: 4px;">
+          Test any custom rule or algorithmic setup across weeks or 5+ years of verified historical candles with realistic Indian market slippage, transaction taxes, and visual on-chart trade markers.
+        </p>
+      </div>
+      <div style="display: flex; gap: 8px; align-items: center;">
+        <span id="bt-dataset-badge" class="badge" style="background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); font-size: 0.75rem;">
+          📊 92,739 5M Bars (2021–2026) Loaded
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Backtest Configuration Card -->
+  <div class="card" style="margin-bottom: 20px; background: var(--bg-card); border: 1px solid var(--border);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; border-bottom: 1px solid var(--border); padding-bottom: 10px;">
+      <span style="font-weight: 800; font-size: 0.95rem; color: #38bdf8;">⚙️ Strategy Parameters &amp; Simulation Setup</span>
+      <span style="font-size: 0.74rem; color: var(--text-secondary);">Select strategy, timeline, instrument, and risk management</span>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
+      <!-- Column 1: Strategy & Rules -->
+      <div style="background: rgba(0,0,0,0.25); padding: 12px; border-radius: 6px; border: 1px solid var(--border);">
+        <label style="display: block; font-size: 0.72rem; color: #38bdf8; font-weight: 700; margin-bottom: 6px; text-transform: uppercase;">1. Algorithmic Strategy</label>
+        <select id="bt-strategy-select" onchange="onBacktestStrategyChange()" style="width: 100%; background: var(--bg-main); color: var(--text-primary); border: 1px solid var(--border); border-radius: 6px; padding: 7px 10px; font-size: 0.82rem; font-weight: 700; margin-bottom: 10px;">
+          <option value="ema_crossover" selected>📈 EMA Trend Crossover (Fast/Slow + RSI)</option>
+          <option value="supertrend">🟢 Supertrend ATR Trend Following</option>
+          <option value="breakout_sr">📦 Support / Resistance High-Low Breakout</option>
+          <option value="vwap_reversion">🎯 Intraday VWAP Mean Reversion Bands</option>
+          <option value="gap_strategy">⚡ Quantitative Opening Gap Strategy</option>
+          <option value="custom_rules">🛠️ Custom Indicator Rule Builder</option>
+        </select>
+
+        <!-- Dynamic Strategy Parameters Container -->
+        <div id="bt-params-ema" class="bt-param-group">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+            <div>
+              <label style="font-size: 0.68rem; color: var(--text-secondary); display: block;">Fast EMA</label>
+              <input type="number" id="bt-ema-fast" value="9" min="2" max="200" style="width: 100%; background: var(--bg-main); color: var(--text-primary); border: 1px solid var(--border); border-radius: 4px; padding: 4px 8px; font-size: 0.78rem;">
+            </div>
+            <div>
+              <label style="font-size: 0.68rem; color: var(--text-secondary); display: block;">Slow EMA</label>
+              <input type="number" id="bt-ema-slow" value="21" min="3" max="500" style="width: 100%; background: var(--bg-main); color: var(--text-primary); border: 1px solid var(--border); border-radius: 4px; padding: 4px 8px; font-size: 0.78rem;">
+            </div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
+            <input type="checkbox" id="bt-ema-use-rsi" style="accent-color: var(--accent);">
+            <label for="bt-ema-use-rsi" style="font-size: 0.72rem; color: var(--text-primary); cursor: pointer;">Filter with RSI (14) &gt;= 50 for Long / &lt;= 50 for Short</label>
+          </div>
+        </div>
+
+        <div id="bt-params-supertrend" class="bt-param-group" style="display: none;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <div>
+              <label style="font-size: 0.68rem; color: var(--text-secondary); display: block;">ATR Period</label>
+              <input type="number" id="bt-st-period" value="10" min="2" max="100" style="width: 100%; background: var(--bg-main); color: var(--text-primary); border: 1px solid var(--border); border-radius: 4px; padding: 4px 8px; font-size: 0.78rem;">
+            </div>
+            <div>
+              <label style="font-size: 0.68rem; color: var(--text-secondary); display: block;">Multiplier</label>
+              <input type="number" id="bt-st-mult" value="3.0" step="0.1" min="0.5" max="10" style="width: 100%; background: var(--bg-main); color: var(--text-primary); border: 1px solid var(--border); border-radius: 4px; padding: 4px 8px; font-size: 0.78rem;">
+            </div>
+          </div>
+        </div>
+
+        <div id="bt-params-breakout" class="bt-param-group" style="display: none;">
+          <div>
+            <label style="font-size: 0.68rem; color: var(--text-secondary); display: block;">Lookback Bars (Donchian Period)</label>
+            <input type="number" id="bt-bo-lookback" value="20" min="5" max="200" style="width: 100%; background: var(--bg-main); color: var(--text-primary); border: 1px solid var(--border); border-radius: 4px; padding: 4px 8px; font-size: 0.78rem;">
+          </div>
+        </div>
+
+        <div id="bt-params-vwap" class="bt-param-group" style="display: none;">
+          <div>
+            <label style="font-size: 0.68rem; color: var(--text-secondary); display: block;">Band Deviation (ATR Multiplier)</label>
+            <input type="number" id="bt-vwap-dev" value="1.5" step="0.1" min="0.5" max="5.0" style="width: 100%; background: var(--bg-main); color: var(--text-primary); border: 1px solid var(--border); border-radius: 4px; padding: 4px 8px; font-size: 0.78rem;">
+          </div>
+        </div>
+
+        <div id="bt-params-gap" class="bt-param-group" style="display: none;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <div>
+              <label style="font-size: 0.68rem; color: var(--text-secondary); display: block;">Min Gap (Points)</label>
+              <input type="number" id="bt-gap-threshold" value="30" min="5" max="300" style="width: 100%; background: var(--bg-main); color: var(--text-primary); border: 1px solid var(--border); border-radius: 4px; padding: 4px 8px; font-size: 0.78rem;">
+            </div>
+            <div>
+              <label style="font-size: 0.68rem; color: var(--text-secondary); display: block;">Gap Strategy Mode</label>
+              <select id="bt-gap-mode" style="width: 100%; background: var(--bg-main); color: var(--text-primary); border: 1px solid var(--border); border-radius: 4px; padding: 4px 6px; font-size: 0.75rem;">
+                <option value="GAP_FILL" selected>Gap Fill (Fade)</option>
+                <option value="GAP_MOMENTUM">Gap Momentum</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div id="bt-params-custom" class="bt-param-group" style="display: none;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 6px;">
+            <div>
+              <label style="font-size: 0.68rem; color: var(--text-secondary); display: block;">MA Type</label>
+              <select id="bt-custom-ma-type" style="width: 100%; background: var(--bg-main); color: var(--text-primary); border: 1px solid var(--border); border-radius: 4px; padding: 4px 6px; font-size: 0.75rem;">
+                <option value="EMA" selected>EMA</option>
+                <option value="SMA">SMA</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size: 0.68rem; color: var(--text-secondary); display: block;">Fast / Slow Periods</label>
+              <div style="display: flex; gap: 4px;">
+                <input type="number" id="bt-custom-fast" value="9" style="width: 50%; background: var(--bg-main); color: var(--text-primary); border: 1px solid var(--border); border-radius: 4px; padding: 4px; font-size: 0.75rem;">
+                <input type="number" id="bt-custom-slow" value="21" style="width: 50%; background: var(--bg-main); color: var(--text-primary); border: 1px solid var(--border); border-radius: 4px; padding: 4px; font-size: 0.75rem;">
+              </div>
+            </div>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <div>
+              <label style="font-size: 0.68rem; color: var(--text-secondary); display: block;">RSI Buy Filter (&gt;=)</label>
+              <input type="number" id="bt-custom-rsi-buy" value="45" style="width: 100%; background: var(--bg-main); color: var(--text-primary); border: 1px solid var(--border); border-radius: 4px; padding: 4px 6px; font-size: 0.75rem;">
+            </div>
+            <div>
+              <label style="font-size: 0.68rem; color: var(--text-secondary); display: block;">RSI Sell Filter (&lt;=)</label>
+              <input type="number" id="bt-custom-rsi-sell" value="55" style="width: 100%; background: var(--bg-main); color: var(--text-primary); border: 1px solid var(--border); border-radius: 4px; padding: 4px 6px; font-size: 0.75rem;">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Column 2: Historical Dataset & Timeframe -->
+      <div style="background: rgba(0,0,0,0.25); padding: 12px; border-radius: 6px; border: 1px solid var(--border);">
+        <label style="display: block; font-size: 0.72rem; color: #10b981; font-weight: 700; margin-bottom: 6px; text-transform: uppercase;">2. Instrument &amp; Timeline</label>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px;">
+          <div>
+            <label style="font-size: 0.68rem; color: var(--text-secondary); display: block;">Underlying Symbol</label>
+            <select id="bt-symbol-select" style="width: 100%; background: var(--bg-main); color: var(--text-primary); border: 1px solid var(--border); border-radius: 4px; padding: 6px 8px; font-size: 0.80rem; font-weight: 700;">
+              <option value="NIFTY" selected>NIFTY 50 (Index)</option>
+              <option value="BANKNIFTY">BANKNIFTY (Index)</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size: 0.68rem; color: var(--text-secondary); display: block;">Candle Timeframe</label>
+            <select id="bt-timeframe-select" style="width: 100%; background: var(--bg-main); color: var(--text-primary); border: 1px solid var(--border); border-radius: 4px; padding: 6px 8px; font-size: 0.80rem; font-weight: 700;">
+              <option value="5M" selected>5 Minutes (Intraday)</option>
+              <option value="15M">15 Minutes (Swing/Trend)</option>
+              <option value="1H">1 Hour (Multi-Day)</option>
+              <option value="DAILY">Daily (Positional 5Y)</option>
+            </select>
+          </div>
+        </div>
+
+        <label style="font-size: 0.68rem; color: var(--text-secondary); display: block; margin-bottom: 4px;">Date Range Presets</label>
+        <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 10px;">
+          <button type="button" class="btn" onclick="setBacktestDatePreset('5Y')" style="background: #1e293b; color: #facc15; border: 1px solid #facc15; padding: 2px 7px; font-size: 0.68rem; font-weight: 700; border-radius: 4px;">5 Years (All)</button>
+          <button type="button" class="btn" onclick="setBacktestDatePreset('3Y')" style="background: #1e293b; color: var(--text-primary); border: 1px solid var(--border); padding: 2px 7px; font-size: 0.68rem; border-radius: 4px;">3 Years</button>
+          <button type="button" class="btn" onclick="setBacktestDatePreset('1Y')" style="background: #1e293b; color: var(--text-primary); border: 1px solid var(--border); padding: 2px 7px; font-size: 0.68rem; border-radius: 4px;">1 Year</button>
+          <button type="button" class="btn" onclick="setBacktestDatePreset('6M')" style="background: #1e293b; color: var(--text-primary); border: 1px solid var(--border); padding: 2px 7px; font-size: 0.68rem; border-radius: 4px;">6 Months</button>
+          <button type="button" class="btn" onclick="setBacktestDatePreset('1M')" style="background: #1e293b; color: var(--text-primary); border: 1px solid var(--border); padding: 2px 7px; font-size: 0.68rem; border-radius: 4px;">1 Month</button>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+          <div>
+            <label style="font-size: 0.68rem; color: var(--text-secondary); display: block;">Start Date</label>
+            <input type="date" id="bt-start-date" value="2021-09-30" style="width: 100%; background: var(--bg-main); color: var(--text-primary); border: 1px solid var(--border); border-radius: 4px; padding: 4px 6px; font-size: 0.75rem;">
+          </div>
+          <div>
+            <label style="font-size: 0.68rem; color: var(--text-secondary); display: block;">End Date</label>
+            <input type="date" id="bt-end-date" value="2026-09-29" style="width: 100%; background: var(--bg-main); color: var(--text-primary); border: 1px solid var(--border); border-radius: 4px; padding: 4px 6px; font-size: 0.75rem;">
+          </div>
+        </div>
+      </div>
+
+      <!-- Column 3: Capital & Position Sizing -->
+      <div style="background: rgba(0,0,0,0.25); padding: 12px; border-radius: 6px; border: 1px solid var(--border);">
+        <label style="display: block; font-size: 0.72rem; color: #f59e0b; font-weight: 700; margin-bottom: 6px; text-transform: uppercase;">3. Capital &amp; Execution</label>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px;">
+          <div>
+            <label style="font-size: 0.68rem; color: var(--text-secondary); display: block;">Initial Capital (₹)</label>
+            <input type="number" id="bt-capital" value="500000" step="10000" style="width: 100%; background: var(--bg-main); color: var(--text-primary); border: 1px solid var(--border); border-radius: 4px; padding: 5px 8px; font-size: 0.78rem; font-weight: 700;">
+          </div>
+          <div>
+            <label style="font-size: 0.68rem; color: var(--text-secondary); display: block;">Lots Traded</label>
+            <input type="number" id="bt-lots" value="1" min="1" max="50" style="width: 100%; background: var(--bg-main); color: var(--text-primary); border: 1px solid var(--border); border-radius: 4px; padding: 5px 8px; font-size: 0.78rem; font-weight: 700;">
+          </div>
+        </div>
+
+        <div style="margin-bottom: 8px;">
+          <label style="font-size: 0.68rem; color: var(--text-secondary); display: block;">Instrument Execution Mode</label>
+          <select id="bt-instrument-mode" style="width: 100%; background: var(--bg-main); color: var(--text-primary); border: 1px solid var(--border); border-radius: 4px; padding: 5px 8px; font-size: 0.78rem;">
+            <option value="OPTIONS_ATM_DELTA" selected>Options ATM Buy CE/PE (Delta 0.50)</option>
+            <option value="FUTURES">Futures Contract (Delta 1.0)</option>
+          </select>
+        </div>
+
+        <div>
+          <label style="font-size: 0.68rem; color: var(--text-secondary); display: block;">Trade Direction Filter</label>
+          <select id="bt-direction" style="width: 100%; background: var(--bg-main); color: var(--text-primary); border: 1px solid var(--border); border-radius: 4px; padding: 5px 8px; font-size: 0.78rem;">
+            <option value="BOTH" selected>Both Long &amp; Short Setups</option>
+            <option value="LONG_ONLY">Long (Buy CE) Only</option>
+            <option value="SHORT_ONLY">Short (Buy PE) Only</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Column 4: Exits & Realism -->
+      <div style="background: rgba(0,0,0,0.25); padding: 12px; border-radius: 6px; border: 1px solid var(--border);">
+        <label style="display: block; font-size: 0.72rem; color: #a855f7; font-weight: 700; margin-bottom: 6px; text-transform: uppercase;">4. Stop Loss, Target &amp; Fees</label>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+          <div>
+            <label style="font-size: 0.68rem; color: #f87171; display: block; font-weight: 700;">Stop Loss (Pts)</label>
+            <input type="number" id="bt-sl" value="40" min="5" max="500" style="width: 100%; background: var(--bg-main); color: #f87171; border: 1px solid var(--border); border-radius: 4px; padding: 5px 8px; font-size: 0.78rem; font-weight: 700;">
+          </div>
+          <div>
+            <label style="font-size: 0.68rem; color: #34d399; display: block; font-weight: 700;">Target (Pts)</label>
+            <input type="number" id="bt-target" value="80" min="5" max="1000" style="width: 100%; background: var(--bg-main); color: #34d399; border: 1px solid var(--border); border-radius: 4px; padding: 5px 8px; font-size: 0.78rem; font-weight: 700;">
+          </div>
+        </div>
+
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 8px;">
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <input type="checkbox" id="bt-trailing-sl" style="accent-color: var(--accent);">
+            <label for="bt-trailing-sl" style="font-size: 0.72rem; color: var(--text-primary); cursor: pointer;">Trailing Stop Loss</label>
+          </div>
+          <div style="display: flex; align-items: center; gap: 4px;">
+            <label style="font-size: 0.68rem; color: var(--text-secondary);">Step:</label>
+            <input type="number" id="bt-trail-step" value="20" style="width: 50px; background: var(--bg-main); color: var(--text-primary); border: 1px solid var(--border); border-radius: 4px; padding: 2px 4px; font-size: 0.72rem;">
+          </div>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
+          <input type="checkbox" id="bt-intraday" checked style="accent-color: var(--accent);">
+          <label for="bt-intraday" style="font-size: 0.72rem; color: var(--text-primary); cursor: pointer;">Intraday Auto-Cutoff at 15:15 IST (No overnight gap risk)</label>
+        </div>
+
+        <div style="font-size: 0.68rem; color: var(--text-secondary); margin-top: 4px;">
+          ⚡ Realism: ₹40 round-trip brokerage + STT + 0.5 pt execution slippage deducted per trade.
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Bar -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border); flex-wrap: wrap; gap: 10px;">
+      <div id="bt-status-msg" style="font-size: 0.80rem; color: #94a3b8; font-weight: 600;">
+        Ready to simulate. Click <strong>▶ Run Automated Backtest</strong> to compute.
+      </div>
+      <button type="button" id="btn-run-backtest" onclick="runAutomatedBacktest()" class="btn" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: white; border: 1px solid #3b82f6; font-size: 0.90rem; font-weight: 800; padding: 9px 24px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 15px rgba(37, 99, 235, 0.35);">
+        <span>▶ Run Automated Backtest</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- KPI Summary Cards Grid -->
+  <div id="bt-summary-board" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 20px;">
+    <!-- Populated dynamically via JS -->
+  </div>
+
+  <!-- Candlestick Visual Chart & Annotations Card -->
+  <div class="card" id="bt-chart-card" style="margin-bottom: 20px; background: var(--bg-card); border: 1px solid var(--border);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="font-weight: 800; font-size: 0.95rem; color: #38bdf8;">📊 Annotated Candlestick Chart &amp; Strategy Markers</span>
+        <span id="bt-chart-info-tag" class="badge badge-blue">Interactive Lightweight Chart</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+        <!-- Visual Legend -->
+        <span style="font-size: 0.70rem; color: #10b981; font-weight: 700;">▲ Long Buy</span>
+        <span style="font-size: 0.70rem; color: #ef4444; font-weight: 700;">▼ Short Sell</span>
+        <span style="font-size: 0.70rem; color: #10b981; font-weight: 700;">🟢 Target Hit</span>
+        <span style="font-size: 0.70rem; color: #ef4444; font-weight: 700;">🟥 Stop Loss Hit</span>
+        <span style="font-size: 0.70rem; color: #f59e0b; font-weight: 700;">⚪ EOD Exit</span>
+        <button type="button" class="btn" onclick="fitBacktestChart()" style="background: #1e293b; color: var(--text-primary); border: 1px solid var(--border); padding: 4px 10px; font-size: 0.72rem; border-radius: 4px; cursor: pointer;">🔄 Fit View</button>
+      </div>
+    </div>
+    <div id="bt-chart-viewport" style="width: 100%; height: 460px; position: relative; border-radius: 6px; overflow: hidden; background: #0b0f19;">
+      <div id="bt-chart-placeholder" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--text-secondary); text-align: center; padding: 20px;">
+        <div style="font-size: 2.2rem; margin-bottom: 10px;">📊</div>
+        <div style="font-weight: 700; font-size: 1.0rem; color: var(--text-primary); margin-bottom: 6px;">Visual Chart Awaiting Backtest Execution</div>
+        <div style="font-size: 0.82rem; max-width: 480px;">Configure your strategy rules above and click <strong>▶ Run Automated Backtest</strong>. The chart will render candlesticks with clear entry arrows, target lines, stop-loss triggers, and indicator overlays.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Equity Curve Card -->
+  <div class="card" id="bt-equity-card" style="margin-bottom: 20px; background: var(--bg-card); border: 1px solid var(--border);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+      <span style="font-weight: 800; font-size: 0.90rem; color: #10b981;">📈 Portfolio Equity Growth &amp; Drawdown Trajectory</span>
+      <span id="bt-equity-final-badge" class="badge badge-green">Capital: ₹5,00,000</span>
+    </div>
+    <div id="bt-equity-viewport" style="width: 100%; height: 200px; position: relative; border-radius: 6px; overflow: hidden; background: #0b0f19;">
+      <div id="bt-equity-placeholder" style="display: flex; align-items: center; justify-content: center; height: 100%; color: var(--text-secondary); font-size: 0.80rem;">
+        Equity curve will appear here once backtest finishes.
+      </div>
+    </div>
+  </div>
+
+  <!-- Chronological Trade Log Card -->
+  <div class="card" id="bt-trades-card" style="background: var(--bg-card); border: 1px solid var(--border);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="font-weight: 800; font-size: 0.95rem; color: var(--text-primary);">📋 Detailed Chronological Trade Journal</span>
+        <span id="bt-trade-count-badge" class="badge badge-blue">0 Trades</span>
+      </div>
+      <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+        <!-- Filter Tabs -->
+        <div style="display: flex; background: rgba(0,0,0,0.3); border-radius: 4px; padding: 2px; border: 1px solid var(--border);">
+          <button type="button" class="btn" id="bt-filter-all" onclick="filterBacktestTrades('ALL')" style="background: var(--accent); color: white; padding: 3px 9px; font-size: 0.70rem; font-weight: 700; border-radius: 3px; border: none;">All</button>
+          <button type="button" class="btn" id="bt-filter-wins" onclick="filterBacktestTrades('WINS')" style="background: transparent; color: #10b981; padding: 3px 9px; font-size: 0.70rem; font-weight: 700; border-radius: 3px; border: none;">Wins Only</button>
+          <button type="button" class="btn" id="bt-filter-losses" onclick="filterBacktestTrades('LOSSES')" style="background: transparent; color: #ef4444; padding: 3px 9px; font-size: 0.70rem; font-weight: 700; border-radius: 3px; border: none;">Losses Only</button>
+        </div>
+        <input type="text" id="bt-trade-search" placeholder="Search date / reason..." oninput="onBacktestSearchTrade()" style="background: var(--bg-main); color: var(--text-primary); border: 1px solid var(--border); border-radius: 4px; padding: 4px 8px; font-size: 0.74rem; width: 170px;">
+        <button type="button" class="btn" onclick="exportBacktestTradesCSV()" style="background: #064e3b; color: #34d399; border: 1px solid #10b981; padding: 4px 12px; font-size: 0.74rem; font-weight: 700; border-radius: 4px; cursor: pointer;">
+          📥 Export CSV
+        </button>
+      </div>
+    </div>
+
+    <div style="overflow-x: auto; max-height: 480px; overflow-y: auto;">
+      <table style="width: 100%; border-collapse: collapse; font-size: 0.78rem; text-align: left;">
+        <thead>
+          <tr style="border-bottom: 2px solid var(--border); color: var(--text-secondary); background: rgba(0,0,0,0.2);">
+            <th style="padding: 8px 10px;">#</th>
+            <th style="padding: 8px 10px;">Type</th>
+            <th style="padding: 8px 10px;">Entry Time &amp; Price</th>
+            <th style="padding: 8px 10px;">Exit Time &amp; Price</th>
+            <th style="padding: 8px 10px;">Points</th>
+            <th style="padding: 8px 10px;">Net P&amp;L (₹)</th>
+            <th style="padding: 8px 10px;">Exit Reason</th>
+            <th style="padding: 8px 10px;">Bars</th>
+            <th style="padding: 8px 10px; text-align: center;">On Chart</th>
+          </tr>
+        </thead>
+        <tbody id="bt-trades-tbody">
+          <tr>
+            <td colspan="9" style="text-align: center; padding: 30px; color: var(--text-secondary);">
+              No backtest executed yet. Run a simulation above to view the trade ledger.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
 <script>
   function switchTab(tabId, btn) {
     document.querySelectorAll('.tab-content').forEach(el => {
@@ -2999,6 +3348,9 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       }
       if (tabId === 'tab-charts' && typeof initTradingViewChart === 'function') {
         initTradingViewChart();
+      }
+      if (tabId === 'tab-backtest' && typeof initBacktestTab === 'function') {
+        initBacktestTab();
       }
     } catch (e) {}
   }
@@ -7830,6 +8182,609 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       fetchOptionChain();
     }
   }, 15000); // 15s option chain live auto-refresh
+
+  // -------------------------------------------------------------
+  // AUTOMATED QUANTITATIVE BACKTESTING STUDIO
+  // -------------------------------------------------------------
+  let _btChart = null;
+  let _btCandleSeries = null;
+  let _btOverlaySeries = [];
+  let _btEquityChart = null;
+  let _btEquitySeries = null;
+  let _btFullResult = null;
+  let _btCurrentFilter = 'ALL';
+
+  function initBacktestTab() {
+    // Check and populate dataset badge
+    fetch('/api/backtest/datasets')
+      .then(res => res.json())
+      .then(data => {
+        if (data.status === 'ok' && data.datasets) {
+          const nifty5m = data.datasets.find(d => d.symbol === 'NIFTY' && d.timeframe === '5M');
+          const badge = document.getElementById('bt-dataset-badge');
+          if (nifty5m && badge) {
+            badge.innerText = `📊 ${Number(nifty5m.count).toLocaleString()} 5M Bars (2021–2026) Loaded`;
+          }
+        }
+      })
+      .catch(() => {});
+
+    // Resize charts if already rendered
+    setTimeout(() => {
+      if (_btChart) {
+        const c = document.getElementById('bt-chart-viewport');
+        if (c && c.clientWidth > 0) _btChart.applyOptions({ width: c.clientWidth, height: c.clientHeight || 460 });
+        _btChart.timeScale().fitContent();
+      }
+      if (_btEquityChart) {
+        const eq = document.getElementById('bt-equity-viewport');
+        if (eq && eq.clientWidth > 0) _btEquityChart.applyOptions({ width: eq.clientWidth, height: eq.clientHeight || 200 });
+        _btEquityChart.timeScale().fitContent();
+      }
+    }, 150);
+  }
+
+  function onBacktestStrategyChange() {
+    const strat = document.getElementById('bt-strategy-select').value;
+    document.querySelectorAll('.bt-param-group').forEach(el => el.style.display = 'none');
+
+    if (strat === 'ema_crossover') {
+      const el = document.getElementById('bt-params-ema');
+      if (el) el.style.display = 'block';
+    } else if (strat === 'supertrend') {
+      const el = document.getElementById('bt-params-supertrend');
+      if (el) el.style.display = 'block';
+    } else if (strat === 'breakout_sr') {
+      const el = document.getElementById('bt-params-breakout');
+      if (el) el.style.display = 'block';
+    } else if (strat === 'vwap_reversion') {
+      const el = document.getElementById('bt-params-vwap');
+      if (el) el.style.display = 'block';
+    } else if (strat === 'gap_strategy') {
+      const el = document.getElementById('bt-params-gap');
+      if (el) el.style.display = 'block';
+    } else if (strat === 'custom_rules') {
+      const el = document.getElementById('bt-params-custom');
+      if (el) el.style.display = 'block';
+    }
+  }
+
+  function setBacktestDatePreset(preset) {
+    const sEl = document.getElementById('bt-start-date');
+    const eEl = document.getElementById('bt-end-date');
+    if (!sEl || !eEl) return;
+
+    eEl.value = '2026-09-29';
+    if (preset === '5Y') {
+      sEl.value = '2021-09-30';
+    } else if (preset === '3Y') {
+      sEl.value = '2023-09-29';
+    } else if (preset === '1Y') {
+      sEl.value = '2025-09-29';
+    } else if (preset === '6M') {
+      sEl.value = '2026-03-29';
+    } else if (preset === '1M') {
+      sEl.value = '2026-08-29';
+    }
+  }
+
+  async function runAutomatedBacktest() {
+    const btn = document.getElementById('btn-run-backtest');
+    const statusMsg = document.getElementById('bt-status-msg');
+
+    const strategy = document.getElementById('bt-strategy-select').value;
+    const symbol = document.getElementById('bt-symbol-select').value;
+    const timeframe = document.getElementById('bt-timeframe-select').value;
+    const startDate = document.getElementById('bt-start-date').value || null;
+    const endDate = document.getElementById('bt-end-date').value || null;
+
+    const capital = parseFloat(document.getElementById('bt-capital').value || 500000);
+    const lots = parseInt(document.getElementById('bt-lots').value || 1, 10);
+    const instrument = document.getElementById('bt-instrument-mode').value;
+    const direction = document.getElementById('bt-direction').value;
+    const sl = parseFloat(document.getElementById('bt-sl').value || 40);
+    const target = parseFloat(document.getElementById('bt-target').value || 80);
+    const trailingSl = document.getElementById('bt-trailing-sl').checked;
+    const trailStep = parseFloat(document.getElementById('bt-trail-step').value || 20);
+    const intradayExit = document.getElementById('bt-intraday').checked;
+
+    const params = {
+      initial_capital: capital,
+      lots: lots,
+      instrument_mode: instrument,
+      direction: direction,
+      sl_points: sl,
+      target_points: target,
+      trailing_sl: trailingSl,
+      trail_step: trailStep,
+      intraday_exit: intradayExit,
+      cutoff_hour: 15,
+      cutoff_min: 15,
+      slippage_pts: 0.5,
+      brokerage: 20.0,
+    };
+
+    // Strategy-specific parameters
+    if (strategy === 'ema_crossover') {
+      params.fast_ema = parseInt(document.getElementById('bt-ema-fast').value || 9, 10);
+      params.slow_ema = parseInt(document.getElementById('bt-ema-slow').value || 21, 10);
+      params.use_rsi = document.getElementById('bt-ema-use-rsi').checked;
+      params.rsi_period = 14;
+      params.rsi_long = 50;
+      params.rsi_short = 50;
+    } else if (strategy === 'supertrend') {
+      params.supertrend_period = parseInt(document.getElementById('bt-st-period').value || 10, 10);
+      params.supertrend_mult = parseFloat(document.getElementById('bt-st-mult').value || 3.0);
+    } else if (strategy === 'breakout_sr') {
+      params.breakout_lookback = parseInt(document.getElementById('bt-bo-lookback').value || 20, 10);
+    } else if (strategy === 'vwap_reversion') {
+      params.vwap_dev_mult = parseFloat(document.getElementById('bt-vwap-dev').value || 1.5);
+    } else if (strategy === 'gap_strategy') {
+      params.gap_threshold = parseFloat(document.getElementById('bt-gap-threshold').value || 30);
+      params.gap_type = document.getElementById('bt-gap-mode').value;
+    } else if (strategy === 'custom_rules') {
+      params.indicator_type = document.getElementById('bt-custom-ma-type').value;
+      params.fast_period = parseInt(document.getElementById('bt-custom-fast').value || 9, 10);
+      params.slow_period = parseInt(document.getElementById('bt-custom-slow').value || 21, 10);
+      params.use_rsi = true;
+      params.rsi_buy = parseFloat(document.getElementById('bt-custom-rsi-buy').value || 45);
+      params.rsi_sell = parseFloat(document.getElementById('bt-custom-rsi-sell').value || 55);
+    }
+
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = `<span class="spinner" style="display:inline-block; width:14px; height:14px; border:2px solid #ffffff; border-top-color:transparent; border-radius:50%; animation:spin 0.8s linear infinite; margin-right:6px;"></span> Simulating ${timeframe} Bars...`;
+    }
+    if (statusMsg) {
+      statusMsg.innerHTML = `<span style="color: #38bdf8;">⏳ Simulating "${strategy}" across historical dataset with zero look-ahead bias...</span>`;
+    }
+
+    const t0 = performance.now();
+    try {
+      const resp = await fetch('/api/backtest/run', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          strategy: strategy,
+          symbol: symbol,
+          timeframe: timeframe,
+          start_date: startDate,
+          end_date: endDate,
+          params: params,
+        }),
+      });
+
+      if (!resp.ok) throw new Error(`HTTP Error ${resp.status}`);
+      const data = await resp.json();
+
+      if (data.status !== 'ok') {
+        throw new Error(data.message || 'Backtest failed');
+      }
+
+      _btFullResult = data;
+      const t1 = performance.now();
+      const elapsedSec = ((t1 - t0) / 1000).toFixed(2);
+
+      if (statusMsg) {
+        const net = data.summary.net_pnl;
+        const color = net >= 0 ? '#10b981' : '#ef4444';
+        statusMsg.innerHTML = `✅ Computed in <strong>${elapsedSec}s</strong> over <strong>${Number(data.summary.bars_tested).toLocaleString()}</strong> bars. Total Net P&L: <strong style="color:${color};">₹${net.toLocaleString('en-IN', {minimumFractionDigits: 2})} (${data.summary.return_pct > 0 ? '+' : ''}${data.summary.return_pct}%)</strong>.`;
+      }
+
+      renderBacktestSummary(data.summary);
+      renderBacktestChart(data.candles, data.markers, data.overlays);
+      renderBacktestEquity(data.equity_curve, data.summary);
+      renderBacktestTrades(data.trades);
+
+    } catch (err) {
+      console.error('Backtest error:', err);
+      if (statusMsg) {
+        statusMsg.innerHTML = `<span style="color: #ef4444;">❌ Backtest failed: ${err.message}</span>`;
+      }
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = `<span>▶ Run Automated Backtest</span>`;
+      }
+    }
+  }
+
+  function renderBacktestSummary(s) {
+    const sb = document.getElementById('bt-summary-board');
+    if (!sb || !s) return;
+
+    const isProfit = s.net_pnl >= 0;
+    const pnlColor = isProfit ? '#10b981' : '#ef4444';
+    const pnlBg = isProfit ? 'rgba(16, 185, 129, 0.12)' : 'rgba(239, 68, 68, 0.12)';
+    const pnlBorder = isProfit ? 'rgba(16, 185, 129, 0.4)' : 'rgba(239, 68, 68, 0.4)';
+
+    sb.innerHTML = `
+      <div style="background: ${pnlBg}; border: 1px solid ${pnlBorder}; border-radius: 6px; padding: 12px;">
+        <div style="font-size: 0.68rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 700;">Net Profit / Loss</div>
+        <div style="font-size: 1.35rem; font-weight: 800; color: ${pnlColor}; margin: 3px 0;">
+          ₹${Number(s.net_pnl).toLocaleString('en-IN', {minimumFractionDigits: 2})}
+        </div>
+        <div style="font-size: 0.74rem; font-weight: 700; color: ${pnlColor};">
+          ${s.return_pct >= 0 ? '+' : ''}${s.return_pct}% on ₹${Number(s.initial_capital).toLocaleString()}
+        </div>
+      </div>
+
+      <div style="background: rgba(0,0,0,0.25); border: 1px solid var(--border); border-radius: 6px; padding: 12px;">
+        <div style="font-size: 0.68rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 700;">Win Rate &amp; Trades</div>
+        <div style="font-size: 1.35rem; font-weight: 800; color: #38bdf8; margin: 3px 0;">
+          ${s.win_rate}%
+        </div>
+        <div style="font-size: 0.74rem; color: var(--text-secondary);">
+          <span style="color:#10b981; font-weight:700;">${s.winning_trades}W</span> / <span style="color:#ef4444; font-weight:700;">${s.losing_trades}L</span> (${s.total_trades} Total)
+        </div>
+      </div>
+
+      <div style="background: rgba(0,0,0,0.25); border: 1px solid var(--border); border-radius: 6px; padding: 12px;">
+        <div style="font-size: 0.68rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 700;">Profit Factor</div>
+        <div style="font-size: 1.35rem; font-weight: 800; color: ${s.profit_factor >= 1.2 ? '#10b981' : (s.profit_factor >= 1.0 ? '#facc15' : '#ef4444')}; margin: 3px 0;">
+          ${s.profit_factor}
+        </div>
+        <div style="font-size: 0.74rem; color: var(--text-secondary);">
+          Gross Win / Gross Loss
+        </div>
+      </div>
+
+      <div style="background: rgba(0,0,0,0.25); border: 1px solid var(--border); border-radius: 6px; padding: 12px;">
+        <div style="font-size: 0.68rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 700;">Max Drawdown</div>
+        <div style="font-size: 1.35rem; font-weight: 800; color: #f87171; margin: 3px 0;">
+          -${s.max_drawdown_pct}%
+        </div>
+        <div style="font-size: 0.74rem; color: var(--text-secondary);">
+          -₹${Number(s.max_drawdown_val).toLocaleString('en-IN', {minimumFractionDigits: 0})} Peak Drop
+        </div>
+      </div>
+
+      <div style="background: rgba(0,0,0,0.25); border: 1px solid var(--border); border-radius: 6px; padding: 12px;">
+        <div style="font-size: 0.68rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 700;">Realized Risk:Reward</div>
+        <div style="font-size: 1.35rem; font-weight: 800; color: #a855f7; margin: 3px 0;">
+          1 : ${s.realized_rr}
+        </div>
+        <div style="font-size: 0.74rem; color: var(--text-secondary);">
+          Avg Win ₹${Number(s.avg_win).toLocaleString('en-IN', {maximumFractionDigits:0})} / Loss ₹${Number(s.avg_loss).toLocaleString('en-IN', {maximumFractionDigits:0})}
+        </div>
+      </div>
+
+      <div style="background: rgba(0,0,0,0.25); border: 1px solid var(--border); border-radius: 6px; padding: 12px;">
+        <div style="font-size: 0.68rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 700;">Expectancy Per Trade</div>
+        <div style="font-size: 1.35rem; font-weight: 800; color: ${s.expectancy >= 0 ? '#10b981' : '#ef4444'}; margin: 3px 0;">
+          ₹${Number(s.expectancy).toLocaleString('en-IN', {minimumFractionDigits: 1})}
+        </div>
+        <div style="font-size: 0.74rem; color: var(--text-secondary);">
+          Streak: ${s.max_consecutive_wins} Wins / ${s.max_consecutive_losses} Losses
+        </div>
+      </div>
+
+      <div style="background: rgba(0,0,0,0.25); border: 1px solid var(--border); border-radius: 6px; padding: 12px;">
+        <div style="font-size: 0.68rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 700;">Bars &amp; Timeframe</div>
+        <div style="font-size: 1.35rem; font-weight: 800; color: #f59e0b; margin: 3px 0;">
+          ${Number(s.bars_tested).toLocaleString()}
+        </div>
+        <div style="font-size: 0.74rem; color: var(--text-secondary);">
+          ${s.timeframe} Bars (${s.start_date} to ${s.end_date})
+        </div>
+      </div>
+    `;
+  }
+
+  function renderBacktestChart(candles, markers, overlays) {
+    const container = document.getElementById('bt-chart-viewport');
+    const placeholder = document.getElementById('bt-chart-placeholder');
+    if (!container || !candles || candles.length === 0) return;
+
+    if (placeholder) placeholder.style.display = 'none';
+
+    if (!_btChart) {
+      _btChart = LightweightCharts.createChart(container, {
+        width: container.clientWidth || 1000,
+        height: container.clientHeight || 460,
+        layout: {
+          background: { type: 'solid', color: '#090d16' },
+          textColor: '#94a3b8',
+          fontSize: 11,
+          fontFamily: 'Inter, -apple-system, sans-serif',
+        },
+        grid: {
+          vertLines: { color: 'rgba(255, 255, 255, 0.04)' },
+          horzLines: { color: 'rgba(255, 255, 255, 0.04)' },
+        },
+        crosshair: {
+          mode: LightweightCharts.CrosshairMode.Normal,
+          vertLine: { color: 'rgba(56, 189, 248, 0.4)', width: 1, style: 2 },
+          horzLine: { color: 'rgba(56, 189, 248, 0.4)', width: 1, style: 2 },
+        },
+        rightPriceScale: {
+          borderColor: '#1f2b48',
+          scaleMargins: { top: 0.08, bottom: 0.08 },
+        },
+        timeScale: {
+          borderColor: '#1f2b48',
+          timeVisible: true,
+          secondsVisible: false,
+        },
+      });
+
+      _btCandleSeries = _btChart.addCandlestickSeries({
+        upColor: '#10b981',
+        downColor: '#ef4444',
+        borderUpColor: '#10b981',
+        borderDownColor: '#ef4444',
+        wickUpColor: '#10b981',
+        wickDownColor: '#ef4444',
+      });
+    }
+
+    _btCandleSeries.setData(candles);
+
+    // Remove old overlay line series
+    if (_btOverlaySeries && _btOverlaySeries.length > 0) {
+      _btOverlaySeries.forEach(s => {
+        try { _btChart.removeSeries(s); } catch (e) {}
+      });
+      _btOverlaySeries = [];
+    }
+
+    // Add new overlay lines
+    if (overlays && overlays.length > 0) {
+      overlays.forEach(ov => {
+        if (ov.data && ov.data.length > 0) {
+          const lineSeries = _btChart.addLineSeries({
+            color: ov.color || '#38bdf8',
+            lineWidth: 2,
+            title: ov.name || '',
+          });
+          lineSeries.setData(ov.data);
+          _btOverlaySeries.push(lineSeries);
+        }
+      });
+    }
+
+    // Set markers on candlestick series
+    if (markers && markers.length > 0) {
+      _btCandleSeries.setMarkers(markers);
+    } else {
+      _btCandleSeries.setMarkers([]);
+    }
+
+    _btChart.timeScale().fitContent();
+
+    const tag = document.getElementById('bt-chart-info-tag');
+    if (tag) tag.innerText = `${candles.length} Candles Rendered with ${markers ? markers.length : 0} Visual Markers`;
+  }
+
+  function fitBacktestChart() {
+    if (_btChart) _btChart.timeScale().fitContent();
+  }
+
+  function zoomToBacktestTrade(entryTimeIso, exitTimeIso) {
+    if (!_btChart) return;
+    try {
+      const eSec = Math.floor(new Date(entryTimeIso).getTime() / 1000);
+      const xSec = Math.floor(new Date(exitTimeIso).getTime() / 1000);
+      const buffer = 3600 * 4; // 4 hour window around trade
+      _btChart.timeScale().setVisibleRange({
+        from: eSec - buffer,
+        to: xSec + buffer,
+      });
+      // Scroll smoothly to chart card
+      const c = document.getElementById('bt-chart-card');
+      if (c) c.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    } catch (e) {
+      console.warn('Zoom to trade error:', e);
+    }
+  }
+
+  function renderBacktestEquity(equityCurve, summary) {
+    const container = document.getElementById('bt-equity-viewport');
+    const placeholder = document.getElementById('bt-equity-placeholder');
+    if (!container || !equityCurve || equityCurve.length === 0) return;
+
+    if (placeholder) placeholder.style.display = 'none';
+
+    if (!_btEquityChart) {
+      _btEquityChart = LightweightCharts.createChart(container, {
+        width: container.clientWidth || 1000,
+        height: container.clientHeight || 200,
+        layout: {
+          background: { type: 'solid', color: '#090d16' },
+          textColor: '#94a3b8',
+          fontSize: 10,
+          fontFamily: 'Inter, -apple-system, sans-serif',
+        },
+        grid: {
+          vertLines: { color: 'rgba(255, 255, 255, 0.03)' },
+          horzLines: { color: 'rgba(255, 255, 255, 0.03)' },
+        },
+        rightPriceScale: {
+          borderColor: '#1f2b48',
+          scaleMargins: { top: 0.1, bottom: 0.1 },
+        },
+        timeScale: {
+          borderColor: '#1f2b48',
+          timeVisible: true,
+          secondsVisible: false,
+        },
+      });
+
+      _btEquitySeries = _btEquityChart.addAreaSeries({
+        lineColor: '#10b981',
+        topColor: 'rgba(16, 185, 129, 0.35)',
+        bottomColor: 'rgba(16, 185, 129, 0.0)',
+        lineWidth: 2,
+      });
+    }
+
+    const isProfit = summary.net_pnl >= 0;
+    _btEquitySeries.applyOptions({
+      lineColor: isProfit ? '#10b981' : '#ef4444',
+      topColor: isProfit ? 'rgba(16, 185, 129, 0.35)' : 'rgba(239, 68, 68, 0.35)',
+    });
+
+    _btEquitySeries.setData(equityCurve);
+    _btEquityChart.timeScale().fitContent();
+
+    const badge = document.getElementById('bt-equity-final-badge');
+    if (badge) {
+      badge.className = isProfit ? 'badge badge-green' : 'badge badge-red';
+      badge.innerText = `Final Capital: ₹${Number(summary.final_capital).toLocaleString('en-IN', {minimumFractionDigits: 2})}`;
+    }
+  }
+
+  function renderBacktestTrades(trades) {
+    const tbody = document.getElementById('bt-trades-tbody');
+    const badge = document.getElementById('bt-trade-count-badge');
+    if (!tbody) return;
+
+    if (badge) badge.innerText = `${trades ? trades.length : 0} Trades`;
+
+    if (!trades || trades.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="9" style="text-align: center; padding: 30px; color: var(--text-secondary);">
+            No trades were triggered during this historical period with the chosen rules.
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    applyBacktestTradeFilters();
+  }
+
+  function filterBacktestTrades(filterType) {
+    _btCurrentFilter = filterType;
+    ['all', 'wins', 'losses'].forEach(f => {
+      const btn = document.getElementById(`bt-filter-${f}`);
+      if (btn) {
+        if (f.toUpperCase() === filterType || (f === 'wins' && filterType === 'WINS') || (f === 'losses' && filterType === 'LOSSES')) {
+          btn.style.background = 'var(--accent)';
+          btn.style.color = 'white';
+        } else {
+          btn.style.background = 'transparent';
+          btn.style.color = f === 'wins' ? '#10b981' : (f === 'losses' ? '#ef4444' : 'var(--text-secondary)');
+        }
+      }
+    });
+    applyBacktestTradeFilters();
+  }
+
+  function onBacktestSearchTrade() {
+    applyBacktestTradeFilters();
+  }
+
+  function applyBacktestTradeFilters() {
+    const tbody = document.getElementById('bt-trades-tbody');
+    if (!tbody || !_btFullResult || !_btFullResult.trades) return;
+
+    const query = (document.getElementById('bt-trade-search').value || '').toLowerCase().trim();
+    let filtered = _btFullResult.trades;
+
+    if (_btCurrentFilter === 'WINS') {
+      filtered = filtered.filter(t => t.net_pnl > 0);
+    } else if (_btCurrentFilter === 'LOSSES') {
+      filtered = filtered.filter(t => t.net_pnl <= 0);
+    }
+
+    if (query) {
+      filtered = filtered.filter(t =>
+        t.entry_time.toLowerCase().includes(query) ||
+        t.exit_time.toLowerCase().includes(query) ||
+        t.exit_reason.toLowerCase().includes(query) ||
+        t.type.toLowerCase().includes(query)
+      );
+    }
+
+    if (filtered.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="9" style="text-align: center; padding: 25px; color: var(--text-secondary);">
+            No trades match the current filter.
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    tbody.innerHTML = filtered.map(t => {
+      const isLong = t.type === 'LONG';
+      const isWin = t.net_pnl >= 0;
+      const typeBadge = isLong
+        ? `<span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3);">🟢 LONG</span>`
+        : `<span class="badge" style="background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3);">🔴 SHORT</span>`;
+
+      const reasonBadge = t.exit_reason === 'TARGET'
+        ? `<span class="badge badge-green" style="font-size:0.68rem;">🎯 TARGET</span>`
+        : (t.exit_reason === 'STOP_LOSS'
+          ? `<span class="badge badge-red" style="font-size:0.68rem;">🛑 STOP LOSS</span>`
+          : `<span class="badge badge-yellow" style="font-size:0.68rem;">⏱️ ${t.exit_reason}</span>`);
+
+      return `
+        <tr style="border-bottom: 1px solid rgba(31, 43, 72, 0.5); transition: background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.03)'" onmouseout="this.style.background='transparent'">
+          <td style="padding: 7px 10px; font-weight: 700; color: var(--text-secondary);">${t.id}</td>
+          <td style="padding: 7px 10px;">${typeBadge}</td>
+          <td style="padding: 7px 10px;">
+            <div style="font-weight: 700; color: var(--text-primary);">${t.entry_time}</div>
+            <div style="font-size: 0.70rem; color: var(--text-secondary);">₹${Number(t.entry_price).toFixed(2)}</div>
+          </td>
+          <td style="padding: 7px 10px;">
+            <div style="font-weight: 700; color: var(--text-primary);">${t.exit_time}</div>
+            <div style="font-size: 0.70rem; color: var(--text-secondary);">₹${Number(t.exit_price).toFixed(2)}</div>
+          </td>
+          <td style="padding: 7px 10px; font-weight: 700; color: ${t.points >= 0 ? '#10b981' : '#ef4444'};">
+            ${t.points >= 0 ? '+' : ''}${t.points} pts
+          </td>
+          <td style="padding: 7px 10px; font-weight: 800; color: ${isWin ? '#10b981' : '#ef4444'};">
+            ₹${Number(t.net_pnl).toLocaleString('en-IN', {minimumFractionDigits: 2})}
+          </td>
+          <td style="padding: 7px 10px;">${reasonBadge}</td>
+          <td style="padding: 7px 10px; color: var(--text-secondary); font-size: 0.72rem;">${t.bars_held} bars</td>
+          <td style="padding: 7px 10px; text-align: center;">
+            <button type="button" onclick="zoomToBacktestTrade('${t.entry_time_iso}', '${t.exit_time_iso}')" class="btn" style="background: #1e293b; color: #38bdf8; border: 1px solid #38bdf8; padding: 2px 8px; font-size: 0.68rem; font-weight: 700; border-radius: 4px; cursor: pointer;">
+              🔍 View
+            </button>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  function exportBacktestTradesCSV() {
+    if (!_btFullResult || !_btFullResult.trades || _btFullResult.trades.length === 0) {
+      alert('No trades available to export. Run a backtest first.');
+      return;
+    }
+
+    const trades = _btFullResult.trades;
+    const headers = ['Trade_ID', 'Type', 'Entry_Time', 'Entry_Price', 'Exit_Time', 'Exit_Price', 'Points', 'Gross_PnL', 'Net_PnL', 'Exit_Reason', 'Bars_Held', 'Running_Capital'];
+    const rows = trades.map(t => [
+      t.id,
+      t.type,
+      `"${t.entry_time}"`,
+      t.entry_price,
+      `"${t.exit_time}"`,
+      t.exit_price,
+      t.points,
+      t.gross_pnl,
+      t.net_pnl,
+      `"${t.exit_reason}"`,
+      t.bars_held,
+      t.running_capital,
+    ]);
+
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(r => r.join(','))].join(String.fromCharCode(10));
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    const sym = (_btFullResult.summary && _btFullResult.summary.symbol) || 'NIFTY';
+    link.setAttribute('download', `Backtest_Trades_${sym}_${Date.now()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
 </script>
 </body>
 </html>
@@ -8596,6 +9551,23 @@ class DashboardHTTPRequestHandler(BaseHTTPRequestHandler):
                 "news": self.aggregator.get_news_summary(),
             }
             self.wfile.write(json.dumps(payload, default=str).encode("utf-8"))
+        elif self.path == "/api/backtest/datasets":
+            try:
+                from nifty_trader.strategies.automated_backtester import AutomatedBacktester
+                bt = AutomatedBacktester()
+                data = bt.get_available_datasets()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps(data).encode("utf-8"))
+                return
+            except Exception as ex:
+                logger.exception("Error in /api/backtest/datasets")
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": "error", "message": str(ex)}).encode("utf-8"))
+                return
         else:
             self.send_response(404)
             self.end_headers()
@@ -8957,6 +9929,42 @@ class DashboardHTTPRequestHandler(BaseHTTPRequestHandler):
                 self.send_header("Content-Type", "application/json")
                 self.end_headers()
                 self.wfile.write(json.dumps({"status": "error", "message": str(ex)}).encode("utf-8"))
+        elif self.path == "/api/backtest/run":
+            try:
+                content_length = int(self.headers.get("Content-Length", 0))
+                body = self.rfile.read(content_length).decode("utf-8")
+                req = json.loads(body) if body else {}
+
+                strategy = req.get("strategy", "ema_crossover")
+                symbol = req.get("symbol", "NIFTY")
+                timeframe = req.get("timeframe", "5M")
+                start_date = req.get("start_date") or None
+                end_date = req.get("end_date") or None
+                params = req.get("params", {})
+
+                from nifty_trader.strategies.automated_backtester import AutomatedBacktester
+                bt = AutomatedBacktester()
+                res = bt.run(
+                    strategy=strategy,
+                    symbol=symbol,
+                    timeframe=timeframe,
+                    start_date=start_date,
+                    end_date=end_date,
+                    params=params,
+                )
+
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps(res, default=str).encode("utf-8"))
+                return
+            except Exception as ex:
+                logger.exception("Error in /api/backtest/run")
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": "error", "message": str(ex)}).encode("utf-8"))
+                return
         else:
             self.send_response(404)
             self.end_headers()
