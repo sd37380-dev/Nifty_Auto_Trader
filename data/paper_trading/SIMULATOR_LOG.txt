@@ -153,3 +153,4 @@
 [2026-11-18 16:05:01 UTC] ⚙️ [SETTINGS UPDATED] Lots=3 (195 qty) | SL=18.5 pts | Target=45.0 pts | TrailingSL=True (12.0 pts step)
 [2026-09-29 15:15] 🏁 EXIT STOP_LOSS | NIFTY 25400 CE | Buy: Rs. 135.00 | Exit: Rs. 114.50 | Gross: Rs. -1,332.50 | Charges: Rs. 64.59 | Net: Rs. -1,397.09 (-15.2%) | Rule: My_Custom_Strategy
 [2026-11-20 16:35:45 UTC] ⚡ [OPTION CHAIN PAPER TRADE] Placed: NIFTY 50 25800 CE | Lots: 1 (65 Qty) | Entry: ₹83.45 | SL: ₹63.45 | Tgt: ₹143.45 | Spot: ₹25784.35
+[2026-11-21 10:01:36 UTC] ⚡ [OPTION CHAIN PAPER TRADE] Placed: NIFTY 50 25700 CE | Lots: 1 (65 Qty) | Entry: ₹120.00 | SL: ₹95.30 | Tgt: ₹220.30 | Spot: ₹25784.35
