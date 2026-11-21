@@ -862,6 +862,27 @@ class SimulatorBackgroundService:
         )
         self.update_report_files()
 
+        # Instant Telegram Alert on Trade Exit (Stop Loss / Target Hit)
+        try:
+            from nifty_trader.notifications.telegram_service import get_telegram_service
+            tele = get_telegram_service(self.root_dir)
+            tele.send_trade_closed_alert(
+                symbol=t.symbol,
+                strike=t.strike,
+                option_type=t.option_type,
+                entry_premium=t.entry_premium,
+                exit_premium=t.exit_premium,
+                exit_reason=t.exit_reason.value if hasattr(t.exit_reason, "value") else str(t.exit_reason),
+                net_pnl=t.net_pnl,
+                pnl_pct=t.pnl_pct,
+                lots=t.lots,
+                qty=t.qty,
+                trade_id=str(t.trade_id),
+                rule_name=t.rule_name,
+            )
+        except Exception as tele_err:
+            logger.warning("Could not dispatch Telegram trade exit alert: %s", tele_err)
+
         # Dual persistence: sync completed trade to Supabase Cloud
         try:
             from nifty_trader.core.supabase_adapter import get_supabase_adapter

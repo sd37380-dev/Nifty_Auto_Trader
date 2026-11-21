@@ -152,6 +152,159 @@ class TelegramNotificationService:
         self._executor.submit(_worker)
         return True
 
+    def send_photo(self, photo_path_or_bytes: Any, caption: str = "", parse_mode: str = "HTML") -> bool:
+        """Sends a photo with optional HTML caption to Telegram asynchronously."""
+        if not self.is_configured:
+            logger.debug("Telegram not configured; skipping photo dispatch: %s", caption[:60])
+            return False
+
+        def _worker():
+            url = f"https://api.telegram.org/bot{self.bot_token}/sendPhoto"
+            try:
+                safe_caption = caption[:1024] if caption else ""
+                data = {
+                    "chat_id": self.chat_id,
+                    "caption": safe_caption,
+                    "parse_mode": parse_mode,
+                }
+                with httpx.Client(timeout=25.0) as client:
+                    if isinstance(photo_path_or_bytes, (str, Path)):
+                        p = Path(photo_path_or_bytes)
+                        if not p.exists():
+                            logger.warning("Telegram sendPhoto: file not found: %s", p)
+                            self.send_message(caption, parse_mode=parse_mode)
+                            return False
+                        with open(p, "rb") as f:
+                            files = {"photo": (p.name, f.read(), "image/png")}
+                            resp = client.post(url, data=data, files=files)
+                    elif isinstance(photo_path_or_bytes, bytes):
+                        files = {"photo": ("chart_screenshot.png", photo_path_or_bytes, "image/png")}
+                        resp = client.post(url, data=data, files=files)
+                    else:
+                        self.send_message(caption, parse_mode=parse_mode)
+                        return False
+
+                    if resp.status_code == 200:
+                        logger.info("Telegram photo sent successfully.")
+                        return True
+                    else:
+                        logger.warning("Telegram sendPhoto failed (HTTP %d): %s", resp.status_code, resp.text)
+                        self.send_message(caption, parse_mode=parse_mode)
+                        return False
+            except Exception as ex:
+                logger.warning("Telegram sendPhoto error: %s", ex)
+                self.send_message(caption, parse_mode=parse_mode)
+                return False
+
+        self._executor.submit(_worker)
+        return True
+
+    def send_chart_trade_executed_alert(
+        self,
+        trade_info: Dict[str, Any],
+        photo_path: Optional[str] = None,
+    ) -> bool:
+        """Sends an instant alert when a visual Long/Short chart trade is executed."""
+        now_ist = datetime.now(IST).strftime("%Y-%m-%d %H:%M:%S IST")
+        symbol = trade_info.get("symbol", "NIFTY")
+        setup_type = trade_info.get("setup_type", "LONG").upper()
+        strike = trade_info.get("strike", 0)
+        option_type = trade_info.get("option_type", "CE")
+        entry_spot = float(trade_info.get("entry_spot", 0.0))
+        target_spot = float(trade_info.get("target_spot", 0.0))
+        sl_spot = float(trade_info.get("sl_spot", 0.0))
+        premium = float(trade_info.get("premium", 0.0))
+        lots = int(trade_info.get("lots", 1))
+        qty = int(trade_info.get("qty", lots * (30 if "BANK" in symbol else 65)))
+        rr = trade_info.get("risk_reward", "1 : 2.0")
+        mode = trade_info.get("mode", "PAPER SIMULATOR")
+        trade_id = trade_info.get("trade_id", "")
+        broker_order_id = trade_info.get("broker_order_id", "")
+
+        is_long = setup_type == "LONG" or option_type == "CE"
+        dir_badge = "🟢 LONG SETUP (BUY CALL - CE)" if is_long else "🔴 SHORT SETUP (BUY PUT - PE)"
+
+        target_pts = abs(target_spot - entry_spot)
+        sl_pts = abs(entry_spot - sl_spot)
+
+        mode_badge = f"🏦 <b>LIVE BROKER (Dhan HQ)</b> | Order: <code>{broker_order_id}</code>" if "BROKER" in mode.upper() else "📄 <b>PAPER TRADING SIMULATOR</b>"
+
+        msg = (
+            f"🚀 <b>[CHART TRADE EXECUTED]</b> 🚀\n"
+            "━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+            f"🎯 <b>Strategy:</b> <b>{dir_badge}</b>\n"
+            f"📊 <b>Option Contract:</b> <b>{symbol} {strike} {option_type}</b>\n"
+            f"💵 <b>Est. Premium:</b> ₹{premium:.2f} | <b>Qty:</b> {lots} Lot ({qty} Qty)\n\n"
+            f"📍 <b>Visual Chart Levels:</b>\n"
+            f"   • Entry Level: <b>₹{entry_spot:,.2f}</b>\n"
+            f"   • Profit Target: <b>₹{target_spot:,.2f}</b> (+{target_pts:,.2f} pts)\n"
+            f"   • Stop Loss: <b>₹{sl_spot:,.2f}</b> (-{sl_pts:,.2f} pts)\n"
+            f"   • Risk : Reward: <b>{rr}</b>\n\n"
+            f"⚙️ <b>Execution Route:</b>\n"
+            f"   {mode_badge}\n"
+            f"🆔 <b>Trade ID:</b> <code>{trade_id}</code>\n"
+            f"⏰ <b>Execution Time:</b> {now_ist}\n"
+            "━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        )
+        if photo_path and Path(photo_path).exists():
+            return self.send_photo(photo_path, caption=msg)
+        return self.send_message(msg)
+
+    def send_trade_closed_alert(
+        self,
+        symbol: str,
+        strike: int,
+        option_type: str,
+        entry_premium: float,
+        exit_premium: float,
+        exit_reason: str,
+        net_pnl: float,
+        pnl_pct: float,
+        lots: int = 1,
+        qty: int = 65,
+        trade_id: str = "",
+        rule_name: str = "",
+        photo_path: Optional[str] = None,
+    ) -> bool:
+        """Sends an instant alert when a trade exits due to Stop Loss, Target, or Manual closure."""
+        now_ist = datetime.now(IST).strftime("%Y-%m-%d %H:%M:%S IST")
+        reason_upper = exit_reason.upper()
+
+        if "TARGET" in reason_upper:
+            header_icon = "🎯 🏆"
+            status_title = "PROFIT TARGET ACHIEVED!"
+            pnl_badge = f"🟢 PROFIT: +₹{abs(net_pnl):,.2f} (+{abs(pnl_pct):.1f}%)"
+        elif "STOP" in reason_upper:
+            header_icon = "🛑 🛡️"
+            status_title = "STOP LOSS TRIGGERED"
+            pnl_badge = f"🔴 LOSS: -₹{abs(net_pnl):,.2f} (-{abs(pnl_pct):.1f}%)"
+        else:
+            header_icon = "🏁"
+            status_title = f"POSITION CLOSED ({exit_reason})"
+            sign = "+" if net_pnl >= 0 else "-"
+            pnl_badge = f"{'🟢' if net_pnl >= 0 else '🔴'} NET P&L: {sign}₹{abs(net_pnl):,.2f} ({pnl_pct:+.1f}%)"
+
+        pts_diff = exit_premium - entry_premium
+        msg = (
+            f"{header_icon} <b>[{status_title}]</b> {header_icon}\n"
+            "━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+            f"📊 <b>Contract:</b> <b>{symbol} {strike} {option_type}</b>\n"
+            f"💰 <b>Net P&L:</b> <b>{pnl_badge}</b>\n\n"
+            f"📈 <b>Trade Metrics:</b>\n"
+            f"   • Entry Fill: ₹{entry_premium:.2f}\n"
+            f"   • Exit Fill: ₹{exit_premium:.2f}\n"
+            f"   • Points P&L: {pts_diff:+.2f} pts\n"
+            f"   • Lots: {lots} ({qty} Qty)\n"
+            f"   • Exit Reason: <code>{exit_reason}</code>\n"
+            f"   • Strategy: {rule_name}\n"
+            f"🆔 <b>Trade ID:</b> <code>{trade_id}</code>\n"
+            f"⏰ <b>Closed At:</b> {now_ist}\n"
+            "━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        )
+        if photo_path and Path(photo_path).exists():
+            return self.send_photo(photo_path, caption=msg)
+        return self.send_message(msg)
+
     def send_test_message(self) -> Dict[str, Any]:
         """Synchronous ping to verify token and chat ID."""
         if not self.is_configured:

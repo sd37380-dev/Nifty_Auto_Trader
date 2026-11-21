@@ -1860,6 +1860,15 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 
       <!-- Drawing & Chart Tools -->
       <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+        <button type="button" class="btn" id="btn-chart-long-tool" onclick="openLongShortTool('LONG')" style="background: #064e3b; color: #34d399; padding: 3px 10px; font-size: 0.72rem; font-weight: 800; border-radius: 4px; border: 1px solid #10b981; cursor: pointer;" title="Place Visual Long Position (Buy CE) with Entry, Target &amp; Stop Loss Lines">
+          🟢 Long (Buy CE)
+        </button>
+        <button type="button" class="btn" id="btn-chart-short-tool" onclick="openLongShortTool('SHORT')" style="background: #4c0519; color: #fb7185; padding: 3px 10px; font-size: 0.72rem; font-weight: 800; border-radius: 4px; border: 1px solid #f43f5e; cursor: pointer;" title="Place Visual Short Position (Buy PE) with Entry, Target &amp; Stop Loss Lines">
+          🔴 Short (Buy PE)
+        </button>
+        <button type="button" class="btn" id="btn-broker-connect" onclick="openBrokerModal()" style="background: #1e1b4b; color: #a5b4fc; padding: 3px 9px; font-size: 0.72rem; font-weight: 700; border-radius: 4px; border: 1px solid #6366f1; cursor: pointer;" title="Broker Live / Paper Mode Settings">
+          🏦 Broker
+        </button>
         <button type="button" class="btn" id="btn-toggle-draw-tools" onclick="toggleDrawingPanel()" style="background: #0284c7; color: white; padding: 3px 10px; font-size: 0.72rem; font-weight: 700; border-radius: 4px; border: 1px solid #38bdf8; cursor: pointer;" title="Open Manual S/R Line & Zone Draw Studio">
           ✏️ Draw Tools ▼
         </button>
@@ -2060,6 +2069,91 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     </div>
   </div>
 
+  <!-- Dedicated Long/Short Visual Trade Setup Panel (HUD) -->
+  <div id="chart-trade-setup-panel" style="display: none; margin-top: 8px; margin-bottom: 8px; background: linear-gradient(135deg, rgba(15, 23, 42, 0.98) 0%, rgba(30, 41, 59, 0.95) 100%); padding: 12px 16px; border-radius: 8px; border: 2px solid #38bdf8; box-shadow: 0 8px 30px rgba(56, 189, 248, 0.25);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px; flex-wrap: wrap; gap: 8px;">
+      <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+        <span id="trade-setup-title-badge" style="font-weight: 900; font-size: 0.85rem; padding: 4px 10px; border-radius: 4px; background: #065f46; color: #34d399; border: 1px solid #10b981;">
+          🟢 LONG (BUY CE) TRADE SETUP
+        </span>
+        <span id="trade-setup-contract-badge" style="font-size: 0.82rem; color: #38bdf8; font-weight: 800; font-family: monospace;">
+          NIFTY 25800 CE
+        </span>
+        <span id="trade-setup-rr-badge" style="font-size: 0.78rem; color: #facc15; font-weight: 700; background: rgba(250, 204, 21, 0.15); padding: 2px 8px; border-radius: 4px; border: 1px solid #facc15;">
+          R:R = 1 : 2.00
+        </span>
+      </div>
+      <div style="display: flex; gap: 8px; align-items: center;">
+        <span id="trade-exec-route-badge" style="font-size: 0.72rem; color: #cbd5e1; font-weight: 700; background: #1e293b; padding: 3px 8px; border-radius: 4px; border: 1px solid var(--border);">
+          📄 Paper Mode
+        </span>
+        <button type="button" onclick="closeLongShortTool()" class="btn" style="background: transparent; color: var(--text-secondary); border: 1px solid var(--border); font-size: 0.75rem; border-radius: 4px; padding: 3px 8px; cursor: pointer;">
+          ✕ Close
+        </button>
+      </div>
+    </div>
+
+    <!-- Controls Grid: Entry, Target, Stop Loss, Lots, Destination -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; align-items: flex-end;">
+      <div>
+        <label style="display: block; font-size: 0.70rem; color: #38bdf8; font-weight: 800; margin-bottom: 3px;">
+          📍 ENTRY SPOT (₹):
+        </label>
+        <input type="number" id="trade-input-entry" step="0.05" oninput="onTradeSetupInputChange()" style="width: 100%; background: #0f172a; color: #38bdf8; border: 1px solid #38bdf8; border-radius: 5px; padding: 5px 8px; font-size: 0.85rem; font-weight: 800; font-family: monospace;">
+      </div>
+
+      <div>
+        <label style="display: block; font-size: 0.70rem; color: #10b981; font-weight: 800; margin-bottom: 3px;">
+          🎯 TARGET SPOT (₹):
+        </label>
+        <input type="number" id="trade-input-target" step="0.05" oninput="onTradeSetupInputChange()" style="width: 100%; background: #0f172a; color: #10b981; border: 1px solid #10b981; border-radius: 5px; padding: 5px 8px; font-size: 0.85rem; font-weight: 800; font-family: monospace;">
+      </div>
+
+      <div>
+        <label style="display: block; font-size: 0.70rem; color: #ef4444; font-weight: 800; margin-bottom: 3px;">
+          🛡️ STOP LOSS SPOT (₹):
+        </label>
+        <input type="number" id="trade-input-sl" step="0.05" oninput="onTradeSetupInputChange()" style="width: 100%; background: #0f172a; color: #ef4444; border: 1px solid #ef4444; border-radius: 5px; padding: 5px 8px; font-size: 0.85rem; font-weight: 800; font-family: monospace;">
+      </div>
+
+      <div>
+        <label style="display: block; font-size: 0.70rem; color: #cbd5e1; font-weight: 700; margin-bottom: 3px;">
+          📦 LOTS:
+        </label>
+        <div style="display: flex; gap: 4px;">
+          <button type="button" onclick="adjustTradeLots(-1)" class="btn" style="background: #1e293b; color: white; border: 1px solid var(--border); padding: 5px 8px; font-weight: 800; border-radius: 4px; cursor: pointer;">-</button>
+          <input type="number" id="trade-input-lots" value="1" min="1" max="50" onchange="onTradeSetupInputChange()" style="width: 48px; text-align: center; background: #0f172a; color: white; border: 1px solid var(--border); border-radius: 4px; padding: 5px 4px; font-size: 0.85rem; font-weight: 800;">
+          <button type="button" onclick="adjustTradeLots(1)" class="btn" style="background: #1e293b; color: white; border: 1px solid var(--border); padding: 5px 8px; font-weight: 800; border-radius: 4px; cursor: pointer;">+</button>
+        </div>
+      </div>
+
+      <div>
+        <label style="display: block; font-size: 0.70rem; color: #cbd5e1; font-weight: 700; margin-bottom: 3px;">
+          ⚡ EXECUTION ROUTE:
+        </label>
+        <select id="trade-input-route" onchange="onTradeRouteSelectChange()" style="width: 100%; background: #0f172a; color: #f8fafc; border: 1px solid var(--border); border-radius: 5px; padding: 5px 6px; font-size: 0.76rem; font-weight: 700; cursor: pointer;">
+          <option value="AUTO" selected>⚡ Auto (Broker/Paper)</option>
+          <option value="PAPER">📄 Paper Simulator</option>
+          <option value="BROKER">🏦 Live Broker (Dhan HQ)</option>
+        </select>
+      </div>
+
+      <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+        <button type="button" id="btn-chart-pick-level" onclick="togglePickLevelOnChart()" class="btn" style="background: #1e293b; color: #facc15; border: 1px solid #facc15; padding: 6px 10px; font-size: 0.76rem; font-weight: 700; border-radius: 5px; cursor: pointer;" title="Click on chart to set entry price">
+          🎯 Pick on Chart
+        </button>
+        <button type="button" id="btn-execute-chart-trade" onclick="executeChartSetupTrade()" class="btn" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; padding: 6px 14px; font-size: 0.82rem; font-weight: 900; border-radius: 5px; cursor: pointer; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);" title="Execute trade in Paper Simulator or Live Broker, save log &amp; screenshot, and dispatch Telegram alert">
+          🚀 Execute Trade
+        </button>
+      </div>
+    </div>
+
+    <!-- Live Status / Message Toast -->
+    <div id="trade-setup-status" style="margin-top: 8px; font-size: 0.74rem; color: #94a3b8; font-weight: 600;">
+      💡 Lines are active on chart: Drag or type prices above. Clicking "Execute Trade" captures a chart screenshot, saves to trade audit log, and alerts Telegram!
+    </div>
+  </div>
+
   <!-- Native Engine Canvas Container -->
   <div id="native-chart-wrapper" class="card" style="padding: 0; overflow: hidden; border-radius: 8px; border: 1px solid var(--border); height: 740px; background: #0f172a; position: relative; display: flex; flex-direction: column;">
     <div id="tv-main-chart-box" style="position: relative; width: 100%; flex: 1; min-height: 400px;">
@@ -2139,6 +2233,51 @@ DASHBOARD_HTML = """<!DOCTYPE html>
           <button type="button" onclick="executeGotoDate(false)" class="btn" style="background: #a855f7; color: white; padding: 7px 16px; border: none; border-radius: 6px; font-size: 0.78rem; font-weight: 800; cursor: pointer;" title="Center chart view on this date">
             🎯 Go to Date
           </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Broker Live / Paper Trading Configuration Modal -->
+    <div id="broker-config-modal" onclick="onBrokerModalBackdropClick(event)" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); z-index: 10000; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
+      <div class="card" style="width: 92%; max-width: 480px; background: #0f172a; border: 1px solid #6366f1; box-shadow: 0 10px 35px rgba(99, 102, 241, 0.25); border-radius: 10px; padding: 20px; position: relative;">
+        <!-- Modal Header -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 8px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 1.15rem; font-weight: 800; color: #a5b4fc;">🏦 Broker Connection (Dhan HQ API)</span>
+          </div>
+          <button type="button" onclick="closeBrokerModal()" class="btn" style="background: transparent; color: var(--text-secondary); border: none; font-size: 1.1rem; cursor: pointer; padding: 2px 6px;">✕</button>
+        </div>
+
+        <div style="font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 14px; line-height: 1.4;">
+          When broker credentials are connected, chart trades and autonomous executions route directly to <b>Dhan HQ REST API</b> for real market execution. Otherwise, the system defaults to the <b>Option Paper Trading Simulator</b>.
+        </div>
+
+        <div style="margin-bottom: 12px;">
+          <label style="display: block; font-size: 0.72rem; color: #cbd5e1; font-weight: 700; margin-bottom: 4px;">Dhan Client ID:</label>
+          <input type="text" id="broker-client-id-input" placeholder="e.g. 1000012345" style="width: 100%; background: #1e293b; color: #f8fafc; border: 1px solid var(--border); border-radius: 6px; padding: 7px 10px; font-size: 0.85rem; font-family: monospace;">
+        </div>
+
+        <div style="margin-bottom: 14px;">
+          <label style="display: block; font-size: 0.72rem; color: #cbd5e1; font-weight: 700; margin-bottom: 4px;">Dhan Access Token (JWT):</label>
+          <input type="password" id="broker-access-token-input" placeholder="eyJ0eXAiOiJKV1QiLCJhbGciOi..." style="width: 100%; background: #1e293b; color: #f8fafc; border: 1px solid var(--border); border-radius: 6px; padding: 7px 10px; font-size: 0.85rem; font-family: monospace;">
+        </div>
+
+        <div id="broker-modal-status" style="font-size: 0.74rem; color: #38bdf8; margin-bottom: 14px; min-height: 18px; line-height: 1.3;">
+          Checking broker status...
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+          <button type="button" onclick="testBrokerConnection()" class="btn" style="background: #1e293b; color: #38bdf8; border: 1px solid #38bdf8; padding: 7px 14px; border-radius: 6px; font-size: 0.78rem; font-weight: 700; cursor: pointer;">
+            🔌 Test Connection
+          </button>
+          <div style="display: flex; gap: 8px;">
+            <button type="button" onclick="closeBrokerModal()" class="btn" style="background: #334155; color: white; padding: 7px 14px; border: none; border-radius: 6px; font-size: 0.78rem; font-weight: 600; cursor: pointer;">
+              Cancel
+            </button>
+            <button type="button" onclick="saveBrokerCredentials()" class="btn" style="background: #6366f1; color: white; padding: 7px 16px; border: none; border-radius: 6px; font-size: 0.78rem; font-weight: 800; cursor: pointer;">
+              💾 Save Credentials
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -4272,6 +4411,14 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   let _replaySpeed = 1000;
   let _replayCutMode = false;
 
+  // --- LONG / SHORT VISUAL TRADE SETUP STATE ---
+  let _activeTradeSetup = null;
+  let _tradeEntryLine = null;
+  let _tradeTargetLine = null;
+  let _tradeSlLine = null;
+  let _tradePickLevelMode = false;
+  let _brokerStatusCache = { connected: false, broker_name: 'None', execution_mode: 'PAPER_SIMULATOR' };
+
   function openTradingViewAppWindow(symbol = 'NSE:NIFTY') {
     const symParam = encodeURIComponent(symbol);
     const url = `https://in.tradingview.com/chart/?symbol=${symParam}`;
@@ -4595,6 +4742,17 @@ DASHBOARD_HTML = """<!DOCTYPE html>
           _replayIndex = matchedIdx;
           renderReplayFrame();
           toggleReplayCutMode(false);
+          return;
+        }
+      }
+    }
+
+    if (_tradePickLevelMode && param && param.point) {
+      const activeSeries = _lwCandleSeries || _lwLineSeries;
+      if (activeSeries) {
+        const clickedPrice = activeSeries.coordinateToPrice(param.point.y);
+        if (clickedPrice && !isNaN(clickedPrice)) {
+          applyPickedChartPrice(clickedPrice);
           return;
         }
       }
@@ -5886,6 +6044,426 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     closeGotoDateModal();
   }
 
+  // =========================================================================
+  // --- VISUAL LONG / SHORT CHART TRADING & BROKER EXECUTION ENGINE ---
+  // =========================================================================
+
+  function openLongShortTool(type) {
+    const isBank = _lwSymbol.includes('BANK');
+    const defaultSpan = isBank ? 250 : 100;
+    const defaultSlSpan = isBank ? 125 : 50;
+    const currentSpot = (_lastCandle && _lastCandle.close) ? _lastCandle.close : (isBank ? 52000.0 : 25800.0);
+
+    let entry = Number(currentSpot.toFixed(2));
+    let target = type === 'LONG' ? Number((entry + defaultSpan).toFixed(2)) : Number((entry - defaultSpan).toFixed(2));
+    let sl = type === 'LONG' ? Number((entry - defaultSlSpan).toFixed(2)) : Number((entry + defaultSlSpan).toFixed(2));
+
+    _activeTradeSetup = {
+      type: type.toUpperCase(),
+      entry: entry,
+      target: target,
+      sl: sl,
+      lots: 1,
+      route: 'AUTO',
+      isLive: false,
+    };
+
+    const panel = document.getElementById('chart-trade-setup-panel');
+    if (panel) panel.style.display = 'block';
+
+    const titleBadge = document.getElementById('trade-setup-title-badge');
+    if (titleBadge) {
+      if (type === 'LONG') {
+        titleBadge.innerText = '🟢 LONG (BUY CE) SETUP';
+        titleBadge.style.background = '#065f46';
+        titleBadge.style.color = '#34d399';
+        titleBadge.style.border = '1px solid #10b981';
+      } else {
+        titleBadge.innerText = '🔴 SHORT (BUY PE) SETUP';
+        titleBadge.style.background = '#881337';
+        titleBadge.style.color = '#fb7185';
+        titleBadge.style.border = '1px solid #f43f5e';
+      }
+    }
+
+    const entryInp = document.getElementById('trade-input-entry');
+    const targetInp = document.getElementById('trade-input-target');
+    const slInp = document.getElementById('trade-input-sl');
+    const lotsInp = document.getElementById('trade-input-lots');
+
+    if (entryInp) entryInp.value = entry;
+    if (targetInp) targetInp.value = target;
+    if (slInp) slInp.value = sl;
+    if (lotsInp) lotsInp.value = 1;
+
+    updateTradeSetupMetrics();
+    renderTradeSetupLines();
+    loadBrokerStatus();
+
+    const statusEl = document.getElementById('trade-setup-status');
+    if (statusEl) {
+      statusEl.innerHTML = `💡 Lines placed on chart! Adjust levels above or click <b>"🚀 Execute Trade"</b> to enter in Paper Simulator or Live Broker.`;
+    }
+  }
+
+  function closeLongShortTool() {
+    clearTradeSetupLines();
+    _activeTradeSetup = null;
+    _tradePickLevelMode = false;
+    const panel = document.getElementById('chart-trade-setup-panel');
+    if (panel) panel.style.display = 'none';
+    const pickBtn = document.getElementById('btn-chart-pick-level');
+    if (pickBtn) {
+      pickBtn.style.background = '#1e293b';
+      pickBtn.innerText = '🎯 Pick on Chart';
+    }
+  }
+
+  function clearTradeSetupLines() {
+    const activeSeries = _lwCandleSeries || _lwLineSeries;
+    if (!activeSeries) return;
+    if (_tradeEntryLine) {
+      try { activeSeries.removePriceLine(_tradeEntryLine); } catch (e) {}
+      _tradeEntryLine = null;
+    }
+    if (_tradeTargetLine) {
+      try { activeSeries.removePriceLine(_tradeTargetLine); } catch (e) {}
+      _tradeTargetLine = null;
+    }
+    if (_tradeSlLine) {
+      try { activeSeries.removePriceLine(_tradeSlLine); } catch (e) {}
+      _tradeSlLine = null;
+    }
+  }
+
+  function renderTradeSetupLines() {
+    clearTradeSetupLines();
+    if (!_activeTradeSetup) return;
+
+    const activeSeries = _lwCandleSeries || _lwLineSeries;
+    if (!activeSeries) return;
+
+    const isLong = _activeTradeSetup.type === 'LONG';
+    const entry = Number(_activeTradeSetup.entry);
+    const target = Number(_activeTradeSetup.target);
+    const sl = Number(_activeTradeSetup.sl);
+
+    const targetPts = Math.abs(target - entry).toFixed(1);
+    const slPts = Math.abs(entry - sl).toFixed(1);
+
+    // 1. Entry Line
+    _tradeEntryLine = activeSeries.createPriceLine({
+      price: entry,
+      color: isLong ? '#38bdf8' : '#ec4899',
+      lineWidth: 2,
+      lineStyle: LightweightCharts.LineStyle.Solid,
+      axisLabelVisible: true,
+      title: `${isLong ? '🟢 BUY CE' : '🔴 BUY PE'} ENTRY: ₹${entry.toFixed(2)}`,
+    });
+
+    // 2. Target Line
+    _tradeTargetLine = activeSeries.createPriceLine({
+      price: target,
+      color: '#10b981',
+      lineWidth: 2,
+      lineStyle: LightweightCharts.LineStyle.Solid,
+      axisLabelVisible: true,
+      title: `🎯 TARGET (+${targetPts} pts): ₹${target.toFixed(2)}`,
+    });
+
+    // 3. Stop Loss Line
+    _tradeSlLine = activeSeries.createPriceLine({
+      price: sl,
+      color: '#ef4444',
+      lineWidth: 2,
+      lineStyle: LightweightCharts.LineStyle.Solid,
+      axisLabelVisible: true,
+      title: `🛡️ STOP LOSS (-${slPts} pts): ₹${sl.toFixed(2)}`,
+    });
+  }
+
+  function onTradeSetupInputChange() {
+    if (!_activeTradeSetup) return;
+    const entry = parseFloat(document.getElementById('trade-input-entry')?.value) || 0;
+    const target = parseFloat(document.getElementById('trade-input-target')?.value) || 0;
+    const sl = parseFloat(document.getElementById('trade-input-sl')?.value) || 0;
+    const lots = parseInt(document.getElementById('trade-input-lots')?.value) || 1;
+
+    _activeTradeSetup.entry = entry;
+    _activeTradeSetup.target = target;
+    _activeTradeSetup.sl = sl;
+    _activeTradeSetup.lots = Math.max(1, lots);
+
+    updateTradeSetupMetrics();
+    renderTradeSetupLines();
+  }
+
+  function adjustTradeLots(delta) {
+    if (!_activeTradeSetup) return;
+    const inp = document.getElementById('trade-input-lots');
+    if (!inp) return;
+    let val = (parseInt(inp.value) || 1) + delta;
+    if (val < 1) val = 1;
+    if (val > 50) val = 50;
+    inp.value = val;
+    _activeTradeSetup.lots = val;
+    updateTradeSetupMetrics();
+  }
+
+  function updateTradeSetupMetrics() {
+    if (!_activeTradeSetup) return;
+    const isBank = _lwSymbol.includes('BANK');
+    const step = isBank ? 100 : 50;
+    const strike = Math.round(_activeTradeSetup.entry / step) * step;
+    const optType = _activeTradeSetup.type === 'LONG' ? 'CE' : 'PE';
+
+    const targetPts = Math.abs(_activeTradeSetup.target - _activeTradeSetup.entry);
+    const slPts = Math.abs(_activeTradeSetup.entry - _activeTradeSetup.sl);
+    const rr = (targetPts / Math.max(0.5, slPts)).toFixed(2);
+
+    const contractBadge = document.getElementById('trade-setup-contract-badge');
+    if (contractBadge) contractBadge.innerText = `${_lwSymbol} ${strike} ${optType}`;
+
+    const rrBadge = document.getElementById('trade-setup-rr-badge');
+    if (rrBadge) rrBadge.innerText = `R:R = 1 : ${rr}`;
+  }
+
+  function togglePickLevelOnChart() {
+    _tradePickLevelMode = !_tradePickLevelMode;
+    const btn = document.getElementById('btn-chart-pick-level');
+    if (btn) {
+      if (_tradePickLevelMode) {
+        btn.style.background = '#f59e0b';
+        btn.style.color = '#000';
+        btn.innerText = '👉 Click Chart to Set Level...';
+      } else {
+        btn.style.background = '#1e293b';
+        btn.style.color = '#facc15';
+        btn.innerText = '🎯 Pick on Chart';
+      }
+    }
+  }
+
+  function applyPickedChartPrice(price) {
+    if (!_activeTradeSetup) return;
+    const cleanPrice = Number(price.toFixed(2));
+    const isLong = _activeTradeSetup.type === 'LONG';
+    const isBank = _lwSymbol.includes('BANK');
+    const defaultSpan = isBank ? 250 : 100;
+    const defaultSlSpan = isBank ? 125 : 50;
+
+    _activeTradeSetup.entry = cleanPrice;
+    _activeTradeSetup.target = isLong ? Number((cleanPrice + defaultSpan).toFixed(2)) : Number((cleanPrice - defaultSpan).toFixed(2));
+    _activeTradeSetup.sl = isLong ? Number((cleanPrice - defaultSlSpan).toFixed(2)) : Number((cleanPrice + defaultSlSpan).toFixed(2));
+
+    const entryInp = document.getElementById('trade-input-entry');
+    const targetInp = document.getElementById('trade-input-target');
+    const slInp = document.getElementById('trade-input-sl');
+    if (entryInp) entryInp.value = cleanPrice;
+    if (targetInp) targetInp.value = _activeTradeSetup.target;
+    if (slInp) slInp.value = _activeTradeSetup.sl;
+
+    togglePickLevelOnChart();
+    updateTradeSetupMetrics();
+    renderTradeSetupLines();
+    showGotoToast(`🎯 Trade entry anchored to ₹${cleanPrice.toFixed(2)}`);
+  }
+
+  function onTradeRouteSelectChange() {
+    const route = document.getElementById('trade-input-route')?.value || 'AUTO';
+    const badge = document.getElementById('trade-exec-route-badge');
+    if (badge) {
+      if (route === 'BROKER') {
+        badge.innerHTML = '🏦 Broker Live (Dhan)';
+        badge.style.color = '#a5b4fc';
+        badge.style.borderColor = '#6366f1';
+      } else if (route === 'PAPER') {
+        badge.innerHTML = '📄 Paper Simulator';
+        badge.style.color = '#cbd5e1';
+        badge.style.borderColor = 'var(--border)';
+      } else {
+        badge.innerHTML = _brokerStatusCache.connected ? '⚡ Auto (Broker Connected)' : '⚡ Auto (Paper Mode)';
+        badge.style.color = _brokerStatusCache.connected ? '#34d399' : '#cbd5e1';
+        badge.style.borderColor = _brokerStatusCache.connected ? '#10b981' : 'var(--border)';
+      }
+    }
+  }
+
+  async function executeChartSetupTrade() {
+    if (!_activeTradeSetup) return;
+    const btn = document.getElementById('btn-execute-chart-trade');
+    const statusEl = document.getElementById('trade-setup-status');
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '⏳ Executing...';
+    }
+
+    if (statusEl) {
+      statusEl.innerHTML = `<span style="color: #38bdf8;">⏳ Capturing chart snapshot, routing order, recording audit log, and sending Telegram notification...</span>`;
+    }
+
+    // Capture chart snapshot directly from Lightweight Charts canvas
+    let screenshotBase64 = null;
+    try {
+      if (_lwChart && typeof _lwChart.takeScreenshot === 'function') {
+        const canvas = _lwChart.takeScreenshot();
+        if (canvas) {
+          screenshotBase64 = canvas.toDataURL('image/png');
+        }
+      }
+    } catch (ssErr) {
+      console.warn('Canvas snapshot warning:', ssErr);
+    }
+
+    const routeVal = document.getElementById('trade-input-route')?.value || 'AUTO';
+
+    const payload = {
+      symbol: _lwSymbol,
+      setup_type: _activeTradeSetup.type,
+      entry_spot: _activeTradeSetup.entry,
+      target_spot: _activeTradeSetup.target,
+      sl_spot: _activeTradeSetup.sl,
+      lots: _activeTradeSetup.lots,
+      mode: routeVal,
+      screenshot_base64: screenshotBase64,
+    };
+
+    try {
+      const resp = await fetch('/api/chart/execute_setup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await resp.json();
+
+      if (resp.ok && data.status === 'ok') {
+        const trade = data.trade;
+        if (statusEl) {
+          statusEl.innerHTML = `<span style="color: #10b981; font-weight: 800;">🚀 ORDER EXECUTED! ID: <code>${trade.trade_id}</code> | Route: <b>${trade.broker}</b> | Telegram Alert &amp; Chart Screenshot Dispatched!</span>`;
+        }
+        showGotoToast(`🚀 ${trade.setup_type} ${trade.symbol} ${trade.strike} ${trade.option_type} executed on ${trade.broker}!`);
+        _activeTradeSetup.isLive = true;
+        const titleBadge = document.getElementById('trade-setup-title-badge');
+        if (titleBadge) {
+          titleBadge.innerHTML = `⚡ ACTIVE POSITION: ${trade.symbol} ${trade.strike} ${trade.option_type}`;
+        }
+      } else {
+        if (statusEl) {
+          statusEl.innerHTML = `<span style="color: #ef4444; font-weight: 700;">❌ Execution error: ${data.message || 'Unknown error'}</span>`;
+        }
+      }
+    } catch (netErr) {
+      if (statusEl) {
+        statusEl.innerHTML = `<span style="color: #ef4444; font-weight: 700;">❌ Network exception: ${netErr.message}</span>`;
+      }
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = '🚀 Execute Trade';
+      }
+    }
+  }
+
+  // --- Broker Configuration Dialog & Status Functions ---
+  async function loadBrokerStatus() {
+    try {
+      const resp = await fetch('/api/broker/status');
+      if (resp.ok) {
+        const data = await resp.json();
+        _brokerStatusCache = data;
+        const badgeBtn = document.getElementById('btn-broker-connect');
+        if (badgeBtn) {
+          if (data.connected) {
+            badgeBtn.innerHTML = '🏦 Broker: 🟢 Connected (Dhan)';
+            badgeBtn.style.color = '#34d399';
+            badgeBtn.style.borderColor = '#10b981';
+          } else {
+            badgeBtn.innerHTML = '🏦 Broker: 📄 Paper Mode';
+            badgeBtn.style.color = '#a5b4fc';
+            badgeBtn.style.borderColor = '#6366f1';
+          }
+        }
+        onTradeRouteSelectChange();
+      }
+    } catch (e) {
+      console.warn('Could not load broker status:', e);
+    }
+  }
+
+  function openBrokerModal() {
+    const modal = document.getElementById('broker-config-modal');
+    if (!modal) return;
+    modal.style.display = 'flex';
+    const statusEl = document.getElementById('broker-modal-status');
+    if (statusEl) {
+      if (_brokerStatusCache.connected) {
+        statusEl.innerHTML = `<span style="color:#10b981;">🟢 Dhan HQ Broker Connected (Client ID: <b>${_brokerStatusCache.client_id_masked}</b>). Live order routing enabled!</span>`;
+      } else {
+        statusEl.innerHTML = `<span style="color:#facc15;">🟡 Running in Paper Simulator mode. Enter Dhan Client ID &amp; Token below to connect live broker.</span>`;
+      }
+    }
+  }
+
+  function closeBrokerModal() {
+    const modal = document.getElementById('broker-config-modal');
+    if (modal) modal.style.display = 'none';
+  }
+
+  function onBrokerModalBackdropClick(e) {
+    if (e.target && e.target.id === 'broker-config-modal') {
+      closeBrokerModal();
+    }
+  }
+
+  async function saveBrokerCredentials() {
+    const clientId = document.getElementById('broker-client-id-input')?.value || '';
+    const token = document.getElementById('broker-access-token-input')?.value || '';
+    const statusEl = document.getElementById('broker-modal-status');
+
+    if (!clientId && !token) {
+      if (statusEl) statusEl.innerHTML = '<span style="color:#ef4444;">Please provide Client ID and Token.</span>';
+      return;
+    }
+
+    if (statusEl) statusEl.innerHTML = '<span>Saving credentials...</span>';
+    try {
+      const resp = await fetch('/api/broker/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ client_id: clientId, access_token: token })
+      });
+      const data = await resp.json();
+      if (resp.ok && data.status === 'ok') {
+        if (statusEl) statusEl.innerHTML = '<span style="color:#10b981;">✅ Credentials saved successfully!</span>';
+        await loadBrokerStatus();
+        setTimeout(closeBrokerModal, 1200);
+      } else {
+        if (statusEl) statusEl.innerHTML = `<span style="color:#ef4444;">❌ Failed to save: ${data.message}</span>`;
+      }
+    } catch (err) {
+      if (statusEl) statusEl.innerHTML = `<span style="color:#ef4444;">❌ Network error: ${err.message}</span>`;
+    }
+  }
+
+  async function testBrokerConnection() {
+    const statusEl = document.getElementById('broker-modal-status');
+    if (statusEl) statusEl.innerHTML = '<span>Testing broker connection...</span>';
+    try {
+      const resp = await fetch('/api/broker/test', { method: 'POST' });
+      const data = await resp.json();
+      if (resp.ok && data.status === 'ok') {
+        if (statusEl) statusEl.innerHTML = `<span style="color:#10b981;">✅ ${data.message}</span>`;
+        await loadBrokerStatus();
+      } else {
+        if (statusEl) statusEl.innerHTML = `<span style="color:#ef4444;">❌ ${data.message}</span>`;
+      }
+    } catch (err) {
+      if (statusEl) statusEl.innerHTML = `<span style="color:#ef4444;">❌ Connection failed: ${err.message}</span>`;
+    }
+  }
+
+  setTimeout(loadBrokerStatus, 1500);
+
   // Keyboard Navigation for Replay Engine & Go to Date
   document.addEventListener('keydown', (e) => {
     // Alt + G opens Go to Date Modal
@@ -6827,6 +7405,38 @@ class DashboardHTTPRequestHandler(BaseHTTPRequestHandler):
                 self.end_headers()
                 self.wfile.write(json.dumps({"configured": False, "error": str(ex)}).encode("utf-8"))
             return
+        elif self.path == "/api/broker/status":
+            try:
+                from nifty_trader.execution.broker_service import get_broker_service
+                bs = get_broker_service()
+                status = bs.get_status()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Cache-Control", "no-cache")
+                self.end_headers()
+                self.wfile.write(json.dumps(status).encode("utf-8"))
+            except Exception as ex:
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"connected": False, "error": str(ex)}).encode("utf-8"))
+            return
+        elif self.path == "/api/chart/trades":
+            try:
+                from nifty_trader.execution.broker_service import get_broker_service
+                bs = get_broker_service()
+                trades = bs.list_chart_trades()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Cache-Control", "no-cache")
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": "ok", "trades": trades}).encode("utf-8"))
+            except Exception as ex:
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": "error", "error": str(ex)}).encode("utf-8"))
+            return
         elif self.path == "/api/telegram/pending_trades":
             try:
                 from nifty_trader.notifications.telegram_service import get_pending_trade_manager
@@ -7417,7 +8027,6 @@ class DashboardHTTPRequestHandler(BaseHTTPRequestHandler):
                 self.wfile.write(json.dumps({"status": "error", "message": str(ex)}).encode("utf-8"))
         elif self.path == "/api/niftytrader/config":
             try:
-                import os
                 api_key = os.getenv("NIFTYTRADER_API_KEY", "")
                 bearer = os.getenv("NIFTYTRADER_BEARER_TOKEN", "")
                 self.send_response(200)
@@ -7490,8 +8099,6 @@ class DashboardHTTPRequestHandler(BaseHTTPRequestHandler):
                 api_key = data.get("api_key", "").strip()
                 bearer_token = data.get("bearer_token", "").strip()
 
-                import os
-                from pathlib import Path
                 if api_key:
                     os.environ["NIFTYTRADER_API_KEY"] = api_key
                 if bearer_token:
@@ -7637,6 +8244,66 @@ class DashboardHTTPRequestHandler(BaseHTTPRequestHandler):
                     self.send_header("Content-Type", "application/json")
                     self.end_headers()
                     self.wfile.write(json.dumps({"status": "error", "message": f"Could not cancel {pending_id} (already completed, cancelled, or not found)"}).encode("utf-8"))
+            except Exception as ex:
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": "error", "message": str(ex)}).encode("utf-8"))
+        elif self.path == "/api/chart/execute_setup":
+            try:
+                content_length = int(self.headers.get("Content-Length", 0))
+                body = self.rfile.read(content_length).decode("utf-8")
+                data = json.loads(body)
+                from nifty_trader.execution.broker_service import get_broker_service
+                bs = get_broker_service()
+                res = bs.execute_chart_trade(
+                    symbol=data.get("symbol", "NIFTY"),
+                    setup_type=data.get("setup_type", "LONG"),
+                    entry_spot=float(data.get("entry_spot", 0.0)),
+                    target_spot=float(data.get("target_spot", 0.0)),
+                    sl_spot=float(data.get("sl_spot", 0.0)),
+                    lots=int(data.get("lots", 1)),
+                    mode=data.get("mode", "AUTO"),
+                    screenshot_base64=data.get("screenshot_base64"),
+                )
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps(res).encode("utf-8"))
+            except Exception as ex:
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": "error", "message": str(ex)}).encode("utf-8"))
+        elif self.path == "/api/broker/config":
+            try:
+                content_length = int(self.headers.get("Content-Length", 0))
+                body = self.rfile.read(content_length).decode("utf-8")
+                data = json.loads(body)
+                from nifty_trader.execution.broker_service import get_broker_service
+                bs = get_broker_service()
+                client_id = data.get("client_id", "").strip()
+                access_token = data.get("access_token", "").strip()
+                res = bs.set_credentials(client_id, access_token)
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": "ok", "broker_status": res}).encode("utf-8"))
+            except Exception as ex:
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": "error", "message": str(ex)}).encode("utf-8"))
+        elif self.path == "/api/broker/test":
+            try:
+                from nifty_trader.execution.broker_service import get_broker_service
+                bs = get_broker_service()
+                res = bs.test_broker_connection()
+                status_code = 200 if res.get("status") == "ok" else 400
+                self.send_response(status_code)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps(res).encode("utf-8"))
             except Exception as ex:
                 self.send_response(500)
                 self.send_header("Content-Type", "application/json")
