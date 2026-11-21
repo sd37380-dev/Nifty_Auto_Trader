@@ -1866,6 +1866,9 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         <button type="button" class="btn" id="btn-toggle-replay" onclick="toggleReplayMode()" style="background: #1e293b; color: #f59e0b; padding: 3px 10px; font-size: 0.72rem; font-weight: 800; border-radius: 4px; border: 1px solid #f59e0b; cursor: pointer;" title="Toggle Candlestick Bar Replay Mode">
           ⏪ Replay
         </button>
+        <button type="button" class="btn" id="btn-goto-date" onclick="openGotoDateModal(false)" style="background: #1e293b; color: #c084fc; padding: 3px 10px; font-size: 0.72rem; font-weight: 700; border-radius: 4px; border: 1px solid #a855f7; cursor: pointer;" title="Go to specific Date &amp; Time on chart [Alt+G]">
+          📅 Go to Date
+        </button>
         <button type="button" class="btn" onclick="openQuickSrPrompt()" style="background: #1e293b; color: #38bdf8; padding: 3px 8px; font-size: 0.72rem; font-weight: 700; border-radius: 4px; border: 1px solid #38bdf8; cursor: pointer;" title="Quick add S/R line">
           ➕ S/R Line
         </button>
@@ -1993,6 +1996,9 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         <button type="button" id="btn-replay-cut" onclick="toggleReplayCutMode()" class="btn" style="background: #1e293b; color: #38bdf8; border: 1px solid #38bdf8; padding: 4px 10px; font-size: 0.72rem; font-weight: 700; border-radius: 4px; cursor: pointer;" title="Click on any chart candle to jump / cut replay start">
           ✂️ Jump / Cut to Bar
         </button>
+        <button type="button" id="btn-replay-goto-date" onclick="openGotoDateModal(true)" class="btn" style="background: #1e293b; color: #c084fc; border: 1px solid #a855f7; padding: 4px 10px; font-size: 0.72rem; font-weight: 700; border-radius: 4px; cursor: pointer;" title="Select Date &amp; Time to start Replay from [Alt+G]">
+          📅 Date
+        </button>
         <span id="replay-cut-prompt" style="display: none; font-size: 0.70rem; color: #facc15; font-weight: 600;">
           👉 Click on any candle on the chart to set starting point
         </span>
@@ -2081,6 +2087,61 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       ⏳ Fetching Real-Time Candlestick Feed...
     </div>
   </div>
+
+    <!-- Go to Date & Time Modal Dialog -->
+    <div id="chart-goto-date-modal" onclick="onGotoModalBackdropClick(event)" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); z-index: 10000; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
+      <div class="card" style="width: 92%; max-width: 440px; background: #0f172a; border: 1px solid #a855f7; box-shadow: 0 10px 35px rgba(168, 85, 247, 0.25); border-radius: 10px; padding: 18px; position: relative;">
+        <!-- Modal Header -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 8px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 1.15rem; font-weight: 800; color: #c084fc;">📅 Go to Date &amp; Time</span>
+          </div>
+          <button type="button" onclick="closeGotoDateModal()" class="btn" style="background: transparent; color: var(--text-secondary); border: none; font-size: 1.1rem; cursor: pointer; padding: 2px 6px;">✕</button>
+        </div>
+
+        <!-- Quick Preset Date Chips -->
+        <div style="margin-bottom: 12px;">
+          <div style="font-size: 0.70rem; color: var(--text-secondary); font-weight: 700; margin-bottom: 6px;">QUICK JUMP PRESETS:</div>
+          <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+            <button type="button" onclick="setGotoPresetDate('today')" class="btn" style="background: #1e293b; color: #cbd5e1; border: 1px solid var(--border); padding: 3px 8px; font-size: 0.70rem; border-radius: 4px; cursor: pointer;">Today</button>
+            <button type="button" onclick="setGotoPresetDate('yesterday')" class="btn" style="background: #1e293b; color: #cbd5e1; border: 1px solid var(--border); padding: 3px 8px; font-size: 0.70rem; border-radius: 4px; cursor: pointer;">Yesterday</button>
+            <button type="button" onclick="setGotoPresetDate('3days')" class="btn" style="background: #1e293b; color: #cbd5e1; border: 1px solid var(--border); padding: 3px 8px; font-size: 0.70rem; border-radius: 4px; cursor: pointer;">3 Days Ago</button>
+            <button type="button" onclick="setGotoPresetDate('1week')" class="btn" style="background: #1e293b; color: #cbd5e1; border: 1px solid var(--border); padding: 3px 8px; font-size: 0.70rem; border-radius: 4px; cursor: pointer;">1 Week Ago</button>
+            <button type="button" onclick="setGotoPresetDate('1month')" class="btn" style="background: #1e293b; color: #cbd5e1; border: 1px solid var(--border); padding: 3px 8px; font-size: 0.70rem; border-radius: 4px; cursor: pointer;">1 Month Ago</button>
+          </div>
+        </div>
+
+        <!-- Date & Time Picker Inputs -->
+        <div style="display: flex; gap: 10px; margin-bottom: 14px;">
+          <div style="flex: 3;">
+            <label style="display: block; font-size: 0.72rem; color: var(--text-secondary); font-weight: 700; margin-bottom: 4px;">Date (YYYY-MM-DD):</label>
+            <input type="date" id="goto-date-input" style="width: 100%; background: #1e293b; color: #f8fafc; border: 1px solid #a855f7; border-radius: 6px; padding: 6px 10px; font-size: 0.85rem; font-family: monospace; cursor: pointer;">
+          </div>
+          <div style="flex: 2;">
+            <label style="display: block; font-size: 0.72rem; color: var(--text-secondary); font-weight: 700; margin-bottom: 4px;">Time (IST):</label>
+            <input type="time" id="goto-time-input" value="09:15" style="width: 100%; background: #1e293b; color: #f8fafc; border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; font-size: 0.85rem; font-family: monospace; cursor: pointer;">
+          </div>
+        </div>
+
+        <!-- Status / Info Message Area -->
+        <div id="goto-date-status" style="font-size: 0.72rem; color: #38bdf8; margin-bottom: 14px; min-height: 18px; line-height: 1.3;">
+          Select date &amp; time to jump on chart or begin replay.
+        </div>
+
+        <!-- Action Buttons -->
+        <div style="display: flex; justify-content: flex-end; gap: 8px;">
+          <button type="button" onclick="closeGotoDateModal()" class="btn" style="background: #334155; color: white; padding: 7px 14px; border: none; border-radius: 6px; font-size: 0.78rem; font-weight: 600; cursor: pointer;">
+            Cancel
+          </button>
+          <button type="button" onclick="executeGotoDate(true)" class="btn" style="background: #f59e0b; color: black; padding: 7px 14px; border: none; border-radius: 6px; font-size: 0.78rem; font-weight: 800; cursor: pointer;" title="Jump to this date and start candle replay">
+            ⏪ Replay from Date
+          </button>
+          <button type="button" onclick="executeGotoDate(false)" class="btn" style="background: #a855f7; color: white; padding: 7px 16px; border: none; border-radius: 6px; font-size: 0.78rem; font-weight: 800; cursor: pointer;" title="Center chart view on this date">
+            🎯 Go to Date
+          </button>
+        </div>
+      </div>
+    </div>
 
     </div> <!-- Close #single-chart-view-container -->
 
@@ -5623,8 +5684,226 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     }
   }
 
-  // Keyboard Navigation for Replay Engine
+  // -------------------------------------------------------------
+  // GO TO DATE CONTROLLER & TIME TRAVEL ENGINE
+  // -------------------------------------------------------------
+  let _gotoModalPrefersReplay = false;
+
+  function openGotoDateModal(preferReplay = false) {
+    _gotoModalPrefersReplay = preferReplay;
+    const modal = document.getElementById('chart-goto-date-modal');
+    if (!modal) return;
+    modal.style.display = 'flex';
+
+    // Populate date input with current candle date or today in IST
+    const dateInput = document.getElementById('goto-date-input');
+    const timeInput = document.getElementById('goto-time-input');
+    const statusEl = document.getElementById('goto-date-status');
+
+    if (statusEl) {
+      statusEl.innerHTML = preferReplay 
+        ? 'Pick a date &amp; time to <b>start bar replay</b> from that historical moment.' 
+        : 'Pick a date &amp; time to <b>center chart view</b> on that candlestick.';
+    }
+
+    const refCandle = _lastCandle || (_cachedCandles && _cachedCandles.length > 0 ? _cachedCandles[_cachedCandles.length - 1] : null);
+    if (refCandle && refCandle.time) {
+      const d = new Date(refCandle.time * 1000);
+      // Format as YYYY-MM-DD in local/IST
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      if (dateInput) dateInput.value = `${y}-${m}-${day}`;
+      const hh = String(d.getHours()).padStart(2, '0');
+      const mm = String(d.getMinutes()).padStart(2, '0');
+      if (timeInput) timeInput.value = `${hh}:${mm}`;
+    } else {
+      setGotoPresetDate('today');
+    }
+  }
+
+  function closeGotoDateModal() {
+    const modal = document.getElementById('chart-goto-date-modal');
+    if (modal) modal.style.display = 'none';
+  }
+
+  function onGotoModalBackdropClick(e) {
+    if (e.target && e.target.id === 'chart-goto-date-modal') {
+      closeGotoDateModal();
+    }
+  }
+
+  function setGotoPresetDate(preset) {
+    const dateInput = document.getElementById('goto-date-input');
+    const timeInput = document.getElementById('goto-time-input');
+    const statusEl = document.getElementById('goto-date-status');
+    if (!dateInput) return;
+
+    const now = new Date();
+    let target = new Date();
+
+    if (preset === 'today') {
+      target = now;
+    } else if (preset === 'yesterday') {
+      target.setDate(now.getDate() - 1);
+    } else if (preset === '3days') {
+      target.setDate(now.getDate() - 3);
+    } else if (preset === '1week') {
+      target.setDate(now.getDate() - 7);
+    } else if (preset === '1month') {
+      target.setMonth(now.getMonth() - 1);
+    }
+
+    const y = target.getFullYear();
+    const m = String(target.getMonth() + 1).padStart(2, '0');
+    const d = String(target.getDate()).padStart(2, '0');
+    dateInput.value = `${y}-${m}-${d}`;
+    if (timeInput) timeInput.value = '09:15';
+    if (statusEl) statusEl.innerText = `Selected preset: ${preset.toUpperCase()} (${y}-${m}-${d} 09:15 IST)`;
+  }
+
+  function showGotoToast(msg) {
+    let toast = document.getElementById('goto-toast');
+    if (!toast) {
+      toast = document.createElement('div');
+      toast.id = 'goto-toast';
+      toast.style.cssText = 'position: absolute; top: 12px; right: 14px; z-index: 25; background: rgba(168, 85, 247, 0.95); color: white; font-weight: 800; font-size: 0.76rem; padding: 6px 14px; border-radius: 6px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); pointer-events: none; transition: opacity 0.4s; border: 1px solid rgba(255,255,255,0.2);';
+      const canvasBox = document.getElementById('tv-main-chart-box');
+      if (canvasBox) canvasBox.appendChild(toast);
+    }
+    toast.innerText = msg;
+    toast.style.display = 'block';
+    toast.style.opacity = '1';
+    clearTimeout(window._gotoToastTimer);
+    window._gotoToastTimer = setTimeout(() => {
+      toast.style.opacity = '0';
+      setTimeout(() => { toast.style.display = 'none'; }, 400);
+    }, 4000);
+  }
+
+  async function executeGotoDate(startReplay = false) {
+    const dateInput = document.getElementById('goto-date-input');
+    const timeInput = document.getElementById('goto-time-input');
+    const statusEl = document.getElementById('goto-date-status');
+
+    if (!dateInput || !dateInput.value) {
+      if (statusEl) statusEl.innerHTML = '<span style="color:#ef4444;">⚠️ Please pick a date.</span>';
+      return;
+    }
+
+    const dateVal = dateInput.value;
+    const timeVal = (timeInput && timeInput.value) ? timeInput.value : '09:15';
+    const [year, month, day] = dateVal.split('-').map(Number);
+    const [hour, minute] = timeVal.split(':').map(Number);
+
+    // Compute target timestamp in IST (UTC+5:30)
+    const targetUtcMs = Date.UTC(year, month - 1, day, hour, minute) - (5.5 * 3600 * 1000);
+    const targetUnixSec = Math.floor(targetUtcMs / 1000);
+
+    let pool = (_isReplayActive && _replayFullCandles.length > 0) ? _replayFullCandles : _cachedCandles;
+    if (!pool || pool.length === 0) {
+      if (statusEl) statusEl.innerHTML = '<span style="color:#ef4444;">⚠️ No candle data available.</span>';
+      return;
+    }
+
+    // Check if target is before earliest loaded candle
+    const earliest = pool[0].time;
+    if (targetUnixSec < earliest - 86400) {
+      if (statusEl) statusEl.innerHTML = '⏳ Fetching extended history for requested date...';
+      const diffDays = Math.ceil((Date.now() / 1000 - targetUnixSec) / 86400);
+      let neededRange = '1mo';
+      if (_lwInterval === '1d' || _lwInterval === '1w') {
+        neededRange = diffDays > 730 ? '5y' : (diffDays > 365 ? '2y' : '1y');
+      } else {
+        neededRange = diffDays > 30 ? '60d' : '1mo';
+      }
+
+      try {
+        const res = await fetch(`/api/chart/candles?symbol=${encodeURIComponent(_lwSymbol)}&interval=${encodeURIComponent(_lwInterval)}&range=${neededRange}`);
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+        if (data.status === 'ok' && data.candles && data.candles.length > 0) {
+          _cachedCandles = data.candles;
+          _replayFullCandles = [...data.candles];
+          _lastCandle = _cachedCandles[_cachedCandles.length - 1];
+          pool = data.candles;
+          applyCandleDataToSeries();
+          const slider = document.getElementById('replay-timeline-slider');
+          if (slider) slider.max = String(pool.length);
+        }
+      } catch (err) {
+        if (statusEl) statusEl.innerHTML = `<span style="color:#ef4444;">⚠️ Could not fetch date: ${err.message}</span>`;
+        return;
+      }
+    }
+
+    // Find closest candle in pool
+    let matchedIdx = -1;
+    let minDiff = Infinity;
+    for (let i = 0; i < pool.length; i++) {
+      const diff = Math.abs(pool[i].time - targetUnixSec);
+      if (diff < minDiff) {
+        minDiff = diff;
+        matchedIdx = i;
+      }
+    }
+
+    if (matchedIdx === -1) {
+      if (statusEl) statusEl.innerHTML = '<span style="color:#ef4444;">⚠️ No candle found near that date.</span>';
+      return;
+    }
+
+    const matchedCandle = pool[matchedIdx];
+    const formattedTime = formatReplayTimestamp(matchedCandle.time);
+
+    if (startReplay) {
+      if (!_isReplayActive) {
+        enterReplayMode();
+      }
+      _replayStartIndex = matchedIdx;
+      _replayIndex = matchedIdx;
+      renderReplayFrame();
+      showGotoToast(`⏪ Replaying from ${formattedTime} (₹${matchedCandle.close.toFixed(2)})`);
+    } else {
+      if (_isReplayActive) {
+        _replayIndex = matchedIdx;
+        renderReplayFrame();
+        showGotoToast(`⏪ Jumped to ${formattedTime} (₹${matchedCandle.close.toFixed(2)})`);
+      } else {
+        // Live view: center time scale on the matched candle
+        const halfWindow = 35;
+        if (_lwChart) {
+          _lwChart.timeScale().setVisibleLogicalRange({
+            from: Math.max(0, matchedIdx - halfWindow),
+            to: Math.min(pool.length - 1, matchedIdx + halfWindow)
+          });
+        }
+        updateOhlcvDisplay(matchedCandle.open, matchedCandle.high, matchedCandle.low, matchedCandle.close, matchedCandle.volume || 0);
+        showGotoToast(`📍 Centered on ${formattedTime} (₹${matchedCandle.close.toFixed(2)})`);
+      }
+    }
+
+    closeGotoDateModal();
+  }
+
+  // Keyboard Navigation for Replay Engine & Go to Date
   document.addEventListener('keydown', (e) => {
+    // Alt + G opens Go to Date Modal
+    if (e.altKey && (e.key === 'g' || e.key === 'G')) {
+      e.preventDefault();
+      openGotoDateModal(false);
+      return;
+    }
+
+    // Escape closes modal if open
+    const modal = document.getElementById('chart-goto-date-modal');
+    if (modal && modal.style.display === 'flex') {
+      if (e.code === 'Escape') {
+        closeGotoDateModal();
+        return;
+      }
+    }
+
     if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) return;
     if (!_isReplayActive) return;
 
