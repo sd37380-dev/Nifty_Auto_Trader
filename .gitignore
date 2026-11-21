@@ -23,5 +23,8 @@ data/browser/screenshots/*.png
 *.sqlite3
 data/**/*.jsonl
 data/**/*.db
+*.log
+data/paper_trading/
+
 
 
