@@ -1,0 +1,5 @@
+2026-11-20 23:05:25,378 [WARNING] Error reading nse_spot_data.db: no such column: instrument
+2026-11-20 23:05:26,124 [INFO] HTTP Request: GET https://webapi.niftytrader.in/webapi/option/option-chain-data?symbol=nifty&exchange=nse "HTTP/1.1 200 OK"
+2026-11-20 23:05:45,198 [INFO] HTTP Request: GET https://webapi.niftytrader.in/webapi/option/option-chain-data?symbol=nifty&exchange=nse "HTTP/1.1 200 OK"
+2026-11-20 23:05:56,907 [INFO] HTTP Request: GET https://webapi.niftytrader.in/webapi/option/option-chain-data?symbol=nifty&exchange=nse "HTTP/1.1 200 OK"
+2026-11-20 23:05:57,660 [INFO] HTTP Request: GET http://127.0.0.1:8080/api/chart/candles?symbol=NIFTY%2050&interval=15m "HTTP/1.0 200 OK"

@@ -426,14 +426,21 @@ class PendingTradeManager:
         cancel_evt = threading.Event()
         self._cancel_events[pending_id] = cancel_evt
 
-        # Send Telegram Intent Alert
+        # Send Telegram Intent Alert (if countdown > 0)
         try:
             tele = get_telegram_service(self.root_dir)
-            tele.send_trade_intent_alert(trade_info)
+            if countdown > 0:
+                tele.send_trade_intent_alert(trade_info)
         except Exception as e:
             logger.warning("Error dispatching Telegram trade intent: %s", e)
 
-        # Launch 15-minute countdown thread
+        # Immediate Execution: If countdown is 0, execute instantly without waiting
+        if countdown <= 0:
+            logger.info("⚡ Immediate execution mode active (countdown=0). Executing %s instantly.", pending_id)
+            self._execute_pending_trade(pending_id)
+            return trade_info
+
+        # Launch countdown thread
         def _countdown_worker():
             start_t = time.time()
             while time.time() - start_t < countdown:

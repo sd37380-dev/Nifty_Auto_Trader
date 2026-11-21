@@ -640,7 +640,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     <span class="badge" id="supabase-badge" style="font-size: 0.8rem; background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.4); color: #60a5fa;" title="Supabase Cloud Sync Status">☁️ SUPABASE: CHECKING...</span>
     <span class="badge" id="telegram-badge" style="font-size: 0.8rem; background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.4); color: #38bdf8; cursor: pointer;" onclick="switchTab('tab-telegram')" title="Telegram Bot & 15-Minute Auto-Execution Alerts">📱 TELEGRAM: CHECKING...</span>
     <span class="badge badge-blue">Gemini 2.5 Brain: READY</span>
-    <span class="badge badge-yellow">Sensibull Virtual: READY</span>
+    <span class="badge badge-yellow">Paper Trading: READY</span>
     <span class="badge badge-red">Live Broker: DISABLED</span>
     <button class="btn" onclick="fetchData()">🔄 Refresh</button>
   </div>
@@ -1863,6 +1863,9 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         <button type="button" class="btn" id="btn-toggle-draw-tools" onclick="toggleDrawingPanel()" style="background: #0284c7; color: white; padding: 3px 10px; font-size: 0.72rem; font-weight: 700; border-radius: 4px; border: 1px solid #38bdf8; cursor: pointer;" title="Open Manual S/R Line & Zone Draw Studio">
           ✏️ Draw Tools ▼
         </button>
+        <button type="button" class="btn" id="btn-toggle-replay" onclick="toggleReplayMode()" style="background: #1e293b; color: #f59e0b; padding: 3px 10px; font-size: 0.72rem; font-weight: 800; border-radius: 4px; border: 1px solid #f59e0b; cursor: pointer;" title="Toggle Candlestick Bar Replay Mode">
+          ⏪ Replay
+        </button>
         <button type="button" class="btn" onclick="openQuickSrPrompt()" style="background: #1e293b; color: #38bdf8; padding: 3px 8px; font-size: 0.72rem; font-weight: 700; border-radius: 4px; border: 1px solid #38bdf8; cursor: pointer;" title="Quick add S/R line">
           ➕ S/R Line
         </button>
@@ -1979,9 +1982,92 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     </div>
   </div>
 
+  <!-- Dedicated Candle Bar Replay Control Bar -->
+  <div id="chart-replay-panel" style="display: none; margin-top: 8px; margin-bottom: 8px; background: linear-gradient(135deg, rgba(15, 23, 42, 0.98) 0%, rgba(30, 41, 59, 0.95) 100%); padding: 10px 14px; border-radius: 6px; border: 1px solid #f59e0b; box-shadow: 0 4px 20px rgba(245, 158, 11, 0.2);">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+      <!-- Left: Badge & Cut to Bar Selector -->
+      <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+        <span class="badge" style="background: rgba(245, 158, 11, 0.2); border: 1px solid #f59e0b; color: #f59e0b; font-weight: 800; font-size: 0.78rem; padding: 4px 8px;">
+          ⏪ BAR REPLAY
+        </span>
+        <button type="button" id="btn-replay-cut" onclick="toggleReplayCutMode()" class="btn" style="background: #1e293b; color: #38bdf8; border: 1px solid #38bdf8; padding: 4px 10px; font-size: 0.72rem; font-weight: 700; border-radius: 4px; cursor: pointer;" title="Click on any chart candle to jump / cut replay start">
+          ✂️ Jump / Cut to Bar
+        </button>
+        <span id="replay-cut-prompt" style="display: none; font-size: 0.70rem; color: #facc15; font-weight: 600;">
+          👉 Click on any candle on the chart to set starting point
+        </span>
+      </div>
+
+      <!-- Center: Playback Controls & Speed -->
+      <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+        <button type="button" onclick="replayJumpToStart()" class="btn" style="background: #1e293b; color: var(--text-primary); border: 1px solid var(--border); padding: 4px 8px; font-size: 0.72rem; font-weight: 700; border-radius: 4px; cursor: pointer;" title="Jump to Replay Start">
+          ⏮️ Start
+        </button>
+        <button type="button" onclick="replayStepBack()" class="btn" style="background: #1e293b; color: var(--text-primary); border: 1px solid var(--border); padding: 4px 9px; font-size: 0.72rem; font-weight: 700; border-radius: 4px; cursor: pointer;" title="Step Back (-1 Candle) [Left Arrow]">
+          ◀ Step
+        </button>
+        <button type="button" id="btn-replay-play" onclick="toggleReplayPlayback()" class="btn" style="background: #f59e0b; color: #000; border: none; padding: 4px 14px; font-size: 0.75rem; font-weight: 800; border-radius: 4px; cursor: pointer; min-width: 76px;" title="Play / Pause Replay [Spacebar]">
+          ▶ Play
+        </button>
+        <button type="button" onclick="replayStepForward()" class="btn" style="background: #1e293b; color: var(--text-primary); border: 1px solid var(--border); padding: 4px 9px; font-size: 0.72rem; font-weight: 700; border-radius: 4px; cursor: pointer;" title="Step Forward (+1 Candle) [Right Arrow]">
+          Step ▶
+        </button>
+        <button type="button" onclick="replayJumpToEnd()" class="btn" style="background: #1e293b; color: var(--text-primary); border: 1px solid var(--border); padding: 4px 8px; font-size: 0.72rem; font-weight: 700; border-radius: 4px; cursor: pointer;" title="Jump to Latest Available Candle">
+          Latest ⏭️
+        </button>
+
+        <!-- Replay Speed Dropdown -->
+        <div style="display: flex; align-items: center; gap: 4px; margin-left: 6px;">
+          <span style="font-size: 0.70rem; color: var(--text-secondary); font-weight: 700;">Speed:</span>
+          <select id="replay-speed-select" onchange="setReplaySpeed(this.value)" style="background: #1e293b; color: #f59e0b; border: 1px solid #f59e0b; border-radius: 4px; padding: 3px 6px; font-size: 0.72rem; font-weight: 700; cursor: pointer;">
+            <option value="2000">0.5x (2.0s)</option>
+            <option value="1000" selected>1.0x (1.0s)</option>
+            <option value="500">2.0x (0.5s)</option>
+            <option value="300">3.0x (0.3s)</option>
+            <option value="200">5.0x (0.2s)</option>
+            <option value="100">10x (0.1s)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Right: Current Bar Info & Exit Button -->
+      <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+        <div style="display: flex; flex-direction: column; align-items: flex-end; line-height: 1.2;">
+          <span id="replay-bar-info" style="font-size: 0.74rem; font-weight: 700; color: #38bdf8; font-family: monospace;">
+            Bar: 0 / 0 (0%)
+          </span>
+          <span id="replay-time-info" style="font-size: 0.70rem; color: #cbd5e1; font-family: monospace;">
+            --:--
+          </span>
+        </div>
+        <button type="button" onclick="exitReplayMode()" class="btn" style="background: #ef4444; color: white; border: none; padding: 4px 10px; font-size: 0.72rem; font-weight: 700; border-radius: 4px; cursor: pointer;" title="Exit Replay and return to live stream [Esc]">
+          ✕ Exit
+        </button>
+      </div>
+    </div>
+
+    <!-- Interactive Timeline Scrubber Slider -->
+    <div style="margin-top: 8px; display: flex; align-items: center; gap: 10px;">
+      <span style="font-size: 0.68rem; color: var(--text-secondary); font-weight: 700;">TIMELINE:</span>
+      <input type="range" id="replay-timeline-slider" min="1" max="100" value="100" oninput="onReplaySliderInput(this.value)" style="flex: 1; accent-color: #f59e0b; cursor: pointer; height: 6px;">
+      <span id="replay-slider-pct" style="font-size: 0.70rem; color: #f59e0b; font-weight: 700; min-width: 45px; text-align: right; font-family: monospace;">100%</span>
+    </div>
+  </div>
+
   <!-- Native Engine Canvas Container -->
   <div id="native-chart-wrapper" class="card" style="padding: 0; overflow: hidden; border-radius: 8px; border: 1px solid var(--border); height: 740px; background: #0f172a; position: relative; display: flex; flex-direction: column;">
     <div id="tv-main-chart-box" style="position: relative; width: 100%; flex: 1; min-height: 400px;">
+      <!-- Floating OHLCV Legend Bar -->
+      <div id="tv-ohlcv-legend" style="position: absolute; top: 8px; left: 12px; z-index: 5; pointer-events: none; display: flex; align-items: center; gap: 8px; font-size: 0.74rem; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: rgba(15,23,42,0.85); padding: 4px 10px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.08); flex-wrap: wrap;">
+        <span id="nc-symbol-title" style="font-weight: 800; color: #f8fafc;">NIFTY 50 (Spot)</span>
+        <span id="nc-current-price" style="font-weight: 800; color: #38bdf8;">--</span>
+        <span id="nc-price-change" style="font-weight: 700;">--</span>
+        <span style="color: var(--text-secondary); margin-left: 4px;">O: <b id="nc-open" style="color: #f8fafc;">--</b></span>
+        <span style="color: var(--text-secondary);">H: <b id="nc-high" style="color: #10b981;">--</b></span>
+        <span style="color: var(--text-secondary);">L: <b id="nc-low" style="color: #ef4444;">--</b></span>
+        <span style="color: var(--text-secondary);">C: <b id="nc-close" style="color: #f8fafc;">--</b></span>
+        <span style="color: var(--text-secondary);">V: <b id="nc-vol" style="color: #38bdf8;">--</b></span>
+      </div>
       <div id="tv-native-chart-canvas" style="width: 100%; height: 100%;"></div>
       <canvas id="tv-drawings-canvas" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2;"></canvas>
     </div>
@@ -4115,6 +4201,16 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   let _lwInterval = '5m';
   let _lwRefreshTimer = null;
 
+  // --- REPLAY STATE ---
+  let _isReplayActive = false;
+  let _replayFullCandles = [];
+  let _replayIndex = 0;
+  let _replayStartIndex = 0;
+  let _replayPlaying = false;
+  let _replayTimer = null;
+  let _replaySpeed = 1000;
+  let _replayCutMode = false;
+
   function openTradingViewAppWindow(symbol = 'NSE:NIFTY') {
     const symParam = encodeURIComponent(symbol);
     const url = `https://in.tradingview.com/chart/?symbol=${symParam}`;
@@ -4419,6 +4515,30 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   }
 
   function handleChartClick(param) {
+    if (_replayCutMode) {
+      if (param && param.time && _replayFullCandles && _replayFullCandles.length > 0) {
+        let targetTime = typeof param.time === 'object' && param.time !== null 
+          ? (param.time.year ? Math.floor(new Date(Date.UTC(param.time.year, param.time.month - 1, param.time.day)).getTime() / 1000) : Number(param.time))
+          : Number(param.time);
+        let matchedIdx = -1;
+        let minDiff = Infinity;
+        for (let i = 0; i < _replayFullCandles.length; i++) {
+          const diff = Math.abs(_replayFullCandles[i].time - targetTime);
+          if (diff < minDiff) {
+            minDiff = diff;
+            matchedIdx = i;
+          }
+        }
+        if (matchedIdx !== -1) {
+          _replayStartIndex = matchedIdx;
+          _replayIndex = matchedIdx;
+          renderReplayFrame();
+          toggleReplayCutMode(false);
+          return;
+        }
+      }
+    }
+
     if (!_clickToDrawSrMode || !param || !param.point) return;
     const activeSeries = _lwCandleSeries || _lwLineSeries;
     if (!activeSeries) return;
@@ -5152,6 +5272,20 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   }
 
   async function fetchNativeCandles() {
+    if (_isReplayActive) {
+      try {
+        const res = await fetch(`/api/chart/candles?symbol=${encodeURIComponent(_lwSymbol)}&interval=${encodeURIComponent(_lwInterval)}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.status === 'ok' && data.candles && data.candles.length > 0) {
+            _replayFullCandles = data.candles;
+            const slider = document.getElementById('replay-timeline-slider');
+            if (slider) slider.max = String(_replayFullCandles.length);
+          }
+        }
+      } catch (e) {}
+      return;
+    }
     const overlay = document.getElementById('nc-loading-overlay');
     try {
       const res = await fetch(`/api/chart/candles?symbol=${encodeURIComponent(_lwSymbol)}&interval=${encodeURIComponent(_lwInterval)}`);
@@ -5194,6 +5328,323 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       }
     }
   }
+
+  // -------------------------------------------------------------
+  // REPLAY ENGINE: CANDLESTICK BAR-BY-BAR PLAYBACK CONTROLLER
+  // -------------------------------------------------------------
+  function toggleReplayMode() {
+    if (_isReplayActive) {
+      exitReplayMode();
+    } else {
+      enterReplayMode();
+    }
+  }
+
+  function enterReplayMode() {
+    if (!_cachedCandles || _cachedCandles.length < 5) {
+      alert('Candlestick data is still loading or insufficient to start replay.');
+      return;
+    }
+    if (_currentLayoutView === 'quad') {
+      setChartLayoutView('single');
+    }
+
+    _isReplayActive = true;
+    _replayFullCandles = [..._cachedCandles];
+
+    // Default starting point: 35 candles before the end, or bar 5 if fewer
+    _replayStartIndex = Math.max(5, _replayFullCandles.length - 35);
+    _replayIndex = _replayStartIndex;
+    _replayPlaying = false;
+    _replayCutMode = false;
+
+    // Show replay bar
+    const p = document.getElementById('chart-replay-panel');
+    if (p) p.style.display = 'block';
+
+    const b = document.getElementById('btn-toggle-replay');
+    if (b) {
+      b.style.background = '#f59e0b';
+      b.style.color = '#000';
+      b.style.border = '1px solid #f59e0b';
+      b.innerText = '⏪ Replay: ON';
+    }
+
+    const badge = document.getElementById('chart-live-badge');
+    if (badge) {
+      badge.className = 'badge badge-yellow';
+      badge.innerText = '⏪ REPLAY ACTIVE';
+    }
+
+    // Configure slider
+    const slider = document.getElementById('replay-timeline-slider');
+    if (slider) {
+      slider.min = '1';
+      slider.max = String(_replayFullCandles.length);
+      slider.value = String(_replayIndex + 1);
+    }
+
+    renderReplayFrame();
+  }
+
+  function exitReplayMode() {
+    if (!_isReplayActive) return;
+    _isReplayActive = false;
+    _replayPlaying = false;
+    _replayCutMode = false;
+    if (_replayTimer) {
+      clearInterval(_replayTimer);
+      _replayTimer = null;
+    }
+
+    const p = document.getElementById('chart-replay-panel');
+    if (p) p.style.display = 'none';
+
+    const b = document.getElementById('btn-toggle-replay');
+    if (b) {
+      b.style.background = '#1e293b';
+      b.style.color = '#f59e0b';
+      b.style.border = '1px solid #f59e0b';
+      b.innerText = '⏪ Replay';
+    }
+
+    const cutPrompt = document.getElementById('replay-cut-prompt');
+    if (cutPrompt) cutPrompt.style.display = 'none';
+    const canvasBox = document.getElementById('tv-main-chart-box');
+    if (canvasBox) canvasBox.style.cursor = 'default';
+
+    const playBtn = document.getElementById('btn-replay-play');
+    if (playBtn) {
+      playBtn.innerText = '▶ Play';
+      playBtn.style.background = '#f59e0b';
+      playBtn.style.color = '#000';
+    }
+
+    const badge = document.getElementById('chart-live-badge');
+    if (badge) {
+      badge.className = 'badge badge-green';
+      badge.innerText = '🟢 LIVE NSE FEED';
+    }
+
+    // Restore full candles
+    if (_replayFullCandles && _replayFullCandles.length > 0) {
+      _cachedCandles = [..._replayFullCandles];
+      _lastCandle = _cachedCandles[_cachedCandles.length - 1];
+      applyCandleDataToSeries();
+      updateHeaderFromCandle(_lastCandle, _cachedCandles[0]);
+    }
+  }
+
+  function toggleReplayPlayback() {
+    if (!_isReplayActive) return;
+    if (_replayPlaying) {
+      pauseReplay();
+    } else {
+      startReplay();
+    }
+  }
+
+  function startReplay() {
+    if (!_isReplayActive) return;
+    if (_replayIndex >= _replayFullCandles.length - 1) {
+      _replayIndex = _replayStartIndex || Math.max(5, _replayFullCandles.length - 35);
+      renderReplayFrame();
+    }
+    _replayPlaying = true;
+    const playBtn = document.getElementById('btn-replay-play');
+    if (playBtn) {
+      playBtn.innerText = '⏸ Pause';
+      playBtn.style.background = '#38bdf8';
+      playBtn.style.color = '#000';
+    }
+
+    if (_replayTimer) clearInterval(_replayTimer);
+    _replayTimer = setInterval(() => {
+      if (!_isReplayActive || !_replayPlaying) return;
+      if (_replayIndex < _replayFullCandles.length - 1) {
+        _replayIndex++;
+        renderReplayFrame();
+      } else {
+        pauseReplay();
+        const playBtn = document.getElementById('btn-replay-play');
+        if (playBtn) {
+          playBtn.innerText = '🔄 Replay Again';
+          playBtn.style.background = '#10b981';
+          playBtn.style.color = '#000';
+        }
+      }
+    }, _replaySpeed);
+  }
+
+  function pauseReplay() {
+    _replayPlaying = false;
+    if (_replayTimer) {
+      clearInterval(_replayTimer);
+      _replayTimer = null;
+    }
+    const playBtn = document.getElementById('btn-replay-play');
+    if (playBtn) {
+      playBtn.innerText = '▶ Play';
+      playBtn.style.background = '#f59e0b';
+      playBtn.style.color = '#000';
+    }
+  }
+
+  function replayStepForward() {
+    if (!_isReplayActive) return;
+    pauseReplay();
+    if (_replayIndex < _replayFullCandles.length - 1) {
+      _replayIndex++;
+      renderReplayFrame();
+    }
+  }
+
+  function replayStepBack() {
+    if (!_isReplayActive) return;
+    pauseReplay();
+    if (_replayIndex > 1) {
+      _replayIndex--;
+      renderReplayFrame();
+    }
+  }
+
+  function replayJumpToStart() {
+    if (!_isReplayActive) return;
+    pauseReplay();
+    _replayIndex = _replayStartIndex || Math.max(5, _replayFullCandles.length - 35);
+    renderReplayFrame();
+  }
+
+  function replayJumpToEnd() {
+    if (!_isReplayActive) return;
+    pauseReplay();
+    _replayIndex = _replayFullCandles.length - 1;
+    renderReplayFrame();
+  }
+
+  function onReplaySliderInput(val) {
+    if (!_isReplayActive || !_replayFullCandles || _replayFullCandles.length === 0) return;
+    pauseReplay();
+    const idx = parseInt(val, 10) - 1;
+    _replayIndex = Math.max(0, Math.min(idx, _replayFullCandles.length - 1));
+    renderReplayFrame();
+  }
+
+  function setReplaySpeed(ms) {
+    _replaySpeed = parseInt(ms, 10);
+    if (_replayPlaying) {
+      startReplay();
+    }
+  }
+
+  function toggleReplayCutMode(force) {
+    _replayCutMode = typeof force === 'boolean' ? force : !_replayCutMode;
+    const btn = document.getElementById('btn-replay-cut');
+    const prompt = document.getElementById('replay-cut-prompt');
+    const canvasBox = document.getElementById('tv-main-chart-box');
+    if (btn) {
+      if (_replayCutMode) {
+        btn.style.background = '#facc15';
+        btn.style.color = '#000';
+        btn.innerText = '✂️ Pick Bar on Chart...';
+      } else {
+        btn.style.background = '#1e293b';
+        btn.style.color = '#38bdf8';
+        btn.innerText = '✂️ Jump / Cut to Bar';
+      }
+    }
+    if (prompt) prompt.style.display = _replayCutMode ? 'inline-block' : 'none';
+    if (canvasBox) canvasBox.style.cursor = _replayCutMode ? 'crosshair' : 'default';
+  }
+
+  function formatReplayTimestamp(unixSec) {
+    if (!unixSec) return '--';
+    const d = new Date(unixSec * 1000);
+    return d.toLocaleString('en-IN', {
+      timeZone: 'Asia/Kolkata',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    }) + ' IST';
+  }
+
+  function updateHeaderFromCandle(last, first) {
+    if (!last) return;
+    const prev = (first && first.open) ? first.open : last.open;
+    const diff = last.close - prev;
+    const pct = prev > 0 ? ((diff / prev) * 100).toFixed(2) : '0.00';
+    const symTitle = _lwSymbol === 'NIFTY' ? 'NIFTY 50 (Spot)' : (_lwSymbol === 'BANKNIFTY' ? 'BANKNIFTY (Spot)' : _lwSymbol);
+
+    const titleEl = document.getElementById('nc-symbol-title');
+    const priceEl = document.getElementById('nc-current-price');
+    const changeEl = document.getElementById('nc-price-change');
+
+    if (titleEl) titleEl.innerText = symTitle;
+    if (priceEl) priceEl.innerText = '₹' + Number(last.close).toLocaleString('en-IN', { minimumFractionDigits: 2 });
+    if (changeEl) {
+      changeEl.innerText = (diff >= 0 ? '+' : '') + diff.toFixed(2) + ' (' + (diff >= 0 ? '+' : '') + pct + '%)';
+      changeEl.style.color = diff >= 0 ? '#10b981' : '#ef4444';
+    }
+    updateOhlcvDisplay(last.open, last.high, last.low, last.close, last.volume || 0);
+  }
+
+  function renderReplayFrame() {
+    if (!_replayFullCandles || _replayFullCandles.length === 0) return;
+    const currentSlice = _replayFullCandles.slice(0, _replayIndex + 1);
+    _cachedCandles = currentSlice;
+    _lastCandle = currentSlice[currentSlice.length - 1];
+
+    applyCandleDataToSeries();
+
+    const firstCandle = _replayFullCandles[0];
+    updateHeaderFromCandle(_lastCandle, firstCandle);
+
+    // Update Slider & Bar Info
+    const total = _replayFullCandles.length;
+    const cur = _replayIndex + 1;
+    const pct = Math.round((cur / total) * 100);
+
+    const barInfoEl = document.getElementById('replay-bar-info');
+    if (barInfoEl) barInfoEl.innerText = `Bar ${cur} / ${total} (${pct}%)`;
+
+    const timeInfoEl = document.getElementById('replay-time-info');
+    if (timeInfoEl) timeInfoEl.innerText = formatReplayTimestamp(_lastCandle.time);
+
+    const slider = document.getElementById('replay-timeline-slider');
+    if (slider) slider.value = String(cur);
+
+    const sliderPct = document.getElementById('replay-slider-pct');
+    if (sliderPct) sliderPct.innerText = `${pct}%`;
+
+    if (_lwChart) {
+      _lwChart.timeScale().scrollToPosition(0, false);
+    }
+  }
+
+  // Keyboard Navigation for Replay Engine
+  document.addEventListener('keydown', (e) => {
+    if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) return;
+    if (!_isReplayActive) return;
+
+    if (e.code === 'Space') {
+      e.preventDefault();
+      toggleReplayPlayback();
+    } else if (e.code === 'ArrowRight') {
+      e.preventDefault();
+      replayStepForward();
+    } else if (e.code === 'ArrowLeft') {
+      e.preventDefault();
+      replayStepBack();
+    } else if (e.code === 'Escape') {
+      if (_replayCutMode) {
+        toggleReplayCutMode(false);
+      } else {
+        exitReplayMode();
+      }
+    }
+  });
 
   function selectSingleTab(sym, btn) {
     document.querySelectorAll('.nc-main-tab-btn').forEach(b => {
@@ -5259,6 +5710,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   }
 
   function selectChartSymbol(sym, btn) {
+    if (_isReplayActive) exitReplayMode();
     _lwSymbol = sym;
     document.querySelectorAll('.nc-sym-btn').forEach(b => {
       b.style.background = '#1e293b';
@@ -5286,6 +5738,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   }
 
   function selectChartInterval(intv, btn) {
+    if (_isReplayActive) exitReplayMode();
     _lwInterval = intv;
     document.querySelectorAll('.nc-int-btn').forEach(b => {
       b.style.background = '#1e293b';
@@ -5316,6 +5769,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   }
 
   function setChartLayoutView(view) {
+    if (view === 'quad' && _isReplayActive) exitReplayMode();
     _currentLayoutView = view;
     const singleCont = document.getElementById('single-chart-view-container');
     const quadCont = document.getElementById('quad-chart-view-container');
@@ -6019,9 +6473,10 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     }
   }, 1000);
 
-  // Restore previously active tab from localStorage if present
+  // Restore previously active tab from URL hash or localStorage if present
   try {
-    const savedTab = localStorage.getItem('nt_active_tab');
+    const hashTab = (window.location.hash && window.location.hash.length > 1) ? window.location.hash.substring(1) : null;
+    const savedTab = (hashTab && document.getElementById(hashTab)) ? hashTab : localStorage.getItem('nt_active_tab');
     if (savedTab && document.getElementById(savedTab)) {
       switchTab(savedTab);
     }
@@ -6870,9 +7325,9 @@ class DashboardHTTPRequestHandler(BaseHTTPRequestHandler):
                     premium=float(data.get("premium", 100.0)),
                     spot_price=float(data.get("spot_price", 0.0)),
                     sl_points=float(data.get("sl_points", 20.0)),
-                    target_points=float(data.get("target_points", 40.0)),
-                    reasoning=data.get("reasoning", "Autonomous setup condition matched with 15-minute confirmation gate"),
-                    custom_countdown=int(data.get("countdown_seconds")) if data.get("countdown_seconds") else None,
+                    target_points=float(data.get("target_points", 60.0)),
+                    reasoning=data.get("reasoning", "Best trade setup matched - Instant Execution"),
+                    custom_countdown=int(data.get("countdown_seconds")) if data.get("countdown_seconds") is not None else 0,
                 )
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json")

@@ -714,6 +714,25 @@ class NSEOptionChainService:
         sim_service._append_log(log_msg)
         sim_service.update_report_files()
 
+        # Send Telegram notification if configured
+        try:
+            from nifty_trader.notifications.telegram_service import get_telegram_service
+            tele = get_telegram_service(root_dir=self.root_dir)
+            if tele.is_configured:
+                tele.send_trade_executed_alert({
+                    "symbol": inst_name,
+                    "strike": strike,
+                    "option_type": opt_type,
+                    "premium": premium,
+                    "sl_price": sl_price,
+                    "target_price": target_price,
+                    "lots": lots,
+                    "qty": qty,
+                    "trade_id": trade_id,
+                })
+        except Exception as tele_err:
+            logger.warning(f"Telegram trade alert error: {tele_err}")
+
         return {
             "status": "ok",
             "trade_id": trade_id,
