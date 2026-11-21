@@ -1975,33 +1975,164 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         <button type="button" class="btn nc-style-btn" id="btn-style-area" onclick="setChartType('area', this)" style="background: #1e293b; color: var(--text-secondary); padding: 3px 8px; font-size: 0.72rem; border-radius: 4px; border: 1px solid var(--border);">📊 Area</button>
       </div>
 
-      <!-- Technical Indicators -->
-      <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+      <!-- Technical Indicators Dropdown with Tick Selection -->
+      <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
         <span style="font-size: 0.72rem; color: var(--text-secondary); font-weight: 700;">INDICATORS:</span>
-        <label style="font-size: 0.72rem; color: #10b981; font-weight: 700; display: inline-flex; align-items: center; gap: 3px; cursor: pointer;" title="Toggle Volume Bars on/off">
-          <input type="checkbox" id="nc-toggle-vol" checked onchange="toggleIndicator('vol')"> Volume
-        </label>
-        <label style="font-size: 0.72rem; color: #facc15; font-weight: 700; display: inline-flex; align-items: center; gap: 3px; cursor: pointer;">
-          <input type="checkbox" id="nc-toggle-ema9" checked onchange="toggleIndicator('ema9')"> EMA 9
-        </label>
-        <label style="font-size: 0.72rem; color: #38bdf8; font-weight: 700; display: inline-flex; align-items: center; gap: 3px; cursor: pointer;">
-          <input type="checkbox" id="nc-toggle-ema20" checked onchange="toggleIndicator('ema20')"> EMA 20
-        </label>
-        <label style="font-size: 0.72rem; color: #fb923c; font-weight: 700; display: inline-flex; align-items: center; gap: 3px; cursor: pointer;">
-          <input type="checkbox" id="nc-toggle-ema50" onchange="toggleIndicator('ema50')"> EMA 50
-        </label>
-        <label style="font-size: 0.72rem; color: #c084fc; font-weight: 700; display: inline-flex; align-items: center; gap: 3px; cursor: pointer;">
-          <input type="checkbox" id="nc-toggle-sma200" onchange="toggleIndicator('sma200')"> SMA 200
-        </label>
-        <label style="font-size: 0.72rem; color: #f43f5e; font-weight: 700; display: inline-flex; align-items: center; gap: 3px; cursor: pointer;">
-          <input type="checkbox" id="nc-toggle-vwap" onchange="toggleIndicator('vwap')"> VWAP
-        </label>
-        <label style="font-size: 0.72rem; color: #60a5fa; font-weight: 700; display: inline-flex; align-items: center; gap: 3px; cursor: pointer;">
-          <input type="checkbox" id="nc-toggle-bb" onchange="toggleIndicator('bb')"> Bollinger
-        </label>
-        <label style="font-size: 0.72rem; color: #a855f7; font-weight: 700; display: inline-flex; align-items: center; gap: 3px; cursor: pointer;">
-          <input type="checkbox" id="nc-toggle-rsi" onchange="toggleIndicator('rsi')"> RSI (14)
-        </label>
+        <div style="position: relative; display: inline-block;">
+          <button type="button" id="btn-indicators-dropdown" onclick="toggleIndicatorsDropdownMenu(event)" class="btn" style="background: #1e293b; color: #38bdf8; padding: 4px 11px; font-size: 0.74rem; font-weight: 700; border-radius: 4px; border: 1px solid #38bdf8; display: inline-flex; align-items: center; gap: 6px; cursor: pointer;" title="Technical Indicators (Click to open dropdown &amp; tick indicators)">
+            <span>📊 Indicators (<span id="indicator-active-count">3</span>)</span>
+            <span style="font-size: 0.65rem;" id="indicator-caret">▼</span>
+          </button>
+
+          <!-- Dropdown Popup Card -->
+          <div id="indicators-dropdown-menu" style="display: none; position: absolute; top: calc(100% + 4px); left: 0; z-index: 1000; min-width: 320px; background: #0f172a; border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 14px 35px rgba(0,0,0,0.85); padding: 10px; backdrop-filter: blur(10px);">
+            <!-- Header with Quick Action Buttons -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 6px;">
+              <span style="font-size: 0.74rem; font-weight: 800; color: #38bdf8; text-transform: uppercase; letter-spacing: 0.5px;">📈 Indicators Suite</span>
+              <div style="display: flex; gap: 5px;">
+                <button type="button" onclick="setAllIndicators(true)" class="btn" style="background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); font-size: 0.64rem; padding: 2px 6px; border-radius: 3px; cursor: pointer;">All</button>
+                <button type="button" onclick="setAllIndicators(false)" class="btn" style="background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); font-size: 0.64rem; padding: 2px 6px; border-radius: 3px; cursor: pointer;">Clear</button>
+                <button type="button" onclick="resetDefaultIndicators()" class="btn" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); font-size: 0.64rem; padding: 2px 6px; border-radius: 3px; cursor: pointer;">Default</button>
+              </div>
+            </div>
+
+            <!-- List of Indicators with Checkboxes / Tick Selection -->
+            <div style="max-height: 380px; overflow-y: auto; padding-right: 2px; display: flex; flex-direction: column; gap: 2px;">
+              
+              <!-- Section: Pivots & Key Levels -->
+              <div style="font-size: 0.62rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin: 4px 0 2px 2px;">📍 Key S/R &amp; Pivots</div>
+              
+              <!-- Standard Pivot Points -->
+              <label class="ind-item-label" style="display: flex; align-items: center; justify-content: space-between; padding: 5px 8px; border-radius: 4px; cursor: pointer;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <input type="checkbox" id="nc-toggle-pivot" onchange="toggleIndicator('pivot')">
+                  <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #facc15;"></span>
+                  <span style="font-size: 0.74rem; font-weight: 700; color: #facc15;">Standard Pivot Points</span>
+                </div>
+                <span style="font-size: 0.64rem; color: var(--text-secondary);">PP, R1, S1, R2, S2</span>
+              </label>
+
+              <!-- CPR (Central Pivot Range) -->
+              <label class="ind-item-label" style="display: flex; align-items: center; justify-content: space-between; padding: 5px 8px; border-radius: 4px; cursor: pointer;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <input type="checkbox" id="nc-toggle-cpr" onchange="toggleIndicator('cpr')">
+                  <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #38bdf8;"></span>
+                  <span style="font-size: 0.74rem; font-weight: 700; color: #38bdf8;">CPR (Central Pivot Range)</span>
+                </div>
+                <span style="font-size: 0.64rem; color: var(--text-secondary);">TC, Pivot, BC</span>
+              </label>
+
+              <!-- Section: Trend & Volatility -->
+              <div style="font-size: 0.62rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin: 6px 0 2px 2px; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 4px;">⚡ Trend &amp; Volatility</div>
+
+              <!-- Supertrend (ST Point) -->
+              <label class="ind-item-label" style="display: flex; align-items: center; justify-content: space-between; padding: 5px 8px; border-radius: 4px; cursor: pointer;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <input type="checkbox" id="nc-toggle-supertrend" onchange="toggleIndicator('supertrend')">
+                  <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #10b981;"></span>
+                  <span style="font-size: 0.74rem; font-weight: 700; color: #10b981;">Supertrend ST (10, 3)</span>
+                </div>
+                <span style="font-size: 0.64rem; color: var(--text-secondary);">ATR Trend Bands</span>
+              </label>
+
+              <!-- ATR (Average True Range) -->
+              <label class="ind-item-label" style="display: flex; align-items: center; justify-content: space-between; padding: 5px 8px; border-radius: 4px; cursor: pointer;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <input type="checkbox" id="nc-toggle-atr" onchange="toggleIndicator('atr')">
+                  <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #f43f5e;"></span>
+                  <span style="font-size: 0.74rem; font-weight: 700; color: #f43f5e;">ATR (Average True Range)</span>
+                </div>
+                <span style="font-size: 0.64rem; color: var(--text-secondary);">14-Period Sub-Pane</span>
+              </label>
+
+              <!-- VWAP -->
+              <label class="ind-item-label" style="display: flex; align-items: center; justify-content: space-between; padding: 5px 8px; border-radius: 4px; cursor: pointer;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <input type="checkbox" id="nc-toggle-vwap" onchange="toggleIndicator('vwap')">
+                  <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #f43f5e;"></span>
+                  <span style="font-size: 0.74rem; font-weight: 700; color: #f43f5e;">VWAP (Intraday Institutional)</span>
+                </div>
+                <span style="font-size: 0.64rem; color: var(--text-secondary);">Volume Weighted</span>
+              </label>
+
+              <!-- Bollinger Bands -->
+              <label class="ind-item-label" style="display: flex; align-items: center; justify-content: space-between; padding: 5px 8px; border-radius: 4px; cursor: pointer;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <input type="checkbox" id="nc-toggle-bb" onchange="toggleIndicator('bb')">
+                  <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #60a5fa;"></span>
+                  <span style="font-size: 0.74rem; font-weight: 700; color: #60a5fa;">Bollinger Bands (20, 2)</span>
+                </div>
+                <span style="font-size: 0.64rem; color: var(--text-secondary);">Volatility Envelope</span>
+              </label>
+
+              <!-- Section: Moving Averages & Momentum -->
+              <div style="font-size: 0.62rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin: 6px 0 2px 2px; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 4px;">📈 Moving Averages &amp; Momentum</div>
+
+              <!-- Volume -->
+              <label class="ind-item-label" style="display: flex; align-items: center; justify-content: space-between; padding: 5px 8px; border-radius: 4px; cursor: pointer;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <input type="checkbox" id="nc-toggle-vol" checked onchange="toggleIndicator('vol')">
+                  <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #38bdf8;"></span>
+                  <span style="font-size: 0.74rem; font-weight: 700; color: #38bdf8;">Volume Bars</span>
+                </div>
+                <span style="font-size: 0.64rem; color: var(--text-secondary);">Histogram</span>
+              </label>
+
+              <!-- EMA 9 -->
+              <label class="ind-item-label" style="display: flex; align-items: center; justify-content: space-between; padding: 5px 8px; border-radius: 4px; cursor: pointer;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <input type="checkbox" id="nc-toggle-ema9" checked onchange="toggleIndicator('ema9')">
+                  <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #facc15;"></span>
+                  <span style="font-size: 0.74rem; font-weight: 700; color: #facc15;">EMA 9 (Fast Trend)</span>
+                </div>
+                <span style="font-size: 0.64rem; color: var(--text-secondary);">Exponential MA</span>
+              </label>
+
+              <!-- EMA 20 -->
+              <label class="ind-item-label" style="display: flex; align-items: center; justify-content: space-between; padding: 5px 8px; border-radius: 4px; cursor: pointer;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <input type="checkbox" id="nc-toggle-ema20" checked onchange="toggleIndicator('ema20')">
+                  <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #38bdf8;"></span>
+                  <span style="font-size: 0.74rem; font-weight: 700; color: #38bdf8;">EMA 20 (Pullback Base)</span>
+                </div>
+                <span style="font-size: 0.64rem; color: var(--text-secondary);">Exponential MA</span>
+              </label>
+
+              <!-- EMA 50 -->
+              <label class="ind-item-label" style="display: flex; align-items: center; justify-content: space-between; padding: 5px 8px; border-radius: 4px; cursor: pointer;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <input type="checkbox" id="nc-toggle-ema50" onchange="toggleIndicator('ema50')">
+                  <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #fb923c;"></span>
+                  <span style="font-size: 0.74rem; font-weight: 700; color: #fb923c;">EMA 50 (Intermediate)</span>
+                </div>
+                <span style="font-size: 0.64rem; color: var(--text-secondary);">Exponential MA</span>
+              </label>
+
+              <!-- SMA 200 -->
+              <label class="ind-item-label" style="display: flex; align-items: center; justify-content: space-between; padding: 5px 8px; border-radius: 4px; cursor: pointer;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <input type="checkbox" id="nc-toggle-sma200" onchange="toggleIndicator('sma200')">
+                  <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #c084fc;"></span>
+                  <span style="font-size: 0.74rem; font-weight: 700; color: #c084fc;">SMA 200 (Long Term Trend)</span>
+                </div>
+                <span style="font-size: 0.64rem; color: var(--text-secondary);">Simple MA</span>
+              </label>
+
+              <!-- RSI (14) -->
+              <label class="ind-item-label" style="display: flex; align-items: center; justify-content: space-between; padding: 5px 8px; border-radius: 4px; cursor: pointer;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <input type="checkbox" id="nc-toggle-rsi" onchange="toggleIndicator('rsi')">
+                  <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #a855f7;"></span>
+                  <span style="font-size: 0.74rem; font-weight: 700; color: #a855f7;">RSI (14) Momentum</span>
+                </div>
+                <span style="font-size: 0.64rem; color: var(--text-secondary);">Sub-Pane (0-100)</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Active Indicators Pills Bar -->
+        <div id="active-indicators-pills" style="display: flex; gap: 4px; align-items: center; flex-wrap: wrap;"></div>
       </div>
 
       <!-- Drawing & Chart Tools -->
@@ -2313,15 +2444,24 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         <span style="color: var(--text-secondary);">L: <b id="nc-low" style="color: #ef4444;">--</b></span>
         <span style="color: var(--text-secondary);">C: <b id="nc-close" style="color: #f8fafc;">--</b></span>
         <span style="color: var(--text-secondary);">V: <b id="nc-vol" style="color: #38bdf8;">--</b></span>
+        <span id="nc-legend-atr-box" style="display: none; color: var(--text-secondary); margin-left: 6px;">ATR(14): <b id="nc-atr-legend" style="color: #f43f5e;">--</b></span>
+        <span id="nc-legend-cpr-box" style="display: none; color: var(--text-secondary); margin-left: 6px;">CPR: <b id="nc-cpr-legend" style="color: #38bdf8;">--</b></span>
+        <span id="nc-legend-st-box" style="display: none; color: var(--text-secondary); margin-left: 6px;">ST(10,3): <b id="nc-st-legend" style="color: #10b981;">--</b></span>
       </div>
       <div id="tv-native-chart-canvas" style="width: 100%; height: 100%;"></div>
       <canvas id="tv-drawings-canvas" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2;"></canvas>
     </div>
-    <div id="tv-rsi-container" style="display: none; height: 160px; border-top: 1px solid var(--border); position: relative; background: #0b0f19;">
+    <div id="tv-rsi-container" style="display: none; height: 150px; border-top: 1px solid var(--border); position: relative; background: #0b0f19;">
       <div style="position: absolute; top: 4px; left: 10px; z-index: 5; font-size: 0.72rem; font-weight: 700; color: #a855f7;">
         RSI (14): <span id="nc-rsi-val" style="color: #cbd5e1;">--</span>
       </div>
       <div id="tv-rsi-chart-canvas" style="width: 100%; height: 100%;"></div>
+    </div>
+    <div id="tv-atr-container" style="display: none; height: 130px; border-top: 1px solid var(--border); position: relative; background: #0b0f19;">
+      <div style="position: absolute; top: 4px; left: 10px; z-index: 5; font-size: 0.72rem; font-weight: 700; color: #f43f5e;">
+        ATR (14): <span id="nc-atr-val" style="color: #cbd5e1;">--</span>
+      </div>
+      <div id="tv-atr-chart-canvas" style="width: 100%; height: 100%;"></div>
     </div>
     <div id="nc-loading-overlay" style="position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(15,23,42,0.85); display: flex; align-items: center; justify-content: center; z-index: 10; color: #38bdf8; font-weight: 700; font-size: 0.95rem;">
       ⏳ Fetching Real-Time Candlestick Feed...
@@ -5019,6 +5159,26 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   let _lwRsiChart = null;
   let _lwRsiSeries = null;
 
+  // Standard Floor Pivot Points
+  let _lwPivotPpSeries = null;
+  let _lwPivotR1Series = null;
+  let _lwPivotS1Series = null;
+  let _lwPivotR2Series = null;
+  let _lwPivotS2Series = null;
+
+  // CPR (Central Pivot Range)
+  let _lwCprTcSeries = null;
+  let _lwCprPivotSeries = null;
+  let _lwCprBcSeries = null;
+
+  // Supertrend (ST Point)
+  let _lwSupertrendBullSeries = null;
+  let _lwSupertrendBearSeries = null;
+
+  // ATR Sub-Chart
+  let _lwAtrChart = null;
+  let _lwAtrSeries = null;
+
   let _cachedCandles = [];
   let _lastCandle = null;
   let _currentChartType = 'candles';
@@ -5189,6 +5349,401 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     return ha;
   }
 
+  function getUnixSec(t) {
+    if (typeof t === 'number') return t;
+    if (typeof t === 'object' && t !== null && t.year) {
+      return Math.floor(new Date(Date.UTC(t.year, t.month - 1, t.day)).getTime() / 1000);
+    }
+    return Number(t) || 0;
+  }
+
+  // --- Floor Pivot Points (PP, R1, S1, R2, S2) ---
+  function calculatePivots(candles) {
+    if (!candles || candles.length === 0) return { pp: [], r1: [], s1: [], r2: [], s2: [] };
+    let dayBars = {};
+    let dayList = [];
+    for (let i = 0; i < candles.length; i++) {
+      const c = candles[i];
+      const sec = getUnixSec(c.time);
+      const dateKey = new Date((sec + 19800) * 1000).toISOString().slice(0, 10);
+      if (!dayBars[dateKey]) {
+        dayBars[dateKey] = { high: c.high, low: c.low, close: c.close };
+        dayList.push(dateKey);
+      } else {
+        if (c.high > dayBars[dateKey].high) dayBars[dateKey].high = c.high;
+        if (c.low < dayBars[dateKey].low) dayBars[dateKey].low = c.low;
+        dayBars[dateKey].close = c.close;
+      }
+    }
+
+    let dayPivots = {};
+    for (let k = 1; k < dayList.length; k++) {
+      const prev = dayBars[dayList[k - 1]];
+      const H = prev.high, L = prev.low, C = prev.close;
+      const PP = (H + L + C) / 3;
+      const R1 = 2 * PP - L;
+      const S1 = 2 * PP - H;
+      const R2 = PP + (H - L);
+      const S2 = PP - (H - L);
+      dayPivots[dayList[k]] = {
+        pp: Math.round(PP * 100) / 100,
+        r1: Math.round(R1 * 100) / 100,
+        s1: Math.round(S1 * 100) / 100,
+        r2: Math.round(R2 * 100) / 100,
+        s2: Math.round(S2 * 100) / 100,
+      };
+    }
+    if (dayList.length > 0 && !dayPivots[dayList[0]]) {
+      const d0 = dayBars[dayList[0]];
+      const PP = (d0.high + d0.low + d0.close) / 3;
+      dayPivots[dayList[0]] = {
+        pp: Math.round(PP * 100) / 100,
+        r1: Math.round((2 * PP - d0.low) * 100) / 100,
+        s1: Math.round((2 * PP - d0.high) * 100) / 100,
+        r2: Math.round((PP + (d0.high - d0.low)) * 100) / 100,
+        s2: Math.round((PP - (d0.high - d0.low)) * 100) / 100,
+      };
+    }
+
+    let pp = [], r1 = [], s1 = [], r2 = [], s2 = [];
+    for (let i = 0; i < candles.length; i++) {
+      const c = candles[i];
+      const sec = getUnixSec(c.time);
+      const dateKey = new Date((sec + 19800) * 1000).toISOString().slice(0, 10);
+      const piv = dayPivots[dateKey] || dayPivots[dayList[0]];
+      if (piv) {
+        pp.push({ time: c.time, value: piv.pp });
+        r1.push({ time: c.time, value: piv.r1 });
+        s1.push({ time: c.time, value: piv.s1 });
+        r2.push({ time: c.time, value: piv.r2 });
+        s2.push({ time: c.time, value: piv.s2 });
+      }
+    }
+    return { pp, r1, s1, r2, s2 };
+  }
+
+  // --- CPR (Central Pivot Range: TC, Pivot, BC) ---
+  function calculateCPR(candles) {
+    if (!candles || candles.length === 0) return { tc: [], pivot: [], bc: [] };
+    let dayBars = {};
+    let dayList = [];
+    for (let i = 0; i < candles.length; i++) {
+      const c = candles[i];
+      const sec = getUnixSec(c.time);
+      const dateKey = new Date((sec + 19800) * 1000).toISOString().slice(0, 10);
+      if (!dayBars[dateKey]) {
+        dayBars[dateKey] = { high: c.high, low: c.low, close: c.close };
+        dayList.push(dateKey);
+      } else {
+        if (c.high > dayBars[dateKey].high) dayBars[dateKey].high = c.high;
+        if (c.low < dayBars[dateKey].low) dayBars[dateKey].low = c.low;
+        dayBars[dateKey].close = c.close;
+      }
+    }
+
+    let dayCpr = {};
+    for (let k = 1; k < dayList.length; k++) {
+      const prev = dayBars[dayList[k - 1]];
+      const H = prev.high, L = prev.low, C = prev.close;
+      const P = (H + L + C) / 3;
+      const BC = (H + L) / 2;
+      const TC = 2 * P - BC;
+      dayCpr[dayList[k]] = {
+        pivot: Math.round(P * 100) / 100,
+        bc: Math.round(BC * 100) / 100,
+        tc: Math.round(TC * 100) / 100,
+      };
+    }
+    if (dayList.length > 0 && !dayCpr[dayList[0]]) {
+      const prev = dayBars[dayList[0]];
+      const P = (prev.high + prev.low + prev.close) / 3;
+      const BC = (prev.high + prev.low) / 2;
+      const TC = 2 * P - BC;
+      dayCpr[dayList[0]] = {
+        pivot: Math.round(P * 100) / 100,
+        bc: Math.round(BC * 100) / 100,
+        tc: Math.round(TC * 100) / 100,
+      };
+    }
+
+    let tc = [], pivot = [], bc = [];
+    for (let i = 0; i < candles.length; i++) {
+      const c = candles[i];
+      const sec = getUnixSec(c.time);
+      const dateKey = new Date((sec + 19800) * 1000).toISOString().slice(0, 10);
+      const cpr = dayCpr[dateKey] || dayCpr[dayList[0]];
+      if (cpr) {
+        tc.push({ time: c.time, value: cpr.tc });
+        pivot.push({ time: c.time, value: cpr.pivot });
+        bc.push({ time: c.time, value: cpr.bc });
+      }
+    }
+    return { tc, pivot, bc };
+  }
+
+  // --- Supertrend / ST Point (Period 10, Multiplier 3) ---
+  function calculateSupertrend(candles, period = 10, multiplier = 3) {
+    if (!candles || candles.length < period) return { bull: [], bear: [] };
+    let tr = [];
+    tr.push(candles[0].high - candles[0].low);
+    for (let i = 1; i < candles.length; i++) {
+      const h = candles[i].high;
+      const l = candles[i].low;
+      const prevClose = candles[i - 1].close;
+      tr.push(Math.max(h - l, Math.abs(h - prevClose), Math.abs(l - prevClose)));
+    }
+
+    let atr = new Array(candles.length);
+    let sum = 0;
+    for (let i = 0; i < period; i++) sum += tr[i];
+    atr[period - 1] = sum / period;
+    for (let i = period; i < candles.length; i++) {
+      atr[i] = (atr[i - 1] * (period - 1) + tr[i]) / period;
+    }
+
+    let upperBand = new Array(candles.length);
+    let lowerBand = new Array(candles.length);
+    let isUpTrend = true;
+    let bull = [];
+    let bear = [];
+
+    for (let i = period - 1; i < candles.length; i++) {
+      const hl2 = (candles[i].high + candles[i].low) / 2;
+      const basicUpper = hl2 + multiplier * atr[i];
+      const basicLower = hl2 - multiplier * atr[i];
+
+      if (i === period - 1) {
+        upperBand[i] = basicUpper;
+        lowerBand[i] = basicLower;
+        isUpTrend = candles[i].close >= lowerBand[i];
+      } else {
+        if (basicUpper < upperBand[i - 1] || candles[i - 1].close > upperBand[i - 1]) {
+          upperBand[i] = basicUpper;
+        } else {
+          upperBand[i] = upperBand[i - 1];
+        }
+
+        if (basicLower > lowerBand[i - 1] || candles[i - 1].close < lowerBand[i - 1]) {
+          lowerBand[i] = basicLower;
+        } else {
+          lowerBand[i] = lowerBand[i - 1];
+        }
+
+        if (isUpTrend) {
+          if (candles[i].close < lowerBand[i]) {
+            isUpTrend = false;
+          }
+        } else {
+          if (candles[i].close > upperBand[i]) {
+            isUpTrend = true;
+          }
+        }
+      }
+
+      const t = candles[i].time;
+      if (isUpTrend) {
+        bull.push({ time: t, value: Math.round(lowerBand[i] * 100) / 100 });
+      } else {
+        bear.push({ time: t, value: Math.round(upperBand[i] * 100) / 100 });
+      }
+    }
+    return { bull, bear };
+  }
+
+  // --- ATR (Average True Range: Period 14) ---
+  function calculateATR(candles, period = 14) {
+    if (!candles || candles.length <= period) return [];
+    let tr = [];
+    tr.push(candles[0].high - candles[0].low);
+    for (let i = 1; i < candles.length; i++) {
+      const h = candles[i].high;
+      const l = candles[i].low;
+      const prevClose = candles[i - 1].close;
+      tr.push(Math.max(h - l, Math.abs(h - prevClose), Math.abs(l - prevClose)));
+    }
+
+    let atr = [];
+    let sum = 0;
+    for (let i = 0; i < period; i++) sum += tr[i];
+    let currentAtr = sum / period;
+    atr.push({ time: candles[period - 1].time, value: Math.round(currentAtr * 100) / 100 });
+
+    for (let i = period; i < candles.length; i++) {
+      currentAtr = (currentAtr * (period - 1) + tr[i]) / period;
+      atr.push({ time: candles[i].time, value: Math.round(currentAtr * 100) / 100 });
+    }
+    return atr;
+  }
+
+  function initAtrChart() {
+    const container = document.getElementById('tv-atr-chart-canvas');
+    if (!container || _lwAtrChart) return;
+    if (typeof LightweightCharts === 'undefined') return;
+
+    _lwAtrChart = LightweightCharts.createChart(container, {
+      width: container.clientWidth || 1000,
+      height: container.clientHeight || 130,
+      layout: {
+        background: { color: '#0b0f19' },
+        textColor: '#94a3b8',
+        fontSize: 11,
+      },
+      grid: {
+        vertLines: { color: 'rgba(30, 41, 59, 0.4)' },
+        horzLines: { color: 'rgba(30, 41, 59, 0.4)' },
+      },
+      crosshair: {
+        mode: LightweightCharts.CrosshairMode.Normal,
+      },
+      rightPriceScale: {
+        borderColor: '#1e293b',
+        scaleMargins: { top: 0.1, bottom: 0.1 },
+      },
+      timeScale: {
+        borderColor: '#1e293b',
+        timeVisible: true,
+        secondsVisible: false,
+      },
+    });
+
+    _lwAtrSeries = _lwAtrChart.addLineSeries({
+      color: '#f43f5e',
+      lineWidth: 2,
+      title: 'ATR (14)',
+    });
+  }
+
+  function toggleIndicatorsDropdownMenu(e) {
+    if (e) e.stopPropagation();
+    const menu = document.getElementById('indicators-dropdown-menu');
+    const caret = document.getElementById('indicator-caret');
+    if (!menu) return;
+    const isHidden = menu.style.display === 'none' || !menu.style.display;
+    menu.style.display = isHidden ? 'block' : 'none';
+    if (caret) caret.innerText = isHidden ? '▲' : '▼';
+  }
+
+  function updateActiveIndicatorCount() {
+    const ids = ['vol', 'ema9', 'ema20', 'ema50', 'sma200', 'vwap', 'bb', 'rsi', 'pivot', 'cpr', 'supertrend', 'atr'];
+    let count = 0;
+    const activePills = [];
+    ids.forEach(id => {
+      const el = document.getElementById('nc-toggle-' + id);
+      if (el && el.checked) {
+        count++;
+        let label = id.toUpperCase();
+        if (id === 'vol') label = 'Vol';
+        else if (id === 'supertrend') label = 'ST(10,3)';
+        else if (id === 'pivot') label = 'Pivot';
+        else if (id === 'cpr') label = 'CPR';
+        else if (id === 'atr') label = 'ATR';
+        else if (id === 'ema9') label = 'EMA9';
+        else if (id === 'ema20') label = 'EMA20';
+        else if (id === 'ema50') label = 'EMA50';
+        else if (id === 'sma200') label = 'SMA200';
+        else if (id === 'vwap') label = 'VWAP';
+        else if (id === 'bb') label = 'BB';
+        else if (id === 'rsi') label = 'RSI';
+        activePills.push({ id: id, label: label });
+      }
+    });
+
+    const countEl = document.getElementById('indicator-active-count');
+    if (countEl) countEl.innerText = count;
+
+    const pillsCont = document.getElementById('active-indicators-pills');
+    if (pillsCont) {
+      if (count === 0) {
+        pillsCont.innerHTML = '<span style="font-size: 0.68rem; color: var(--text-secondary); font-style: italic;">No indicators active</span>';
+      } else {
+        pillsCont.innerHTML = activePills.map(item => {
+          let col = '#38bdf8';
+          if (item.id === 'ema9' || item.id === 'pivot') col = '#facc15';
+          else if (item.id === 'ema50') col = '#fb923c';
+          else if (item.id === 'sma200') col = '#c084fc';
+          else if (item.id === 'vwap' || item.id === 'atr') col = '#f43f5e';
+          else if (item.id === 'bb') col = '#60a5fa';
+          else if (item.id === 'rsi') col = '#a855f7';
+          else if (item.id === 'supertrend' || item.id === 'vol') col = '#10b981';
+          return `<span style="display: inline-flex; align-items: center; gap: 4px; background: rgba(30, 41, 59, 0.85); border: 1px solid ${col}; color: ${col}; font-size: 0.64rem; font-weight: 700; padding: 1px 7px; border-radius: 4px;">` +
+                 item.label +
+                 ` <span onclick="event.stopPropagation(); uncheckIndicator('${item.id}');" style="cursor: pointer; opacity: 0.75; font-weight: 900; margin-left: 3px;" title="Turn off ${item.label}">×</span>` +
+                 `</span>`;
+        }).join('');
+      }
+    }
+  }
+
+  function uncheckIndicator(id) {
+    const el = document.getElementById('nc-toggle-' + id);
+    if (el) {
+      el.checked = false;
+      toggleIndicator(id);
+    }
+  }
+
+  function setAllIndicators(enable) {
+    const ids = ['vol', 'ema9', 'ema20', 'ema50', 'sma200', 'vwap', 'bb', 'rsi', 'pivot', 'cpr', 'supertrend', 'atr'];
+    ids.forEach(id => {
+      const el = document.getElementById('nc-toggle-' + id);
+      if (el) {
+        el.checked = enable;
+        toggleIndicator(id);
+      }
+    });
+  }
+
+  function resetDefaultIndicators() {
+    const defaults = { vol: true, ema9: true, ema20: true, cpr: true, supertrend: true };
+    const ids = ['vol', 'ema9', 'ema20', 'ema50', 'sma200', 'vwap', 'bb', 'rsi', 'pivot', 'cpr', 'supertrend', 'atr'];
+    ids.forEach(id => {
+      const el = document.getElementById('nc-toggle-' + id);
+      if (el) {
+        el.checked = !!defaults[id];
+        toggleIndicator(id);
+      }
+    });
+  }
+
+  function saveIndicatorPreferences() {
+    const ids = ['vol', 'ema9', 'ema20', 'ema50', 'sma200', 'vwap', 'bb', 'rsi', 'pivot', 'cpr', 'supertrend', 'atr'];
+    const prefs = {};
+    ids.forEach(id => {
+      const el = document.getElementById('nc-toggle-' + id);
+      if (el) prefs[id] = el.checked;
+    });
+    try {
+      localStorage.setItem('nifty_trader_indicator_prefs', JSON.stringify(prefs));
+    } catch (e) {}
+  }
+
+  function loadIndicatorPreferences() {
+    try {
+      const saved = localStorage.getItem('nifty_trader_indicator_prefs');
+      if (saved) {
+        const prefs = JSON.parse(saved);
+        Object.keys(prefs).forEach(id => {
+          const el = document.getElementById('nc-toggle-' + id);
+          if (el && typeof prefs[id] === 'boolean') {
+            el.checked = prefs[id];
+            toggleIndicator(id);
+          }
+        });
+      }
+    } catch (e) {}
+    updateActiveIndicatorCount();
+  }
+
+  document.addEventListener('click', function(e) {
+    const menu = document.getElementById('indicators-dropdown-menu');
+    const btn = document.getElementById('btn-indicators-dropdown');
+    if (menu && menu.style.display !== 'none' && !menu.contains(e.target) && btn && !btn.contains(e.target)) {
+      menu.style.display = 'none';
+      const caret = document.getElementById('indicator-caret');
+      if (caret) caret.innerText = '▼';
+    }
+  });
+
   function updateOhlcvDisplay(o, h, l, c, v) {
     const elO = document.getElementById('nc-open');
     const elH = document.getElementById('nc-high');
@@ -5210,6 +5765,10 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     const rsiCont = document.getElementById('tv-rsi-chart-canvas');
     if (_lwRsiChart && rsiCont && rsiCont.clientHeight > 0) {
       _lwRsiChart.applyOptions({ width: rsiCont.clientWidth, height: rsiCont.clientHeight });
+    }
+    const atrCont = document.getElementById('tv-atr-chart-canvas');
+    if (_lwAtrChart && atrCont && atrCont.clientHeight > 0) {
+      _lwAtrChart.applyOptions({ width: atrCont.clientWidth, height: atrCont.clientHeight });
     }
     resizeQuadCharts();
   }
@@ -5267,6 +5826,53 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       if (_lwBbLowerSeries) _lwBbLowerSeries.applyOptions({ visible: show });
     }
 
+    if (ind === 'pivot') {
+      if (_lwPivotPpSeries) _lwPivotPpSeries.applyOptions({ visible: show });
+      if (_lwPivotR1Series) _lwPivotR1Series.applyOptions({ visible: show });
+      if (_lwPivotS1Series) _lwPivotS1Series.applyOptions({ visible: show });
+      if (_lwPivotR2Series) _lwPivotR2Series.applyOptions({ visible: show });
+      if (_lwPivotS2Series) _lwPivotS2Series.applyOptions({ visible: show });
+    }
+
+    if (ind === 'cpr') {
+      if (_lwCprTcSeries) _lwCprTcSeries.applyOptions({ visible: show });
+      if (_lwCprPivotSeries) _lwCprPivotSeries.applyOptions({ visible: show });
+      if (_lwCprBcSeries) _lwCprBcSeries.applyOptions({ visible: show });
+      const cprLeg = document.getElementById('nc-legend-cpr-box');
+      if (cprLeg) cprLeg.style.display = show ? 'inline' : 'none';
+    }
+
+    if (ind === 'supertrend' || ind === 'st') {
+      if (_lwSupertrendBullSeries) _lwSupertrendBullSeries.applyOptions({ visible: show });
+      if (_lwSupertrendBearSeries) _lwSupertrendBearSeries.applyOptions({ visible: show });
+      const stLeg = document.getElementById('nc-legend-st-box');
+      if (stLeg) stLeg.style.display = show ? 'inline' : 'none';
+    }
+
+    if (ind === 'atr') {
+      const atrCont = document.getElementById('tv-atr-container');
+      const atrLeg = document.getElementById('nc-legend-atr-box');
+      if (atrLeg) atrLeg.style.display = show ? 'inline' : 'none';
+      if (atrCont) {
+        atrCont.style.display = show ? 'block' : 'none';
+        if (show) {
+          if (!_lwAtrChart) initAtrChart();
+          if (_cachedCandles && _cachedCandles.length > 0) {
+            const standardCandles = _cachedCandles.map(c => ({
+              time: c.time,
+              open: c.open,
+              high: c.high,
+              low: c.low,
+              close: c.close
+            }));
+            const atrData = calculateATR(standardCandles, 14);
+            if (_lwAtrSeries) _lwAtrSeries.setData(atrData);
+          }
+        }
+        setTimeout(resizeCharts, 50);
+      }
+    }
+
     if (ind === 'rsi') {
       const rsiCont = document.getElementById('tv-rsi-container');
       if (rsiCont) {
@@ -5281,6 +5887,9 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         setTimeout(resizeCharts, 50);
       }
     }
+
+    updateActiveIndicatorCount();
+    saveIndicatorPreferences();
   }
 
   let _customLines = []; // { id, price, label, color, style, pLineRef }
@@ -6026,6 +6635,82 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         visible: false,
       });
 
+      // Standard Pivot Points
+      const isPivotVisible = document.getElementById('nc-toggle-pivot') ? document.getElementById('nc-toggle-pivot').checked : false;
+      _lwPivotPpSeries = _lwChart.addLineSeries({
+        color: '#facc15',
+        lineWidth: 2,
+        title: 'Pivot (PP)',
+        visible: isPivotVisible,
+      });
+      _lwPivotR1Series = _lwChart.addLineSeries({
+        color: '#ef4444',
+        lineWidth: 1,
+        lineStyle: LightweightCharts.LineStyle.Dashed,
+        title: 'R1',
+        visible: isPivotVisible,
+      });
+      _lwPivotS1Series = _lwChart.addLineSeries({
+        color: '#10b981',
+        lineWidth: 1,
+        lineStyle: LightweightCharts.LineStyle.Dashed,
+        title: 'S1',
+        visible: isPivotVisible,
+      });
+      _lwPivotR2Series = _lwChart.addLineSeries({
+        color: '#dc2626',
+        lineWidth: 1,
+        lineStyle: LightweightCharts.LineStyle.Dotted,
+        title: 'R2',
+        visible: isPivotVisible,
+      });
+      _lwPivotS2Series = _lwChart.addLineSeries({
+        color: '#059669',
+        lineWidth: 1,
+        lineStyle: LightweightCharts.LineStyle.Dotted,
+        title: 'S2',
+        visible: isPivotVisible,
+      });
+
+      // CPR (Central Pivot Range: TC, Pivot, BC)
+      const isCprVisible = document.getElementById('nc-toggle-cpr') ? document.getElementById('nc-toggle-cpr').checked : false;
+      _lwCprTcSeries = _lwChart.addLineSeries({
+        color: '#38bdf8',
+        lineWidth: 2,
+        title: 'CPR TC',
+        visible: isCprVisible,
+      });
+      _lwCprPivotSeries = _lwChart.addLineSeries({
+        color: '#f59e0b',
+        lineWidth: 2,
+        lineStyle: LightweightCharts.LineStyle.Dashed,
+        title: 'CPR Pivot',
+        visible: isCprVisible,
+      });
+      _lwCprBcSeries = _lwChart.addLineSeries({
+        color: '#c084fc',
+        lineWidth: 2,
+        title: 'CPR BC',
+        visible: isCprVisible,
+      });
+
+      // Supertrend (ST Point)
+      const isStVisible = document.getElementById('nc-toggle-supertrend') ? document.getElementById('nc-toggle-supertrend').checked : false;
+      _lwSupertrendBullSeries = _lwChart.addLineSeries({
+        color: '#10b981',
+        lineWidth: 2,
+        title: 'ST Bull',
+        visible: isStVisible,
+      });
+      _lwSupertrendBearSeries = _lwChart.addLineSeries({
+        color: '#ef4444',
+        lineWidth: 2,
+        title: 'ST Bear',
+        visible: isStVisible,
+      });
+
+      loadIndicatorPreferences();
+
       _lwChart.subscribeCrosshairMove(param => {
         if (!param || !param.time || !param.seriesData) return;
         const candle = param.seriesData.get(_lwCandleSeries);
@@ -6113,6 +6798,60 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         const rsiEl = document.getElementById('nc-rsi-val');
         if (rsiEl) rsiEl.innerText = lastRsi.toFixed(1);
       }
+    }
+
+    // 1. Standard Floor Pivot Points
+    const pivots = calculatePivots(standardCandles);
+    if (_lwPivotPpSeries) _lwPivotPpSeries.setData(pivots.pp);
+    if (_lwPivotR1Series) _lwPivotR1Series.setData(pivots.r1);
+    if (_lwPivotS1Series) _lwPivotS1Series.setData(pivots.s1);
+    if (_lwPivotR2Series) _lwPivotR2Series.setData(pivots.r2);
+    if (_lwPivotS2Series) _lwPivotS2Series.setData(pivots.s2);
+
+    // 2. CPR (Central Pivot Range: TC, Pivot, BC)
+    const cpr = calculateCPR(standardCandles);
+    if (_lwCprTcSeries) _lwCprTcSeries.setData(cpr.tc);
+    if (_lwCprPivotSeries) _lwCprPivotSeries.setData(cpr.pivot);
+    if (_lwCprBcSeries) _lwCprBcSeries.setData(cpr.bc);
+    if (cpr.pivot && cpr.pivot.length > 0) {
+      const lastP = cpr.pivot[cpr.pivot.length - 1].value;
+      const lastTc = cpr.tc[cpr.tc.length - 1].value;
+      const lastBc = cpr.bc[cpr.bc.length - 1].value;
+      const cprWidth = Math.abs(lastTc - lastBc);
+      const cprPct = (cprWidth / (lastP || 1)) * 100;
+      const tag = cprPct < 0.25 ? 'Narrow (Trending)' : (cprPct > 0.55 ? 'Wide (Rangebound)' : 'Average');
+      const cprEl = document.getElementById('nc-cpr-legend');
+      if (cprEl) cprEl.innerText = `${lastP.toFixed(1)} (${tag})`;
+    }
+
+    // 3. Supertrend (ST Point)
+    const stData = calculateSupertrend(standardCandles, 10, 3);
+    if (_lwSupertrendBullSeries) _lwSupertrendBullSeries.setData(stData.bull);
+    if (_lwSupertrendBearSeries) _lwSupertrendBearSeries.setData(stData.bear);
+    if (stData.bull.length > 0 || stData.bear.length > 0) {
+      const lastBull = stData.bull.length > 0 ? stData.bull[stData.bull.length - 1] : null;
+      const lastBear = stData.bear.length > 0 ? stData.bear[stData.bear.length - 1] : null;
+      const stEl = document.getElementById('nc-st-legend');
+      if (stEl) {
+        if (lastBull && (!lastBear || lastBull.time >= lastBear.time)) {
+          stEl.innerText = `▲ ${lastBull.value.toFixed(1)} Bull`;
+          stEl.style.color = '#10b981';
+        } else if (lastBear) {
+          stEl.innerText = `▼ ${lastBear.value.toFixed(1)} Bear`;
+          stEl.style.color = '#ef4444';
+        }
+      }
+    }
+
+    // 4. ATR
+    const atrData = calculateATR(standardCandles, 14);
+    if (_lwAtrSeries) _lwAtrSeries.setData(atrData);
+    if (atrData.length > 0) {
+      const lastAtr = atrData[atrData.length - 1].value;
+      const atrValEl = document.getElementById('nc-atr-val');
+      if (atrValEl) atrValEl.innerText = `${lastAtr.toFixed(2)} pts`;
+      const atrLegEl = document.getElementById('nc-atr-legend');
+      if (atrLegEl) atrLegEl.innerText = `${lastAtr.toFixed(1)} pts`;
     }
     setTimeout(renderCustomZones, 30);
   }
