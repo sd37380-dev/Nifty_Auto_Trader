@@ -31,6 +31,44 @@ class AutomatedBacktester:
     def __init__(self, db_path: Optional[Path] = None):
         self.db_path = db_path or DEFAULT_MARKET_DB
 
+    @staticmethod
+    def get_custom_strategies_dir() -> Path:
+        p = Path(__file__).resolve().parent / "custom_strategies"
+        p.mkdir(parents=True, exist_ok=True)
+        return p
+
+    def list_custom_strategies(self) -> List[Dict[str, Any]]:
+        cdir = self.get_custom_strategies_dir()
+        files = []
+        for f in cdir.glob("*.py"):
+            if f.name == "__init__.py":
+                continue
+            files.append({
+                "filename": f.name,
+                "name": f.stem.replace("_", " ").title(),
+                "path": str(f),
+                "modified": datetime.fromtimestamp(f.stat().st_mtime, timezone.utc).strftime("%Y-%m-%d %H:%M"),
+                "size_bytes": f.stat().st_size,
+            })
+        return sorted(files, key=lambda x: x["filename"])
+
+    def read_custom_strategy(self, filename: str) -> str:
+        cdir = self.get_custom_strategies_dir()
+        safe_name = Path(filename).name
+        target = cdir / safe_name
+        if not target.exists():
+            raise FileNotFoundError(f"Strategy file '{safe_name}' not found.")
+        return target.read_text(encoding="utf-8")
+
+    def save_custom_strategy(self, filename: str, code: str) -> Dict[str, Any]:
+        cdir = self.get_custom_strategies_dir()
+        safe_name = Path(filename).name
+        if not safe_name.endswith(".py"):
+            safe_name += ".py"
+        target = cdir / safe_name
+        target.write_text(code, encoding="utf-8")
+        return {"status": "ok", "filename": safe_name, "path": str(target)}
+
     def get_available_datasets(self) -> Dict[str, Any]:
         """Returns metadata about available symbols, timeframes, and date spans."""
         if not self.db_path.exists():
@@ -366,6 +404,92 @@ class AutomatedBacktester:
                 df["long_condition"] = cross_long
             if direction in ("BOTH", "SHORT_ONLY"):
                 df["short_condition"] = cross_short
+
+        # Strategy 7: Custom Python Strategy (.py file or dynamic code)
+        elif strategy in ("custom_py", "custom_file", "custom_strategy"):
+            custom_file = params.get("custom_file") or params.get("strategy_file")
+            custom_code = params.get("custom_code")
+
+            mod_scope = {
+                "np": np,
+                "pd": pd,
+                "__name__": "__custom_strategy__",
+            }
+            if custom_code and custom_code.strip():
+                exec(custom_code, mod_scope)
+            elif custom_file:
+                file_path = Path(custom_file)
+                if not file_path.is_absolute():
+                    custom_dir = Path(__file__).resolve().parent / "custom_strategies"
+                    candidate = custom_dir / file_path.name
+                    if candidate.exists():
+                        file_path = candidate
+                    else:
+                        file_path = Path(__file__).resolve().parent.parent.parent / custom_file
+                if not file_path.exists():
+                    raise FileNotFoundError(f"Custom strategy file not found: {custom_file}")
+                with open(file_path, "r", encoding="utf-8") as f:
+                    code = f.read()
+                exec(code, mod_scope)
+            else:
+                default_path = Path(__file__).resolve().parent / "custom_strategies" / "multi_factor_strategy.py"
+                if default_path.exists():
+                    with open(default_path, "r", encoding="utf-8") as f:
+                        code = f.read()
+                    exec(code, mod_scope)
+                else:
+                    raise ValueError("No custom strategy file (.py) or code provided.")
+
+            entry_fn = mod_scope.get("generate_signals") or mod_scope.get("apply_strategy") or mod_scope.get("calculate_signals")
+            if not entry_fn:
+                raise AttributeError("Custom strategy file must define a function named 'generate_signals(df, params)'.")
+
+            res = entry_fn(df, params)
+            if isinstance(res, tuple):
+                df_res, custom_overlays = res
+            else:
+                df_res = res
+                custom_overlays = {}
+
+            if "long_condition" not in df_res.columns or "short_condition" not in df_res.columns:
+                raise ValueError("Custom strategy must return df with 'long_condition' and 'short_condition' boolean columns.")
+
+            direction = params.get("direction", "BOTH").upper()
+            if direction in ("BOTH", "LONG_ONLY"):
+                df["long_condition"] = df_res["long_condition"].fillna(False).astype(bool)
+            if direction in ("BOTH", "SHORT_ONLY"):
+                df["short_condition"] = df_res["short_condition"].fillna(False).astype(bool)
+
+            palette = ["#38bdf8", "#f59e0b", "#10b981", "#ef4444", "#c084fc", "#ec4899", "#14b8a6"]
+            if isinstance(custom_overlays, dict):
+                for idx, (name, ov_info) in enumerate(custom_overlays.items()):
+                    color = palette[idx % len(palette)]
+                    if isinstance(ov_info, dict) and "series" in ov_info:
+                        col_name = f"_ov_{abs(hash(name)) % 100000}_{idx}"
+                        df[col_name] = ov_info["series"]
+                        overlay_lines[name] = {
+                            "color": ov_info.get("color", color),
+                            "col": col_name,
+                        }
+                    elif isinstance(ov_info, (pd.Series, np.ndarray, list)):
+                        col_name = f"_ov_{abs(hash(name)) % 100000}_{idx}"
+                        df[col_name] = ov_info
+                        overlay_lines[name] = {
+                            "color": color,
+                            "col": col_name,
+                        }
+            elif isinstance(custom_overlays, (list, tuple)):
+                for idx, item in enumerate(custom_overlays):
+                    color = palette[idx % len(palette)]
+                    if isinstance(item, dict):
+                        name = item.get("name", f"Overlay {idx+1}")
+                        c = item.get("color", color)
+                        if "series" in item:
+                            col_name = f"_ov_{abs(hash(name)) % 100000}_{idx}"
+                            df[col_name] = item["series"]
+                            overlay_lines[name] = {"color": c, "col": col_name}
+                        elif "col" in item and item["col"] in df.columns:
+                            overlay_lines[name] = {"color": c, "col": item["col"]}
 
         return df, overlay_lines
 

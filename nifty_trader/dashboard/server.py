@@ -3003,7 +3003,8 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       <div style="background: rgba(0,0,0,0.25); padding: 12px; border-radius: 6px; border: 1px solid var(--border);">
         <label style="display: block; font-size: 0.72rem; color: #38bdf8; font-weight: 700; margin-bottom: 6px; text-transform: uppercase;">1. Algorithmic Strategy</label>
         <select id="bt-strategy-select" onchange="onBacktestStrategyChange()" style="width: 100%; background: var(--bg-main); color: var(--text-primary); border: 1px solid var(--border); border-radius: 6px; padding: 7px 10px; font-size: 0.82rem; font-weight: 700; margin-bottom: 10px;">
-          <option value="ema_crossover" selected>📈 EMA Trend Crossover (Fast/Slow + RSI)</option>
+          <option value="custom_py" selected>🐍 Custom Strategy Python File (.py) [Multi-Factor]</option>
+          <option value="ema_crossover">📈 EMA Trend Crossover (Fast/Slow + RSI)</option>
           <option value="supertrend">🟢 Supertrend ATR Trend Following</option>
           <option value="breakout_sr">📦 Support / Resistance High-Low Breakout</option>
           <option value="vwap_reversion">🎯 Intraday VWAP Mean Reversion Bands</option>
@@ -3011,8 +3012,49 @@ DASHBOARD_HTML = """<!DOCTYPE html>
           <option value="custom_rules">🛠️ Custom Indicator Rule Builder</option>
         </select>
 
+        <!-- Dynamic Strategy Parameters Container: Custom Python Strategy (.py) -->
+        <div id="bt-params-custom-py" class="bt-param-group">
+          <div style="margin-bottom: 8px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+              <label style="font-size: 0.68rem; color: #38bdf8; font-weight: 700; display: block;">Select .py Strategy File</label>
+              <span id="bt-py-file-status" style="font-size: 0.68rem; color: #10b981; font-weight: 600;">multi_factor_strategy.py</span>
+            </div>
+            <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+              <select id="bt-custom-py-file" onchange="onSelectCustomPyFile(this.value)" style="flex: 1; min-width: 140px; background: var(--bg-main); color: var(--text-primary); border: 1px solid var(--border); border-radius: 4px; padding: 5px 8px; font-size: 0.78rem; font-weight: 700;">
+                <option value="multi_factor_strategy.py" selected>multi_factor_strategy.py (Template)</option>
+              </select>
+              <button type="button" onclick="triggerUploadCustomPyFile()" class="btn" style="background: #1e293b; color: #38bdf8; border: 1px solid #38bdf8; padding: 4px 8px; font-size: 0.72rem; font-weight: 700; border-radius: 4px; cursor: pointer;" title="Upload custom .py strategy file from disk">
+                📂 Upload .py
+              </button>
+              <input type="file" id="bt-py-file-upload-input" accept=".py" style="display: none;" onchange="handleUploadCustomPyFile(this)">
+              <button type="button" onclick="createNewCustomPyFile()" class="btn" style="background: #1e293b; color: #10b981; border: 1px solid #10b981; padding: 4px 8px; font-size: 0.72rem; font-weight: 700; border-radius: 4px; cursor: pointer;" title="Create new .py file">
+                ➕ New
+              </button>
+              <button type="button" onclick="saveCustomStrategyCode()" class="btn" style="background: #0284c7; color: white; border: none; padding: 4px 10px; font-size: 0.72rem; font-weight: 700; border-radius: 4px; cursor: pointer;" title="Save edited code to disk">
+                💾 Save
+              </button>
+            </div>
+          </div>
+
+          <!-- Code Editor Area -->
+          <div style="position: relative; border-radius: 6px; overflow: hidden; border: 1px solid var(--border); background: #080c14;">
+            <div style="display: flex; justify-content: space-between; align-items: center; background: #0f172a; padding: 4px 10px; border-bottom: 1px solid var(--border);">
+              <span id="bt-code-filename-label" style="font-size: 0.70rem; color: #38bdf8; font-family: monospace; font-weight: 700;">multi_factor_strategy.py</span>
+              <div style="display: flex; gap: 6px; align-items: center;">
+                <span id="bt-code-syntax-badge" class="badge badge-green" style="font-size: 0.62rem; padding: 1px 5px;">Python 3</span>
+                <button type="button" onclick="toggleCodeEditorFullscreen()" class="btn" style="background: transparent; color: var(--text-secondary); border: none; font-size: 0.72rem; cursor: pointer; padding: 0 4px;" title="Toggle editor height">⛶ Resize</button>
+              </div>
+            </div>
+            <textarea id="bt-custom-py-code" spellcheck="false" placeholder="# Loading Python strategy code..." style="width: 100%; height: 210px; background: #080c14; color: #e2e8f0; font-family: 'Consolas', 'Fira Code', Courier, monospace; font-size: 0.74rem; line-height: 1.45; padding: 8px 10px; border: none; outline: none; resize: vertical; tab-size: 4; white-space: pre;" onkeydown="handleCodeTextareaTab(event)"></textarea>
+          </div>
+
+          <div style="margin-top: 6px; font-size: 0.68rem; color: #94a3b8; line-height: 1.4;">
+            💡 <strong>Multi-Factor Rule:</strong> Your script must define <code style="color:#38bdf8;">generate_signals(df, params)</code> returning <code style="color:#10b981;">(df, overlays)</code> with boolean columns <code style="color:#f59e0b;">df['long_condition']</code> &amp; <code style="color:#f59e0b;">df['short_condition']</code>.
+          </div>
+        </div>
+
         <!-- Dynamic Strategy Parameters Container -->
-        <div id="bt-params-ema" class="bt-param-group">
+        <div id="bt-params-ema" class="bt-param-group" style="display: none;">
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
             <div>
               <label style="font-size: 0.68rem; color: var(--text-secondary); display: block;">Fast EMA</label>
@@ -8209,6 +8251,9 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       })
       .catch(() => {});
 
+    // Populate custom strategies dropdown and load active .py code
+    fetchCustomStrategiesList();
+
     // Resize charts if already rendered
     setTimeout(() => {
       if (_btChart) {
@@ -8224,11 +8269,211 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     }, 150);
   }
 
+  // --- Custom Python Strategy Management ---
+  async function fetchCustomStrategiesList() {
+    try {
+      const resp = await fetch('/api/backtest/custom_strategies');
+      if (!resp.ok) return;
+      const data = await resp.json();
+      if (data.status === 'ok' && data.strategies) {
+        const select = document.getElementById('bt-custom-py-file');
+        if (!select) return;
+        const currentVal = select.value || 'multi_factor_strategy.py';
+        select.innerHTML = data.strategies.map(s => {
+          const isSel = s.filename === currentVal ? 'selected' : '';
+          return `<option value="${s.filename}" ${isSel}>${s.filename} (${(s.size_bytes / 1024).toFixed(1)} KB)</option>`;
+        }).join('');
+
+        // If current value is in list, keep it; else select first
+        const activeFile = select.value || (data.strategies[0] ? data.strategies[0].filename : 'multi_factor_strategy.py');
+        onSelectCustomPyFile(activeFile);
+      }
+    } catch (e) {
+      console.warn('Error fetching custom strategies list:', e);
+    }
+  }
+
+  async function onSelectCustomPyFile(filename) {
+    if (!filename) return;
+    const label = document.getElementById('bt-code-filename-label');
+    const status = document.getElementById('bt-py-file-status');
+    const textarea = document.getElementById('bt-custom-py-code');
+
+    if (label) label.innerText = filename;
+    if (status) status.innerText = `Loading ${filename}...`;
+
+    try {
+      const resp = await fetch(`/api/backtest/custom_strategy_code?filename=${encodeURIComponent(filename)}`);
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const data = await resp.json();
+      if (data.status === 'ok' && textarea) {
+        textarea.value = data.code || '';
+        if (status) {
+          status.style.color = '#10b981';
+          status.innerText = `Loaded: ${filename}`;
+        }
+      }
+    } catch (err) {
+      if (status) {
+        status.style.color = '#ef4444';
+        status.innerText = `Failed to load ${filename}`;
+      }
+    }
+  }
+
+  function triggerUploadCustomPyFile() {
+    const input = document.getElementById('bt-py-file-upload-input');
+    if (input) input.click();
+  }
+
+  function handleUploadCustomPyFile(input) {
+    if (!input || !input.files || input.files.length === 0) return;
+    const file = input.files[0];
+    if (!file.name.endsWith('.py')) {
+      alert('Please select a valid Python (.py) file.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = async function(e) {
+      const code = e.target.result;
+      try {
+        const resp = await fetch('/api/backtest/save_custom_strategy', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ filename: file.name, code: code }),
+        });
+        const res = await resp.json();
+        if (res.status === 'ok') {
+          alert(`✅ Strategy '${file.name}' uploaded and saved!`);
+          await fetchCustomStrategiesList();
+          const sel = document.getElementById('bt-custom-py-file');
+          if (sel) sel.value = file.name;
+          onSelectCustomPyFile(file.name);
+        } else {
+          alert(`Upload failed: ${res.message || 'Unknown error'}`);
+        }
+      } catch (err) {
+        alert(`Error uploading file: ${err.message}`);
+      }
+    };
+    reader.readAsText(file);
+    input.value = '';
+  }
+
+  async function createNewCustomPyFile() {
+    let name = prompt('Enter new Python strategy filename:', 'my_strategy.py');
+    if (!name) return;
+    name = name.trim();
+    if (!name.endsWith('.py')) name += '.py';
+
+    const defaultTemplate = `# Custom Multi-Factor Strategy: ` + name + String.fromCharCode(10) +
+`import numpy as np` + String.fromCharCode(10) +
+`import pandas as pd` + String.fromCharCode(10) + String.fromCharCode(10) +
+`def generate_signals(df: pd.DataFrame, params: dict):` + String.fromCharCode(10) +
+`    df = df.copy()` + String.fromCharCode(10) +
+`    close = df['close']` + String.fromCharCode(10) +
+`    # Factor 1: Moving average trend` + String.fromCharCode(10) +
+`    df['ema_fast'] = close.ewm(span=params.get('fast_ema', 9), adjust=False).mean()` + String.fromCharCode(10) +
+`    df['ema_slow'] = close.ewm(span=params.get('slow_ema', 21), adjust=False).mean()` + String.fromCharCode(10) +
+`    # Factor 2: RSI momentum` + String.fromCharCode(10) +
+`    delta = close.diff()` + String.fromCharCode(10) +
+`    gain = delta.clip(lower=0).ewm(com=13).mean()` + String.fromCharCode(10) +
+`    loss = (-delta.clip(upper=0)).ewm(com=13).mean()` + String.fromCharCode(10) +
+`    df['rsi'] = 100 - (100 / (1 + gain / (loss + 1e-9)))` + String.fromCharCode(10) + String.fromCharCode(10) +
+`    # Confluence signals` + String.fromCharCode(10) +
+`    df['long_condition'] = (df['ema_fast'] > df['ema_slow']) & (df['ema_fast'].shift(1) <= df['ema_slow'].shift(1)) & (df['rsi'] >= 50)` + String.fromCharCode(10) +
+`    df['short_condition'] = (df['ema_fast'] < df['ema_slow']) & (df['ema_fast'].shift(1) >= df['ema_slow'].shift(1)) & (df['rsi'] <= 50)` + String.fromCharCode(10) + String.fromCharCode(10) +
+`    overlays = {` + String.fromCharCode(10) +
+`        'Fast EMA': {'color': '#38bdf8', 'series': df['ema_fast']},` + String.fromCharCode(10) +
+`        'Slow EMA': {'color': '#f59e0b', 'series': df['ema_slow']},` + String.fromCharCode(10) +
+`    }` + String.fromCharCode(10) +
+`    return df, overlays` + String.fromCharCode(10);
+
+    try {
+      const resp = await fetch('/api/backtest/save_custom_strategy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filename: name, code: defaultTemplate }),
+      });
+      const res = await resp.json();
+      if (res.status === 'ok') {
+        await fetchCustomStrategiesList();
+        const sel = document.getElementById('bt-custom-py-file');
+        if (sel) sel.value = name;
+        onSelectCustomPyFile(name);
+      }
+    } catch (e) {
+      alert(`Error creating strategy: ${e.message}`);
+    }
+  }
+
+  async function saveCustomStrategyCode() {
+    const sel = document.getElementById('bt-custom-py-file');
+    const textarea = document.getElementById('bt-custom-py-code');
+    const status = document.getElementById('bt-py-file-status');
+    if (!sel || !textarea) return;
+
+    const filename = sel.value || 'multi_factor_strategy.py';
+    const code = textarea.value;
+
+    if (status) {
+      status.style.color = '#38bdf8';
+      status.innerText = `Saving ${filename}...`;
+    }
+
+    try {
+      const resp = await fetch('/api/backtest/save_custom_strategy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filename: filename, code: code }),
+      });
+      const data = await resp.json();
+      if (data.status === 'ok') {
+        if (status) {
+          status.style.color = '#10b981';
+          status.innerText = `✅ Saved ${filename} successfully!`;
+          setTimeout(() => {
+            status.innerText = filename;
+          }, 3000);
+        }
+      } else {
+        throw new Error(data.message || 'Save failed');
+      }
+    } catch (err) {
+      if (status) {
+        status.style.color = '#ef4444';
+        status.innerText = `Save failed: ${err.message}`;
+      }
+    }
+  }
+
+  function handleCodeTextareaTab(event) {
+    if (event.key === 'Tab') {
+      event.preventDefault();
+      const ta = event.target;
+      const start = ta.selectionStart;
+      const end = ta.selectionEnd;
+      ta.value = ta.value.substring(0, start) + '    ' + ta.value.substring(end);
+      ta.selectionStart = ta.selectionEnd = start + 4;
+    }
+  }
+
+  let _codeEditorExpanded = false;
+  function toggleCodeEditorFullscreen() {
+    const ta = document.getElementById('bt-custom-py-code');
+    if (!ta) return;
+    _codeEditorExpanded = !_codeEditorExpanded;
+    ta.style.height = _codeEditorExpanded ? '460px' : '210px';
+  }
+
   function onBacktestStrategyChange() {
     const strat = document.getElementById('bt-strategy-select').value;
     document.querySelectorAll('.bt-param-group').forEach(el => el.style.display = 'none');
 
-    if (strat === 'ema_crossover') {
+    if (strat === 'custom_py') {
+      const el = document.getElementById('bt-params-custom-py');
+      if (el) el.style.display = 'block';
+    } else if (strat === 'ema_crossover') {
       const el = document.getElementById('bt-params-ema');
       if (el) el.style.display = 'block';
     } else if (strat === 'supertrend') {
@@ -8305,7 +8550,12 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     };
 
     // Strategy-specific parameters
-    if (strategy === 'ema_crossover') {
+    if (strategy === 'custom_py') {
+      const fileSel = document.getElementById('bt-custom-py-file');
+      const codeTa = document.getElementById('bt-custom-py-code');
+      params.custom_file = fileSel ? fileSel.value : 'multi_factor_strategy.py';
+      params.custom_code = codeTa ? codeTa.value : '';
+    } else if (strategy === 'ema_crossover') {
       params.fast_ema = parseInt(document.getElementById('bt-ema-fast').value || 9, 10);
       params.slow_ema = parseInt(document.getElementById('bt-ema-slow').value || 21, 10);
       params.use_rsi = document.getElementById('bt-ema-use-rsi').checked;
@@ -9568,6 +9818,44 @@ class DashboardHTTPRequestHandler(BaseHTTPRequestHandler):
                 self.end_headers()
                 self.wfile.write(json.dumps({"status": "error", "message": str(ex)}).encode("utf-8"))
                 return
+        elif self.path == "/api/backtest/custom_strategies":
+            try:
+                from nifty_trader.strategies.automated_backtester import AutomatedBacktester
+                bt = AutomatedBacktester()
+                strats = bt.list_custom_strategies()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": "ok", "strategies": strats}).encode("utf-8"))
+                return
+            except Exception as ex:
+                logger.exception("Error in /api/backtest/custom_strategies")
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": "error", "message": str(ex)}).encode("utf-8"))
+                return
+        elif self.path.startswith("/api/backtest/custom_strategy_code"):
+            try:
+                from urllib.parse import parse_qs, urlparse
+                parsed = urlparse(self.path)
+                params = parse_qs(parsed.query)
+                filename = params.get("filename", ["multi_factor_strategy.py"])[0]
+                from nifty_trader.strategies.automated_backtester import AutomatedBacktester
+                bt = AutomatedBacktester()
+                code = bt.read_custom_strategy(filename)
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": "ok", "filename": filename, "code": code}).encode("utf-8"))
+                return
+            except Exception as ex:
+                logger.exception("Error in /api/backtest/custom_strategy_code")
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": "error", "message": str(ex)}).encode("utf-8"))
+                return
         else:
             self.send_response(404)
             self.end_headers()
@@ -9960,6 +10248,28 @@ class DashboardHTTPRequestHandler(BaseHTTPRequestHandler):
                 return
             except Exception as ex:
                 logger.exception("Error in /api/backtest/run")
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": "error", "message": str(ex)}).encode("utf-8"))
+                return
+        elif self.path == "/api/backtest/save_custom_strategy":
+            try:
+                content_length = int(self.headers.get("Content-Length", 0))
+                body = self.rfile.read(content_length).decode("utf-8")
+                data = json.loads(body) if body else {}
+                filename = data.get("filename", "multi_factor_strategy.py")
+                code = data.get("code", "")
+                from nifty_trader.strategies.automated_backtester import AutomatedBacktester
+                bt = AutomatedBacktester()
+                res = bt.save_custom_strategy(filename, code)
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps(res).encode("utf-8"))
+                return
+            except Exception as ex:
+                logger.exception("Error in /api/backtest/save_custom_strategy")
                 self.send_response(500)
                 self.send_header("Content-Type", "application/json")
                 self.end_headers()
