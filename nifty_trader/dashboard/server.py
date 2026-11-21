@@ -247,6 +247,48 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   .badge-red { background: rgba(239, 68, 68, 0.12); color: var(--red); border-color: rgba(239, 68, 68, 0.3); }
   .badge-yellow { background: rgba(245, 158, 11, 0.12); color: var(--yellow); border-color: rgba(245, 158, 11, 0.3); }
 
+  /* Contributor Quick-Picks Pills */
+  .nc-contrib-pill {
+    background: #1e293b;
+    color: #cbd5e1;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 4px;
+    padding: 2px 7px;
+    font-size: 0.69rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.15s ease;
+  }
+  .nc-contrib-pill:hover {
+    background: #334155;
+    color: #38bdf8;
+    border-color: #38bdf8;
+    transform: translateY(-1px);
+  }
+  .nc-contrib-pill.active {
+    background: #0284c7;
+    color: #ffffff;
+    border-color: #38bdf8;
+    font-weight: 700;
+    box-shadow: 0 0 8px rgba(56, 189, 248, 0.35);
+  }
+  .weight-badge {
+    background: rgba(255, 255, 255, 0.12);
+    color: #fbbf24;
+    padding: 0 4px;
+    border-radius: 3px;
+    font-size: 0.63rem;
+    font-weight: 700;
+  }
+  .nc-contrib-pill.active .weight-badge {
+    background: rgba(0, 0, 0, 0.3);
+    color: #fef08a;
+  }
+
   .nav-tabs {
     display: flex;
     gap: 8px;
@@ -1782,24 +1824,90 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       <!-- Quick Dropdown Selection & Interval -->
       <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
         <span style="font-size: 0.74rem; color: var(--text-secondary); font-weight: 700;">Select:</span>
-        <select id="single-chart-symbol-dropdown" onchange="onSymbolDropdownChange(this.value)" style="background: #1e293b; color: #38bdf8; border: 1px solid #38bdf8; border-radius: 4px; padding: 3px 8px; font-size: 0.76rem; font-weight: 700; cursor: pointer;">
-          <option value="NIFTY">📊 NIFTY 50</option>
-          <option value="BANKNIFTY">🏦 BANKNIFTY</option>
-          <option value="GIFT NIFTY">🌐 GIFT NIFTY</option>
-          <option value="SENSEX">📈 BSE SENSEX</option>
-          <option value="FINNIFTY">💼 FINNIFTY</option>
-          <option value="MIDCPNIFTY">⚡ MIDCAP NIFTY</option>
-          <option value="RELIANCE">🏢 RELIANCE</option>
-          <option value="HDFCBANK">🏛️ HDFCBANK</option>
-          <option value="TCS">💻 TCS</option>
-          <option value="INFY">💻 INFY</option>
-          <option value="ICICIBANK">💳 ICICIBANK</option>
-          <option value="SBIN">🏦 SBIN</option>
-          <option value="AAPL">🍏 AAPL (NASDAQ)</option>
-          <option value="BTCUSD">₿ BTC/USD</option>
-          <option value="GOLD">🥇 GOLD Spot</option>
+        <select id="single-chart-symbol-dropdown" onchange="onSymbolDropdownChange(this.value)" style="background: #1e293b; color: #38bdf8; border: 1px solid #38bdf8; border-radius: 4px; padding: 3px 8px; font-size: 0.76rem; font-weight: 700; cursor: pointer; max-width: 175px;">
+          <optgroup label="📊 Major Indices" style="background: #0f172a; color: #94a3b8; font-weight: 700;">
+            <option value="NIFTY" selected>📊 NIFTY 50</option>
+            <option value="BANKNIFTY">🏦 BANKNIFTY</option>
+            <option value="GIFT NIFTY">🌐 GIFT NIFTY</option>
+            <option value="SENSEX">📈 BSE SENSEX</option>
+            <option value="FINNIFTY">💼 FINNIFTY</option>
+            <option value="MIDCPNIFTY">⚡ MIDCAP NIFTY</option>
+          </optgroup>
+          <optgroup label="🏦 BANK NIFTY Top Contributors (~95% Weight)" style="background: #0f172a; color: #38bdf8; font-weight: 700;">
+            <option value="HDFCBANK">🏛️ HDFCBANK (~28.5%)</option>
+            <option value="ICICIBANK">💳 ICICIBANK (~24.0%)</option>
+            <option value="SBIN">🏦 SBIN (~10.5%)</option>
+            <option value="AXISBANK">💳 AXISBANK (~9.5%)</option>
+            <option value="KOTAKBANK">🏦 KOTAKBANK (~8.5%)</option>
+            <option value="INDUSINDBK">🏛️ INDUSINDBK (~5.5%)</option>
+            <option value="BANKBARODA">🏦 BANKBARODA (~2.7%)</option>
+            <option value="PNB">🏦 PNB (~2.1%)</option>
+            <option value="AUBANK">💳 AUBANK (~2.0%)</option>
+            <option value="FEDERALBNK">🏦 FEDERALBNK (~1.9%)</option>
+            <option value="IDFCFIRSTB">🏛️ IDFCFIRSTB (~1.3%)</option>
+            <option value="BANDHANBNK">🏦 BANDHANBNK (~1.0%)</option>
+          </optgroup>
+          <optgroup label="🏆 NIFTY 50 Heavyweights (Non-Bank)" style="background: #0f172a; color: #34d399; font-weight: 700;">
+            <option value="RELIANCE">🏢 RELIANCE (~9.5%)</option>
+            <option value="INFY">💻 INFY (~5.6%)</option>
+            <option value="ITC">🚬 ITC (~4.3%)</option>
+            <option value="TCS">💻 TCS (~4.0%)</option>
+            <option value="LT">🏗️ LT (~3.9%)</option>
+            <option value="BHARTIARTL">📡 BHARTIARTL (~3.7%)</option>
+            <option value="BAJFINANCE">💰 BAJFINANCE (~2.1%)</option>
+            <option value="M&M">🚗 M&amp;M (~2.2%)</option>
+            <option value="HINDUNILVR">🧴 HINDUNILVR (~2.0%)</option>
+            <option value="MARUTI">🚗 MARUTI (~1.7%)</option>
+            <option value="TATASTEEL">🔩 TATASTEEL (~1.6%)</option>
+            <option value="SUNPHARMA">💊 SUNPHARMA (~1.5%)</option>
+            <option value="TITAN">⌚ TITAN (~1.4%)</option>
+            <option value="NTPC">⚡ NTPC (~1.4%)</option>
+            <option value="POWERGRID">⚡ POWERGRID (~1.2%)</option>
+            <option value="WIPRO">💻 WIPRO (~1.0%)</option>
+            <option value="HCLTECH">💻 HCLTECH (~1.4%)</option>
+            <option value="ASIANPAINT">🎨 ASIANPAINT (~1.1%)</option>
+          </optgroup>
+          <optgroup label="🌐 Global &amp; Commodities" style="background: #0f172a; color: #f59e0b; font-weight: 700;">
+            <option value="AAPL">🍏 AAPL (NASDAQ)</option>
+            <option value="BTCUSD">₿ BTC/USD</option>
+            <option value="GOLD">🥇 GOLD Spot</option>
+          </optgroup>
         </select>
-        <input type="text" id="chart-custom-symbol-input" placeholder="TICKER" style="background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border); border-radius: 4px; padding: 3px 6px; font-size: 0.74rem; width: 80px; text-transform: uppercase;">
+
+        <input type="text" id="chart-custom-symbol-input" list="chart-contributors-datalist" placeholder="TICKER / CO." onkeydown="if(event.key==='Enter')loadCustomChartSymbol()" style="background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border); border-radius: 4px; padding: 3px 6px; font-size: 0.74rem; width: 95px; text-transform: uppercase;" title="Type custom symbol or choose from NIFTY / BANKNIFTY contributor list">
+        <datalist id="chart-contributors-datalist">
+          <option value="HDFCBANK">HDFCBANK — HDFC Bank Ltd (~28.5% Bank Nifty / ~11.5% Nifty 50)</option>
+          <option value="ICICIBANK">ICICIBANK — ICICI Bank Ltd (~24.0% Bank Nifty / ~7.9% Nifty 50)</option>
+          <option value="RELIANCE">RELIANCE — Reliance Industries (~9.5% Nifty 50)</option>
+          <option value="SBIN">SBIN — State Bank of India (~10.5% Bank Nifty / ~3.0% Nifty 50)</option>
+          <option value="INFY">INFY — Infosys Ltd (~5.6% Nifty 50)</option>
+          <option value="AXISBANK">AXISBANK — Axis Bank Ltd (~9.5% Bank Nifty / ~3.2% Nifty 50)</option>
+          <option value="KOTAKBANK">KOTAKBANK — Kotak Mahindra Bank (~8.5% Bank Nifty / ~2.8% Nifty 50)</option>
+          <option value="ITC">ITC — ITC Ltd (~4.3% Nifty 50)</option>
+          <option value="TCS">TCS — Tata Consultancy Services (~4.0% Nifty 50)</option>
+          <option value="LT">LT — Larsen &amp; Toubro (~3.9% Nifty 50)</option>
+          <option value="BHARTIARTL">BHARTIARTL — Bharti Airtel (~3.7% Nifty 50)</option>
+          <option value="INDUSINDBK">INDUSINDBK — IndusInd Bank (~5.5% Bank Nifty)</option>
+          <option value="BAJFINANCE">BAJFINANCE — Bajaj Finance (~2.1% Nifty 50)</option>
+          <option value="M&M">M&amp;M — Mahindra &amp; Mahindra (~2.2% Nifty 50)</option>
+          <option value="HINDUNILVR">HINDUNILVR — Hindustan Unilever (~2.0% Nifty 50)</option>
+          <option value="BANKBARODA">BANKBARODA — Bank of Baroda (~2.7% Bank Nifty)</option>
+          <option value="PNB">PNB — Punjab National Bank (~2.1% Bank Nifty)</option>
+          <option value="AUBANK">AUBANK — AU Small Finance Bank (~2.0% Bank Nifty)</option>
+          <option value="FEDERALBNK">FEDERALBNK — Federal Bank (~1.9% Bank Nifty)</option>
+          <option value="IDFCFIRSTB">IDFCFIRSTB — IDFC First Bank (~1.3% Bank Nifty)</option>
+          <option value="BANDHANBNK">BANDHANBNK — Bandhan Bank (~1.0% Bank Nifty)</option>
+          <option value="MARUTI">MARUTI — Maruti Suzuki (~1.7% Nifty 50)</option>
+          <option value="TATASTEEL">TATASTEEL — Tata Steel (~1.6% Nifty 50)</option>
+          <option value="SUNPHARMA">SUNPHARMA — Sun Pharma (~1.5% Nifty 50)</option>
+          <option value="TITAN">TITAN — Titan Company (~1.4% Nifty 50)</option>
+          <option value="NTPC">NTPC — NTPC Ltd (~1.4% Nifty 50)</option>
+          <option value="POWERGRID">POWERGRID — Power Grid Corp (~1.2% Nifty 50)</option>
+          <option value="WIPRO">WIPRO — Wipro Ltd (~1.0% Nifty 50)</option>
+          <option value="HCLTECH">HCLTECH — HCL Technologies (~1.4% Nifty 50)</option>
+          <option value="ASIANPAINT">ASIANPAINT — Asian Paints (~1.1% Nifty 50)</option>
+        </datalist>
+
         <button type="button" onclick="loadCustomChartSymbol()" class="btn" style="background: var(--accent); color: white; padding: 3px 8px; font-size: 0.72rem; font-weight: 700; border: none; border-radius: 4px; cursor: pointer;">Load</button>
 
         <span style="font-size: 0.74rem; color: var(--text-secondary); margin-left: 4px; font-weight: 700;">TF:</span>
@@ -1810,6 +1918,43 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         <button type="button" class="btn nc-int-btn" onclick="selectChartInterval('1d', this)" style="background: #1e293b; color: var(--text-secondary); padding: 2px 6px; font-size: 0.72rem; border-radius: 4px; border: 1px solid var(--border);">1D</button>
         <button type="button" class="btn nc-int-btn" onclick="selectChartInterval('1w', this)" style="background: #1e293b; color: var(--text-secondary); padding: 2px 6px; font-size: 0.72rem; border-radius: 4px; border: 1px solid var(--border);">1W</button>
       </div>
+    </div>
+
+    <!-- Contributor Quick-Picks Strip -->
+    <div id="chart-contributor-pills-bar" style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 6px; background: rgba(15, 23, 42, 0.9); padding: 5px 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.08); flex-wrap: nowrap; overflow-x: auto;">
+      <div style="display: flex; align-items: center; gap: 5px; flex-shrink: 0;">
+        <span style="font-size: 0.72rem; font-weight: 800; color: #f59e0b; display: flex; align-items: center; gap: 4px;">⚡ Contributors:</span>
+        <button type="button" class="btn nc-contrib-filter-btn" id="btn-contrib-filter-all" onclick="filterContributorPills('all', this)" style="background: var(--accent); color: white; padding: 1px 6px; font-size: 0.67rem; font-weight: 700; border-radius: 3px; border: none; cursor: pointer;">All</button>
+        <button type="button" class="btn nc-contrib-filter-btn" id="btn-contrib-filter-bn" onclick="filterContributorPills('bn', this)" style="background: #1e293b; color: #38bdf8; padding: 1px 6px; font-size: 0.67rem; font-weight: 700; border-radius: 3px; border: 1px solid #38bdf8; cursor: pointer;">🏦 Bank Nifty (~95%)</button>
+        <button type="button" class="btn nc-contrib-filter-btn" id="btn-contrib-filter-n50" onclick="filterContributorPills('n50', this)" style="background: #1e293b; color: #34d399; padding: 1px 6px; font-size: 0.67rem; font-weight: 700; border-radius: 3px; border: 1px solid #34d399; cursor: pointer;">🏆 Nifty 50 (~65%)</button>
+      </div>
+
+      <div id="contrib-pills-container" style="display: flex; align-items: center; gap: 4px; overflow-x: auto; white-space: nowrap; padding-bottom: 2px;">
+        <!-- Bank Nifty Drivers -->
+        <button type="button" class="btn nc-contrib-pill contrib-tag-bn" onclick="quickSelectContributor('HDFCBANK')" title="HDFC Bank — 28.5% Bank Nifty / 11.5% Nifty 50">🏛️ HDFCBANK <span class="weight-badge">28.5%</span></button>
+        <button type="button" class="btn nc-contrib-pill contrib-tag-bn" onclick="quickSelectContributor('ICICIBANK')" title="ICICI Bank — 24.0% Bank Nifty / 7.9% Nifty 50">💳 ICICIBANK <span class="weight-badge">24.0%</span></button>
+        <button type="button" class="btn nc-contrib-pill contrib-tag-bn" onclick="quickSelectContributor('SBIN')" title="State Bank of India — 10.5% Bank Nifty / 3.0% Nifty 50">🏦 SBIN <span class="weight-badge">10.5%</span></button>
+        <button type="button" class="btn nc-contrib-pill contrib-tag-bn" onclick="quickSelectContributor('AXISBANK')" title="Axis Bank — 9.5% Bank Nifty / 3.2% Nifty 50">💳 AXISBANK <span class="weight-badge">9.5%</span></button>
+        <button type="button" class="btn nc-contrib-pill contrib-tag-bn" onclick="quickSelectContributor('KOTAKBANK')" title="Kotak Mahindra Bank — 8.5% Bank Nifty / 2.8% Nifty 50">🏦 KOTAKBANK <span class="weight-badge">8.5%</span></button>
+        <button type="button" class="btn nc-contrib-pill contrib-tag-bn" onclick="quickSelectContributor('INDUSINDBK')" title="IndusInd Bank — 5.5% Bank Nifty">🏛️ INDUSIND <span class="weight-badge">5.5%</span></button>
+        <button type="button" class="btn nc-contrib-pill contrib-tag-bn" onclick="quickSelectContributor('BANKBARODA')" title="Bank of Baroda — 2.7% Bank Nifty">🏦 BOB <span class="weight-badge">2.7%</span></button>
+        <button type="button" class="btn nc-contrib-pill contrib-tag-bn" onclick="quickSelectContributor('PNB')" title="Punjab National Bank — 2.1% Bank Nifty">🏦 PNB <span class="weight-badge">2.1%</span></button>
+        <button type="button" class="btn nc-contrib-pill contrib-tag-bn" onclick="quickSelectContributor('FEDERALBNK')" title="Federal Bank — 1.9% Bank Nifty">🏦 FEDERAL <span class="weight-badge">1.9%</span></button>
+
+        <!-- Nifty 50 Heavyweights -->
+        <button type="button" class="btn nc-contrib-pill contrib-tag-n50" onclick="quickSelectContributor('RELIANCE')" title="Reliance Industries — 9.5% Nifty 50">🏢 RELIANCE <span class="weight-badge">9.5%</span></button>
+        <button type="button" class="btn nc-contrib-pill contrib-tag-n50" onclick="quickSelectContributor('INFY')" title="Infosys — 5.6% Nifty 50">💻 INFY <span class="weight-badge">5.6%</span></button>
+        <button type="button" class="btn nc-contrib-pill contrib-tag-n50" onclick="quickSelectContributor('ITC')" title="ITC Ltd — 4.3% Nifty 50">🚬 ITC <span class="weight-badge">4.3%</span></button>
+        <button type="button" class="btn nc-contrib-pill contrib-tag-n50" onclick="quickSelectContributor('TCS')" title="Tata Consultancy Services — 4.0% Nifty 50">💻 TCS <span class="weight-badge">4.0%</span></button>
+        <button type="button" class="btn nc-contrib-pill contrib-tag-n50" onclick="quickSelectContributor('LT')" title="Larsen &amp; Toubro — 3.9% Nifty 50">🏗️ LT <span class="weight-badge">3.9%</span></button>
+        <button type="button" class="btn nc-contrib-pill contrib-tag-n50" onclick="quickSelectContributor('BHARTIARTL')" title="Bharti Airtel — 3.7% Nifty 50">📡 AIRTEL <span class="weight-badge">3.7%</span></button>
+        <button type="button" class="btn nc-contrib-pill contrib-tag-n50" onclick="quickSelectContributor('BAJFINANCE')" title="Bajaj Finance — 2.1% Nifty 50">💰 BAJFINANCE <span class="weight-badge">2.1%</span></button>
+        <button type="button" class="btn nc-contrib-pill contrib-tag-n50" onclick="quickSelectContributor('M&M')" title="Mahindra &amp; Mahindra — 2.2% Nifty 50">🚗 M&amp;M <span class="weight-badge">2.2%</span></button>
+        <button type="button" class="btn nc-contrib-pill contrib-tag-n50" onclick="quickSelectContributor('HINDUNILVR')" title="Hindustan Unilever — 2.0% Nifty 50">🧴 HUL <span class="weight-badge">2.0%</span></button>
+        <button type="button" class="btn nc-contrib-pill contrib-tag-n50" onclick="quickSelectContributor('MARUTI')" title="Maruti Suzuki — 1.7% Nifty 50">🚗 MARUTI <span class="weight-badge">1.7%</span></button>
+        <button type="button" class="btn nc-contrib-pill contrib-tag-n50" onclick="quickSelectContributor('TATASTEEL')" title="Tata Steel — 1.6% Nifty 50">🔩 TATASTEEL <span class="weight-badge">1.6%</span></button>
+      </div>
+    </div>
     </div>
   </div>
 
@@ -2291,22 +2436,44 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         <div class="card quad-cell" id="quad-cell-0" style="padding: 6px; border-radius: 8px; background: #0f172a; border: 1px solid var(--border); display: flex; flex-direction: column; height: 385px; position: relative;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; flex-wrap: wrap; gap: 4px; background: rgba(0,0,0,0.3); padding: 4px 6px; border-radius: 4px;">
             <div style="display: flex; align-items: center; gap: 6px;">
-              <select id="quad-symbol-0" onchange="changeQuadSymbol(0, this.value)" style="background: #1e293b; color: #38bdf8; border: 1px solid #38bdf8; border-radius: 4px; padding: 2px 6px; font-size: 0.72rem; font-weight: 700; cursor: pointer;">
-                <option value="NIFTY" selected>📊 NIFTY 50</option>
-                <option value="BANKNIFTY">🏦 BANKNIFTY</option>
-                <option value="GIFT NIFTY">🌐 GIFT NIFTY</option>
-                <option value="SENSEX">📈 BSE SENSEX</option>
-                <option value="FINNIFTY">💼 FINNIFTY</option>
-                <option value="MIDCPNIFTY">⚡ MIDCAP NIFTY</option>
-                <option value="RELIANCE">🏢 RELIANCE</option>
-                <option value="HDFCBANK">🏛️ HDFCBANK</option>
-                <option value="TCS">💻 TCS</option>
-                <option value="INFY">💻 INFY</option>
-                <option value="ICICIBANK">💳 ICICIBANK</option>
-                <option value="SBIN">🏦 SBIN</option>
-                <option value="AAPL">🍏 AAPL</option>
-                <option value="BTCUSD">₿ BTC/USD</option>
-                <option value="GOLD">🥇 GOLD</option>
+              <select id="quad-symbol-0" onchange="changeQuadSymbol(0, this.value)" style="background: #1e293b; color: #38bdf8; border: 1px solid #38bdf8; border-radius: 4px; padding: 2px 6px; font-size: 0.72rem; font-weight: 700; cursor: pointer; max-width: 145px;">
+                <optgroup label="📊 Major Indices" style="background: #0f172a; color: #94a3b8; font-weight: 700;">
+                  <option value="NIFTY" selected>📊 NIFTY 50</option>
+                  <option value="BANKNIFTY">🏦 BANKNIFTY</option>
+                  <option value="GIFT NIFTY">🌐 GIFT NIFTY</option>
+                  <option value="SENSEX">📈 BSE SENSEX</option>
+                  <option value="FINNIFTY">💼 FINNIFTY</option>
+                  <option value="MIDCPNIFTY">⚡ MIDCAP NIFTY</option>
+                </optgroup>
+                <optgroup label="🏦 BANK NIFTY Top Contributors" style="background: #0f172a; color: #38bdf8; font-weight: 700;">
+                  <option value="HDFCBANK">🏛️ HDFCBANK (28.5%)</option>
+                  <option value="ICICIBANK">💳 ICICIBANK (24.0%)</option>
+                  <option value="SBIN">🏦 SBIN (10.5%)</option>
+                  <option value="AXISBANK">💳 AXISBANK (9.5%)</option>
+                  <option value="KOTAKBANK">🏦 KOTAKBANK (8.5%)</option>
+                  <option value="INDUSINDBK">🏛️ INDUSIND (5.5%)</option>
+                  <option value="BANKBARODA">🏦 BOB (2.7%)</option>
+                  <option value="PNB">🏦 PNB (2.1%)</option>
+                  <option value="FEDERALBNK">🏦 FEDERAL (1.9%)</option>
+                </optgroup>
+                <optgroup label="🏆 NIFTY 50 Heavyweights" style="background: #0f172a; color: #34d399; font-weight: 700;">
+                  <option value="RELIANCE">🏢 RELIANCE (9.5%)</option>
+                  <option value="INFY">💻 INFY (5.6%)</option>
+                  <option value="ITC">🚬 ITC (4.3%)</option>
+                  <option value="TCS">💻 TCS (4.0%)</option>
+                  <option value="LT">🏗️ LT (3.9%)</option>
+                  <option value="BHARTIARTL">📡 AIRTEL (3.7%)</option>
+                  <option value="BAJFINANCE">💰 BAJFINANCE (2.1%)</option>
+                  <option value="M&M">🚗 M&amp;M (2.2%)</option>
+                  <option value="HINDUNILVR">🧴 HUL (2.0%)</option>
+                  <option value="MARUTI">🚗 MARUTI (1.7%)</option>
+                  <option value="TATASTEEL">🔩 TATASTEEL (1.6%)</option>
+                </optgroup>
+                <optgroup label="🌐 Global &amp; Macro" style="background: #0f172a; color: #f59e0b; font-weight: 700;">
+                  <option value="AAPL">🍏 AAPL</option>
+                  <option value="BTCUSD">₿ BTC/USD</option>
+                  <option value="GOLD">🥇 GOLD</option>
+                </optgroup>
               </select>
               <span id="quad-price-0" style="font-size: 0.74rem; font-weight: 800; color: #10b981;">--</span>
             </div>
@@ -2328,22 +2495,44 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         <div class="card quad-cell" id="quad-cell-1" style="padding: 6px; border-radius: 8px; background: #0f172a; border: 1px solid var(--border); display: flex; flex-direction: column; height: 385px; position: relative;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; flex-wrap: wrap; gap: 4px; background: rgba(0,0,0,0.3); padding: 4px 6px; border-radius: 4px;">
             <div style="display: flex; align-items: center; gap: 6px;">
-              <select id="quad-symbol-1" onchange="changeQuadSymbol(1, this.value)" style="background: #1e293b; color: #38bdf8; border: 1px solid #38bdf8; border-radius: 4px; padding: 2px 6px; font-size: 0.72rem; font-weight: 700; cursor: pointer;">
-                <option value="NIFTY">📊 NIFTY 50</option>
-                <option value="BANKNIFTY" selected>🏦 BANKNIFTY</option>
-                <option value="GIFT NIFTY">🌐 GIFT NIFTY</option>
-                <option value="SENSEX">📈 BSE SENSEX</option>
-                <option value="FINNIFTY">💼 FINNIFTY</option>
-                <option value="MIDCPNIFTY">⚡ MIDCAP NIFTY</option>
-                <option value="RELIANCE">🏢 RELIANCE</option>
-                <option value="HDFCBANK">🏛️ HDFCBANK</option>
-                <option value="TCS">💻 TCS</option>
-                <option value="INFY">💻 INFY</option>
-                <option value="ICICIBANK">💳 ICICIBANK</option>
-                <option value="SBIN">🏦 SBIN</option>
-                <option value="AAPL">🍏 AAPL</option>
-                <option value="BTCUSD">₿ BTC/USD</option>
-                <option value="GOLD">🥇 GOLD</option>
+              <select id="quad-symbol-1" onchange="changeQuadSymbol(1, this.value)" style="background: #1e293b; color: #38bdf8; border: 1px solid #38bdf8; border-radius: 4px; padding: 2px 6px; font-size: 0.72rem; font-weight: 700; cursor: pointer; max-width: 145px;">
+                <optgroup label="📊 Major Indices" style="background: #0f172a; color: #94a3b8; font-weight: 700;">
+                  <option value="NIFTY">📊 NIFTY 50</option>
+                  <option value="BANKNIFTY" selected>🏦 BANKNIFTY</option>
+                  <option value="GIFT NIFTY">🌐 GIFT NIFTY</option>
+                  <option value="SENSEX">📈 BSE SENSEX</option>
+                  <option value="FINNIFTY">💼 FINNIFTY</option>
+                  <option value="MIDCPNIFTY">⚡ MIDCAP NIFTY</option>
+                </optgroup>
+                <optgroup label="🏦 BANK NIFTY Top Contributors" style="background: #0f172a; color: #38bdf8; font-weight: 700;">
+                  <option value="HDFCBANK">🏛️ HDFCBANK (28.5%)</option>
+                  <option value="ICICIBANK">💳 ICICIBANK (24.0%)</option>
+                  <option value="SBIN">🏦 SBIN (10.5%)</option>
+                  <option value="AXISBANK">💳 AXISBANK (9.5%)</option>
+                  <option value="KOTAKBANK">🏦 KOTAKBANK (8.5%)</option>
+                  <option value="INDUSINDBK">🏛️ INDUSIND (5.5%)</option>
+                  <option value="BANKBARODA">🏦 BOB (2.7%)</option>
+                  <option value="PNB">🏦 PNB (2.1%)</option>
+                  <option value="FEDERALBNK">🏦 FEDERAL (1.9%)</option>
+                </optgroup>
+                <optgroup label="🏆 NIFTY 50 Heavyweights" style="background: #0f172a; color: #34d399; font-weight: 700;">
+                  <option value="RELIANCE">🏢 RELIANCE (9.5%)</option>
+                  <option value="INFY">💻 INFY (5.6%)</option>
+                  <option value="ITC">🚬 ITC (4.3%)</option>
+                  <option value="TCS">💻 TCS (4.0%)</option>
+                  <option value="LT">🏗️ LT (3.9%)</option>
+                  <option value="BHARTIARTL">📡 AIRTEL (3.7%)</option>
+                  <option value="BAJFINANCE">💰 BAJFINANCE (2.1%)</option>
+                  <option value="M&M">🚗 M&amp;M (2.2%)</option>
+                  <option value="HINDUNILVR">🧴 HUL (2.0%)</option>
+                  <option value="MARUTI">🚗 MARUTI (1.7%)</option>
+                  <option value="TATASTEEL">🔩 TATASTEEL (1.6%)</option>
+                </optgroup>
+                <optgroup label="🌐 Global &amp; Macro" style="background: #0f172a; color: #f59e0b; font-weight: 700;">
+                  <option value="AAPL">🍏 AAPL</option>
+                  <option value="BTCUSD">₿ BTC/USD</option>
+                  <option value="GOLD">🥇 GOLD</option>
+                </optgroup>
               </select>
               <span id="quad-price-1" style="font-size: 0.74rem; font-weight: 800; color: #10b981;">--</span>
             </div>
@@ -2365,22 +2554,44 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         <div class="card quad-cell" id="quad-cell-2" style="padding: 6px; border-radius: 8px; background: #0f172a; border: 1px solid var(--border); display: flex; flex-direction: column; height: 385px; position: relative;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; flex-wrap: wrap; gap: 4px; background: rgba(0,0,0,0.3); padding: 4px 6px; border-radius: 4px;">
             <div style="display: flex; align-items: center; gap: 6px;">
-              <select id="quad-symbol-2" onchange="changeQuadSymbol(2, this.value)" style="background: #1e293b; color: #38bdf8; border: 1px solid #38bdf8; border-radius: 4px; padding: 2px 6px; font-size: 0.72rem; font-weight: 700; cursor: pointer;">
-                <option value="NIFTY">📊 NIFTY 50</option>
-                <option value="BANKNIFTY">🏦 BANKNIFTY</option>
-                <option value="GIFT NIFTY" selected>🌐 GIFT NIFTY</option>
-                <option value="SENSEX">📈 BSE SENSEX</option>
-                <option value="FINNIFTY">💼 FINNIFTY</option>
-                <option value="MIDCPNIFTY">⚡ MIDCAP NIFTY</option>
-                <option value="RELIANCE">🏢 RELIANCE</option>
-                <option value="HDFCBANK">🏛️ HDFCBANK</option>
-                <option value="TCS">💻 TCS</option>
-                <option value="INFY">💻 INFY</option>
-                <option value="ICICIBANK">💳 ICICIBANK</option>
-                <option value="SBIN">🏦 SBIN</option>
-                <option value="AAPL">🍏 AAPL</option>
-                <option value="BTCUSD">₿ BTC/USD</option>
-                <option value="GOLD">🥇 GOLD</option>
+              <select id="quad-symbol-2" onchange="changeQuadSymbol(2, this.value)" style="background: #1e293b; color: #38bdf8; border: 1px solid #38bdf8; border-radius: 4px; padding: 2px 6px; font-size: 0.72rem; font-weight: 700; cursor: pointer; max-width: 145px;">
+                <optgroup label="📊 Major Indices" style="background: #0f172a; color: #94a3b8; font-weight: 700;">
+                  <option value="NIFTY">📊 NIFTY 50</option>
+                  <option value="BANKNIFTY">🏦 BANKNIFTY</option>
+                  <option value="GIFT NIFTY" selected>🌐 GIFT NIFTY</option>
+                  <option value="SENSEX">📈 BSE SENSEX</option>
+                  <option value="FINNIFTY">💼 FINNIFTY</option>
+                  <option value="MIDCPNIFTY">⚡ MIDCAP NIFTY</option>
+                </optgroup>
+                <optgroup label="🏦 BANK NIFTY Top Contributors" style="background: #0f172a; color: #38bdf8; font-weight: 700;">
+                  <option value="HDFCBANK">🏛️ HDFCBANK (28.5%)</option>
+                  <option value="ICICIBANK">💳 ICICIBANK (24.0%)</option>
+                  <option value="SBIN">🏦 SBIN (10.5%)</option>
+                  <option value="AXISBANK">💳 AXISBANK (9.5%)</option>
+                  <option value="KOTAKBANK">🏦 KOTAKBANK (8.5%)</option>
+                  <option value="INDUSINDBK">🏛️ INDUSIND (5.5%)</option>
+                  <option value="BANKBARODA">🏦 BOB (2.7%)</option>
+                  <option value="PNB">🏦 PNB (2.1%)</option>
+                  <option value="FEDERALBNK">🏦 FEDERAL (1.9%)</option>
+                </optgroup>
+                <optgroup label="🏆 NIFTY 50 Heavyweights" style="background: #0f172a; color: #34d399; font-weight: 700;">
+                  <option value="RELIANCE">🏢 RELIANCE (9.5%)</option>
+                  <option value="INFY">💻 INFY (5.6%)</option>
+                  <option value="ITC">🚬 ITC (4.3%)</option>
+                  <option value="TCS">💻 TCS (4.0%)</option>
+                  <option value="LT">🏗️ LT (3.9%)</option>
+                  <option value="BHARTIARTL">📡 AIRTEL (3.7%)</option>
+                  <option value="BAJFINANCE">💰 BAJFINANCE (2.1%)</option>
+                  <option value="M&M">🚗 M&amp;M (2.2%)</option>
+                  <option value="HINDUNILVR">🧴 HUL (2.0%)</option>
+                  <option value="MARUTI">🚗 MARUTI (1.7%)</option>
+                  <option value="TATASTEEL">🔩 TATASTEEL (1.6%)</option>
+                </optgroup>
+                <optgroup label="🌐 Global &amp; Macro" style="background: #0f172a; color: #f59e0b; font-weight: 700;">
+                  <option value="AAPL">🍏 AAPL</option>
+                  <option value="BTCUSD">₿ BTC/USD</option>
+                  <option value="GOLD">🥇 GOLD</option>
+                </optgroup>
               </select>
               <span id="quad-price-2" style="font-size: 0.74rem; font-weight: 800; color: #10b981;">--</span>
             </div>
@@ -2402,22 +2613,44 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         <div class="card quad-cell" id="quad-cell-3" style="padding: 6px; border-radius: 8px; background: #0f172a; border: 1px solid var(--border); display: flex; flex-direction: column; height: 385px; position: relative;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; flex-wrap: wrap; gap: 4px; background: rgba(0,0,0,0.3); padding: 4px 6px; border-radius: 4px;">
             <div style="display: flex; align-items: center; gap: 6px;">
-              <select id="quad-symbol-3" onchange="changeQuadSymbol(3, this.value)" style="background: #1e293b; color: #38bdf8; border: 1px solid #38bdf8; border-radius: 4px; padding: 2px 6px; font-size: 0.72rem; font-weight: 700; cursor: pointer;">
-                <option value="NIFTY">📊 NIFTY 50</option>
-                <option value="BANKNIFTY">🏦 BANKNIFTY</option>
-                <option value="GIFT NIFTY">🌐 GIFT NIFTY</option>
-                <option value="SENSEX" selected>📈 BSE SENSEX</option>
-                <option value="FINNIFTY">💼 FINNIFTY</option>
-                <option value="MIDCPNIFTY">⚡ MIDCAP NIFTY</option>
-                <option value="RELIANCE">🏢 RELIANCE</option>
-                <option value="HDFCBANK">🏛️ HDFCBANK</option>
-                <option value="TCS">💻 TCS</option>
-                <option value="INFY">💻 INFY</option>
-                <option value="ICICIBANK">💳 ICICIBANK</option>
-                <option value="SBIN">🏦 SBIN</option>
-                <option value="AAPL">🍏 AAPL</option>
-                <option value="BTCUSD">₿ BTC/USD</option>
-                <option value="GOLD">🥇 GOLD</option>
+              <select id="quad-symbol-3" onchange="changeQuadSymbol(3, this.value)" style="background: #1e293b; color: #38bdf8; border: 1px solid #38bdf8; border-radius: 4px; padding: 2px 6px; font-size: 0.72rem; font-weight: 700; cursor: pointer; max-width: 145px;">
+                <optgroup label="📊 Major Indices" style="background: #0f172a; color: #94a3b8; font-weight: 700;">
+                  <option value="NIFTY">📊 NIFTY 50</option>
+                  <option value="BANKNIFTY">🏦 BANKNIFTY</option>
+                  <option value="GIFT NIFTY">🌐 GIFT NIFTY</option>
+                  <option value="SENSEX" selected>📈 BSE SENSEX</option>
+                  <option value="FINNIFTY">💼 FINNIFTY</option>
+                  <option value="MIDCPNIFTY">⚡ MIDCAP NIFTY</option>
+                </optgroup>
+                <optgroup label="🏦 BANK NIFTY Top Contributors" style="background: #0f172a; color: #38bdf8; font-weight: 700;">
+                  <option value="HDFCBANK">🏛️ HDFCBANK (28.5%)</option>
+                  <option value="ICICIBANK">💳 ICICIBANK (24.0%)</option>
+                  <option value="SBIN">🏦 SBIN (10.5%)</option>
+                  <option value="AXISBANK">💳 AXISBANK (9.5%)</option>
+                  <option value="KOTAKBANK">🏦 KOTAKBANK (8.5%)</option>
+                  <option value="INDUSINDBK">🏛️ INDUSIND (5.5%)</option>
+                  <option value="BANKBARODA">🏦 BOB (2.7%)</option>
+                  <option value="PNB">🏦 PNB (2.1%)</option>
+                  <option value="FEDERALBNK">🏦 FEDERAL (1.9%)</option>
+                </optgroup>
+                <optgroup label="🏆 NIFTY 50 Heavyweights" style="background: #0f172a; color: #34d399; font-weight: 700;">
+                  <option value="RELIANCE">🏢 RELIANCE (9.5%)</option>
+                  <option value="INFY">💻 INFY (5.6%)</option>
+                  <option value="ITC">🚬 ITC (4.3%)</option>
+                  <option value="TCS">💻 TCS (4.0%)</option>
+                  <option value="LT">🏗️ LT (3.9%)</option>
+                  <option value="BHARTIARTL">📡 AIRTEL (3.7%)</option>
+                  <option value="BAJFINANCE">💰 BAJFINANCE (2.1%)</option>
+                  <option value="M&M">🚗 M&amp;M (2.2%)</option>
+                  <option value="HINDUNILVR">🧴 HUL (2.0%)</option>
+                  <option value="MARUTI">🚗 MARUTI (1.7%)</option>
+                  <option value="TATASTEEL">🔩 TATASTEEL (1.6%)</option>
+                </optgroup>
+                <optgroup label="🌐 Global &amp; Macro" style="background: #0f172a; color: #f59e0b; font-weight: 700;">
+                  <option value="AAPL">🍏 AAPL</option>
+                  <option value="BTCUSD">₿ BTC/USD</option>
+                  <option value="GOLD">🥇 GOLD</option>
+                </optgroup>
               </select>
               <span id="quad-price-3" style="font-size: 0.74rem; font-weight: 800; color: #10b981;">--</span>
             </div>
@@ -5525,7 +5758,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       const prev = data.previousClose || _cachedCandles[0].open;
       const diff = last.close - prev;
       const pct = prev > 0 ? ((diff / prev) * 100).toFixed(2) : '0.00';
-      const symTitle = data.symbol === 'NIFTY' ? 'NIFTY 50 (Spot)' : (data.symbol === 'BANKNIFTY' ? 'BANKNIFTY (Spot)' : data.symbol);
+      const symTitle = (typeof CONTRIBUTOR_TITLES !== 'undefined' && CONTRIBUTOR_TITLES[data.symbol]) ? CONTRIBUTOR_TITLES[data.symbol] : (data.symbol === 'NIFTY' ? 'NIFTY 50 (Spot)' : (data.symbol === 'BANKNIFTY' ? 'BANKNIFTY (Spot)' : data.symbol));
 
       const titleEl = document.getElementById('nc-symbol-title');
       const priceEl = document.getElementById('nc-current-price');
@@ -5789,12 +6022,51 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     }) + ' IST';
   }
 
+  const CONTRIBUTOR_TITLES = {
+    'NIFTY': 'NIFTY 50 (Spot)',
+    'BANKNIFTY': 'BANKNIFTY (Spot)',
+    'GIFT NIFTY': 'GIFT NIFTY (GIFT City)',
+    'SENSEX': 'BSE SENSEX (Spot)',
+    'FINNIFTY': 'FINNIFTY (Financial Services)',
+    'MIDCPNIFTY': 'MIDCAP NIFTY',
+    'HDFCBANK': 'HDFCBANK (HDFC Bank Ltd • ~28.5% BN / ~11.5% N50)',
+    'ICICIBANK': 'ICICIBANK (ICICI Bank Ltd • ~24.0% BN / ~7.9% N50)',
+    'RELIANCE': 'RELIANCE (Reliance Industries • ~9.5% N50)',
+    'SBIN': 'SBIN (State Bank of India • ~10.5% BN / ~3.0% N50)',
+    'INFY': 'INFY (Infosys Ltd • ~5.6% N50)',
+    'AXISBANK': 'AXISBANK (Axis Bank Ltd • ~9.5% BN / ~3.2% N50)',
+    'KOTAKBANK': 'KOTAKBANK (Kotak Mahindra Bank • ~8.5% BN / ~2.8% N50)',
+    'ITC': 'ITC (ITC Ltd • ~4.3% N50)',
+    'TCS': 'TCS (Tata Consultancy Services • ~4.0% N50)',
+    'LT': 'LT (Larsen & Toubro Ltd • ~3.9% N50)',
+    'BHARTIARTL': 'BHARTIARTL (Bharti Airtel • ~3.7% N50)',
+    'INDUSINDBK': 'INDUSINDBK (IndusInd Bank • ~5.5% BN)',
+    'BAJFINANCE': 'BAJFINANCE (Bajaj Finance • ~2.1% N50)',
+    'M&M': 'M&M (Mahindra & Mahindra • ~2.2% N50)',
+    'HINDUNILVR': 'HINDUNILVR (Hindustan Unilever • ~2.0% N50)',
+    'BANKBARODA': 'BANKBARODA (Bank of Baroda • ~2.7% BN)',
+    'PNB': 'PNB (Punjab National Bank • ~2.1% BN)',
+    'AUBANK': 'AUBANK (AU Small Finance Bank • ~2.0% BN)',
+    'FEDERALBNK': 'FEDERALBNK (Federal Bank • ~1.9% BN)',
+    'IDFCFIRSTB': 'IDFCFIRSTB (IDFC First Bank • ~1.3% BN)',
+    'BANDHANBNK': 'BANDHANBNK (Bandhan Bank • ~1.0% BN)',
+    'MARUTI': 'MARUTI (Maruti Suzuki • ~1.7% N50)',
+    'TATASTEEL': 'TATASTEEL (Tata Steel • ~1.6% N50)',
+    'SUNPHARMA': 'SUNPHARMA (Sun Pharma • ~1.5% N50)',
+    'TITAN': 'TITAN (Titan Company • ~1.4% N50)',
+    'NTPC': 'NTPC (NTPC Ltd • ~1.4% N50)',
+    'POWERGRID': 'POWERGRID (Power Grid Corp • ~1.2% N50)',
+    'WIPRO': 'WIPRO (Wipro Ltd • ~1.0% N50)',
+    'HCLTECH': 'HCLTECH (HCL Technologies • ~1.4% N50)',
+    'ASIANPAINT': 'ASIANPAINT (Asian Paints • ~1.1% N50)',
+  };
+
   function updateHeaderFromCandle(last, first) {
     if (!last) return;
     const prev = (first && first.open) ? first.open : last.open;
     const diff = last.close - prev;
     const pct = prev > 0 ? ((diff / prev) * 100).toFixed(2) : '0.00';
-    const symTitle = _lwSymbol === 'NIFTY' ? 'NIFTY 50 (Spot)' : (_lwSymbol === 'BANKNIFTY' ? 'BANKNIFTY (Spot)' : _lwSymbol);
+    const symTitle = CONTRIBUTOR_TITLES[_lwSymbol] || (_lwSymbol === 'NIFTY' ? 'NIFTY 50 (Spot)' : (_lwSymbol === 'BANKNIFTY' ? 'BANKNIFTY (Spot)' : _lwSymbol));
 
     const titleEl = document.getElementById('nc-symbol-title');
     const priceEl = document.getElementById('nc-current-price');
@@ -6741,10 +7013,64 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         }
       }
     }
+    const input = document.getElementById('chart-custom-symbol-input');
+    if (input && sym !== 'NIFTY' && sym !== 'BANKNIFTY' && sym !== 'GIFT NIFTY') {
+      input.value = sym;
+    }
+    updateActiveContributorPill(sym);
     const overlay = document.getElementById('nc-loading-overlay');
     if (overlay) overlay.style.display = 'flex';
     loadDrawingsFromStorage(_lwSymbol);
     fetchNativeCandles();
+  }
+
+  function quickSelectContributor(sym) {
+    const input = document.getElementById('chart-custom-symbol-input');
+    if (input) input.value = sym;
+    const tabCustom = document.getElementById('tab-btn-custom');
+    if (tabCustom) {
+      selectSingleTab('CUSTOM', tabCustom);
+    }
+    onSymbolDropdownChange(sym);
+    showGotoToast(`⚡ Loaded Contributor: ${sym}`);
+  }
+
+  function updateActiveContributorPill(sym) {
+    document.querySelectorAll('.nc-contrib-pill').forEach(pill => {
+      const fn = pill.getAttribute('onclick') || '';
+      if (fn.includes(`'${sym}'`)) {
+        pill.classList.add('active');
+      } else {
+        pill.classList.remove('active');
+      }
+    });
+  }
+
+  function filterContributorPills(type, btn) {
+    document.querySelectorAll('.nc-contrib-filter-btn').forEach(b => {
+      b.style.background = '#1e293b';
+      b.style.color = 'var(--text-secondary)';
+      b.style.border = '1px solid var(--border)';
+    });
+    if (btn) {
+      btn.style.background = 'var(--accent)';
+      btn.style.color = 'white';
+      btn.style.border = '1px solid var(--accent)';
+    }
+
+    const bnPills = document.querySelectorAll('.contrib-tag-bn');
+    const n50Pills = document.querySelectorAll('.contrib-tag-n50');
+
+    if (type === 'all') {
+      bnPills.forEach(p => p.style.display = 'inline-flex');
+      n50Pills.forEach(p => p.style.display = 'inline-flex');
+    } else if (type === 'bn') {
+      bnPills.forEach(p => p.style.display = 'inline-flex');
+      n50Pills.forEach(p => p.style.display = 'none');
+    } else if (type === 'n50') {
+      bnPills.forEach(p => p.style.display = 'none');
+      n50Pills.forEach(p => p.style.display = 'inline-flex');
+    }
   }
 
   function selectChartInterval(intv, btn) {
@@ -7650,14 +7976,73 @@ class DashboardHTTPRequestHandler(BaseHTTPRequestHandler):
                     "BSE:SENSEX": "^BSESN",
                     "FINNIFTY": "NIFTY_FIN_SERVICE.NS",
                     "MIDCPNIFTY": "NIFTY_MID_SELECT.NS",
-                    "RELIANCE": "RELIANCE.NS",
-                    "NSE:RELIANCE": "RELIANCE.NS",
+                    # BANK NIFTY Main Contributors
                     "HDFCBANK": "HDFCBANK.NS",
                     "NSE:HDFCBANK": "HDFCBANK.NS",
-                    "TCS": "TCS.NS",
-                    "INFY": "INFY.NS",
                     "ICICIBANK": "ICICIBANK.NS",
+                    "NSE:ICICIBANK": "ICICIBANK.NS",
                     "SBIN": "SBIN.NS",
+                    "NSE:SBIN": "SBIN.NS",
+                    "AXISBANK": "AXISBANK.NS",
+                    "NSE:AXISBANK": "AXISBANK.NS",
+                    "KOTAKBANK": "KOTAKBANK.NS",
+                    "NSE:KOTAKBANK": "KOTAKBANK.NS",
+                    "INDUSINDBK": "INDUSINDBK.NS",
+                    "NSE:INDUSINDBK": "INDUSINDBK.NS",
+                    "BANKBARODA": "BANKBARODA.NS",
+                    "NSE:BANKBARODA": "BANKBARODA.NS",
+                    "PNB": "PNB.NS",
+                    "NSE:PNB": "PNB.NS",
+                    "AUBANK": "AUBANK.NS",
+                    "NSE:AUBANK": "AUBANK.NS",
+                    "FEDERALBNK": "FEDERALBNK.NS",
+                    "NSE:FEDERALBNK": "FEDERALBNK.NS",
+                    "IDFCFIRSTB": "IDFCFIRSTB.NS",
+                    "NSE:IDFCFIRSTB": "IDFCFIRSTB.NS",
+                    "BANDHANBNK": "BANDHANBNK.NS",
+                    "NSE:BANDHANBNK": "BANDHANBNK.NS",
+                    # NIFTY 50 Heavyweights
+                    "RELIANCE": "RELIANCE.NS",
+                    "NSE:RELIANCE": "RELIANCE.NS",
+                    "INFY": "INFY.NS",
+                    "NSE:INFY": "INFY.NS",
+                    "ITC": "ITC.NS",
+                    "NSE:ITC": "ITC.NS",
+                    "TCS": "TCS.NS",
+                    "NSE:TCS": "TCS.NS",
+                    "LT": "LT.NS",
+                    "NSE:LT": "LT.NS",
+                    "BHARTIARTL": "BHARTIARTL.NS",
+                    "NSE:BHARTIARTL": "BHARTIARTL.NS",
+                    "BAJFINANCE": "BAJFINANCE.NS",
+                    "NSE:BAJFINANCE": "BAJFINANCE.NS",
+                    "M&M": "M%26M.NS",
+                    "MM": "M%26M.NS",
+                    "NSE:M&M": "M%26M.NS",
+                    "HINDUNILVR": "HINDUNILVR.NS",
+                    "NSE:HINDUNILVR": "HINDUNILVR.NS",
+                    "MARUTI": "MARUTI.NS",
+                    "NSE:MARUTI": "MARUTI.NS",
+                    "TATAMOTORS": "TMCV.NS",
+                    "TMCV": "TMCV.NS",
+                    "TMPV": "TMPV.NS",
+                    "TATASTEEL": "TATASTEEL.NS",
+                    "NSE:TATASTEEL": "TATASTEEL.NS",
+                    "SUNPHARMA": "SUNPHARMA.NS",
+                    "NSE:SUNPHARMA": "SUNPHARMA.NS",
+                    "TITAN": "TITAN.NS",
+                    "NSE:TITAN": "TITAN.NS",
+                    "NTPC": "NTPC.NS",
+                    "NSE:NTPC": "NTPC.NS",
+                    "POWERGRID": "POWERGRID.NS",
+                    "NSE:POWERGRID": "POWERGRID.NS",
+                    "WIPRO": "WIPRO.NS",
+                    "NSE:WIPRO": "WIPRO.NS",
+                    "HCLTECH": "HCLTECH.NS",
+                    "NSE:HCLTECH": "HCLTECH.NS",
+                    "ASIANPAINT": "ASIANPAINT.NS",
+                    "NSE:ASIANPAINT": "ASIANPAINT.NS",
+                    # Global & Macro
                     "AAPL": "AAPL",
                     "BTCUSD": "BTC-USD",
                     "GOLD": "GC=F",
