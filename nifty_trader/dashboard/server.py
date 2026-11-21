@@ -5840,6 +5840,14 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     if (_lwChart) {
       _lwChart.timeScale().scrollToPosition(0, false);
     }
+
+    // Maintain and evaluate visual trade setup during Replay Practice
+    if (_activeTradeSetup) {
+      renderTradeSetupLines();
+      if (_activeTradeSetup.isLive && !_activeTradeSetup.isClosed) {
+        evaluateReplayPracticeTrade();
+      }
+    }
   }
 
   // -------------------------------------------------------------
@@ -6052,38 +6060,55 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     const isBank = _lwSymbol.includes('BANK');
     const defaultSpan = isBank ? 250 : 100;
     const defaultSlSpan = isBank ? 125 : 50;
-    const currentSpot = (_lastCandle && _lastCandle.close) ? _lastCandle.close : (isBank ? 52000.0 : 25800.0);
+    const currentSpot = (_isReplayActive && _cachedCandles && _cachedCandles.length > 0)
+      ? _cachedCandles[_cachedCandles.length - 1].close
+      : ((_lastCandle && _lastCandle.close) ? _lastCandle.close : ((_cachedCandles && _cachedCandles.length > 0) ? _cachedCandles[_cachedCandles.length - 1].close : (isBank ? 52000.0 : 25800.0)));
 
     let entry = Number(currentSpot.toFixed(2));
     let target = type === 'LONG' ? Number((entry + defaultSpan).toFixed(2)) : Number((entry - defaultSpan).toFixed(2));
     let sl = type === 'LONG' ? Number((entry - defaultSlSpan).toFixed(2)) : Number((entry + defaultSlSpan).toFixed(2));
 
+    const isReplay = _isReplayActive;
     _activeTradeSetup = {
       type: type.toUpperCase(),
       entry: entry,
       target: target,
       sl: sl,
       lots: 1,
-      route: 'AUTO',
+      route: isReplay ? 'REPLAY' : 'AUTO',
       isLive: false,
+      isReplay: isReplay,
+      isClosed: false,
     };
 
     const panel = document.getElementById('chart-trade-setup-panel');
     if (panel) panel.style.display = 'block';
 
+    const execBtn = document.getElementById('btn-execute-chart-trade');
+    if (execBtn) {
+      execBtn.innerHTML = isReplay ? '🚀 Execute Practice Trade' : '🚀 Execute Trade';
+    }
+
     const titleBadge = document.getElementById('trade-setup-title-badge');
     if (titleBadge) {
       if (type === 'LONG') {
-        titleBadge.innerText = '🟢 LONG (BUY CE) SETUP';
+        titleBadge.innerText = isReplay ? '🟢 LONG (BUY CE) [REPLAY PRACTICE]' : '🟢 LONG (BUY CE) SETUP';
         titleBadge.style.background = '#065f46';
         titleBadge.style.color = '#34d399';
         titleBadge.style.border = '1px solid #10b981';
       } else {
-        titleBadge.innerText = '🔴 SHORT (BUY PE) SETUP';
+        titleBadge.innerText = isReplay ? '🔴 SHORT (BUY PE) [REPLAY PRACTICE]' : '🔴 SHORT (BUY PE) SETUP';
         titleBadge.style.background = '#881337';
         titleBadge.style.color = '#fb7185';
         titleBadge.style.border = '1px solid #f43f5e';
       }
+    }
+
+    const routeBadge = document.getElementById('trade-exec-route-badge');
+    if (routeBadge && isReplay) {
+      routeBadge.innerHTML = '🎮 Replay Practice Simulator';
+      routeBadge.style.color = '#f59e0b';
+      routeBadge.style.borderColor = '#f59e0b';
     }
 
     const entryInp = document.getElementById('trade-input-entry');
@@ -6102,7 +6127,11 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 
     const statusEl = document.getElementById('trade-setup-status');
     if (statusEl) {
-      statusEl.innerHTML = `💡 Lines placed on chart! Adjust levels above or click <b>"🚀 Execute Trade"</b> to enter in Paper Simulator or Live Broker.`;
+      if (isReplay) {
+        statusEl.innerHTML = `🎮 <b>Replay Practice Mode Active:</b> Place your trade setup on this historical candle. Click <b>"🚀 Execute Trade"</b> and step through bars with [Step ▶] or [Spacebar] to watch your trade play out!`;
+      } else {
+        statusEl.innerHTML = `💡 Lines placed on chart! Adjust levels above or click <b>"🚀 Execute Trade"</b> to enter in Paper Simulator or Live Broker.`;
+      }
     }
   }
 
@@ -6315,7 +6344,8 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       console.warn('Canvas snapshot warning:', ssErr);
     }
 
-    const routeVal = document.getElementById('trade-input-route')?.value || 'AUTO';
+    const isReplay = _isReplayActive;
+    const routeVal = isReplay ? 'REPLAY' : (document.getElementById('trade-input-route')?.value || 'AUTO');
 
     const payload = {
       symbol: _lwSymbol,
@@ -6338,14 +6368,29 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 
       if (resp.ok && data.status === 'ok') {
         const trade = data.trade;
-        if (statusEl) {
-          statusEl.innerHTML = `<span style="color: #10b981; font-weight: 800;">🚀 ORDER EXECUTED! ID: <code>${trade.trade_id}</code> | Route: <b>${trade.broker}</b> | Telegram Alert &amp; Chart Screenshot Dispatched!</span>`;
-        }
-        showGotoToast(`🚀 ${trade.setup_type} ${trade.symbol} ${trade.strike} ${trade.option_type} executed on ${trade.broker}!`);
         _activeTradeSetup.isLive = true;
-        const titleBadge = document.getElementById('trade-setup-title-badge');
-        if (titleBadge) {
-          titleBadge.innerHTML = `⚡ ACTIVE POSITION: ${trade.symbol} ${trade.strike} ${trade.option_type}`;
+        _activeTradeSetup.isClosed = false;
+        _activeTradeSetup.trade_id = trade.trade_id;
+        _activeTradeSetup.entryBar = _replayIndex;
+
+        if (isReplay) {
+          if (statusEl) {
+            statusEl.innerHTML = `<span style="color: #34d399; font-weight: 800;">🎮 REPLAY PRACTICE ARMED! (ID: <code>${trade.trade_id}</code>)</span> — Click <b>[Step ▶]</b> or <b>[Spacebar]</b> to advance candle by candle and watch your trade play out!`;
+          }
+          showGotoToast(`🎮 Practice ${trade.setup_type} Armed! Step forward on chart.`);
+          const titleBadge = document.getElementById('trade-setup-title-badge');
+          if (titleBadge) {
+            titleBadge.innerHTML = `⚡ LIVE PRACTICE: ${trade.symbol} ${trade.strike} ${trade.option_type}`;
+          }
+        } else {
+          if (statusEl) {
+            statusEl.innerHTML = `<span style="color: #10b981; font-weight: 800;">🚀 ORDER EXECUTED! ID: <code>${trade.trade_id}</code> | Route: <b>${trade.broker}</b> | Telegram Alert &amp; Chart Screenshot Dispatched!</span>`;
+          }
+          showGotoToast(`🚀 ${trade.setup_type} ${trade.symbol} ${trade.strike} ${trade.option_type} executed on ${trade.broker}!`);
+          const titleBadge = document.getElementById('trade-setup-title-badge');
+          if (titleBadge) {
+            titleBadge.innerHTML = `⚡ ACTIVE POSITION: ${trade.symbol} ${trade.strike} ${trade.option_type}`;
+          }
         }
       } else {
         if (statusEl) {
@@ -6359,8 +6404,116 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     } finally {
       if (btn) {
         btn.disabled = false;
-        btn.innerHTML = '🚀 Execute Trade';
+        btn.innerHTML = isReplay ? '🚀 Execute Practice Trade' : '🚀 Execute Trade';
       }
+    }
+  }
+
+  // --- Replay Practice Trade Evaluator & Completion ---
+  function evaluateReplayPracticeTrade() {
+    if (!_activeTradeSetup || !_activeTradeSetup.isLive || _activeTradeSetup.isClosed) return;
+    if (!_lastCandle) return;
+
+    const isLong = _activeTradeSetup.type === 'LONG';
+    const high = Number(_lastCandle.high);
+    const low = Number(_lastCandle.low);
+    const close = Number(_lastCandle.close);
+    const entry = Number(_activeTradeSetup.entry);
+    const target = Number(_activeTradeSetup.target);
+    const sl = Number(_activeTradeSetup.sl);
+
+    const isBank = _lwSymbol.includes('BANK');
+    const lotSize = isBank ? 30 : 65;
+    const totalQty = (_activeTradeSetup.lots || 1) * lotSize;
+
+    let hitTarget = false;
+    let hitSl = false;
+
+    if (isLong) {
+      if (low <= sl) hitSl = true;
+      else if (high >= target) hitTarget = true;
+    } else {
+      if (high >= sl) hitSl = true;
+      else if (low <= target) hitTarget = true;
+    }
+
+    if (hitTarget) {
+      if (_replayPlaying) toggleReplayPlayback();
+      _activeTradeSetup.isClosed = true;
+      const targetPts = Math.abs(target - entry);
+      const optGain = targetPts * 0.50;
+      const netPnl = Math.round(optGain * totalQty * 100) / 100;
+      finishReplayPracticeTrade('TARGET', target, netPnl, targetPts);
+    } else if (hitSl) {
+      if (_replayPlaying) toggleReplayPlayback();
+      _activeTradeSetup.isClosed = true;
+      const slPts = Math.abs(entry - sl);
+      const optLoss = slPts * 0.50;
+      const netPnl = -Math.round(optLoss * totalQty * 100) / 100;
+      finishReplayPracticeTrade('STOP_LOSS', sl, netPnl, slPts);
+    } else {
+      // Floating MTM calculation
+      const pts = isLong ? (close - entry) : (entry - close);
+      const mtm = Math.round(pts * 0.50 * totalQty * 100) / 100;
+      const mtmColor = mtm >= 0 ? '#34d399' : '#f87171';
+      const statusEl = document.getElementById('trade-setup-status');
+      if (statusEl) {
+        statusEl.innerHTML = `<span style="color: #38bdf8; font-weight: 800;">⚡ REPLAY ACTIVE:</span> <b style="color: ${mtmColor};">Floating MTM: ${mtm >= 0 ? '+' : ''}₹${mtm.toFixed(2)} (${pts >= 0 ? '+' : ''}${pts.toFixed(1)} pts)</b> | Spot: ₹${close.toFixed(2)} (Candle ${_replayIndex + 1}/${_replayFullCandles.length})`;
+      }
+    }
+  }
+
+  async function finishReplayPracticeTrade(reason, exitSpot, netPnl, ptsMoved) {
+    if (!_activeTradeSetup) return;
+    const isWin = reason === 'TARGET';
+    const titleBadge = document.getElementById('trade-setup-title-badge');
+    const statusEl = document.getElementById('trade-setup-status');
+
+    if (titleBadge) {
+      if (isWin) {
+        titleBadge.innerHTML = `🎯 PRACTICE WON: TARGET HIT! (+₹${netPnl.toFixed(2)})`;
+        titleBadge.style.background = '#065f46';
+        titleBadge.style.color = '#34d399';
+        titleBadge.style.border = '1px solid #10b981';
+      } else {
+        titleBadge.innerHTML = `🛑 PRACTICE STOPPED: SL HIT (-₹${Math.abs(netPnl).toFixed(2)})`;
+        titleBadge.style.background = '#881337';
+        titleBadge.style.color = '#fb7185';
+        titleBadge.style.border = '1px solid #f43f5e';
+      }
+    }
+
+    if (statusEl) {
+      const msgColor = isWin ? '#34d399' : '#f87171';
+      const icon = isWin ? '🎯 🏆' : '🛑 🛡️';
+      statusEl.innerHTML = `<b style="color: ${msgColor}; font-size: 0.82rem;">${icon} [REPLAY TRADE FINISHED] Exit Reason: ${reason} | Exit Spot: ₹${exitSpot.toFixed(2)} | Net P&L: ${netPnl >= 0 ? '+' : ''}₹${netPnl.toFixed(2)} (${ptsMoved.toFixed(1)} pts) | Logged &amp; Sent to Telegram!</b>`;
+    }
+
+    showGotoToast(isWin ? `🎯 TARGET HIT (+₹${netPnl.toFixed(2)})!` : `🛑 STOP LOSS HIT (-₹${Math.abs(netPnl).toFixed(2)})`);
+
+    // Capture exit screenshot
+    let exitScreenshotBase64 = null;
+    try {
+      if (_lwChart && typeof _lwChart.takeScreenshot === 'function') {
+        const canvas = _lwChart.takeScreenshot();
+        if (canvas) exitScreenshotBase64 = canvas.toDataURL('image/png');
+      }
+    } catch (e) {}
+
+    try {
+      await fetch('/api/chart/close_setup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          trade_id: _activeTradeSetup.trade_id || `RP-${Date.now()}`,
+          exit_reason: reason,
+          exit_spot: exitSpot,
+          net_pnl: netPnl,
+          screenshot_base64: exitScreenshotBase64,
+        })
+      });
+    } catch (err) {
+      console.warn('Could not post practice trade close:', err);
     }
   }
 
@@ -8264,6 +8417,29 @@ class DashboardHTTPRequestHandler(BaseHTTPRequestHandler):
                     sl_spot=float(data.get("sl_spot", 0.0)),
                     lots=int(data.get("lots", 1)),
                     mode=data.get("mode", "AUTO"),
+                    screenshot_base64=data.get("screenshot_base64"),
+                )
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps(res).encode("utf-8"))
+            except Exception as ex:
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": "error", "message": str(ex)}).encode("utf-8"))
+        elif self.path == "/api/chart/close_setup":
+            try:
+                content_length = int(self.headers.get("Content-Length", 0))
+                body = self.rfile.read(content_length).decode("utf-8")
+                data = json.loads(body)
+                from nifty_trader.execution.broker_service import get_broker_service
+                bs = get_broker_service()
+                res = bs.close_chart_trade(
+                    trade_id=data.get("trade_id", ""),
+                    exit_reason=data.get("exit_reason", "MANUAL"),
+                    exit_spot=float(data.get("exit_spot", 0.0)),
+                    net_pnl=float(data.get("net_pnl", 0.0)),
                     screenshot_base64=data.get("screenshot_base64"),
                 )
                 self.send_response(200)

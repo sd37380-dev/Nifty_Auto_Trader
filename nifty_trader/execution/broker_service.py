@@ -298,16 +298,28 @@ class BrokerService:
         # Determine Destination Route
         exec_mode = mode.upper()
         route_to_broker = False
-        if exec_mode == "BROKER":
+        is_replay_practice = "REPLAY" in exec_mode or "PRACTICE" in exec_mode
+
+        if is_replay_practice:
+            broker_name = "Replay Practice Simulator"
+            route_to_broker = False
+            exec_status = "ACTIVE_PRACTICE"
+            trade_id = f"RP-{int(time.time())}-{strike}{option_type}"
+        elif exec_mode == "BROKER":
             route_to_broker = True
+            broker_name = "Paper Trading Simulator"
+            exec_status = "FILLED"
         elif exec_mode == "AUTO":
             route_to_broker = self.is_broker_connected
+            broker_name = "Paper Trading Simulator"
+            exec_status = "FILLED"
+        else:
+            broker_name = "Paper Trading Simulator"
+            exec_status = "FILLED"
 
-        broker_name = "Paper Trading Simulator"
         broker_order_id = ""
-        exec_status = "FILLED"
 
-        if route_to_broker and self.is_broker_connected:
+        if route_to_broker and self.is_broker_connected and not is_replay_practice:
             broker_res = self.place_broker_order(
                 symbol=symbol,
                 strike=strike,
@@ -326,7 +338,7 @@ class BrokerService:
                 logger.warning("Broker execution failed; falling back to Paper Simulator: %s", broker_res.get("message"))
                 route_to_broker = False
 
-        if not route_to_broker:
+        if not route_to_broker and not is_replay_practice:
             # Execute into Option Paper Simulator
             try:
                 from nifty_trader.market_data.option_chain_service import get_option_chain_service
@@ -434,6 +446,103 @@ class BrokerService:
             return rows
         except Exception:
             return []
+
+    def close_chart_trade(
+        self,
+        trade_id: str,
+        exit_reason: str,
+        exit_spot: float,
+        net_pnl: float,
+        screenshot_base64: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Closes an active chart trade (live or replay practice), logs outcome, and dispatches Telegram notification."""
+        now_dt = datetime.now(IST)
+        closed_at_str = now_dt.strftime("%Y-%m-%d %H:%M:%S IST")
+
+        # Save Exit Screenshot if present
+        screenshot_path = None
+        if screenshot_base64:
+            try:
+                shots_dir = self.root_dir / "data" / "browser" / "screenshots"
+                shots_dir.mkdir(parents=True, exist_ok=True)
+                raw_b64 = screenshot_base64
+                if "," in raw_b64:
+                    raw_b64 = raw_b64.split(",", 1)[1]
+                img_data = base64.b64decode(raw_b64)
+                file_name = f"chart_trade_exit_{trade_id}_{int(time.time())}.png"
+                target_file = shots_dir / file_name
+                target_file.write_bytes(img_data)
+                screenshot_path = str(target_file)
+            except Exception:
+                pass
+
+        # Update SQLite
+        db_path = self.root_dir / "data" / "paper_trading" / "paper_trades.db"
+        trade_row = None
+        try:
+            conn = sqlite3.connect(str(db_path), timeout=5.0)
+            conn.row_factory = sqlite3.Row
+            with conn:
+                cur = conn.cursor()
+                cur.execute("SELECT * FROM chart_trades WHERE trade_id = ?", (trade_id,))
+                trade_row = cur.fetchone()
+                cur.execute("""
+                    UPDATE chart_trades
+                    SET status = ?, closed_at = ?, exit_price = ?, net_pnl = ?
+                    WHERE trade_id = ?
+                """, (f"CLOSED_{exit_reason.upper()}", closed_at_str, exit_spot, net_pnl, trade_id))
+            conn.close()
+        except Exception as e:
+            logger.warning("Error updating closed trade in DB: %s", e)
+
+        # Append to log
+        log_file = self.root_dir / "data" / "paper_trading" / "chart_trades.log"
+        sign = "+" if net_pnl >= 0 else "-"
+        sym = trade_row["symbol"] if trade_row else "NIFTY"
+        stk = trade_row["strike"] if trade_row else 0
+        opt = trade_row["option_type"] if trade_row else "CE"
+        mode_val = trade_row["mode"] if trade_row else "PRACTICE"
+        log_entry = (
+            f"[{closed_at_str}] 🏁 TRADE CLOSED ({exit_reason.upper()}): {sym} {stk} {opt} | "
+            f"Exit Spot: ₹{exit_spot:,.2f} | Net P&L: {sign}₹{abs(net_pnl):,.2f} | Mode: {mode_val} | ID: {trade_id}\n"
+        )
+        try:
+            with open(log_file, "a", encoding="utf-8") as f:
+                f.write(log_entry)
+        except Exception:
+            pass
+
+        # Dispatch Telegram exit notification
+        try:
+            from nifty_trader.notifications.telegram_service import get_telegram_service
+            tele = get_telegram_service(self.root_dir)
+            pnl_pct = round((net_pnl / 7500.0) * 100, 1)
+            tele.send_trade_closed_alert(
+                symbol=sym,
+                strike=stk,
+                option_type=opt,
+                entry_premium=trade_row["premium"] if trade_row else 120.0,
+                exit_premium=(trade_row["premium"] + (net_pnl / (trade_row["qty"] if trade_row else 65))) if trade_row else 120.0,
+                exit_reason=f"{exit_reason} (Replay Practice)" if "REPLAY" in str(mode_val).upper() else exit_reason,
+                net_pnl=net_pnl,
+                pnl_pct=pnl_pct,
+                lots=trade_row["lots"] if trade_row else 1,
+                qty=trade_row["qty"] if trade_row else 65,
+                trade_id=trade_id,
+                rule_name="Replay Practice Trading" if "REPLAY" in str(mode_val).upper() else "Chart Level Strategy",
+                photo_path=screenshot_path,
+            )
+        except Exception as tele_err:
+            logger.warning("Could not dispatch Telegram trade close alert: %s", tele_err)
+
+        return {
+            "status": "ok",
+            "trade_id": trade_id,
+            "exit_reason": exit_reason,
+            "exit_spot": exit_spot,
+            "net_pnl": net_pnl,
+            "closed_at": closed_at_str,
+        }
 
 
 def get_broker_service(root_dir: Optional[Path] = None) -> BrokerService:
