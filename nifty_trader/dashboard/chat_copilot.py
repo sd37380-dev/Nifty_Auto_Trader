@@ -2,8 +2,8 @@
 AI Copilot Web Chat Service for NIFTY Autonomous Trader.
 Provides real-time conversational assistance directly inside the Render Web Dashboard.
 Seamlessly bridges to local Antigravity when the user is logged in,
-uses Google Gemini / OpenAI with live market and historical context injection,
-and includes an intelligent autonomous rule engine as a built-in zero-dependency fallback.
+uses Google Gemini / OpenAI with live market and historical database context injection,
+and transparently displays genuine error messages when AI keys are missing or failing.
 """
 
 from datetime import datetime, timedelta, timezone
@@ -13,9 +13,20 @@ import os
 from pathlib import Path
 import re
 import sqlite3
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 import urllib.error
 import urllib.request
+
+# Automatically load environment variables from .env
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+    # Also attempt loading from project root
+    _root = Path(__file__).resolve().parent.parent.parent
+    if (_root / ".env").exists():
+        load_dotenv(_root / ".env")
+except Exception:
+    pass
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +34,8 @@ logger = logging.getLogger(__name__)
 def find_historical_ohlc(user_msg: str, root_dir: Optional[Path] = None) -> Optional[Dict[str, Any]]:
     """
     Parses dates or relative time expressions from the user's message and retrieves
-    exact historical OHLC session data from SQLite (data/market/nse_spot_data.db).
+    exact historical OHLC session data from SQLite (data/market/nse_spot_data.db)
+    or Supabase Cloud PostgreSQL.
     """
     if not user_msg:
         return None
@@ -100,108 +112,181 @@ def find_historical_ohlc(user_msg: str, root_dir: Optional[Path] = None) -> Opti
     if not target_date_str:
         return None
 
-    # Locate database
     if root_dir is None:
         root_dir = Path(__file__).resolve().parent.parent.parent
     db_path = root_dir / "data" / "market" / "nse_spot_data.db"
 
-    if not db_path.exists():
+    by_symbol: Dict[str, Dict[str, Any]] = {}
+    rows = []
+
+    if db_path.exists():
+        try:
+            conn = sqlite3.connect(str(db_path))
+            conn.row_factory = sqlite3.Row
+            cur = conn.cursor()
+            cur.execute(
+                """
+                SELECT date, time, symbol, spot_price, open_price, high_price, low_price,
+                       close_price, previous_close, change_pts, change_pct
+                FROM nse_spot_records
+                WHERE date LIKE ?
+                ORDER BY id DESC
+                """,
+                (f"%{target_date_str}%",),
+            )
+            rows = cur.fetchall()
+            conn.close()
+        except Exception as ex:
+            logger.warning("Local SQLite historical query error: %s", ex)
+
+    if rows:
+        for r in rows:
+            sym = r["symbol"]
+            if sym not in by_symbol:
+                by_symbol[sym] = {
+                    "date": r["date"],
+                    "time": r["time"],
+                    "symbol": sym,
+                    "spot_price": r["spot_price"],
+                    "open_price": r["open_price"],
+                    "high_price": r["high_price"],
+                    "low_price": r["low_price"],
+                    "close_price": r["close_price"],
+                    "previous_close": r["previous_close"],
+                    "change_pts": r["change_pts"],
+                    "change_pct": r["change_pct"],
+                }
+    else:
+        # Fall back to Supabase Cloud Database (PostgreSQL)
+        try:
+            from nifty_trader.core.supabase_adapter import get_supabase_adapter
+            supa = get_supabase_adapter(root_dir)
+            cloud_records = supa.fetch_spot_records_from_cloud(target_date_str)
+            if cloud_records:
+                for cr in cloud_records:
+                    sym = cr.get("symbol")
+                    if sym and sym not in by_symbol:
+                        by_symbol[sym] = {
+                            "date": target_date_str,
+                            "time": cr.get("timestamp_ist", "").split(" ")[1] if " " in cr.get("timestamp_ist", "") else "",
+                            "symbol": sym,
+                            "spot_price": cr.get("spot_price"),
+                            "open_price": cr.get("day_open"),
+                            "high_price": cr.get("day_high"),
+                            "low_price": cr.get("day_low"),
+                            "close_price": cr.get("day_close") or cr.get("spot_price"),
+                            "previous_close": cr.get("previous_close"),
+                            "change_pts": cr.get("change_pts"),
+                            "change_pct": cr.get("change_pct"),
+                        }
+        except Exception as ex:
+            logger.debug("Supabase cloud historical spot error: %s", ex)
+
+    if not by_symbol:
         return None
 
-    try:
-        conn = sqlite3.connect(str(db_path))
-        conn.row_factory = sqlite3.Row
-        cur = conn.cursor()
-        cur.execute(
-            """
-            SELECT date, time, symbol, spot_price, open_price, high_price, low_price,
-                   close_price, previous_close, change_pts, change_pct
-            FROM nse_spot_records
-            WHERE date LIKE ?
-            ORDER BY id DESC
-            """,
-            (f"%{target_date_str}%",),
-        )
-        rows = cur.fetchall()
-        conn.close()
+    # Build clean markdown
+    md_lines = [
+        f"### 📅 Historical Market Session ({display_title or target_date_str})",
+    ]
 
-        by_symbol: Dict[str, Dict[str, Any]] = {}
-        if rows:
-            for r in rows:
-                sym = r["symbol"]
-                if sym not in by_symbol:
-                    by_symbol[sym] = {
-                        "date": r["date"],
-                        "time": r["time"],
-                        "symbol": sym,
-                        "spot_price": r["spot_price"],
-                        "open_price": r["open_price"],
-                        "high_price": r["high_price"],
-                        "low_price": r["low_price"],
-                        "close_price": r["close_price"],
-                        "previous_close": r["previous_close"],
-                        "change_pts": r["change_pts"],
-                        "change_pct": r["change_pct"],
-                    }
-        else:
-            # Fall back to Supabase Cloud Database (PostgreSQL)
-            try:
-                from nifty_trader.core.supabase_adapter import get_supabase_adapter
-                supa = get_supabase_adapter(root_dir)
-                cloud_records = supa.fetch_spot_records_from_cloud(target_date_str)
-                if cloud_records:
-                    for cr in cloud_records:
-                        sym = cr.get("symbol")
-                        if sym and sym not in by_symbol:
-                            by_symbol[sym] = {
-                                "date": target_date_str,
-                                "time": cr.get("timestamp_ist", "").split(" ")[1] if " " in cr.get("timestamp_ist", "") else "",
-                                "symbol": sym,
-                                "spot_price": cr.get("spot_price"),
-                                "open_price": cr.get("day_open"),
-                                "high_price": cr.get("day_high"),
-                                "low_price": cr.get("day_low"),
-                                "close_price": cr.get("day_close") or cr.get("spot_price"),
-                                "previous_close": cr.get("previous_close"),
-                                "change_pts": cr.get("change_pts"),
-                                "change_pct": cr.get("change_pct"),
-                            }
-            except Exception as ex:
-                logger.debug("Supabase cloud historical spot error: %s", ex)
+    for sym in ["NIFTY 50", "BANKNIFTY", "GIFT NIFTY"]:
+        if sym in by_symbol:
+            data = by_symbol[sym]
+            chg = data["change_pts"] or 0.0
+            chg_pct = data["change_pct"] or 0.0
+            sign = "+" if chg >= 0 else ""
+            md_lines.append(f"\n**{sym}:**")
+            md_lines.append(f"• **Open Spot Price**: **₹{data['open_price']:,.2f}**")
+            md_lines.append(f"• **Session High**: ₹{data['high_price']:,.2f}")
+            md_lines.append(f"• **Session Low**: ₹{data['low_price']:,.2f}")
+            md_lines.append(f"• **Closing / Last Spot**: ₹{data['close_price']:,.2f}")
+            if data["previous_close"]:
+                md_lines.append(f"• **Previous Close**: ₹{data['previous_close']:,.2f}")
+            md_lines.append(f"• **Net Move**: **{sign}{chg:,.2f} pts ({sign}{chg_pct:.2f}%)**")
 
-        if not by_symbol:
-            return None
+    return {
+        "target_date": target_date_str,
+        "display_title": display_title,
+        "symbols": by_symbol,
+        "formatted_markdown": "\n".join(md_lines),
+    }
 
-        # Build clean markdown
-        md_lines = [
-            f"### 📅 Historical Market Session ({display_title or target_date_str})",
-        ]
 
-        for sym in ["NIFTY 50", "BANKNIFTY", "GIFT NIFTY"]:
-            if sym in by_symbol:
-                data = by_symbol[sym]
-                chg = data["change_pts"] or 0.0
-                chg_pct = data["change_pct"] or 0.0
-                sign = "+" if chg >= 0 else ""
-                md_lines.append(f"\n**{sym}:**")
-                md_lines.append(f"• **Open Spot Price**: **₹{data['open_price']:,.2f}**")
-                md_lines.append(f"• **Session High**: ₹{data['high_price']:,.2f}")
-                md_lines.append(f"• **Session Low**: ₹{data['low_price']:,.2f}")
-                md_lines.append(f"• **Closing / Last Spot**: ₹{data['close_price']:,.2f}")
-                if data["previous_close"]:
-                    md_lines.append(f"• **Previous Close**: ₹{data['previous_close']:,.2f}")
-                md_lines.append(f"• **Net Move**: **{sign}{chg:,.2f} pts ({sign}{chg_pct:.2f}%)**")
+def get_market_statistics_context(root_dir: Optional[Path] = None, user_msg: str = "") -> str:
+    """
+    Computes statistical extremes (monthly highs, lows, all-time ranges) from the database
+    so the AI model can answer queries like 'what is nifty lowest price this month'.
+    """
+    if root_dir is None:
+        root_dir = Path(__file__).resolve().parent.parent.parent
+    db_path = root_dir / "data" / "market" / "nse_spot_data.db"
 
-        return {
-            "target_date": target_date_str,
-            "display_title": display_title,
-            "symbols": by_symbol,
-            "formatted_markdown": "\n".join(md_lines),
-        }
+    lines = ["### COMPREHENSIVE MARKET RANGE & EXTREMES STATS:"]
 
-    except Exception as ex:
-        logger.warning("Historical OHLC query error: %s", ex)
-        return None
+    if db_path.exists():
+        try:
+            conn = sqlite3.connect(str(db_path))
+            conn.row_factory = sqlite3.Row
+            cur = conn.cursor()
+
+            # 1. Current Month (November 2026) Extremes
+            cur.execute(
+                """
+                SELECT symbol, MIN(low_price) as min_low, MAX(high_price) as max_high,
+                       MIN(open_price) as min_open, MAX(close_price) as max_close
+                FROM nse_spot_records
+                WHERE date LIKE '2026-11%'
+                GROUP BY symbol
+                """
+            )
+            rows = cur.fetchall()
+            if rows:
+                lines.append("\n**Current Month (November 2026) Ranges:**")
+                for r in rows:
+                    sym = r["symbol"]
+                    min_low = r["min_low"]
+                    max_high = r["max_high"]
+
+                    # Find date of min_low
+                    cur.execute(
+                        "SELECT date FROM nse_spot_records WHERE symbol = ? AND date LIKE '2026-11%' AND low_price = ? LIMIT 1",
+                        (sym, min_low),
+                    )
+                    low_match = cur.fetchone()
+                    low_date = low_match["date"] if low_match else "Nov 2026"
+
+                    # Find date of max_high
+                    cur.execute(
+                        "SELECT date FROM nse_spot_records WHERE symbol = ? AND date LIKE '2026-11%' AND high_price = ? LIMIT 1",
+                        (sym, max_high),
+                    )
+                    high_match = cur.fetchone()
+                    high_date = high_match["date"] if high_match else "Nov 2026"
+
+                    lines.append(
+                        f"- **{sym}**: Lowest = ₹{min_low:,.2f} (on {low_date}) | Highest = ₹{max_high:,.2f} (on {high_date}) | Month Open = ₹{r['min_open']:,.2f}"
+                    )
+
+            # 2. Database All-Time / 52-Week Range in SQLite
+            cur.execute(
+                """
+                SELECT symbol, MIN(low_price) as min_low, MAX(high_price) as max_high
+                FROM nse_spot_records
+                GROUP BY symbol
+                """
+            )
+            all_time_rows = cur.fetchall()
+            if all_time_rows:
+                lines.append("\n**All-Time / Database Recorded Extremes:**")
+                for r in all_time_rows:
+                    lines.append(f"- **{r['symbol']}**: Lowest Ever Recorded = ₹{r['min_low']:,.2f} | Highest Ever = ₹{r['max_high']:,.2f}")
+
+            conn.close()
+        except Exception as ex:
+            logger.debug("Market stats extraction error: %s", ex)
+
+    return "\n".join(lines)
 
 
 def build_live_market_context(root_dir: Optional[Path] = None, user_msg: str = "") -> Dict[str, Any]:
@@ -280,6 +365,9 @@ def build_live_market_context(root_dir: Optional[Path] = None, user_msg: str = "
         if hist:
             ctx["historical"] = hist
 
+    # 6. Monthly & Range Statistics
+    ctx["market_stats_text"] = get_market_statistics_context(root_dir, user_msg)
+
     return ctx
 
 
@@ -293,7 +381,13 @@ def format_context_for_prompt(ctx: Dict[str, Any]) -> str:
     if "historical" in ctx:
         hist = ctx["historical"]
         lines.append("\n" + hist["formatted_markdown"])
-        lines.append("\n> [CRITICAL INSTRUCTION] Use these EXACT historical numbers above to answer the user's date query directly.")
+        lines.append("\n> [CRITICAL INSTRUCTION] Use these EXACT historical numbers above to answer the user's specific date query directly.")
+
+    # Monthly & Range Statistics
+    stats_text = ctx.get("market_stats_text")
+    if stats_text:
+        lines.append("\n" + stats_text)
+        lines.append("> [CRITICAL INSTRUCTION] If the user asks for monthly low/high, lowest/highest price, or range extremes, answer directly with the exact numbers above.")
 
     # Spot Prices
     spots = ctx.get("spots", {})
@@ -345,13 +439,22 @@ def format_context_for_prompt(ctx: Dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
-def call_gemini_api(api_key: str, system_prompt: str, user_prompt: str, history: List[Dict[str, str]] = None) -> Optional[str]:
-    """Invokes Google Gemini REST API (gemini-2.5-flash or gemini-1.5-flash)."""
+def call_gemini_api(
+    api_key: str,
+    system_prompt: str,
+    user_prompt: str,
+    history: Optional[List[Dict[str, str]]] = None,
+) -> Tuple[Optional[str], Optional[str]]:
+    """
+    Invokes Google Gemini REST API (gemini-2.5-flash or gemini-1.5-flash).
+    Returns (result_text, None) on success or (None, error_message) on failure.
+    """
     models = ["gemini-2.5-flash", "gemini-1.5-flash"]
+    last_error = None
 
     contents = []
     if history:
-        for turn in history[-6:]:  # Keep last 3 turns
+        for turn in history[-6:]:
             role = "user" if turn.get("role") == "user" else "model"
             content = turn.get("content", "").strip()
             if content:
@@ -378,27 +481,34 @@ def call_gemini_api(api_key: str, system_prompt: str, user_prompt: str, history:
             method="POST",
         )
         try:
-            with urllib.request.urlopen(req, timeout=12.0) as resp:
+            with urllib.request.urlopen(req, timeout=14.0) as resp:
                 res = json.loads(resp.read().decode("utf-8"))
                 candidates = res.get("candidates", [])
                 if candidates:
                     parts = candidates[0].get("content", {}).get("parts", [])
                     if parts and "text" in parts[0]:
-                        return parts[0]["text"]
+                        return (parts[0]["text"], None)
         except urllib.error.HTTPError as e:
             err_body = e.read().decode("utf-8", errors="ignore")
-            logger.warning("Gemini %s API error (%s): %s", model, e.code, err_body)
+            last_error = f"HTTP {e.code}: {err_body[:200]}"
+            logger.warning("Gemini %s API error: %s", model, last_error)
             if e.code in (404, 400):
-                continue  # Try next model
+                continue
             break
         except Exception as ex:
+            last_error = str(ex)
             logger.warning("Gemini %s request failed: %s", model, ex)
             break
 
-    return None
+    return (None, last_error or "No response from Gemini models")
 
 
-def call_openai_api(api_key: str, system_prompt: str, user_prompt: str, history: List[Dict[str, str]] = None) -> Optional[str]:
+def call_openai_api(
+    api_key: str,
+    system_prompt: str,
+    user_prompt: str,
+    history: Optional[List[Dict[str, str]]] = None,
+) -> Tuple[Optional[str], Optional[str]]:
     """Invokes OpenAI Chat Completions API as secondary fallback."""
     url = "https://api.openai.com/v1/chat/completions"
     messages = [{"role": "system", "content": system_prompt}]
@@ -432,136 +542,11 @@ def call_openai_api(api_key: str, system_prompt: str, user_prompt: str, history:
             res = json.loads(resp.read().decode("utf-8"))
             choices = res.get("choices", [])
             if choices:
-                return choices[0].get("message", {}).get("content")
+                return (choices[0].get("message", {}).get("content"), None)
     except Exception as ex:
         logger.warning("OpenAI API request failed: %s", ex)
-    return None
-
-
-def autonomous_copilot_rule_engine(user_msg: str, ctx: Dict[str, Any]) -> str:
-    """
-    Intelligent built-in algorithmic reasoning engine.
-    Executes if no external LLM API key (GEMINI_API_KEY) is supplied yet on Render
-    or if local Antigravity bridge is offline.
-    Accurately parses market queries and provides actionable quantitative answers.
-    """
-    msg_low = user_msg.lower().strip()
-    spots = ctx.get("spots", {})
-    sim = ctx.get("simulator", {})
-    news = ctx.get("news", [])
-    levels = ctx.get("levels", {})
-
-    # 0. Historical Session OHLC Lookup (e.g. "what is open spot price in 19th nov 2026")
-    if "historical" in ctx:
-        return ctx["historical"]["formatted_markdown"]
-
-    nifty_spot = None
-    if isinstance(spots, dict) and "symbol" in spots:
-        nifty_spot = spots.get("spot_price") or spots.get("price")
-    elif isinstance(spots, dict):
-        for k, v in spots.items():
-            if isinstance(v, dict) and "NIFTY" in k and "BANK" not in k:
-                nifty_spot = v.get("spot_price") or v.get("price")
-                break
-
-    # 1. Volume Profile, POC, Fair Value, Zones
-    if any(w in msg_low for w in ["poc", "fair value", "vah", "val", "zone", "value area", "profile"]):
-        resp = [
-            "### 📊 Volume Profile & Fair Value Engine Report",
-            "- **Timeframe**: 5-Minute Intraday Session (Standard for NIFTY/BANKNIFTY).",
-            "- **Point of Control (POC)**: Represents the high-density trading node where maximum volume exchanged.",
-            "- **Value Area (70%)**: Bounded between **VAL (Value Area Low)** and **VAH (Value Area High)**.",
-        ]
-        if nifty_spot:
-            resp.append(f"- **Current NIFTY Spot**: ₹{nifty_spot:,.2f}")
-        resp.extend([
-            "\n**Actionable Rules:**",
-            "1. **Inside Value Area**: High probability of rotational / mean-reverting chop between VAL and VAH.",
-            "2. **Above VAH**: Premium Zone — do not chase longs; wait for a pullback to VAH or POC retest.",
-            "3. **Below VAL**: Discount Zone — do not short blindly; watch for institutional absorption.",
-            "\n*Tip: Click the **[ 📊 Fair Value POC ]** toolbar button on the Charts tab to view live histogram bins.*",
-        ])
-        return "\n".join(resp)
-
-    # 2. Positions, P&L, Trades
-    if any(w in msg_low for w in ["position", "pnl", "p&l", "profit", "loss", "trade", "holding"]):
-        net_pnl = sim.get("net_pnl", 0.0)
-        pnl_sign = "+" if net_pnl >= 0 else ""
-        active = sim.get("active_positions", [])
-        resp = [
-            "### ⚡ Paper Trading & Portfolio Status",
-            f"- **Execution Engine**: {sim.get('status', 'ACTIVE')}",
-            f"- **Net Realized P&L**: **₹{pnl_sign}{net_pnl:,.2f}**",
-            f"- **Win Rate**: {sim.get('win_rate', '0%')} ({sim.get('total_trades', 0)} total closed trades)",
-            f"- **Active Positions**: **{len(active)}**",
-        ]
-        if active:
-            resp.append("\n**Open Contracts:**")
-            for p in active:
-                resp.append(f"- {p.get('symbol')} {p.get('strike')} {p.get('option_type')} | Qty: {p.get('qty')} | Entry: ₹{p.get('entry_price')} | Unrealized: ₹{p.get('unrealized_pnl', 0.0):,.2f}")
-        else:
-            resp.append("\n*No open positions currently. System is standing by for high-probability setups.*")
-        return "\n".join(resp)
-
-    # 3. Market News & Sentiment
-    if any(w in msg_low for w in ["news", "sentiment", "headline", "macro", "event"]):
-        sentiment = ctx.get("news_sentiment", "NEUTRAL")
-        resp = [
-            f"### 📰 Market News & Sentiment Analysis: **{sentiment}**",
-        ]
-        if news:
-            for i, n in enumerate(news[:4], 1):
-                resp.append(f"{i}. **[{n.get('impact_type', 'MARKET')}]** {n.get('title')}")
-        else:
-            resp.append("- Automated news scraper is monitoring Indian economic calendar and corporate releases.")
-        resp.append("\n*Tip: Switch to the **Market News & Impact** tab for full historical sentiment breakdown.*")
-        return "\n".join(resp)
-
-    # 4. Spot Price, Trend, Direction
-    if any(w in msg_low for w in ["price", "spot", "trend", "direction", "nifty", "market"]):
-        resp = [
-            "### 📈 Real-Time Spot & Market Structure",
-        ]
-        if spots:
-            if isinstance(spots, dict) and "symbol" in spots:
-                sym = spots.get("symbol", "NIFTY")
-                p = spots.get("spot_price") or spots.get("price") or "--"
-                chg = spots.get("change") or spots.get("change_pct") or ""
-                resp.append(f"- **{sym}**: ₹{p} {f'({chg})' if chg else ''}")
-            elif isinstance(spots, dict):
-                for sym, d in spots.items():
-                    if isinstance(d, dict):
-                        p = d.get("spot_price") or d.get("price") or "--"
-                        chg = d.get("change") or d.get("change_pct") or ""
-                        resp.append(f"- **{sym}**: ₹{p} {f'({chg})' if chg else ''}")
-        else:
-            resp.append("- Real-time spot telemetry feed active (5-Minute automated interval).")
-        resp.extend([
-            "\n**Market Session Clock**: NSE trades **09:15 to 15:30 IST**.",
-            "- Directional bias is filtered by 9 & 20 EMA slope and Supertrend alignment.",
-            "- High-probability entries execute between **09:25 and 15:00 IST**.",
-        ])
-        return "\n".join(resp)
-
-    # 5. Default Comprehensive Help
-    resp = [
-        "### 🤖 NIFTY Autonomous Trader Copilot",
-        "Server is active on Render. Market telemetry & analysis engine ready.",
-    ]
-    if nifty_spot:
-        resp.append(f"- **NIFTY 50 Spot**: ₹{nifty_spot:,.2f}")
-    resp.extend([
-        f"- **Paper Trading P&L**: ₹{sim.get('net_pnl', 0.0):,.2f} ({sim.get('active_positions_count', 0)} active positions)",
-        f"- **Armed Level Triggers**: {levels.get('armed_count', 0)} triggers standing by",
-        "\n**You can ask me:**",
-        "• *'What is today's POC and are we in Premium or Discount zone?'*",
-        "• *'What was open spot price in 19th nov 2026?'*",
-        "• *'Show my active positions and current P&L'*",
-        "• *'Summarize today's market news sentiment'*",
-        "• *'Check NIFTY trend and key levels'*",
-        "\n> [!TIP]\n> *Whenever you have Antigravity running on your computer, the chat automatically bridges directly to Antigravity for live interactive reasoning.*",
-    ])
-    return "\n".join(resp)
+        return (None, str(ex))
+    return (None, "No choices returned by OpenAI")
 
 
 def handle_ai_chat_request(data: Dict[str, Any], root_dir: Optional[Path] = None) -> Dict[str, Any]:
@@ -569,7 +554,7 @@ def handle_ai_chat_request(data: Dict[str, Any], root_dir: Optional[Path] = None
     Main orchestration handler for the web chat endpoint `/api/chat`.
     1. If Antigravity local bridge is online, routes directly to Antigravity.
     2. Otherwise, uses Gemini API / OpenAI API with live context & historical SQLite lookup.
-    3. Seamlessly falls back to the autonomous algorithmic rule engine.
+    3. If API keys are missing or fail, honestly displays the error to the user rather than fake text.
     """
     user_msg = (data.get("message") or "").strip()
     history = data.get("history") or []
@@ -577,7 +562,7 @@ def handle_ai_chat_request(data: Dict[str, Any], root_dir: Optional[Path] = None
     if not user_msg:
         return {"status": "error", "message": "Empty message provided"}
 
-    # Compile real-time context + historical lookup
+    # Compile real-time context + historical lookup + monthly stats
     ctx = build_live_market_context(root_dir, user_msg=user_msg)
     context_text = format_context_for_prompt(ctx)
 
@@ -611,41 +596,67 @@ def handle_ai_chat_request(data: Dict[str, Any], root_dir: Optional[Path] = None
         "You are the NIFTY Autonomous Trader Copilot, an expert Indian markets quantitative options trader "
         "and algorithmic analyst. You assist the trader directly via the Render Web Dashboard.\n\n"
         "Guidelines:\n"
-        "1. Always cite exact numbers, price levels, historical session data, and P&L from the provided context.\n"
-        "2. If the user asks for historical prices or past dates, use the exact numbers from the HISTORICAL MARKET SESSION block.\n"
-        "3. Explain technical setups clearly using Volume Profile (POC, VAH, VAL), Supertrend, and EMA structure.\n"
-        "4. Emphasize strict risk management (1:3 Risk-to-Reward, hard stops, max daily drawdown ₹2,000).\n"
-        "5. Format your responses with clean Markdown, bullet points, and bold price highlights.\n"
-        "6. Keep responses concise, punchy, and actionable.\n\n"
+        "1. Always answer the specific question asked by the user.\n"
+        "2. If the user asks for historical prices, open prices, or specific past dates, cite the exact numbers from the HISTORICAL DATA block.\n"
+        "3. If the user asks for the lowest price, highest price, or monthly range, cite the exact numbers from the COMPREHENSIVE MARKET RANGE & EXTREMES block.\n"
+        "4. Explain technical setups clearly using Volume Profile (POC, VAH, VAL), Supertrend, and EMA structure.\n"
+        "5. Emphasize strict risk management (1:3 Risk-to-Reward, hard stops, max daily drawdown ₹2,000).\n"
+        "6. Format your responses with clean Markdown, bullet points, and bold price highlights.\n"
+        "7. Keep responses direct, concise, and actionable.\n\n"
         f"{context_text}"
     )
 
-    reply = None
-    model_name = "autonomous_rules_engine"
-
     gemini_key = os.environ.get("GEMINI_API_KEY", "").strip()
     if gemini_key:
-        reply = call_gemini_api(gemini_key, system_prompt, user_msg, history)
+        reply, err = call_gemini_api(gemini_key, system_prompt, user_msg, history)
         if reply:
-            model_name = "gemini-2.5-flash"
+            return {
+                "status": "ok",
+                "reply": reply,
+                "model": "gemini-2.5-flash",
+                "timestamp": datetime.now(timezone.utc).strftime("%H:%M:%S UTC"),
+            }
+        else:
+            return {
+                "status": "error",
+                "message": f"Gemini API request failed: {err}",
+                "reply": f"⚠️ **Gemini AI Request Error**: {err}\n\nPlease check your `GEMINI_API_KEY` quota and configuration.",
+                "model": "error",
+                "timestamp": datetime.now(timezone.utc).strftime("%H:%M:%S UTC"),
+            }
 
-    if not reply:
-        openai_key = os.environ.get("OPENAI_API_KEY", "").strip()
-        if openai_key:
-            reply = call_openai_api(openai_key, system_prompt, user_msg, history)
-            if reply:
-                model_name = "gpt-4o-mini"
+    openai_key = os.environ.get("OPENAI_API_KEY", "").strip()
+    if openai_key:
+        reply, err = call_openai_api(openai_key, system_prompt, user_msg, history)
+        if reply:
+            return {
+                "status": "ok",
+                "reply": reply,
+                "model": "gpt-4o-mini",
+                "timestamp": datetime.now(timezone.utc).strftime("%H:%M:%S UTC"),
+            }
+        else:
+            return {
+                "status": "error",
+                "message": f"OpenAI API request failed: {err}",
+                "reply": f"⚠️ **OpenAI Request Error**: {err}\n\nPlease check your `OPENAI_API_KEY` configuration.",
+                "model": "error",
+                "timestamp": datetime.now(timezone.utc).strftime("%H:%M:%S UTC"),
+            }
 
     # -------------------------------------------------------------
-    # PRIORITY 2: Built-in Autonomous Rule Engine
+    # NO API KEY CONFIGURED
     # -------------------------------------------------------------
-    if not reply:
-        reply = autonomous_copilot_rule_engine(user_msg, ctx)
-        model_name = "autonomous_copilot"
-
     return {
-        "status": "ok",
-        "reply": reply,
-        "model": model_name,
+        "status": "error",
+        "message": "GEMINI_API_KEY is not configured",
+        "reply": (
+            "⚠️ **AI Assistant Not Configured**:\n\n"
+            "I could not connect to Google Gemini because **`GEMINI_API_KEY`** is not set in your environment or `.env` file.\n\n"
+            "To enable live conversational intelligence:\n"
+            "1. Get a free API key at [Google AI Studio](https://aistudio.google.com/)\n"
+            "2. Add `GEMINI_API_KEY=your_key_here` to your `.env` file or Render Environment Variables."
+        ),
+        "model": "unconfigured",
         "timestamp": datetime.now(timezone.utc).strftime("%H:%M:%S UTC"),
     }

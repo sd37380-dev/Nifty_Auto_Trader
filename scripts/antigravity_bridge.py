@@ -27,12 +27,21 @@ ROOT_DIR = Path(__file__).resolve().parent.parent
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
+# Load .env file automatically
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+    if (ROOT_DIR / ".env").exists():
+        load_dotenv(ROOT_DIR / ".env")
+except Exception:
+    pass
+
 from nifty_trader.dashboard.chat_copilot import (
-    autonomous_copilot_rule_engine,
     call_gemini_api,
     call_openai_api,
     find_historical_ohlc,
     format_context_for_prompt,
+    get_market_statistics_context,
 )
 
 logging.basicConfig(
@@ -56,37 +65,43 @@ def generate_antigravity_response(
     if hist:
         ctx["historical"] = hist
 
-    # 2. Check for Gemini API key
+    # 2. Add statistical extremes (monthly low/high, all-time ranges)
+    ctx["market_stats_text"] = get_market_statistics_context(ROOT_DIR, user_msg)
+
+    # 3. Check for Gemini API key
     gemini_key = os.environ.get("GEMINI_API_KEY", "").strip()
     system_prompt = (
         "You are Antigravity, the elite autonomous AI trading engineer and quantitative researcher for NIFTY Autonomous Trader. "
         "You are communicating with the user directly through the Live Web Chat Bridge from your local execution environment.\n\n"
         "Guidelines:\n"
-        "1. Give direct, precise, quantitative answers citing exact numbers, prices, and P&L.\n"
-        "2. If the user asks for historical session prices (e.g. open price on a specific date), cite the exact numbers from the HISTORICAL DATA block.\n"
-        "3. Explain trading setups using Volume Profile (POC, VAH, VAL), 9/20 EMA slope, Supertrend, and strict 1:3 risk management.\n"
-        "4. Format your output cleanly with bullet points and bold highlights.\n\n"
+        "1. Always answer the specific question asked by the user.\n"
+        "2. If the user asks for historical prices or past dates, cite the exact numbers from the HISTORICAL DATA block.\n"
+        "3. If the user asks for the lowest price, highest price, or monthly range, cite the exact numbers from the COMPREHENSIVE MARKET RANGE & EXTREMES block.\n"
+        "4. Explain trading setups using Volume Profile (POC, VAH, VAL), 9/20 EMA slope, Supertrend, and strict 1:3 risk management.\n"
+        "5. Format your output cleanly with bullet points and bold highlights.\n\n"
         f"{format_context_for_prompt(ctx)}"
     )
 
-    reply = None
     if gemini_key:
-        reply = call_gemini_api(gemini_key, system_prompt, user_msg, history)
+        reply, err = call_gemini_api(gemini_key, system_prompt, user_msg, history)
+        if reply:
+            return f"{reply}\n\n*— Answered by Antigravity (Live Local Agent Bridge)*"
+        else:
+            return f"⚠️ **Antigravity AI Request Error**: {err}\n\nPlease check your `GEMINI_API_KEY` configuration."
 
-    if not reply:
-        openai_key = os.environ.get("OPENAI_API_KEY", "").strip()
-        if openai_key:
-            reply = call_openai_api(openai_key, system_prompt, user_msg, history)
+    openai_key = os.environ.get("OPENAI_API_KEY", "").strip()
+    if openai_key:
+        reply, err = call_openai_api(openai_key, system_prompt, user_msg, history)
+        if reply:
+            return f"{reply}\n\n*— Answered by Antigravity (Live Local Agent Bridge)*"
+        else:
+            return f"⚠️ **Antigravity OpenAI Error**: {err}\n\nPlease check your `OPENAI_API_KEY` configuration."
 
-    if not reply:
-        # Fall back to high-fidelity autonomous rule engine
-        reply = autonomous_copilot_rule_engine(user_msg, ctx)
-
-    # Attach Antigravity signature
-    if "\n\n*— Answered by Antigravity" not in reply:
-        reply = f"{reply}\n\n*— Answered by Antigravity (Live Local Agent Bridge)*"
-
-    return reply
+    return (
+        "⚠️ **Antigravity AI Key Error**:\n\n"
+        "No `GEMINI_API_KEY` was found in your `.env` file on this computer.\n"
+        "Please add `GEMINI_API_KEY=your_key` to `.env` so Antigravity can answer your questions with live reasoning."
+    )
 
 
 def run_bridge_worker(
@@ -101,6 +116,7 @@ def run_bridge_worker(
     logger.info("🚀 ANTIGRAVITY LIVE WEB CHAT BRIDGE ACTIVE")
     logger.info("   Target Server : %s", server_url)
     logger.info("   Local Root    : %s", ROOT_DIR)
+    logger.info("   AI Key Status : %s", "Configured (Gemini)" if os.environ.get("GEMINI_API_KEY") else "Missing GEMINI_API_KEY")
     logger.info("   Token Status  : Authenticated")
     logger.info("=" * 60)
     logger.info("Listening for incoming chat questions from the Web Copilot...")
