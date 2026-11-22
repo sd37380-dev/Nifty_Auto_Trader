@@ -83,17 +83,35 @@ def generate_antigravity_response(
     )
 
     if gemini_key:
-        reply, err = call_gemini_api(gemini_key, system_prompt, user_msg, history)
+        reply, meta, err = call_gemini_api(gemini_key, system_prompt, user_msg, history)
         if reply:
-            return f"{reply}\n\n*— Answered by Antigravity (Live Local Agent Bridge)*"
+            engine_str = meta.get("engine", "Google Gemini 2.5 Flash") if meta else "Google Gemini 2.5 Flash"
+            prompt_t = meta.get("prompt_tokens", 0) if meta else 0
+            cand_t = meta.get("candidate_tokens", 0) if meta else 0
+            lat = meta.get("latency_sec", 0.0) if meta else 0.0
+            proof_badge = (
+                f"\n\n---\n"
+                f"*⚡ Verified AI Origin: Antigravity Bridge via **{engine_str}** "
+                f"({prompt_t} in / {cand_t} out • {lat}s latency)*"
+            )
+            return f"{reply}{proof_badge}"
         else:
             return f"⚠️ **Antigravity AI Request Error**: {err}\n\nPlease check your `GEMINI_API_KEY` configuration."
 
     openai_key = os.environ.get("OPENAI_API_KEY", "").strip()
     if openai_key:
-        reply, err = call_openai_api(openai_key, system_prompt, user_msg, history)
+        reply, meta, err = call_openai_api(openai_key, system_prompt, user_msg, history)
         if reply:
-            return f"{reply}\n\n*— Answered by Antigravity (Live Local Agent Bridge)*"
+            engine_str = meta.get("engine", "OpenAI gpt-4o-mini") if meta else "OpenAI gpt-4o-mini"
+            prompt_t = meta.get("prompt_tokens", 0) if meta else 0
+            cand_t = meta.get("candidate_tokens", 0) if meta else 0
+            lat = meta.get("latency_sec", 0.0) if meta else 0.0
+            proof_badge = (
+                f"\n\n---\n"
+                f"*⚡ Verified AI Origin: Antigravity Bridge via **{engine_str}** "
+                f"({prompt_t} in / {cand_t} out • {lat}s latency)*"
+            )
+            return f"{reply}{proof_badge}"
         else:
             return f"⚠️ **Antigravity OpenAI Error**: {err}\n\nPlease check your `OPENAI_API_KEY` configuration."
 

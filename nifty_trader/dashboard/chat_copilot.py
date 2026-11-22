@@ -444,11 +444,12 @@ def call_gemini_api(
     system_prompt: str,
     user_prompt: str,
     history: Optional[List[Dict[str, str]]] = None,
-) -> Tuple[Optional[str], Optional[str]]:
+) -> Tuple[Optional[str], Optional[Dict[str, Any]], Optional[str]]:
     """
     Invokes Google Gemini REST API (gemini-2.5-flash or gemini-1.5-flash).
-    Returns (result_text, None) on success or (None, error_message) on failure.
+    Returns (result_text, metadata_dict, None) on success or (None, None, error_message) on failure.
     """
+    import time
     models = ["gemini-2.5-flash", "gemini-1.5-flash"]
     last_error = None
 
@@ -480,6 +481,7 @@ def call_gemini_api(
             headers={"Content-Type": "application/json"},
             method="POST",
         )
+        t0 = time.time()
         try:
             with urllib.request.urlopen(req, timeout=14.0) as resp:
                 res = json.loads(resp.read().decode("utf-8"))
@@ -487,7 +489,15 @@ def call_gemini_api(
                 if candidates:
                     parts = candidates[0].get("content", {}).get("parts", [])
                     if parts and "text" in parts[0]:
-                        return (parts[0]["text"], None)
+                        usage = res.get("usageMetadata", {})
+                        meta = {
+                            "engine": f"Google Gemini ({model})",
+                            "model": model,
+                            "prompt_tokens": usage.get("promptTokenCount", 0),
+                            "candidate_tokens": usage.get("candidatesTokenCount", 0),
+                            "latency_sec": round(time.time() - t0, 2),
+                        }
+                        return (parts[0]["text"], meta, None)
         except urllib.error.HTTPError as e:
             err_body = e.read().decode("utf-8", errors="ignore")
             last_error = f"HTTP {e.code}: {err_body[:200]}"
@@ -500,7 +510,7 @@ def call_gemini_api(
             logger.warning("Gemini %s request failed: %s", model, ex)
             break
 
-    return (None, last_error or "No response from Gemini models")
+    return (None, None, last_error or "No response from Gemini models")
 
 
 def call_openai_api(
@@ -508,8 +518,9 @@ def call_openai_api(
     system_prompt: str,
     user_prompt: str,
     history: Optional[List[Dict[str, str]]] = None,
-) -> Tuple[Optional[str], Optional[str]]:
+) -> Tuple[Optional[str], Optional[Dict[str, Any]], Optional[str]]:
     """Invokes OpenAI Chat Completions API as secondary fallback."""
+    import time
     url = "https://api.openai.com/v1/chat/completions"
     messages = [{"role": "system", "content": system_prompt}]
     if history:
@@ -537,16 +548,25 @@ def call_openai_api(
         },
         method="POST",
     )
+    t0 = time.time()
     try:
         with urllib.request.urlopen(req, timeout=12.0) as resp:
             res = json.loads(resp.read().decode("utf-8"))
             choices = res.get("choices", [])
             if choices:
-                return (choices[0].get("message", {}).get("content"), None)
+                usage = res.get("usage", {})
+                meta = {
+                    "engine": "OpenAI (gpt-4o-mini)",
+                    "model": "gpt-4o-mini",
+                    "prompt_tokens": usage.get("prompt_tokens", 0),
+                    "candidate_tokens": usage.get("completion_tokens", 0),
+                    "latency_sec": round(time.time() - t0, 2),
+                }
+                return (choices[0].get("message", {}).get("content"), meta, None)
     except Exception as ex:
         logger.warning("OpenAI API request failed: %s", ex)
-        return (None, str(ex))
-    return (None, "No choices returned by OpenAI")
+        return (None, None, str(ex))
+    return (None, None, "No choices returned by OpenAI")
 
 
 def handle_ai_chat_request(data: Dict[str, Any], root_dir: Optional[Path] = None) -> Dict[str, Any]:
@@ -608,12 +628,22 @@ def handle_ai_chat_request(data: Dict[str, Any], root_dir: Optional[Path] = None
 
     gemini_key = os.environ.get("GEMINI_API_KEY", "").strip()
     if gemini_key:
-        reply, err = call_gemini_api(gemini_key, system_prompt, user_msg, history)
+        reply, meta, err = call_gemini_api(gemini_key, system_prompt, user_msg, history)
         if reply:
+            engine_str = meta.get("engine", "Google Gemini 2.5 Flash") if meta else "Google Gemini 2.5 Flash"
+            prompt_t = meta.get("prompt_tokens", 0) if meta else 0
+            cand_t = meta.get("candidate_tokens", 0) if meta else 0
+            lat = meta.get("latency_sec", 0.0) if meta else 0.0
+            proof_badge = (
+                f"\n\n---\n"
+                f"*✨ Verified AI: Generated live via **{engine_str}** "
+                f"({prompt_t} in / {cand_t} out • {lat}s latency)*"
+            )
             return {
                 "status": "ok",
-                "reply": reply,
-                "model": "gemini-2.5-flash",
+                "reply": reply + proof_badge,
+                "model": meta.get("model", "gemini-2.5-flash") if meta else "gemini-2.5-flash",
+                "meta": meta,
                 "timestamp": datetime.now(timezone.utc).strftime("%H:%M:%S UTC"),
             }
         else:
@@ -627,12 +657,22 @@ def handle_ai_chat_request(data: Dict[str, Any], root_dir: Optional[Path] = None
 
     openai_key = os.environ.get("OPENAI_API_KEY", "").strip()
     if openai_key:
-        reply, err = call_openai_api(openai_key, system_prompt, user_msg, history)
+        reply, meta, err = call_openai_api(openai_key, system_prompt, user_msg, history)
         if reply:
+            engine_str = meta.get("engine", "OpenAI gpt-4o-mini") if meta else "OpenAI gpt-4o-mini"
+            prompt_t = meta.get("prompt_tokens", 0) if meta else 0
+            cand_t = meta.get("candidate_tokens", 0) if meta else 0
+            lat = meta.get("latency_sec", 0.0) if meta else 0.0
+            proof_badge = (
+                f"\n\n---\n"
+                f"*✨ Verified AI: Generated live via **{engine_str}** "
+                f"({prompt_t} in / {cand_t} out • {lat}s latency)*"
+            )
             return {
                 "status": "ok",
-                "reply": reply,
-                "model": "gpt-4o-mini",
+                "reply": reply + proof_badge,
+                "model": meta.get("model", "gpt-4o-mini") if meta else "gpt-4o-mini",
+                "meta": meta,
                 "timestamp": datetime.now(timezone.utc).strftime("%H:%M:%S UTC"),
             }
         else:
