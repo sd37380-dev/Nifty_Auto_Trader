@@ -13,6 +13,8 @@ from nifty_trader.features.migrations import (
     MigrationStep,
 )
 from nifty_trader.features.manifest import ReleaseManifestManager
+from nifty_trader.features.volume_candles import VolumeBar, VolumeBarAggregator
+from nifty_trader.features.volume_signals import VolumePatternDetector
 
 __all__ = [
     "FeatureModule",
@@ -23,4 +25,7 @@ __all__ = [
     "DatabaseMigrationManager",
     "MigrationStep",
     "ReleaseManifestManager",
+    "VolumeBar",
+    "VolumeBarAggregator",
+    "VolumePatternDetector",
 ]

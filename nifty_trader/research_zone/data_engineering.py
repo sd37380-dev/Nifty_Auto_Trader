@@ -182,6 +182,24 @@ class DataEngineeringZone:
 
         return aggregated
 
+    def resample_to_volume_bars(
+        self,
+        bars: List[NormalizedBar],
+        target_volume: int = 10000,
+        slice_overflow: bool = True,
+    ):
+        """
+        Resamples granular bars into constant-volume candlesticks (Volume Bars).
+        Closes a candle when the cumulative volume hits target_volume.
+        """
+        from nifty_trader.features.volume_candles import VolumeBarAggregator
+        aggregator = VolumeBarAggregator(default_target_volume=target_volume)
+        return aggregator.aggregate_from_normalized_bars(
+            bars=bars,
+            target_volume=target_volume,
+            slice_overflow=slice_overflow,
+        )
+
     def _aggregate_bucket(
         self,
         bucket: List[NormalizedBar],

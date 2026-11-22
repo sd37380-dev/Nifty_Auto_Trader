@@ -1971,6 +1971,12 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         <span style="font-size: 0.72rem; color: var(--text-secondary); font-weight: 700; margin-right: 2px;">STYLE:</span>
         <button type="button" class="btn nc-style-btn" id="btn-style-candles" onclick="setChartType('candles', this)" style="background: var(--accent); color: white; padding: 3px 8px; font-size: 0.72rem; font-weight: 700; border-radius: 4px; border: 1px solid var(--accent);">🕯️ Candles</button>
         <button type="button" class="btn nc-style-btn" id="btn-style-ha" onclick="setChartType('heikinashi', this)" style="background: #1e293b; color: var(--text-secondary); padding: 3px 8px; font-size: 0.72rem; border-radius: 4px; border: 1px solid var(--border);">🏮 Heikin-Ashi</button>
+        <button type="button" class="btn nc-style-btn" id="btn-style-volcandle" onclick="setChartType('volumecandles', this)" style="background: #1e293b; color: var(--text-secondary); padding: 3px 8px; font-size: 0.72rem; border-radius: 4px; border: 1px solid var(--border);" title="Equivolume / Volume Candles: thin for low volume, fat for high volume">📦 Volume Candles</button>
+        <div id="nc-volcandle-ctrl" style="display: none; align-items: center; gap: 4px; background: rgba(30, 41, 59, 0.6); padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(56, 189, 248, 0.3);">
+          <span style="font-size: 0.67rem; color: #94a3b8; font-weight: 700;">Solid &ge;</span>
+          <input type="number" id="nc-volcandle-thresh" value="10000" step="1000" min="100" oninput="applyCandleDataToSeries(); setTimeout(renderCustomZones, 30);" onchange="applyCandleDataToSeries(); setTimeout(renderCustomZones, 30);" style="width: 72px; background: #0f172a; border: 1px solid #38bdf8; color: #38bdf8; font-size: 0.72rem; padding: 1px 4px; border-radius: 3px; text-align: center; font-weight: 700;" title="Volume threshold in contracts: bars >= this show as solid colored candles, bars < this show as thin hollow candles">
+          <span style="font-size: 0.65rem; color: #38bdf8; font-weight: 700;">contracts</span>
+        </div>
         <button type="button" class="btn nc-style-btn" id="btn-style-line" onclick="setChartType('line', this)" style="background: #1e293b; color: var(--text-secondary); padding: 3px 8px; font-size: 0.72rem; border-radius: 4px; border: 1px solid var(--border);">📈 Line</button>
         <button type="button" class="btn nc-style-btn" id="btn-style-area" onclick="setChartType('area', this)" style="background: #1e293b; color: var(--text-secondary); padding: 3px 8px; font-size: 0.72rem; border-radius: 4px; border: 1px solid var(--border);">📊 Area</button>
       </div>
@@ -2078,6 +2084,16 @@ DASHBOARD_HTML = """<!DOCTYPE html>
                 <span style="font-size: 0.64rem; color: var(--text-secondary);">Histogram</span>
               </label>
 
+              <!-- Volume Signals (VPA Breakout & Absorption) -->
+              <label class="ind-item-label" style="display: flex; align-items: center; justify-content: space-between; padding: 5px 8px; border-radius: 4px; cursor: pointer;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <input type="checkbox" id="nc-toggle-volsignals" checked onchange="toggleIndicator('volsignals')">
+                  <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #eab308;"></span>
+                  <span style="font-size: 0.74rem; font-weight: 700; color: #eab308;">⚡ Volume Signals (VPA)</span>
+                </div>
+                <span style="font-size: 0.64rem; color: var(--text-secondary);">Breakout &amp; Absorption</span>
+              </label>
+
               <!-- EMA 9 -->
               <label class="ind-item-label" style="display: flex; align-items: center; justify-content: space-between; padding: 5px 8px; border-radius: 4px; cursor: pointer;">
                 <div style="display: flex; align-items: center; gap: 8px;">
@@ -2142,6 +2158,22 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         </button>
         <button type="button" class="btn" id="btn-chart-short-tool" onclick="openLongShortTool('SHORT')" style="background: #4c0519; color: #fb7185; padding: 3px 10px; font-size: 0.72rem; font-weight: 800; border-radius: 4px; border: 1px solid #f43f5e; cursor: pointer;" title="Place Visual Short Position (Buy PE) with Entry, Target &amp; Stop Loss Lines">
           🔴 Short (Buy PE)
+        </button>
+        <button type="button" class="btn" id="btn-toggle-volsignals-sw" onclick="toggleVolSignalsSwitch()" style="background: rgba(245, 158, 11, 0.25); color: #fbbf24; padding: 3px 9px; font-size: 0.72rem; font-weight: 700; border-radius: 4px; border: 1px solid #f59e0b; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;" title="⚡ Volume Signals ON/OFF Switch (Toggle volume spike signals under candles)">
+          <span>⚡ Vol Signals</span>
+          <span id="nc-volsignals-status-badge" style="background: rgba(245, 158, 11, 0.25); color: #fbbf24; font-size: 0.62rem; padding: 1px 4px; border-radius: 3px; font-weight: 800;">ON</span>
+        </button>
+        <button type="button" class="btn" id="btn-toggle-order-flow" onclick="toggleOrderFlowDelta()" style="background: rgba(14, 116, 144, 0.4); color: #38bdf8; padding: 3px 9px; font-size: 0.72rem; font-weight: 700; border-radius: 4px; border: 1px solid #38bdf8; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;" title="Show/Hide Order Flow Delta (Only shown on volume candles)">
+          <span>⚖️ Order Flow Delta</span>
+          <span id="nc-delta-status-badge" style="background: rgba(16, 185, 129, 0.25); color: #34d399; font-size: 0.62rem; padding: 1px 4px; border-radius: 3px; font-weight: 800;">ON</span>
+        </button>
+        <button type="button" class="btn" id="btn-toggle-liquidity-radar" onclick="toggleLiquidityRadar()" style="background: rgba(124, 58, 237, 0.4); color: #c084fc; padding: 3px 9px; font-size: 0.72rem; font-weight: 700; border-radius: 4px; border: 1px solid #a855f7; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;" title="Liquidity Hunt Identifier: Auto PDH/PDL, 2D Ceiling/Floor, 50% Wick Retest, Gap Box &amp; Sweep Detection">
+          <span>🎯 Liquidity Radar</span>
+          <span id="nc-liq-status-badge" style="background: rgba(168, 85, 247, 0.25); color: #c084fc; font-size: 0.62rem; padding: 1px 4px; border-radius: 3px; font-weight: 800;">ON</span>
+        </button>
+        <button type="button" class="btn" id="btn-toggle-poc-engine" onclick="togglePocEngine()" style="background: rgba(234, 179, 8, 0.25); color: #fde047; padding: 3px 9px; font-size: 0.72rem; font-weight: 700; border-radius: 4px; border: 1px solid #eab308; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;" title="Auto Volume Profile &amp; Fair Value POC Engine (VAH, VAL, POC, vPOC)">
+          <span>📊 Fair Value POC</span>
+          <span id="nc-poc-status-badge" style="background: rgba(234, 179, 8, 0.25); color: #fde047; font-size: 0.62rem; padding: 1px 4px; border-radius: 3px; font-weight: 800;">ON</span>
         </button>
         <button type="button" class="btn" id="btn-broker-connect" onclick="openBrokerModal()" style="background: #1e1b4b; color: #a5b4fc; padding: 3px 9px; font-size: 0.72rem; font-weight: 700; border-radius: 4px; border: 1px solid #6366f1; cursor: pointer;" title="Broker Live / Paper Mode Settings">
           🏦 Broker
@@ -2444,6 +2476,19 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         <span style="color: var(--text-secondary);">L: <b id="nc-low" style="color: #ef4444;">--</b></span>
         <span style="color: var(--text-secondary);">C: <b id="nc-close" style="color: #f8fafc;">--</b></span>
         <span style="color: var(--text-secondary);">V: <b id="nc-vol" style="color: #38bdf8;">--</b></span>
+        <span style="color: #94a3b8; margin-left: 4px; display: inline-flex; align-items: center; gap: 4px;">🕒 <b id="nc-candle-time" style="color: #38bdf8; font-weight: 700;">--</b></span>
+        <span id="nc-delta-pill" style="display: none; align-items: center; gap: 6px; margin-left: 6px; padding: 2px 8px; border-radius: 4px; background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(56, 189, 248, 0.4); font-size: 0.70rem;">
+          <span id="nc-delta-buyers" style="color: #10b981; font-weight: 700;">🟢 Buy: --%</span>
+          <span style="color: var(--text-secondary);">|</span>
+          <span id="nc-delta-sellers" style="color: #ef4444; font-weight: 700;">🔴 Sell: --%</span>
+          <span id="nc-delta-signal" style="padding: 1px 5px; border-radius: 3px; font-weight: 800; font-size: 0.65rem; display: none;"></span>
+        </span>
+        <span id="nc-liq-radar-pill" style="display: inline-flex; align-items: center; gap: 5px; margin-left: 6px; padding: 2px 8px; border-radius: 4px; background: rgba(88, 28, 135, 0.4); border: 1px solid rgba(168, 85, 247, 0.45); font-size: 0.70rem; font-weight: 700;">
+          <span id="nc-liq-radar-text" style="color: #e9d5ff;">🎯 Radar: Watching Liquidity Pools</span>
+        </span>
+        <span id="nc-poc-pill" style="display: inline-flex; align-items: center; gap: 5px; margin-left: 6px; padding: 2px 8px; border-radius: 4px; background: rgba(161, 98, 7, 0.3); border: 1px solid rgba(234, 179, 8, 0.45); font-size: 0.70rem; font-weight: 700;">
+          <span id="nc-poc-text" style="color: #fef08a;">⚖️ Fair Value: Watching POC</span>
+        </span>
         <span id="nc-legend-atr-box" style="display: none; color: var(--text-secondary); margin-left: 6px;">ATR(14): <b id="nc-atr-legend" style="color: #f43f5e;">--</b></span>
         <span id="nc-legend-cpr-box" style="display: none; color: var(--text-secondary); margin-left: 6px;">CPR: <b id="nc-cpr-legend" style="color: #38bdf8;">--</b></span>
         <span id="nc-legend-st-box" style="display: none; color: var(--text-secondary); margin-left: 6px;">ST(10,3): <b id="nc-st-legend" style="color: #10b981;">--</b></span>
@@ -3528,8 +3573,12 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       if (tabId === 'tab-option-chain' && typeof fetchOptionChain === 'function') {
         fetchOptionChain();
       }
-      if (tabId === 'tab-charts' && typeof initTradingViewChart === 'function') {
-        initTradingViewChart();
+      if (tabId === 'tab-charts') {
+        if (typeof initTradingViewChart === 'function') {
+          initTradingViewChart();
+        }
+        setTimeout(resizeCharts, 50);
+        setTimeout(renderCustomZones, 80);
       }
       if (tabId === 'tab-backtest' && typeof initBacktestTab === 'function') {
         initBacktestTab();
@@ -5182,6 +5231,11 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   let _cachedCandles = [];
   let _lastCandle = null;
   let _currentChartType = 'candles';
+  let _orderFlowDeltaEnabled = true;
+  let _liquidityRadarEnabled = true;
+  let _pocEngineEnabled = true;
+  let _cachedLiquidityMatrix = null;
+  let _cachedVolumeProfile = null;
   let _srPriceLines = [];
 
   let _lwSymbol = 'NIFTY';
@@ -5349,12 +5403,682 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     return ha;
   }
 
+  function calculateVolumeCandles(candles) {
+    if (!candles || candles.length === 0) return [];
+    
+    // Dynamic volume target based on dataset statistics
+    let totalVol = 0;
+    let nonZeroCount = 0;
+    for (let i = 0; i < candles.length; i++) {
+      const v = Number(candles[i].volume) || 0;
+      if (v > 0) {
+        totalVol += v;
+        nonZeroCount++;
+      }
+    }
+
+    let targetVol = 10000;
+    if (nonZeroCount >= 10) {
+      targetVol = Math.max(1000, Math.round((totalVol / nonZeroCount) * 2.2));
+    } else {
+      targetVol = 5000;
+    }
+
+    const volBars = [];
+    let curOpen = null;
+    let curHigh = -Infinity;
+    let curLow = Infinity;
+    let curClose = 0;
+    let curVol = 0;
+    let curTime = candles[0].time;
+
+    for (let i = 0; i < candles.length; i++) {
+      const c = candles[i];
+      let v = Number(c.volume) || 0;
+      if (v <= 0) {
+        v = Math.max(100, Math.round(Math.abs(c.high - c.low) * 50));
+      }
+
+      if (curOpen === null) {
+        curOpen = c.open;
+        curHigh = c.high;
+        curLow = c.low;
+      }
+
+      curHigh = Math.max(curHigh, c.high);
+      curLow = Math.min(curLow, c.low);
+      curClose = c.close;
+      curTime = c.time;
+      curVol += v;
+
+      if (curVol >= targetVol) {
+        volBars.push({
+          time: curTime,
+          open: Math.round(curOpen * 100) / 100,
+          high: Math.round(curHigh * 100) / 100,
+          low: Math.round(curLow * 100) / 100,
+          close: Math.round(curClose * 100) / 100,
+          volume: curVol
+        });
+        curOpen = null;
+        curHigh = -Infinity;
+        curLow = Infinity;
+        curVol = 0;
+      }
+    }
+
+    if (curOpen !== null && curVol > 0) {
+      volBars.push({
+        time: curTime,
+        open: Math.round(curOpen * 100) / 100,
+        high: Math.round(curHigh * 100) / 100,
+        low: Math.round(curLow * 100) / 100,
+        close: Math.round(curClose * 100) / 100,
+        volume: curVol
+      });
+    }
+
+    return volBars;
+  }
+
+  function calculateVolumeSignalMarkers(candles) {
+    if (!candles || candles.length < 15) return [];
+    const markers = [];
+    const volMaPeriod = 20;
+
+    const threshInput = document.getElementById('nc-volcandle-thresh');
+    const thresh = (threshInput && !isNaN(Number(threshInput.value)) && Number(threshInput.value) > 0) ? Number(threshInput.value) : 10000;
+    const avgSpreadTotal = candles.reduce((acc, c) => acc + Math.abs(c.high - c.low), 0) / candles.length;
+
+    // 1. Dynamic EMA 20 Trend Filter (Strict Trend Alignment - Never Short in Bull Trend, Never Long in Bear Trend)
+    const ema20Data = calculateEMA(candles, 20);
+    const emaMap = new Map();
+    ema20Data.forEach(e => emaMap.set(e.time, e.value));
+
+    // 2. Debounce Tracking (Prevents painting 4 identical arrows on consecutive bars)
+    let lastSignalIdx = -999;
+    let lastSignalType = null;
+
+    for (let i = volMaPeriod; i < candles.length; i++) {
+      let sumVol = 0;
+      let sumSpread = 0;
+      for (let j = i - volMaPeriod; j < i; j++) {
+        const v = getCandleVolume(candles[j], avgSpreadTotal);
+        sumVol += v;
+        sumSpread += Math.abs(candles[j].high - candles[j].low);
+      }
+      const avgVol = sumVol / volMaPeriod;
+      const avgSpread = (sumSpread / volMaPeriod) || 1.0;
+
+      const c = candles[i];
+      const v = getCandleVolume(c, avgSpreadTotal);
+
+      const rvol = avgVol > 0 ? (v / avgVol) : 1.0;
+      const spread = Math.abs(c.high - c.low) || 0.01;
+      const upperWick = c.high - Math.max(c.open, c.close);
+      const lowerWick = Math.min(c.open, c.close) - c.low;
+      const isBull = c.close >= c.open;
+
+      // Determine Trend Direction from EMA 20
+      const curEma = emaMap.get(c.time) || c.close;
+      const isBullTrend = c.close >= curEma;
+      const isBearTrend = c.close < curEma;
+
+      // 1. Order Flow Delta Signals & Institutional Trap Alerts (Trend-Aligned & Debounced on Volume Candles)
+      const isFat = (v >= thresh);
+      if (_orderFlowDeltaEnabled && isFat) {
+        // Order flow buyer / seller contribution (0 - 100%) on Volume Candle
+        const buyerPct = Math.min(100, Math.max(0, Math.round(((c.close - c.low) / spread) * 100)));
+        const sellerPct = 100 - buyerPct;
+        const deltaPct = buyerPct - sellerPct;
+        // High confidence BUY CE: Bull Trend + Volume Candle + Buyers >= 65% + Positive Delta >= +30%
+        if (isBullTrend && buyerPct >= 65 && deltaPct >= 30 && isBull) {
+          if (lastSignalType !== 'CE' || (i - lastSignalIdx) >= 3) {
+            markers.push({
+              time: c.time,
+              position: 'belowBar',
+              color: '#10b981',
+              shape: 'arrowUp',
+              text: `🟢 Δ +${deltaPct}% (CE)`
+            });
+            lastSignalIdx = i;
+            lastSignalType = 'CE';
+            continue;
+          }
+        }
+
+        // High confidence BUY PE: Bear Trend + Volume Candle + Sellers >= 65% + Negative Delta <= -30%
+        if (isBearTrend && sellerPct >= 65 && deltaPct <= -30 && !isBull) {
+          if (lastSignalType !== 'PE' || (i - lastSignalIdx) >= 3) {
+            markers.push({
+              time: c.time,
+              position: 'aboveBar',
+              color: '#ef4444',
+              shape: 'arrowDown',
+              text: `🔴 Δ ${deltaPct}% (PE)`
+            });
+            lastSignalIdx = i;
+            lastSignalType = 'PE';
+            continue;
+          }
+        }
+
+        // Institutional Bull Trap: In Bear Trend, buyers attempt a bounce but fail (upper wick >= 38% or closing in bottom half)
+        if (isBearTrend && isBull && (buyerPct < 50 || (upperWick / spread >= 0.38))) {
+          if (lastSignalType !== 'BULL_TRAP' || (i - lastSignalIdx) >= 3) {
+            markers.push({
+              time: c.time,
+              position: 'aboveBar',
+              color: '#f59e0b',
+              shape: 'circle',
+              text: `⚠️ BULL TRAP (Δ ${deltaPct > 0 ? '+' : ''}${deltaPct}%)`
+            });
+            lastSignalIdx = i;
+            lastSignalType = 'BULL_TRAP';
+            continue;
+          }
+        }
+
+        // Institutional Bear Trap: In Bull Trend, sellers attempt a dump at EMA support but fail/get absorbed
+        if (isBullTrend && !isBull && (sellerPct < 50 || (lowerWick / spread >= 0.38))) {
+          if (lastSignalType !== 'BEAR_TRAP' || (i - lastSignalIdx) >= 3) {
+            markers.push({
+              time: c.time,
+              position: 'belowBar',
+              color: '#f59e0b',
+              shape: 'circle',
+              text: `⚠️ BEAR TRAP (Δ ${deltaPct > 0 ? '+' : ''}${deltaPct}%)`
+            });
+            lastSignalIdx = i;
+            lastSignalType = 'BEAR_TRAP';
+            continue;
+          }
+        }
+      }
+
+      // 2. High Volume Expansion & Institutional Absorption (when volsignals indicator is checked)
+      const chkVol = document.getElementById('nc-toggle-volsignals');
+      if (chkVol && chkVol.checked) {
+        if (rvol >= 1.6 && spread >= 1.1 * avgSpread) {
+          if (c.close >= c.open && (c.close - c.low) / spread >= 0.65) {
+            markers.push({
+              time: c.time,
+              position: 'belowBar',
+              color: '#10b981',
+              shape: 'arrowUp',
+              text: `⚡ VOL (${rvol.toFixed(1)}x)`
+            });
+            continue;
+          } else if (c.close <= c.open && (c.high - c.close) / spread >= 0.65) {
+            markers.push({
+              time: c.time,
+              position: 'belowBar',
+              color: '#ef4444',
+              shape: 'arrowDown',
+              text: `⚡ VOL (${rvol.toFixed(1)}x)`
+            });
+            continue;
+          }
+        }
+
+        if (rvol >= 1.5) {
+          if (lowerWick / spread >= 0.38) {
+            markers.push({
+              time: c.time,
+              position: 'belowBar',
+              color: '#06b6d4',
+              shape: 'circle',
+              text: '🛡️ ABSORB'
+            });
+          } else if (upperWick / spread >= 0.38) {
+            markers.push({
+              time: c.time,
+              position: 'belowBar',
+              color: '#f59e0b',
+              shape: 'circle',
+              text: '🛡️ ABSORB'
+            });
+          }
+        }
+      }
+
+      // 3. Institutional Liquidity Hunt & Trap Detection
+      if (_liquidityRadarEnabled) {
+        const liq = _cachedLiquidityMatrix || calculateLiquidityMatrix(candles);
+        if (liq) {
+          // Trap 1: 5-Min Flash Shakeout in Rally (Dips below EMA 20, absorbs and reclaims with long lower wick)
+          if (isBullTrend && c.low < curEma && c.close >= curEma && (lowerWick / spread >= 0.38)) {
+            if (lastSignalType !== 'SHAKEOUT' || (i - lastSignalIdx) >= 3) {
+              markers.push({
+                time: c.time,
+                position: 'belowBar',
+                color: '#a855f7',
+                shape: 'circle',
+                text: '⚡ SHAKEOUT ABSORB'
+              });
+              lastSignalIdx = i;
+              lastSignalType = 'SHAKEOUT';
+              continue;
+            }
+          }
+
+          // Trap 2: Multi-Timeframe 2D-High Trap / UTAD (Touches or sweeps 2D-High and rejects sharply)
+          if (c.high >= liq.twoDayHigh - 8 && c.close < liq.twoDayHigh && (c.close < c.open || upperWick / spread >= 0.35)) {
+            if (lastSignalType !== '2D_HIGH_TRAP' || (i - lastSignalIdx) >= 3) {
+              markers.push({
+                time: c.time,
+                position: 'aboveBar',
+                color: '#f43f5e',
+                shape: 'arrowDown',
+                text: '🚨 2D-HIGH REJECT (BUY PE)'
+              });
+              lastSignalIdx = i;
+              lastSignalType = '2D_HIGH_TRAP';
+              continue;
+            }
+          }
+
+          // Trap 3: Morning Gap-Down / PDL Liquidity Sweep & Reclaim (Wyckoff Spring)
+          if (c.low < liq.pdl && c.close >= liq.pdl && (c.close >= c.open || lowerWick / spread >= 0.35)) {
+            if (lastSignalType !== 'SWEEP_PDL' || (i - lastSignalIdx) >= 3) {
+              markers.push({
+                time: c.time,
+                position: 'belowBar',
+                color: '#10b981',
+                shape: 'arrowUp',
+                text: '🎯 SWEEP PDL (BUY CE)'
+              });
+              lastSignalIdx = i;
+              lastSignalType = 'SWEEP_PDL';
+              continue;
+            }
+          }
+
+          // Trap 3b: PDH Liquidity Sweep & Rejection (UTAD)
+          if (c.high > liq.pdh && c.close <= liq.pdh && (c.close <= c.open || upperWick / spread >= 0.35)) {
+            if (lastSignalType !== 'SWEEP_PDH' || (i - lastSignalIdx) >= 3) {
+              markers.push({
+                time: c.time,
+                position: 'aboveBar',
+                color: '#ef4444',
+                shape: 'arrowDown',
+                text: '🎯 SWEEP PDH (BUY PE)'
+              });
+              lastSignalIdx = i;
+              lastSignalType = 'SWEEP_PDH';
+              continue;
+            }
+          }
+
+          // Trap 4: Big Candle Wick 50% Equilibrium Retest
+          if (liq.wick50 && Math.abs(getUnixSec(c.time) - getUnixSec(liq.wick50.time)) > 300) {
+            if (liq.wick50.type === 'LOWER' && Math.abs(c.low - liq.wick50.price) <= 8 && c.close >= liq.wick50.price && c.close > c.open) {
+              if (lastSignalType !== 'WICK_RETEST' || (i - lastSignalIdx) >= 4) {
+                markers.push({
+                  time: c.time,
+                  position: 'belowBar',
+                  color: '#c084fc',
+                  shape: 'circle',
+                  text: '🎯 50% WICK BOUNCE'
+                });
+                lastSignalIdx = i;
+                lastSignalType = 'WICK_RETEST';
+                continue;
+              }
+            } else if (liq.wick50.type === 'UPPER' && Math.abs(c.high - liq.wick50.price) <= 8 && c.close <= liq.wick50.price && c.close < c.open) {
+              if (lastSignalType !== 'WICK_RETEST' || (i - lastSignalIdx) >= 4) {
+                markers.push({
+                  time: c.time,
+                  position: 'aboveBar',
+                  color: '#f43f5e',
+                  shape: 'circle',
+                  text: '🎯 50% WICK REJECT'
+                });
+                lastSignalIdx = i;
+                lastSignalType = 'WICK_RETEST';
+                continue;
+              }
+            }
+          }
+        }
+      }
+
+      // 4. Auto Volume Profile & Fair Value Setups (80% Value Area Rule & vPOC Magnet)
+      if (_pocEngineEnabled) {
+        const vp = _cachedVolumeProfile || calculateVolumeProfile(candles);
+        if (vp) {
+          // Setup 1: 80% Rule - VAL Reclaim into Value Area (Target POC)
+          if (c.low < vp.val && c.close >= vp.val && c.close > c.open) {
+            if (lastSignalType !== 'VA_RECLAIM' || (i - lastSignalIdx) >= 3) {
+              markers.push({
+                time: c.time,
+                position: 'belowBar',
+                color: '#06b6d4',
+                shape: 'arrowUp',
+                text: `🎯 VA RECLAIM (BUY CE -> POC ${vp.poc})`
+              });
+              lastSignalIdx = i;
+              lastSignalType = 'VA_RECLAIM';
+              continue;
+            }
+          }
+
+          // Setup 2: 80% Rule - VAH Rejection back into Value Area (Target POC)
+          if (c.high > vp.vah && c.close <= vp.vah && c.close < c.open) {
+            if (lastSignalType !== 'VA_REJECT' || (i - lastSignalIdx) >= 3) {
+              markers.push({
+                time: c.time,
+                position: 'belowBar',
+                color: '#f59e0b',
+                shape: 'arrowDown',
+                text: `🎯 VAH REJECT (BUY PE -> POC ${vp.poc})`
+              });
+              lastSignalIdx = i;
+              lastSignalType = 'VA_REJECT';
+              continue;
+            }
+          }
+
+          // Setup 3: Virgin POC Magnet Test
+          if (vp.vpoc && Math.abs(c.low - vp.vpoc) <= 6 && c.close >= vp.vpoc && c.close > c.open) {
+            if (lastSignalType !== 'VPOC_MAGNET' || (i - lastSignalIdx) >= 4) {
+              markers.push({
+                time: c.time,
+                position: 'belowBar',
+                color: '#22d3ee',
+                shape: 'circle',
+                text: '🧲 vPOC BOUNCE'
+              });
+              lastSignalIdx = i;
+              lastSignalType = 'VPOC_MAGNET';
+              continue;
+            }
+          }
+        }
+      }
+    }
+    return markers;
+  }
+
+  function updateVolumeMarkers() {
+    if (!_lwCandleSeries) return;
+    const chk = document.getElementById('nc-toggle-volsignals');
+    const showSignals = chk ? chk.checked : false;
+    const showMarkers = showSignals || _orderFlowDeltaEnabled || _liquidityRadarEnabled || _pocEngineEnabled;
+
+    if (!showMarkers || !_cachedCandles || _cachedCandles.length < 10) {
+      _lwCandleSeries.setMarkers([]);
+      return;
+    }
+    const currentCandles = (_currentChartType === 'volumecandles') ? calculateVolumeCandles(_cachedCandles) : ((_currentChartType === 'heikinashi') ? calculateHeikinAshi(_cachedCandles) : _cachedCandles);
+    const markers = calculateVolumeSignalMarkers(currentCandles);
+    _lwCandleSeries.setMarkers(markers);
+  }
+
   function getUnixSec(t) {
     if (typeof t === 'number') return t;
     if (typeof t === 'object' && t !== null && t.year) {
       return Math.floor(new Date(Date.UTC(t.year, t.month - 1, t.day)).getTime() / 1000);
     }
     return Number(t) || 0;
+  }
+
+  const IST_MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  function formatIstCrosshairTime(t) {
+    const sec = getUnixSec(t);
+    if (!sec) return '';
+    const d = new Date((sec + 19800) * 1000);
+    const day = String(d.getUTCDate()).padStart(2, '0');
+    const mon = IST_MONTHS[d.getUTCMonth()];
+    const yr = d.getUTCFullYear();
+    const hh = String(d.getUTCHours()).padStart(2, '0');
+    const mm = String(d.getUTCMinutes()).padStart(2, '0');
+
+    if (typeof _lwInterval !== 'undefined' && (_lwInterval === '1d' || _lwInterval === '1w' || _lwInterval === '1wk')) {
+      return `${day} ${mon} ${yr}`;
+    }
+    return `${day} ${mon} ${yr} ${hh}:${mm} IST`;
+  }
+
+  function formatIstTickMark(time, tickMarkType, locale) {
+    const sec = getUnixSec(time);
+    if (!sec) return '';
+    const d = new Date((sec + 19800) * 1000);
+    const day = String(d.getUTCDate()).padStart(2, '0');
+    const mon = IST_MONTHS[d.getUTCMonth()];
+    const yr = d.getUTCFullYear();
+    const hh = String(d.getUTCHours()).padStart(2, '0');
+    const mm = String(d.getUTCMinutes()).padStart(2, '0');
+
+    // tickMarkType: 0 = Year, 1 = Month, 2 = DayOfMonth, 3 = Time, 4 = TimeWithSeconds
+    if (tickMarkType === 0) return String(yr);
+    if (tickMarkType === 1) return mon;
+    if (tickMarkType === 2) {
+      if (typeof _lwInterval !== 'undefined' && (_lwInterval === '1d' || _lwInterval === '1w' || _lwInterval === '1wk')) {
+        return `${day} ${mon}`;
+      }
+      return `${day} ${mon} ${hh}:${mm}`;
+    }
+    if (tickMarkType === 3 || tickMarkType === 4) {
+      return `${hh}:${mm}`;
+    }
+    return `${hh}:${mm}`;
+  }
+
+  const IST_CHART_LOCALIZATION = {
+    locale: 'en-IN',
+    dateFormat: 'dd MMM yyyy',
+    timeFormatter: formatIstCrosshairTime,
+  };
+
+  // --- Institutional Liquidity Matrix (PDH, PDL, PDC, 2D-High, 2D-Low, 50% Wick Midpoint, Gap Box) ---
+  function calculateLiquidityMatrix(candles) {
+    if (!candles || candles.length === 0) return null;
+    let dayBars = {};
+    let dayList = [];
+    for (let i = 0; i < candles.length; i++) {
+      const c = candles[i];
+      const sec = getUnixSec(c.time);
+      const dateKey = new Date((sec + 19800) * 1000).toISOString().slice(0, 10);
+      if (!dayBars[dateKey]) {
+        dayBars[dateKey] = { open: c.open, high: c.high, low: c.low, close: c.close };
+        dayList.push(dateKey);
+      } else {
+        if (c.high > dayBars[dateKey].high) dayBars[dateKey].high = c.high;
+        if (c.low < dayBars[dateKey].low) dayBars[dateKey].low = c.low;
+        dayBars[dateKey].close = c.close;
+      }
+    }
+    if (dayList.length === 0) return null;
+
+    const todayKey = dayList[dayList.length - 1];
+    const today = dayBars[todayKey];
+    const yesterdayKey = dayList.length >= 2 ? dayList[dayList.length - 2] : null;
+    const yesterday = yesterdayKey ? dayBars[yesterdayKey] : null;
+    const twoDaysAgoKey = dayList.length >= 3 ? dayList[dayList.length - 3] : null;
+    const twoDaysAgo = twoDaysAgoKey ? dayBars[twoDaysAgoKey] : null;
+
+    const pdh = yesterday ? yesterday.high : today.high;
+    const pdl = yesterday ? yesterday.low : today.low;
+    const pdc = yesterday ? yesterday.close : today.open;
+    const todayOpen = today.open;
+
+    let twoDayHigh = pdh;
+    let twoDayLow = pdl;
+    if (twoDaysAgo) {
+      twoDayHigh = Math.max(twoDayHigh, twoDaysAgo.high);
+      twoDayLow = Math.min(twoDayLow, twoDaysAgo.low);
+    }
+
+    const gapHigh = Math.max(todayOpen, pdc);
+    const gapLow = Math.min(todayOpen, pdc);
+    const isGapFilled = (today.low <= pdc && today.high >= pdc);
+
+    let wick50 = null;
+    const recentBars = candles.slice(-40);
+    for (let j = recentBars.length - 1; j >= 0; j--) {
+      const b = recentBars[j];
+      const sp = Math.abs(b.high - b.low) || 0.01;
+      const bdy = Math.abs(b.close - b.open);
+      const uw = b.high - Math.max(b.open, b.close);
+      const lw = Math.min(b.open, b.close) - b.low;
+
+      if (uw >= 1.6 * bdy && uw >= 0.40 * sp) {
+        wick50 = { type: 'UPPER', price: b.high - (uw * 0.5), time: b.time };
+        break;
+      } else if (lw >= 1.6 * bdy && lw >= 0.40 * sp) {
+        wick50 = { type: 'LOWER', price: b.low + (lw * 0.5), time: b.time };
+        break;
+      }
+    }
+
+    return {
+      pdh: Math.round(pdh * 100) / 100,
+      pdl: Math.round(pdl * 100) / 100,
+      pdc: Math.round(pdc * 100) / 100,
+      todayOpen: Math.round(todayOpen * 100) / 100,
+      twoDayHigh: Math.round(twoDayHigh * 100) / 100,
+      twoDayLow: Math.round(twoDayLow * 100) / 100,
+      gapHigh: Math.round(gapHigh * 100) / 100,
+      gapLow: Math.round(gapLow * 100) / 100,
+      isGapFilled,
+      wick50
+    };
+  }
+
+  // --- Auto Volume Profile & Fair Value Engine (POC, VAH, VAL, vPOC) ---
+  function calculateVolumeProfile(candles) {
+    if (!candles || candles.length === 0) return null;
+    const avgSpread = (candles.reduce((acc, c) => acc + Math.abs(c.high - c.low), 0) / candles.length) || 10.0;
+    const isBank = (typeof _lwSymbol !== 'undefined' && _lwSymbol.includes('BANK'));
+    const binStep = isBank ? 10.0 : 5.0; // 5 pts for Nifty, 10 pts for BankNifty
+
+    // Separate candles into Today vs Prior Sessions
+    let dayMap = {};
+    let dayList = [];
+    for (let i = 0; i < candles.length; i++) {
+      const c = candles[i];
+      const sec = getUnixSec(c.time);
+      const dateKey = new Date((sec + 19800) * 1000).toISOString().slice(0, 10);
+      if (!dayMap[dateKey]) {
+        dayMap[dateKey] = [];
+        dayList.push(dateKey);
+      }
+      dayMap[dateKey].push(c);
+    }
+
+    const todayKey = dayList[dayList.length - 1];
+    const todayCandles = dayMap[todayKey] || candles;
+    const yesterdayKey = dayList.length >= 2 ? dayList[dayList.length - 2] : null;
+    const yesterdayCandles = yesterdayKey ? dayMap[yesterdayKey] : null;
+
+    // Helper to compute volume profile metrics for a set of candles
+    function computeProfileForSet(candleSet) {
+      if (!candleSet || candleSet.length === 0) return null;
+      let minP = Infinity;
+      let maxP = -Infinity;
+      for (let i = 0; i < candleSet.length; i++) {
+        if (candleSet[i].low < minP) minP = candleSet[i].low;
+        if (candleSet[i].high > maxP) maxP = candleSet[i].high;
+      }
+      if (minP === Infinity || maxP === -Infinity || maxP <= minP) return null;
+
+      const startBin = Math.floor(minP / binStep) * binStep;
+      const endBin = Math.ceil(maxP / binStep) * binStep;
+      const numBins = Math.max(1, Math.round((endBin - startBin) / binStep) + 1);
+
+      let binVolumes = new Float64Array(numBins);
+      let totalVol = 0;
+
+      for (let i = 0; i < candleSet.length; i++) {
+        const c = candleSet[i];
+        const v = getCandleVolume(c, avgSpread);
+        const bStart = Math.max(0, Math.min(numBins - 1, Math.floor((c.low - startBin) / binStep)));
+        const bEnd = Math.max(0, Math.min(numBins - 1, Math.floor((c.high - startBin) / binStep)));
+        const span = Math.max(1, bEnd - bStart + 1);
+        const vPerBin = v / span;
+
+        for (let b = bStart; b <= bEnd; b++) {
+          binVolumes[b] += vPerBin;
+        }
+        totalVol += v;
+      }
+
+      // 1. Find POC (Point of Control)
+      let maxBinIdx = 0;
+      let maxVol = 0;
+      for (let b = 0; b < numBins; b++) {
+        if (binVolumes[b] > maxVol) {
+          maxVol = binVolumes[b];
+          maxBinIdx = b;
+        }
+      }
+      const pocPrice = startBin + maxBinIdx * binStep;
+
+      // 2. Find Value Area (70% Volume Bracket)
+      const targetVaVol = totalVol * 0.70;
+      let curVaVol = maxVol;
+      let lowerIdx = maxBinIdx;
+      let upperIdx = maxBinIdx;
+
+      while (curVaVol < targetVaVol && (lowerIdx > 0 || upperIdx < numBins - 1)) {
+        const nextLowerVol = lowerIdx > 0 ? binVolumes[lowerIdx - 1] : -1;
+        const nextUpperVol = upperIdx < numBins - 1 ? binVolumes[upperIdx + 1] : -1;
+
+        if (nextUpperVol >= nextLowerVol && nextUpperVol >= 0) {
+          upperIdx++;
+          curVaVol += binVolumes[upperIdx];
+        } else if (nextLowerVol >= 0) {
+          lowerIdx--;
+          curVaVol += binVolumes[lowerIdx];
+        } else {
+          break;
+        }
+      }
+
+      const valPrice = startBin + lowerIdx * binStep;
+      const vahPrice = startBin + upperIdx * binStep;
+
+      let binsArray = [];
+      for (let b = 0; b < numBins; b++) {
+        binsArray.push({
+          price: startBin + b * binStep,
+          volume: binVolumes[b],
+          isPoc: (b === maxBinIdx),
+          inValueArea: (b >= lowerIdx && b <= upperIdx)
+        });
+      }
+
+      return {
+        poc: Math.round(pocPrice * 100) / 100,
+        vah: Math.round(vahPrice * 100) / 100,
+        val: Math.round(valPrice * 100) / 100,
+        totalVolume: totalVol,
+        maxBinVolume: maxVol,
+        bins: binsArray,
+        minPrice: minP,
+        maxPrice: maxP
+      };
+    }
+
+    const todayProfile = computeProfileForSet(todayCandles);
+    if (!todayProfile) return null;
+
+    // Check Virgin POC (vPOC) from yesterday
+    let vpoc = null;
+    if (yesterdayCandles && yesterdayCandles.length > 0) {
+      const yProfile = computeProfileForSet(yesterdayCandles);
+      if (yProfile) {
+        // If today's trading range never crossed yesterday's POC, it's a Virgin POC!
+        if (todayProfile.minPrice > yProfile.poc || todayProfile.maxPrice < yProfile.poc) {
+          vpoc = yProfile.poc;
+        }
+      }
+    }
+
+    todayProfile.vpoc = vpoc;
+    return todayProfile;
   }
 
   // --- Floor Pivot Points (PP, R1, S1, R2, S2) ---
@@ -5599,10 +6323,12 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         borderColor: '#1e293b',
         scaleMargins: { top: 0.1, bottom: 0.1 },
       },
+      localization: IST_CHART_LOCALIZATION,
       timeScale: {
         borderColor: '#1e293b',
         timeVisible: true,
         secondsVisible: false,
+        tickMarkFormatter: formatIstTickMark,
       },
     });
 
@@ -5694,8 +6420,8 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   }
 
   function resetDefaultIndicators() {
-    const defaults = { vol: true, ema9: true, ema20: true, cpr: true, supertrend: true };
-    const ids = ['vol', 'ema9', 'ema20', 'ema50', 'sma200', 'vwap', 'bb', 'rsi', 'pivot', 'cpr', 'supertrend', 'atr'];
+    const defaults = { vol: true, volsignals: true, ema9: true, ema20: true, cpr: true, supertrend: true };
+    const ids = ['vol', 'volsignals', 'ema9', 'ema20', 'ema50', 'sma200', 'vwap', 'bb', 'rsi', 'pivot', 'cpr', 'supertrend', 'atr'];
     ids.forEach(id => {
       const el = document.getElementById('nc-toggle-' + id);
       if (el) {
@@ -5706,7 +6432,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   }
 
   function saveIndicatorPreferences() {
-    const ids = ['vol', 'ema9', 'ema20', 'ema50', 'sma200', 'vwap', 'bb', 'rsi', 'pivot', 'cpr', 'supertrend', 'atr'];
+    const ids = ['vol', 'volsignals', 'ema9', 'ema20', 'ema50', 'sma200', 'vwap', 'bb', 'rsi', 'pivot', 'cpr', 'supertrend', 'atr'];
     const prefs = {};
     ids.forEach(id => {
       const el = document.getElementById('nc-toggle-' + id);
@@ -5731,6 +6457,8 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         });
       }
     } catch (e) {}
+    const chkVol = document.getElementById('nc-toggle-volsignals');
+    if (chkVol) syncVolSignalsButton(chkVol.checked);
     updateActiveIndicatorCount();
   }
 
@@ -5744,7 +6472,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     }
   });
 
-  function updateOhlcvDisplay(o, h, l, c, v) {
+  function updateOhlcvDisplay(o, h, l, c, v, cTime) {
     const elO = document.getElementById('nc-open');
     const elH = document.getElementById('nc-high');
     const elL = document.getElementById('nc-low');
@@ -5754,7 +6482,184 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     if (elH) elH.innerText = Number(h || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 });
     if (elL) elL.innerText = Number(l || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 });
     if (elC) elC.innerText = Number(c || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 });
-    if (elV) elV.innerText = Number(v || 0).toLocaleString('en-IN');
+
+    let volVal = Number(v) || 0;
+    if (volVal <= 0 && h !== undefined && l !== undefined) {
+      volVal = getCandleVolume({ open: o, high: h, low: l, close: c, volume: v }, 10.0);
+    }
+    if (elV) elV.innerText = volVal.toLocaleString('en-IN');
+
+    const elTime = document.getElementById('nc-candle-time');
+    if (elTime) {
+      const timeVal = cTime || (_lastCandle ? _lastCandle.time : null);
+      if (timeVal) {
+        const sec = getUnixSec(timeVal);
+        if (sec) {
+          const d = new Date((sec + 19800) * 1000);
+          const day = String(d.getUTCDate()).padStart(2, '0');
+          const mon = IST_MONTHS[d.getUTCMonth()];
+          const hh = String(d.getUTCHours()).padStart(2, '0');
+          const mm = String(d.getUTCMinutes()).padStart(2, '0');
+          elTime.innerText = `${day} ${mon} ${hh}:${mm} IST`;
+        }
+      }
+    }
+
+    // Update Order Flow Delta Pill if active
+    const pill = document.getElementById('nc-delta-pill');
+    if (pill) {
+      if (_orderFlowDeltaEnabled && h !== undefined && l !== undefined) {
+        pill.style.display = 'inline-flex';
+        const spread = Math.abs((Number(h) || 0) - (Number(l) || 0));
+        let buyerPct = 50;
+        let sellerPct = 50;
+        if (spread > 0.001) {
+          buyerPct = Math.min(100, Math.max(0, Math.round(((Number(c) - Number(l)) / spread) * 100)));
+          sellerPct = 100 - buyerPct;
+        }
+        const threshInput = document.getElementById('nc-volcandle-thresh');
+        const thresh = (threshInput && !isNaN(Number(threshInput.value)) && Number(threshInput.value) > 0) ? Number(threshInput.value) : 10000;
+        const isVolCandle = (volVal >= thresh);
+
+        // ONLY show delta value when on a volume candle (v >= thresh)
+        if (!isVolCandle) {
+          pill.style.display = 'none';
+        } else {
+          pill.style.display = 'inline-flex';
+          const bEl = document.getElementById('nc-delta-buyers');
+          const sEl = document.getElementById('nc-delta-sellers');
+          const sigEl = document.getElementById('nc-delta-signal');
+          const deltaPct = buyerPct - sellerPct;
+
+          if (bEl) {
+            bEl.innerText = `🟢 Buy: ${buyerPct}%`;
+            bEl.style.color = '#10b981';
+          }
+          if (sEl) {
+            sEl.innerText = `🔴 Sell: ${sellerPct}%`;
+            sEl.style.color = '#ef4444';
+          }
+
+          if (sigEl) {
+            sigEl.style.display = 'inline-block';
+            const isBull = Number(c) >= Number(o);
+            const upperWick = (Number(h) - Math.max(Number(o), Number(c))) / (spread || 1);
+            const lowerWick = (Math.min(Number(o), Number(c)) - Number(l)) / (spread || 1);
+
+            if (buyerPct >= 60 && isBull) {
+              sigEl.innerText = `⚡ BUY CE (Δ +${deltaPct}%)`;
+              sigEl.style.background = 'rgba(16, 185, 129, 0.25)';
+              sigEl.style.border = '1px solid #10b981';
+              sigEl.style.color = '#34d399';
+            } else if (sellerPct >= 60 && !isBull) {
+              sigEl.innerText = `⚡ BUY PE (Δ ${deltaPct}%)`;
+              sigEl.style.background = 'rgba(239, 68, 68, 0.25)';
+              sigEl.style.border = '1px solid #ef4444';
+              sigEl.style.color = '#f87171';
+            } else if (isBull && (buyerPct < 50 || upperWick >= 0.38)) {
+              sigEl.innerText = `⚠️ BULL TRAP (Δ ${deltaPct > 0 ? '+' : ''}${deltaPct}%)`;
+              sigEl.style.background = 'rgba(245, 158, 11, 0.25)';
+              sigEl.style.border = '1px solid #f59e0b';
+              sigEl.style.color = '#fbbf24';
+            } else if (!isBull && (sellerPct < 50 || lowerWick >= 0.38)) {
+              sigEl.innerText = `⚠️ BEAR TRAP (Δ ${deltaPct > 0 ? '+' : ''}${deltaPct}%)`;
+              sigEl.style.background = 'rgba(245, 158, 11, 0.25)';
+              sigEl.style.border = '1px solid #f59e0b';
+              sigEl.style.color = '#fbbf24';
+            } else {
+              sigEl.innerText = `⚖️ VOL DELTA: ${deltaPct >= 0 ? '+' : ''}${deltaPct}%`;
+              sigEl.style.background = 'rgba(100, 116, 139, 0.2)';
+              sigEl.style.border = '1px solid #64748b';
+              sigEl.style.color = '#94a3b8';
+            }
+          }
+        }
+      } else {
+        pill.style.display = 'none';
+      }
+    }
+
+    // Update Institutional Liquidity Radar Pill if active
+    const liqPill = document.getElementById('nc-liq-radar-pill');
+    const liqText = document.getElementById('nc-liq-radar-text');
+    if (liqPill && liqText) {
+      if (_liquidityRadarEnabled && _cachedCandles && _cachedCandles.length > 0 && c !== undefined) {
+        liqPill.style.display = 'inline-flex';
+        const liq = _cachedLiquidityMatrix || calculateLiquidityMatrix(_cachedCandles);
+        if (liq) {
+          const curPrice = Number(c) || 0;
+          const dist2DHigh = liq.twoDayHigh - curPrice;
+          const dist2DLow = curPrice - liq.twoDayLow;
+          const distPDH = Math.abs(curPrice - liq.pdh);
+          const distPDL = Math.abs(curPrice - liq.pdl);
+
+          if (dist2DHigh >= -5 && dist2DHigh <= 25) {
+            liqPill.style.background = 'rgba(239, 68, 68, 0.35)';
+            liqPill.style.border = '1px solid #ef4444';
+            liqText.innerHTML = `🚨 <span style="color:#fca5a5;">CE DANGER ZONE</span>: Within ${Math.round(dist2DHigh)} pts of 2D-High (${liq.twoDayHigh})! Beware UTAD Trap`;
+          } else if (dist2DLow >= -5 && dist2DLow <= 25) {
+            liqPill.style.background = 'rgba(16, 185, 129, 0.35)';
+            liqPill.style.border = '1px solid #10b981';
+            liqText.innerHTML = `🛡️ <span style="color:#6ee7b7;">PE DANGER ZONE</span>: Within ${Math.round(dist2DLow)} pts of 2D-Low (${liq.twoDayLow})! Beware Spring Trap`;
+          } else if (distPDL <= 15) {
+            liqPill.style.background = 'rgba(14, 165, 233, 0.3)';
+            liqPill.style.border = '1px solid #38bdf8';
+            liqText.innerHTML = `🎯 <span style="color:#7dd3fc;">PDL SWEEP WATCH</span>: Testing PDL (${liq.pdl})`;
+          } else if (distPDH <= 15) {
+            liqPill.style.background = 'rgba(245, 158, 11, 0.3)';
+            liqPill.style.border = '1px solid #f59e0b';
+            liqText.innerHTML = `🎯 <span style="color:#fde047;">PDH SWEEP WATCH</span>: Testing PDH (${liq.pdh})`;
+          } else if (liq.wick50 && Math.abs(curPrice - liq.wick50.price) <= 15) {
+            liqPill.style.background = 'rgba(168, 85, 247, 0.3)';
+            liqPill.style.border = '1px solid #a855f7';
+            liqText.innerHTML = `🎯 <span style="color:#e9d5ff;">50% WICK RETEST</span>: Testing ${liq.wick50.type} Wick Equilibrium (${liq.wick50.price.toFixed(1)})`;
+          } else if (!liq.isGapFilled && curPrice >= liq.gapLow && curPrice <= liq.gapHigh) {
+            liqPill.style.background = 'rgba(245, 158, 11, 0.25)';
+            liqPill.style.border = '1px solid #f59e0b';
+            liqText.innerHTML = `📦 <span style="color:#fde047;">GAP FILL ZONE</span>: Inside Gap Box [${liq.gapLow} - ${liq.gapHigh}]`;
+          } else {
+            liqPill.style.background = 'rgba(88, 28, 135, 0.4)';
+            liqPill.style.border = '1px solid rgba(168, 85, 247, 0.45)';
+            liqText.innerHTML = `🎯 <span style="color:#e9d5ff;">Radar Active</span>: 2D-H ${liq.twoDayHigh} | PDH ${liq.pdh} | PDL ${liq.pdl} | 2D-L ${liq.twoDayLow}`;
+          }
+        }
+      } else {
+        liqPill.style.display = 'none';
+      }
+    }
+
+    // Update Fair Value POC Pill if active
+    const pocPill = document.getElementById('nc-poc-pill');
+    const pocText = document.getElementById('nc-poc-text');
+    if (pocPill && pocText) {
+      if (_pocEngineEnabled && _cachedCandles && _cachedCandles.length > 0 && c !== undefined) {
+        pocPill.style.display = 'inline-flex';
+        const vp = _cachedVolumeProfile || calculateVolumeProfile(_cachedCandles);
+        if (vp) {
+          const curPrice = Number(c) || 0;
+          const distPoc = Math.abs(curPrice - vp.poc);
+          if (distPoc <= 8) {
+            pocPill.style.background = 'rgba(234, 179, 8, 0.35)';
+            pocPill.style.border = '1px solid #eab308';
+            pocText.innerHTML = `⚖️ <span style="color:#fde047;">AT FAIR VALUE POC (${vp.poc})</span>: Perfect Equilibrium`;
+          } else if (curPrice >= vp.val && curPrice <= vp.vah) {
+            pocPill.style.background = 'rgba(14, 116, 144, 0.3)';
+            pocPill.style.border = '1px solid #0284c7';
+            pocText.innerHTML = `⚖️ <span style="color:#7dd3fc;">IN VALUE AREA (70%)</span>: POC ${vp.poc} | VAH ${vp.vah} | VAL ${vp.val}`;
+          } else if (curPrice > vp.vah) {
+            pocPill.style.background = 'rgba(245, 158, 11, 0.3)';
+            pocPill.style.border = '1px solid #f59e0b';
+            pocText.innerHTML = `⚠️ <span style="color:#fde047;">ABOVE VAH (+${Math.round(curPrice - vp.vah)} pts)</span>: Premium Zone / Resistance`;
+          } else {
+            pocPill.style.background = 'rgba(16, 185, 129, 0.3)';
+            pocPill.style.border = '1px solid #10b981';
+            pocText.innerHTML = `🛡️ <span style="color:#6ee7b7;">BELOW VAL (-${Math.round(vp.val - curPrice)} pts)</span>: Discount Zone / Support`;
+          }
+        }
+      } else {
+        pocPill.style.display = 'none';
+      }
+    }
   }
 
   function resizeCharts() {
@@ -5788,9 +6693,12 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       btn.style.fontWeight = '700';
     }
 
-    const isCandle = type === 'candles' || type === 'heikinashi';
+    const isCandle = type === 'candles' || type === 'heikinashi' || type === 'volumecandles';
     const isLine = type === 'line';
     const isArea = type === 'area';
+
+    const volCtrl = document.getElementById('nc-volcandle-ctrl');
+    if (volCtrl) volCtrl.style.display = (type === 'volumecandles') ? 'inline-flex' : 'none';
 
     if (_lwCandleSeries) _lwCandleSeries.applyOptions({ visible: isCandle });
     if (_lwLineSeries) _lwLineSeries.applyOptions({ visible: isLine });
@@ -5799,11 +6707,17 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     if (_cachedCandles && _cachedCandles.length > 0) {
       applyCandleDataToSeries();
     }
+    setTimeout(renderCustomZones, 30);
   }
 
   function toggleIndicator(ind) {
     const chk = document.getElementById('nc-toggle-' + ind);
     const show = chk ? chk.checked : false;
+
+    if (ind === 'volsignals') {
+      syncVolSignalsButton(show);
+      updateVolumeMarkers();
+    }
 
     if (ind === 'vol') {
       if (_lwVolumeSeries) _lwVolumeSeries.applyOptions({ visible: show });
@@ -5895,6 +6809,106 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   let _customLines = []; // { id, price, label, color, style, pLineRef }
   let _customZones = []; // { id, topPrice, bottomPrice, label, type, fillColor, borderColor, topRef, bottomRef }
   let _clickToDrawSrMode = false;
+
+  function toggleVolSignalsSwitch(forceState) {
+    const chk = document.getElementById('nc-toggle-volsignals');
+    const newState = typeof forceState === 'boolean' ? forceState : (chk ? !chk.checked : true);
+    if (chk) {
+      chk.checked = newState;
+    }
+    syncVolSignalsButton(newState);
+    toggleIndicator('volsignals');
+  }
+
+  function syncVolSignalsButton(isOn) {
+    const btn = document.getElementById('btn-toggle-volsignals-sw');
+    const badge = document.getElementById('nc-volsignals-status-badge');
+    if (badge) {
+      badge.innerText = isOn ? 'ON' : 'OFF';
+      badge.style.background = isOn ? 'rgba(245, 158, 11, 0.25)' : 'rgba(148, 163, 184, 0.2)';
+      badge.style.color = isOn ? '#fbbf24' : '#94a3b8';
+    }
+    if (btn) {
+      btn.style.background = isOn ? 'rgba(245, 158, 11, 0.25)' : '#1e293b';
+      btn.style.borderColor = isOn ? '#f59e0b' : '#64748b';
+      btn.style.color = isOn ? '#fbbf24' : '#94a3b8';
+    }
+  }
+
+  function toggleOrderFlowDelta(forceState) {
+    _orderFlowDeltaEnabled = typeof forceState === 'boolean' ? forceState : !_orderFlowDeltaEnabled;
+    const btn = document.getElementById('btn-toggle-order-flow');
+    const badge = document.getElementById('nc-delta-status-badge');
+    const pill = document.getElementById('nc-delta-pill');
+    if (badge) {
+      badge.innerText = _orderFlowDeltaEnabled ? 'ON' : 'OFF';
+      badge.style.background = _orderFlowDeltaEnabled ? 'rgba(16, 185, 129, 0.25)' : 'rgba(148, 163, 184, 0.2)';
+      badge.style.color = _orderFlowDeltaEnabled ? '#34d399' : '#94a3b8';
+    }
+    if (btn) {
+      btn.style.background = _orderFlowDeltaEnabled ? 'rgba(14, 116, 144, 0.4)' : '#1e293b';
+      btn.style.borderColor = _orderFlowDeltaEnabled ? '#38bdf8' : '#0284c7';
+      btn.style.color = _orderFlowDeltaEnabled ? '#38bdf8' : '#94a3b8';
+    }
+    if (!_orderFlowDeltaEnabled && pill) {
+      pill.style.display = 'none';
+    }
+    renderCustomZones();
+    updateVolumeMarkers();
+    if (_lastCandle) {
+      updateOhlcvDisplay(_lastCandle.open, _lastCandle.high, _lastCandle.low, _lastCandle.close, _lastCandle.volume);
+    }
+  }
+
+  function toggleLiquidityRadar(forceState) {
+    _liquidityRadarEnabled = typeof forceState === 'boolean' ? forceState : !_liquidityRadarEnabled;
+    const btn = document.getElementById('btn-toggle-liquidity-radar');
+    const badge = document.getElementById('nc-liq-status-badge');
+    const pill = document.getElementById('nc-liq-radar-pill');
+    if (badge) {
+      badge.innerText = _liquidityRadarEnabled ? 'ON' : 'OFF';
+      badge.style.background = _liquidityRadarEnabled ? 'rgba(168, 85, 247, 0.25)' : 'rgba(148, 163, 184, 0.2)';
+      badge.style.color = _liquidityRadarEnabled ? '#c084fc' : '#94a3b8';
+    }
+    if (btn) {
+      btn.style.background = _liquidityRadarEnabled ? 'rgba(124, 58, 237, 0.4)' : '#1e293b';
+      btn.style.borderColor = _liquidityRadarEnabled ? '#a855f7' : '#6b21a8';
+      btn.style.color = _liquidityRadarEnabled ? '#d8b4fe' : '#94a3b8';
+    }
+    if (pill) {
+      pill.style.display = _liquidityRadarEnabled ? 'inline-flex' : 'none';
+    }
+    renderCustomZones();
+    updateVolumeMarkers();
+    if (_lastCandle) {
+      updateOhlcvDisplay(_lastCandle.open, _lastCandle.high, _lastCandle.low, _lastCandle.close, _lastCandle.volume);
+    }
+  }
+
+  function togglePocEngine(forceState) {
+    _pocEngineEnabled = typeof forceState === 'boolean' ? forceState : !_pocEngineEnabled;
+    const btn = document.getElementById('btn-toggle-poc-engine');
+    const badge = document.getElementById('nc-poc-status-badge');
+    const pill = document.getElementById('nc-poc-pill');
+    if (badge) {
+      badge.innerText = _pocEngineEnabled ? 'ON' : 'OFF';
+      badge.style.background = _pocEngineEnabled ? 'rgba(234, 179, 8, 0.25)' : 'rgba(148, 163, 184, 0.2)';
+      badge.style.color = _pocEngineEnabled ? '#fde047' : '#94a3b8';
+    }
+    if (btn) {
+      btn.style.background = _pocEngineEnabled ? 'rgba(234, 179, 8, 0.25)' : '#1e293b';
+      btn.style.borderColor = _pocEngineEnabled ? '#eab308' : '#64748b';
+      btn.style.color = _pocEngineEnabled ? '#fde047' : '#94a3b8';
+    }
+    if (pill) {
+      pill.style.display = _pocEngineEnabled ? 'inline-flex' : 'none';
+    }
+    renderCustomZones();
+    updateVolumeMarkers();
+    if (_lastCandle) {
+      updateOhlcvDisplay(_lastCandle.open, _lastCandle.high, _lastCandle.low, _lastCandle.close, _lastCandle.volume);
+    }
+  }
 
   function toggleDrawingPanel(forceState) {
     const p = document.getElementById('chart-drawing-panel');
@@ -6287,6 +7301,296 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       ctx.fillStyle = zone.borderColor || '#10b981';
       ctx.fillText(labelText, 16, minY + 15);
     });
+
+    // Render Institutional Liquidity Matrix (PDH, PDL, PDC, 2D-High, 2D-Low, 50% Wick Midpoint, Gap Box & Danger Zones)
+    if (_liquidityRadarEnabled && _cachedCandles && _cachedCandles.length > 0 && _lwCandleSeries) {
+      const liq = _cachedLiquidityMatrix || calculateLiquidityMatrix(_cachedCandles);
+      if (liq) {
+        function drawLiqLine(price, label, strokeColor, dash, badgeBg) {
+          const y = _lwCandleSeries.priceToCoordinate(price);
+          if (y === null || y < -10 || y > rect.height + 10) return;
+          ctx.save();
+          ctx.strokeStyle = strokeColor;
+          ctx.lineWidth = 1.3;
+          ctx.setLineDash(dash || [4, 4]);
+          ctx.beginPath();
+          ctx.moveTo(0, y);
+          ctx.lineTo(chartWidth, y);
+          ctx.stroke();
+          ctx.setLineDash([]);
+
+          ctx.font = 'bold 9.5px Inter, sans-serif';
+          const tw = ctx.measureText(label).width;
+          const badgeX = Math.max(10, chartWidth - tw - 16);
+          ctx.fillStyle = badgeBg || 'rgba(15, 23, 42, 0.90)';
+          ctx.fillRect(badgeX, y - 8, tw + 12, 16);
+          ctx.strokeStyle = strokeColor;
+          ctx.lineWidth = 1;
+          ctx.strokeRect(badgeX, y - 8, tw + 12, 16);
+          ctx.fillStyle = strokeColor;
+          ctx.fillText(label, badgeX + 6, y + 4);
+          ctx.restore();
+        }
+
+        function drawLiqZone(topPrice, bottomPrice, label, fillColor, strokeColor) {
+          const yTop = _lwCandleSeries.priceToCoordinate(topPrice);
+          const yBottom = _lwCandleSeries.priceToCoordinate(bottomPrice);
+          if (yTop === null || yBottom === null) return;
+          const minY = Math.min(yTop, yBottom);
+          const h = Math.abs(yBottom - yTop);
+          if (minY + h < 0 || minY > rect.height) return;
+
+          ctx.save();
+          ctx.fillStyle = fillColor;
+          ctx.fillRect(0, minY, chartWidth, h);
+
+          ctx.strokeStyle = strokeColor;
+          ctx.lineWidth = 1;
+          ctx.setLineDash([3, 3]);
+          ctx.beginPath();
+          ctx.moveTo(0, minY);
+          ctx.lineTo(chartWidth, minY);
+          ctx.moveTo(0, minY + h);
+          ctx.lineTo(chartWidth, minY + h);
+          ctx.stroke();
+          ctx.setLineDash([]);
+
+          ctx.font = 'bold 9px Inter, sans-serif';
+          const tw = ctx.measureText(label).width;
+          ctx.fillStyle = 'rgba(15, 23, 42, 0.90)';
+          ctx.fillRect(10, minY + 2, tw + 10, 14);
+          ctx.strokeStyle = strokeColor;
+          ctx.lineWidth = 1;
+          ctx.strokeRect(10, minY + 2, tw + 10, 14);
+          ctx.fillStyle = strokeColor;
+          ctx.fillText(label, 15, minY + 12);
+          ctx.restore();
+        }
+
+        // 1. CE Danger Zone: Translucent red band 25 pts below 2D-High
+        drawLiqZone(liq.twoDayHigh, liq.twoDayHigh - 25, `🚨 CE DANGER ZONE [${(liq.twoDayHigh - 25).toFixed(0)} - ${liq.twoDayHigh}]`, 'rgba(239, 68, 68, 0.12)', 'rgba(239, 68, 68, 0.7)');
+
+        // 2. PE Danger Zone: Translucent emerald band 25 pts above 2D-Low
+        drawLiqZone(liq.twoDayLow + 25, liq.twoDayLow, `🛡️ PE DANGER ZONE [${liq.twoDayLow} - ${(liq.twoDayLow + 25).toFixed(0)}]`, 'rgba(16, 185, 129, 0.12)', 'rgba(16, 185, 129, 0.7)');
+
+        // 3. Gap Box (if unfilled and >= 5 pts gap)
+        if (!liq.isGapFilled && Math.abs(liq.gapHigh - liq.gapLow) >= 5) {
+          drawLiqZone(liq.gapHigh, liq.gapLow, `📦 UNFILLED GAP [${liq.gapLow} - ${liq.gapHigh}]`, 'rgba(245, 158, 11, 0.08)', 'rgba(245, 158, 11, 0.6)');
+        }
+
+        // 4. Horizontal Liquidity Lines
+        drawLiqLine(liq.twoDayHigh, `⚡ 2D-HIGH POOL [${liq.twoDayHigh}]`, '#f43f5e', [6, 4]);
+        drawLiqLine(liq.twoDayLow, `⚡ 2D-LOW POOL [${liq.twoDayLow}]`, '#10b981', [6, 4]);
+        drawLiqLine(liq.pdh, `PDH [${liq.pdh}]`, '#f59e0b', [4, 3]);
+        drawLiqLine(liq.pdl, `PDL [${liq.pdl}]`, '#0ea5e9', [4, 3]);
+        drawLiqLine(liq.pdc, `PDC [${liq.pdc}]`, '#94a3b8', [2, 3]);
+
+        // 5. 50% Wick Midpoint (Consequent Encroachment)
+        if (liq.wick50) {
+          drawLiqLine(liq.wick50.price, `🎯 50% WICK EQUILIBRIUM [${liq.wick50.price.toFixed(1)}]`, '#c084fc', [3, 3]);
+        }
+      }
+    }
+
+    // Render Auto Volume Profile & Fair Value POC Engine (VAH, VAL, Golden POC, vPOC, Right Profile Histogram)
+    if (_pocEngineEnabled && _cachedCandles && _cachedCandles.length > 0 && _lwCandleSeries) {
+      const vp = _cachedVolumeProfile || calculateVolumeProfile(_cachedCandles);
+      if (vp) {
+        // 1. Fair Value Box (VAH to VAL: 70% Volume Bracket)
+        const yVah = _lwCandleSeries.priceToCoordinate(vp.vah);
+        const yVal = _lwCandleSeries.priceToCoordinate(vp.val);
+        if (yVah !== null && yVal !== null) {
+          const minY = Math.min(yVah, yVal);
+          const vaHeight = Math.abs(yVal - yVah);
+          if (minY + vaHeight >= 0 && minY <= rect.height) {
+            ctx.save();
+            ctx.fillStyle = 'rgba(56, 189, 248, 0.08)';
+            ctx.fillRect(0, minY, chartWidth, vaHeight);
+
+            // Dashed bounds for VAH and VAL
+            ctx.strokeStyle = 'rgba(56, 189, 248, 0.55)';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([4, 4]);
+            ctx.beginPath();
+            ctx.moveTo(0, minY);
+            ctx.lineTo(chartWidth, minY);
+            ctx.moveTo(0, minY + vaHeight);
+            ctx.lineTo(chartWidth, minY + vaHeight);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Labels for VAH and VAL
+            ctx.font = 'bold 9px Inter, sans-serif';
+            const vahText = `VAH [${vp.vah}] (70% Top)`;
+            const valText = `VAL [${vp.val}] (70% Bottom)`;
+            const vahW = ctx.measureText(vahText).width;
+            const valW = ctx.measureText(valText).width;
+
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.90)';
+            ctx.fillRect(chartWidth - vahW - 14, minY - 7, vahW + 10, 14);
+            ctx.fillRect(chartWidth - valW - 14, minY + vaHeight - 7, valW + 10, 14);
+
+            ctx.fillStyle = '#38bdf8';
+            ctx.fillText(vahText, chartWidth - vahW - 9, minY + 3);
+            ctx.fillText(valText, chartWidth - valW - 9, minY + vaHeight + 3);
+            ctx.restore();
+          }
+        }
+
+        // 2. Golden Point of Control (POC) Line
+        const yPoc = _lwCandleSeries.priceToCoordinate(vp.poc);
+        if (yPoc !== null && yPoc >= 0 && yPoc <= rect.height) {
+          ctx.save();
+          ctx.strokeStyle = '#eab308';
+          ctx.lineWidth = 1.8;
+          ctx.beginPath();
+          ctx.moveTo(0, yPoc);
+          ctx.lineTo(chartWidth, yPoc);
+          ctx.stroke();
+
+          const pocLabel = `★ POC (FAIR VALUE) [${vp.poc}]`;
+          ctx.font = 'bold 9.5px Inter, sans-serif';
+          const pocW = ctx.measureText(pocLabel).width;
+          const badgeX = Math.max(10, chartWidth - pocW - 18);
+          ctx.fillStyle = 'rgba(15, 23, 42, 0.92)';
+          ctx.fillRect(badgeX, yPoc - 9, pocW + 12, 17);
+          ctx.strokeStyle = '#eab308';
+          ctx.lineWidth = 1.2;
+          ctx.strokeRect(badgeX, yPoc - 9, pocW + 12, 17);
+          ctx.fillStyle = '#fde047';
+          ctx.fillText(pocLabel, badgeX + 6, yPoc + 3.5);
+          ctx.restore();
+        }
+
+        // 3. Virgin POC (vPOC) Line if present
+        if (vp.vpoc) {
+          const yVpoc = _lwCandleSeries.priceToCoordinate(vp.vpoc);
+          if (yVpoc !== null && yVpoc >= 0 && yVpoc <= rect.height) {
+            ctx.save();
+            ctx.strokeStyle = '#06b6d4';
+            ctx.lineWidth = 1.2;
+            ctx.setLineDash([3, 3]);
+            ctx.beginPath();
+            ctx.moveTo(0, yVpoc);
+            ctx.lineTo(chartWidth, yVpoc);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            const vpocLabel = `🧲 VIRGIN POC TARGET [${vp.vpoc}]`;
+            ctx.font = 'bold 9px Inter, sans-serif';
+            const vpocW = ctx.measureText(vpocLabel).width;
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.90)';
+            ctx.fillRect(chartWidth - vpocW - 16, yVpoc - 8, vpocW + 10, 15);
+            ctx.strokeStyle = '#06b6d4';
+            ctx.strokeRect(chartWidth - vpocW - 16, yVpoc - 8, vpocW + 10, 15);
+            ctx.fillStyle = '#22d3ee';
+            ctx.fillText(vpocLabel, chartWidth - vpocW - 11, yVpoc + 3);
+            ctx.restore();
+          }
+        }
+
+        // 4. Right-Edge Volume Profile Horizontal Histogram
+        if (vp.bins && vp.bins.length > 0 && vp.maxBinVolume > 0) {
+          ctx.save();
+          const maxBarW = 75; // max width in pixels on right edge
+          const isBank = (typeof _lwSymbol !== 'undefined' && _lwSymbol.includes('BANK'));
+          const halfStep = (isBank ? 10.0 : 5.0) / 2;
+
+          for (let b = 0; b < vp.bins.length; b++) {
+            const bin = vp.bins[b];
+            const y1 = _lwCandleSeries.priceToCoordinate(bin.price + halfStep);
+            const y2 = _lwCandleSeries.priceToCoordinate(bin.price - halfStep);
+            if (y1 === null || y2 === null) continue;
+            const topY = Math.min(y1, y2);
+            const bH = Math.max(1, Math.abs(y2 - y1) - 1);
+            if (topY + bH < 0 || topY > rect.height) continue;
+
+            const bW = Math.max(1, Math.round((bin.volume / vp.maxBinVolume) * maxBarW));
+            const startX = chartWidth - bW;
+
+            if (bin.isPoc) {
+              ctx.fillStyle = 'rgba(234, 179, 8, 0.75)'; // Golden for POC
+            } else if (bin.inValueArea) {
+              ctx.fillStyle = 'rgba(56, 189, 248, 0.28)'; // Value Area (70%)
+            } else {
+              ctx.fillStyle = 'rgba(100, 116, 139, 0.16)'; // Low volume tails
+            }
+            ctx.fillRect(startX, topY, bW, bH);
+          }
+          ctx.restore();
+        }
+      }
+    }
+
+    // Equivolume Clean "Little Fat" Candle Bodies (when in Volume Candles mode)
+    if (_currentChartType === 'volumecandles' && _cachedCandles && _cachedCandles.length > 0 && _lwChart) {
+      const threshInput = document.getElementById('nc-volcandle-thresh');
+      const thresh = (threshInput && !isNaN(Number(threshInput.value)) && Number(threshInput.value) > 0) ? Number(threshInput.value) : 10000;
+      const timeScale = _lwChart.timeScale();
+      const avgSpread = _cachedCandles.reduce((acc, c) => acc + Math.abs(c.high - c.low), 0) / _cachedCandles.length;
+
+      // Dynamically calculate screen bar spacing so fat candles never overlap neighbors at any zoom level
+      let barSpacing = 8;
+      for (let i = 0; i < _cachedCandles.length - 1; i++) {
+        const xA = timeScale.timeToCoordinate(_cachedCandles[i].time);
+        const xB = timeScale.timeToCoordinate(_cachedCandles[i + 1].time);
+        if (xA !== null && xB !== null) {
+          const d = Math.abs(xB - xA);
+          if (d >= 2 && d <= 120) {
+            barSpacing = d;
+            break;
+          }
+        }
+      }
+
+      // "Little Fat" width: cleanly wider than thin candles (~80% of bar spacing, capped to prevent collision)
+      const fatWidth = Math.max(3, Math.min(Math.round(barSpacing - 2), Math.round(barSpacing * 0.82)));
+
+      _cachedCandles.forEach(c => {
+        const v = getCandleVolume(c, avgSpread);
+        if (v < thresh) return; // Lower volume stays as clean thin hollow candle
+
+        const x = timeScale.timeToCoordinate(c.time);
+        if (x === null || x < -10 || x > chartWidth + 10) return;
+
+        const yOpen = _lwCandleSeries.priceToCoordinate(c.open);
+        const yClose = _lwCandleSeries.priceToCoordinate(c.close);
+        if (yOpen === null || yClose === null) return;
+
+        const isBull = c.close >= c.open;
+        const topY = Math.min(yOpen, yClose);
+        const bodyH = Math.max(2, Math.abs(yClose - yOpen));
+        const leftX = Math.round(x - (fatWidth / 2));
+
+        // Crisp, solid body fill (zero blurry halo, clean borders)
+        ctx.fillStyle = isBull ? '#10b981' : '#ef4444';
+        ctx.fillRect(leftX, topY, fatWidth, bodyH);
+
+        // Crisp 1px outline
+        ctx.strokeStyle = isBull ? '#34d399' : '#f87171';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(leftX + 0.5, topY + 0.5, Math.max(1, fatWidth - 1), Math.max(1, bodyH - 1));
+
+        // SHOW DELTA VALUE ON VOLUME CANDLE (Only on volume candles, skipped for thin hollow)
+        if (_orderFlowDeltaEnabled && barSpacing >= 12) {
+          const cSpread = Math.abs(c.high - c.low) || 0.01;
+          const bPct = Math.min(100, Math.max(0, Math.round(((c.close - c.low) / cSpread) * 100)));
+          const sPct = 100 - bPct;
+          const deltaPct = bPct - sPct;
+          const deltaText = `${deltaPct >= 0 ? '+' : ''}${deltaPct}%`;
+
+          if (barSpacing >= 10 && fatWidth >= 14 && bodyH >= 10) {
+            ctx.save();
+            ctx.font = 'bold 8.5px Inter, -apple-system, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = '#ffffff';
+            ctx.fillText(deltaText, x, topY + (bodyH / 2));
+            ctx.restore();
+          }
+        }
+      });
+    }
   }
 
   function saveDrawingsToStorage() {
@@ -6451,10 +7755,12 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         borderColor: '#1e293b',
         scaleMargins: { top: 0.1, bottom: 0.1 },
       },
+      localization: IST_CHART_LOCALIZATION,
       timeScale: {
         borderColor: '#1e293b',
         timeVisible: true,
         secondsVisible: false,
+        tickMarkFormatter: formatIstTickMark,
       },
     });
 
@@ -6536,10 +7842,12 @@ DASHBOARD_HTML = """<!DOCTYPE html>
           borderColor: '#1e293b',
           scaleMargins: { top: 0.1, bottom: 0.22 },
         },
+        localization: IST_CHART_LOCALIZATION,
         timeScale: {
           borderColor: '#1e293b',
           timeVisible: true,
           secondsVisible: false,
+          tickMarkFormatter: formatIstTickMark,
         },
       });
 
@@ -6717,11 +8025,13 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         const line = param.seriesData.get(_lwLineSeries);
         const area = param.seriesData.get(_lwAreaSeries);
         const vol = param.seriesData.get(_lwVolumeSeries);
+        const avgSp = (_cachedCandles && _cachedCandles.length > 0) ? (_cachedCandles.reduce((a, b) => a + Math.abs(b.high - b.low), 0) / _cachedCandles.length) : 10.0;
         if (candle) {
-          updateOhlcvDisplay(candle.open, candle.high, candle.low, candle.close, vol ? vol.value : 0);
+          const cv = (vol && Number(vol.value) > 0) ? vol.value : getCandleVolume(candle, avgSp);
+          updateOhlcvDisplay(candle.open, candle.high, candle.low, candle.close, cv, param.time);
         } else if (line || area) {
           const val = (line ? line.value : (area ? area.value : 0));
-          updateOhlcvDisplay(val, val, val, val, vol ? vol.value : 0);
+          updateOhlcvDisplay(val, val, val, val, vol ? vol.value : 0, param.time);
         }
       });
 
@@ -6746,8 +8056,22 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     _lwRefreshTimer = setInterval(fetchNativeCandles, 15000);
   }
 
+  function getCandleVolume(c, avgSpread) {
+    let v = Number(c.volume) || 0;
+    if (v <= 0) {
+      const spread = Math.abs(c.high - c.low) || 1.0;
+      const body = Math.abs(c.close - c.open) || 0.5;
+      const refSpread = Math.max(1.0, avgSpread || 10.0);
+      const ratio = spread / refSpread;
+      v = Math.round(ratio * 9500 + (body / refSpread) * 5500);
+    }
+    return v;
+  }
+
   function applyCandleDataToSeries() {
     if (!_cachedCandles || _cachedCandles.length === 0) return;
+    _cachedLiquidityMatrix = calculateLiquidityMatrix(_cachedCandles);
+    _cachedVolumeProfile = calculateVolumeProfile(_cachedCandles);
 
     const standardCandles = _cachedCandles.map(c => ({
       time: c.time,
@@ -6762,9 +8086,49 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       value: c.close
     }));
 
+    const avgSpread = _cachedCandles.length > 0
+      ? (_cachedCandles.reduce((acc, c) => acc + Math.abs(c.high - c.low), 0) / _cachedCandles.length)
+      : 10.0;
+
+    const threshInput = document.getElementById('nc-volcandle-thresh');
+    const thresh = (threshInput && !isNaN(Number(threshInput.value)) && Number(threshInput.value) > 0)
+      ? Number(threshInput.value)
+      : 10000;
+
     if (_currentChartType === 'heikinashi') {
       const haCandles = calculateHeikinAshi(standardCandles);
       if (_lwCandleSeries) _lwCandleSeries.setData(haCandles);
+    } else if (_currentChartType === 'volumecandles') {
+      const volCandles = _cachedCandles.map(c => {
+        const v = getCandleVolume(c, avgSpread);
+        const isBull = c.close >= c.open;
+        if (v >= thresh) {
+          // SOLID candle color for volume >= threshold
+          return {
+            time: c.time,
+            open: c.open,
+            high: c.high,
+            low: c.low,
+            close: c.close,
+            color: isBull ? '#10b981' : '#ef4444',
+            borderColor: isBull ? '#10b981' : '#ef4444',
+            wickColor: isBull ? '#10b981' : '#ef4444',
+          };
+        } else {
+          // HOLLOW / THIN candle for volume < threshold (body matches dark background)
+          return {
+            time: c.time,
+            open: c.open,
+            high: c.high,
+            low: c.low,
+            close: c.close,
+            color: '#0b0f19',
+            borderColor: isBull ? 'rgba(16, 185, 129, 0.50)' : 'rgba(239, 68, 68, 0.50)',
+            wickColor: isBull ? 'rgba(16, 185, 129, 0.40)' : 'rgba(239, 68, 68, 0.40)',
+          };
+        }
+      });
+      if (_lwCandleSeries) _lwCandleSeries.setData(volCandles);
     } else {
       if (_lwCandleSeries) _lwCandleSeries.setData(standardCandles);
     }
@@ -6772,11 +8136,27 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     if (_lwLineSeries) _lwLineSeries.setData(lineData);
     if (_lwAreaSeries) _lwAreaSeries.setData(lineData);
 
-    const volumes = _cachedCandles.map(c => ({
-      time: c.time,
-      value: c.volume || 0,
-      color: c.close >= c.open ? 'rgba(16, 185, 129, 0.4)' : 'rgba(239, 68, 68, 0.4)'
-    }));
+    const isVolCandleMode = _currentChartType === 'volumecandles';
+    const volumes = _cachedCandles.map(c => {
+      const v = getCandleVolume(c, avgSpread);
+      const isFat = v >= thresh;
+      const isBull = c.close >= c.open;
+      let col;
+      if (isVolCandleMode) {
+        if (isFat) {
+          col = isBull ? '#10b981' : '#ef4444';
+        } else {
+          col = isBull ? 'rgba(16, 185, 129, 0.22)' : 'rgba(239, 68, 68, 0.22)';
+        }
+      } else {
+        col = isBull ? 'rgba(16, 185, 129, 0.4)' : 'rgba(239, 68, 68, 0.4)';
+      }
+      return {
+        time: c.time,
+        value: v,
+        color: col
+      };
+    });
     if (_lwVolumeSeries) _lwVolumeSeries.setData(volumes);
 
     if (_lwEma9Series) _lwEma9Series.setData(calculateEMA(standardCandles, 9));
@@ -6854,6 +8234,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       if (atrLegEl) atrLegEl.innerText = `${lastAtr.toFixed(1)} pts`;
     }
     setTimeout(renderCustomZones, 30);
+    updateVolumeMarkers();
   }
 
   async function fetchNativeCandles() {
@@ -6904,7 +8285,9 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         changeEl.style.color = diff >= 0 ? '#10b981' : '#ef4444';
       }
 
-      updateOhlcvDisplay(last.open, last.high, last.low, last.close, last.volume || 0);
+      const avgSp = _cachedCandles.length > 0 ? (_cachedCandles.reduce((a, b) => a + Math.abs(b.high - b.low), 0) / _cachedCandles.length) : 10.0;
+      const lastVol = getCandleVolume(last, avgSp);
+      updateOhlcvDisplay(last.open, last.high, last.low, last.close, lastVol, last.time);
     } catch (err) {
       console.error('Error fetching candles:', err);
       if (overlay) {
@@ -7211,7 +8594,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       changeEl.innerText = (diff >= 0 ? '+' : '') + diff.toFixed(2) + ' (' + (diff >= 0 ? '+' : '') + pct + '%)';
       changeEl.style.color = diff >= 0 ? '#10b981' : '#ef4444';
     }
-    updateOhlcvDisplay(last.open, last.high, last.low, last.close, last.volume || 0);
+    updateOhlcvDisplay(last.open, last.high, last.low, last.close, last.volume || 0, last.time);
   }
 
   function renderReplayFrame() {
@@ -7449,7 +8832,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
             to: Math.min(pool.length - 1, matchedIdx + halfWindow)
           });
         }
-        updateOhlcvDisplay(matchedCandle.open, matchedCandle.high, matchedCandle.low, matchedCandle.close, matchedCandle.volume || 0);
+        updateOhlcvDisplay(matchedCandle.open, matchedCandle.high, matchedCandle.low, matchedCandle.close, matchedCandle.volume || 0, matchedCandle.time);
         showGotoToast(`📍 Centered on ${formattedTime} (₹${matchedCandle.close.toFixed(2)})`);
       }
     }
@@ -7536,6 +8919,30 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         statusEl.innerHTML = `🎮 <b>Replay Practice Mode Active:</b> Place your trade setup on this historical candle. Click <b>"🚀 Execute Trade"</b> and step through bars with [Step ▶] or [Spacebar] to watch your trade play out!`;
       } else {
         statusEl.innerHTML = `💡 Lines placed on chart! Adjust levels above or click <b>"🚀 Execute Trade"</b> to enter in Paper Simulator or Live Broker.`;
+      }
+    }
+
+    // Pre-Trade Liquidity Trap Safety Shield
+    if (_liquidityRadarEnabled && _cachedCandles && _cachedCandles.length > 0) {
+      const liq = _cachedLiquidityMatrix || calculateLiquidityMatrix(_cachedCandles);
+      if (liq) {
+        if (type === 'LONG' && (liq.twoDayHigh - entry) <= 25 && (liq.twoDayHigh - entry) >= -10) {
+          showGotoToast(`🚨 DANGER ZONE ALERT: Buying CE within 25 pts of 2D-High (${liq.twoDayHigh})! Beware institutional UTAD reversal.`);
+        } else if (type === 'SHORT' && (entry - liq.twoDayLow) <= 25 && (entry - liq.twoDayLow) >= -10) {
+          showGotoToast(`🚨 DANGER ZONE ALERT: Buying PE within 25 pts of 2D-Low (${liq.twoDayLow})! Beware institutional Spring absorption.`);
+        }
+      }
+    }
+
+    // Pre-Trade Value Area Caution Shield
+    if (_pocEngineEnabled && _cachedCandles && _cachedCandles.length > 0) {
+      const vp = _cachedVolumeProfile || calculateVolumeProfile(_cachedCandles);
+      if (vp) {
+        if (type === 'LONG' && Math.abs(entry - vp.vah) <= 12 && entry <= vp.vah + 8) {
+          showGotoToast(`⚠️ VALUE AREA WARNING: Long (Buy CE) at Value Area High (${vp.vah})! Risk of mean reversion back to POC (${vp.poc}).`);
+        } else if (type === 'SHORT' && Math.abs(entry - vp.val) <= 12 && entry >= vp.val - 8) {
+          showGotoToast(`⚠️ VALUE AREA WARNING: Short (Buy PE) at Value Area Low (${vp.val})! Risk of institutional bounce back to POC (${vp.poc}).`);
+        }
       }
     }
   }
@@ -8352,10 +9759,12 @@ DASHBOARD_HTML = """<!DOCTYPE html>
           scaleMargins: { top: 0.1, bottom: 0.2 },
           autoScale: true,
         },
+        localization: IST_CHART_LOCALIZATION,
         timeScale: {
           borderColor: 'rgba(255, 255, 255, 0.1)',
           timeVisible: true,
           secondsVisible: false,
+          tickMarkFormatter: formatIstTickMark,
         },
       });
 
@@ -9490,10 +10899,12 @@ DASHBOARD_HTML = """<!DOCTYPE html>
           borderColor: '#1f2b48',
           scaleMargins: { top: 0.08, bottom: 0.08 },
         },
+        localization: IST_CHART_LOCALIZATION,
         timeScale: {
           borderColor: '#1f2b48',
           timeVisible: true,
           secondsVisible: false,
+          tickMarkFormatter: formatIstTickMark,
         },
       });
 
@@ -9592,10 +11003,12 @@ DASHBOARD_HTML = """<!DOCTYPE html>
           borderColor: '#1f2b48',
           scaleMargins: { top: 0.1, bottom: 0.1 },
         },
+        localization: IST_CHART_LOCALIZATION,
         timeScale: {
           borderColor: '#1f2b48',
           timeVisible: true,
           secondsVisible: false,
+          tickMarkFormatter: formatIstTickMark,
         },
       });
 
@@ -10023,6 +11436,10 @@ class DashboardHTTPRequestHandler(BaseHTTPRequestHandler):
                         l = lows[i] if i < len(lows) else None
                         c = closes[i] if i < len(closes) else None
                         v = volumes[i] if i < len(volumes) else 0
+                        if (not v or v == 0) and o is not None and h is not None and l is not None and c is not None:
+                            pt_spread = max(1.0, abs(h - l))
+                            pt_body = abs(c - o)
+                            v = int(max(1500, round(pt_spread * 320 + pt_body * 380)))
                         if o is not None and h is not None and l is not None and c is not None:
                             candles.append({
                                 "time": t,
