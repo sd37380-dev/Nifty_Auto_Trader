@@ -814,6 +814,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   <button class="nav-tab" onclick="switchTab('tab-simulator', this)">⚡ Option Paper Simulator</button>
   <button class="nav-tab" onclick="switchTab('tab-option-chain', this)" id="nav-btn-option-chain">📊 NSE Option Chain &amp; Trade</button>
   <button class="nav-tab" onclick="switchTab('tab-charts', this)" id="nav-btn-charts">📈 TradingView Live Charts</button>
+  <button class="nav-tab" onclick="toggleAiChatWindow(true)" id="nav-btn-chat" style="color: #38bdf8; font-weight: 800; border: 1px solid rgba(56, 189, 248, 0.4); background: rgba(56, 189, 248, 0.1);">💬 AI Copilot</button>
   <button class="nav-tab" onclick="switchTab('tab-backtest', this)" id="nav-btn-backtest">🧪 Automated Backtest</button>
   <button class="nav-tab" onclick="switchTab('tab-news', this)" id="nav-btn-news">📰 Market News &amp; Impact <span id="nav-news-count-badge" class="badge badge-green" style="font-size: 0.65rem; padding: 1px 6px; margin-left: 4px;">--</span></button>
   <button class="nav-tab" onclick="switchTab('tab-telegram', this)" id="nav-btn-telegram">📱 Telegram &amp; 15-Min Execution <span id="nav-pending-badge" class="badge badge-yellow" style="font-size: 0.65rem; padding: 1px 6px; margin-left: 4px; display: none;">0</span></button>
@@ -11187,7 +11188,198 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     link.click();
     document.body.removeChild(link);
   }
+
+  // --- AI Copilot Web Chat Widget Controller ---
+  let _aiChatHistory = [];
+  let _aiChatOpen = false;
+
+  function toggleAiChatWindow(forceState) {
+    const win = document.getElementById('ai-chat-window');
+    if (!win) return;
+    _aiChatOpen = typeof forceState === 'boolean' ? forceState : !_aiChatOpen;
+    win.style.display = _aiChatOpen ? 'flex' : 'none';
+    if (_aiChatOpen) {
+      setTimeout(() => {
+        const inp = document.getElementById('ai-chat-input');
+        if (inp) inp.focus();
+        scrollAiChatToBottom();
+      }, 100);
+    }
+  }
+
+  function scrollAiChatToBottom() {
+    const el = document.getElementById('ai-chat-messages');
+    if (el) el.scrollTop = el.scrollHeight;
+  }
+
+  function clearAiChatHistory() {
+    _aiChatHistory = [];
+    const el = document.getElementById('ai-chat-messages');
+    if (el) {
+      el.innerHTML = `
+        <div style="background: rgba(30, 41, 59, 0.6); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 10px 12px; color: #e2e8f0; line-height: 1.45;">
+          <div style="font-weight: 800; color: #38bdf8; margin-bottom: 4px;">🤖 Copilot Ready</div>
+          Chat history cleared. Ask me about POC, active positions, P&L, or NIFTY trend!
+        </div>
+      `;
+    }
+  }
+
+  function sendQuickPrompt(promptText) {
+    const inp = document.getElementById('ai-chat-input');
+    if (inp) inp.value = promptText;
+    if (!_aiChatOpen) toggleAiChatWindow(true);
+    sendAiChatMessage();
+  }
+
+  function formatMarkdownText(txt) {
+    if (!txt) return '';
+    const lines = txt.split(String.fromCharCode(10));
+    const formatted = [];
+    for (let i = 0; i < lines.length; i++) {
+      let l = lines[i];
+      if (l.startsWith('### ')) {
+        formatted.push('<div style="font-weight:800; color:#38bdf8; margin-top:6px; margin-bottom:2px; font-size:0.84rem;">' + l.slice(4) + '</div>');
+        continue;
+      }
+      if (l.startsWith('- ') || l.startsWith('* ') || l.startsWith('• ')) {
+        l = '<div style="padding-left:10px; margin-bottom:2px;">• ' + l.slice(2) + '</div>';
+      }
+      const parts = l.split('**');
+      if (parts.length >= 3) {
+        let bolded = '';
+        for (let j = 0; j < parts.length; j++) {
+          bolded += (j % 2 === 1) ? '<strong style="color:#f8fafc;">' + parts[j] + '</strong>' : parts[j];
+        }
+        l = bolded;
+      }
+      formatted.push(l);
+    }
+    return formatted.join('<br>');
+  }
+
+  async function sendAiChatMessage() {
+    const inp = document.getElementById('ai-chat-input');
+    const msgs = document.getElementById('ai-chat-messages');
+    const typing = document.getElementById('ai-chat-typing');
+    const sendBtn = document.getElementById('ai-chat-btn-send');
+    if (!inp || !msgs) return;
+
+    const text = inp.value.trim();
+    if (!text) return;
+    inp.value = '';
+
+    // Append User Message
+    const userDiv = document.createElement('div');
+    userDiv.style.cssText = 'align-self: flex-end; background: #0284c7; color: white; padding: 8px 12px; border-radius: 10px 10px 2px 10px; max-width: 85%; font-weight: 500; line-height: 1.4; word-break: break-word;';
+    userDiv.innerText = text;
+    msgs.appendChild(userDiv);
+    scrollAiChatToBottom();
+
+    _aiChatHistory.push({ role: 'user', content: text });
+    if (typing) typing.style.display = 'block';
+    if (sendBtn) sendBtn.disabled = true;
+
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: text,
+          history: _aiChatHistory
+        })
+      });
+
+      const data = await res.json();
+      if (typing) typing.style.display = 'none';
+      if (sendBtn) sendBtn.disabled = false;
+
+      if (data.status === 'ok' && data.reply) {
+        _aiChatHistory.push({ role: 'assistant', content: data.reply });
+        const aiDiv = document.createElement('div');
+        aiDiv.style.cssText = 'align-self: flex-start; background: #131d33; border: 1px solid rgba(255,255,255,0.08); border-radius: 10px 10px 10px 2px; padding: 10px 12px; max-width: 90%; color: #cbd5e1; line-height: 1.45; word-break: break-word;';
+        aiDiv.innerHTML = formatMarkdownText(data.reply);
+        msgs.appendChild(aiDiv);
+
+        const badge = document.getElementById('ai-chat-model-badge');
+        if (badge && data.model) {
+          badge.innerText = data.model;
+        }
+      } else {
+        const errDiv = document.createElement('div');
+        errDiv.style.cssText = 'align-self: flex-start; background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; border-radius: 8px; padding: 8px 10px; color: #fca5a5;';
+        errDiv.innerText = '⚠️ ' + (data.message || 'Error communicating with AI Copilot');
+        msgs.appendChild(errDiv);
+      }
+    } catch (err) {
+      if (typing) typing.style.display = 'none';
+      if (sendBtn) sendBtn.disabled = false;
+      const errDiv = document.createElement('div');
+      errDiv.style.cssText = 'align-self: flex-start; background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; border-radius: 8px; padding: 8px 10px; color: #fca5a5;';
+      errDiv.innerText = '⚠️ Network error: Could not reach /api/chat. Please retry.';
+      msgs.appendChild(errDiv);
+    }
+    scrollAiChatToBottom();
+  }
 </script>
+
+  <!-- Floating AI Copilot Chat Widget for Render Web Dashboard -->
+  <div id="ai-chat-bubble" onclick="toggleAiChatWindow()" style="position: fixed; bottom: 22px; right: 24px; z-index: 9999; display: flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 9999px; background: linear-gradient(135deg, #0284c7 0%, #2563eb 50%, #7c3aed 100%); color: white; font-weight: 800; font-size: 0.85rem; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; box-shadow: 0 8px 30px rgba(2, 132, 199, 0.5); cursor: pointer; transition: all 0.25s ease; border: 1px solid rgba(255, 255, 255, 0.25); user-select: none;">
+    <span style="font-size: 1.15rem;">🤖</span>
+    <span>AI Copilot</span>
+    <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #10b981; box-shadow: 0 0 10px #10b981;"></span>
+  </div>
+
+  <div id="ai-chat-window" style="display: none; position: fixed; bottom: 84px; right: 24px; z-index: 10000; width: 395px; max-width: calc(100vw - 32px); height: 560px; max-height: calc(100vh - 105px); background: #090e1a; border: 1px solid rgba(56, 189, 248, 0.35); border-radius: 12px; box-shadow: 0 16px 50px rgba(0, 0, 0, 0.85); flex-direction: column; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+    <!-- Chat Header -->
+    <div style="background: linear-gradient(135deg, rgba(15, 23, 42, 0.98) 0%, rgba(30, 41, 59, 0.95) 100%); padding: 12px 14px; border-bottom: 1px solid rgba(255,255,255,0.08); display: flex; justify-content: space-between; align-items: center;">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span style="font-size: 1.3rem;">🤖</span>
+        <div>
+          <div style="font-weight: 800; font-size: 0.88rem; color: #f8fafc; display: flex; align-items: center; gap: 6px;">
+            NIFTY AI Copilot
+            <span id="ai-chat-model-badge" style="font-size: 0.62rem; padding: 1px 6px; border-radius: 4px; background: rgba(56, 189, 248, 0.2); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4); font-weight: 700;">Live Render</span>
+          </div>
+          <div style="font-size: 0.68rem; color: #94a3b8; display: flex; align-items: center; gap: 4px;">
+            <span style="width: 6px; height: 6px; border-radius: 50%; background: #10b981; display: inline-block;"></span>
+            Real-Time Market Context Active
+          </div>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 6px;">
+        <button type="button" onclick="clearAiChatHistory()" style="background: transparent; border: none; color: #94a3b8; cursor: pointer; font-size: 0.82rem; padding: 4px;" title="Clear Chat History">🗑️</button>
+        <button type="button" onclick="toggleAiChatWindow(false)" style="background: transparent; border: none; color: #94a3b8; cursor: pointer; font-size: 1.0rem; padding: 4px 8px; font-weight: 800;" title="Close Chat">✕</button>
+      </div>
+    </div>
+
+    <!-- Quick Action Chips -->
+    <div style="background: rgba(15, 23, 42, 0.7); padding: 6px 10px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; gap: 6px; overflow-x: auto; white-space: nowrap; scrollbar-width: none;">
+      <button type="button" onclick="sendQuickPrompt('What is today\\'s Fair Value POC, VAH, and VAL for NIFTY?')" style="background: #1e293b; color: #fde047; border: 1px solid rgba(234, 179, 8, 0.4); border-radius: 9999px; font-size: 0.68rem; padding: 3px 9px; cursor: pointer; font-weight: 700; flex-shrink: 0;">📊 POC &amp; Zones</button>
+      <button type="button" onclick="sendQuickPrompt('Do we have any active paper trade positions and what is our P&L?')" style="background: #1e293b; color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4); border-radius: 9999px; font-size: 0.68rem; padding: 3px 9px; cursor: pointer; font-weight: 700; flex-shrink: 0;">⚡ Open Positions</button>
+      <button type="button" onclick="sendQuickPrompt('Summarize today\\'s market news sentiment and key macro events.')" style="background: #1e293b; color: #a855f7; border: 1px solid rgba(168, 85, 247, 0.4); border-radius: 9999px; font-size: 0.68rem; padding: 3px 9px; cursor: pointer; font-weight: 700; flex-shrink: 0;">📰 News Sentiment</button>
+      <button type="button" onclick="sendQuickPrompt('Analyze current NIFTY 50 spot price, EMA slope, and trend structure.')" style="background: #1e293b; color: #10b981; border: 1px solid rgba(16, 185, 129, 0.4); border-radius: 9999px; font-size: 0.68rem; padding: 3px 9px; cursor: pointer; font-weight: 700; flex-shrink: 0;">🎯 NIFTY Trend</button>
+    </div>
+
+    <!-- Messages Container -->
+    <div id="ai-chat-messages" style="flex: 1; padding: 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; font-size: 0.80rem; background: #090e1a;">
+      <div style="background: rgba(30, 41, 59, 0.6); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 10px 12px; color: #e2e8f0; line-height: 1.45;">
+        <div style="font-weight: 800; color: #38bdf8; margin-bottom: 4px;">🤖 Copilot Online</div>
+        Hello! I am your <strong>NIFTY AI Copilot</strong> running live on Render.<br><br>
+        I have real-time access to live spot prices, Fair Value POC &amp; Value Area (VAH/VAL), active paper trades, and Indian market news. Tap any chip above or ask me a question!
+      </div>
+    </div>
+
+    <!-- Typing Indicator -->
+    <div id="ai-chat-typing" style="display: none; padding: 4px 14px 8px; font-size: 0.70rem; color: #38bdf8; font-style: italic;">
+      <span>🤖 Copilot is thinking...</span>
+    </div>
+
+    <!-- Chat Input Area -->
+    <div style="padding: 10px 12px; background: rgba(15, 23, 42, 0.95); border-top: 1px solid rgba(255, 255, 255, 0.08); display: flex; align-items: center; gap: 8px;">
+      <input type="text" id="ai-chat-input" placeholder="Ask about POC, P&amp;L, NIFTY trend..." onkeydown="if(event.key==='Enter') sendAiChatMessage()" style="flex: 1; background: #0f172a; border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 6px; padding: 8px 12px; color: #f8fafc; font-size: 0.80rem; outline: none;" />
+      <button type="button" id="ai-chat-btn-send" onclick="sendAiChatMessage()" style="background: #0284c7; color: white; border: none; border-radius: 6px; width: 34px; height: 34px; font-size: 0.95rem; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.2s; flex-shrink: 0;" title="Send Message">➤</button>
+    </div>
+  </div>
 </body>
 </html>
 """
@@ -12012,6 +12204,25 @@ class DashboardHTTPRequestHandler(BaseHTTPRequestHandler):
                 self.end_headers()
                 self.wfile.write(json.dumps({"status": "error", "message": str(ex)}).encode("utf-8"))
                 return
+        elif self.path == "/api/chat":
+            try:
+                content_length = int(self.headers.get("Content-Length", 0))
+                body = self.rfile.read(content_length).decode("utf-8")
+                req = json.loads(body) if body else {}
+                from nifty_trader.dashboard.chat_copilot import handle_ai_chat_request
+                res = handle_ai_chat_request(req)
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps(res).encode("utf-8"))
+                return
+            except Exception as ex:
+                logger.exception("Error in /api/chat")
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": "error", "message": str(ex)}).encode("utf-8"))
+                return
         else:
             self.send_response(404)
             self.end_headers()
@@ -12426,6 +12637,25 @@ class DashboardHTTPRequestHandler(BaseHTTPRequestHandler):
                 return
             except Exception as ex:
                 logger.exception("Error in /api/backtest/save_custom_strategy")
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": "error", "message": str(ex)}).encode("utf-8"))
+                return
+        elif self.path == "/api/chat":
+            try:
+                content_length = int(self.headers.get("Content-Length", 0))
+                body = self.rfile.read(content_length).decode("utf-8")
+                req = json.loads(body) if body else {}
+                from nifty_trader.dashboard.chat_copilot import handle_ai_chat_request
+                res = handle_ai_chat_request(req)
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps(res).encode("utf-8"))
+                return
+            except Exception as ex:
+                logger.exception("Error in /api/chat")
                 self.send_response(500)
                 self.send_header("Content-Type", "application/json")
                 self.end_headers()
