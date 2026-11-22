@@ -11199,6 +11199,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     _aiChatOpen = typeof forceState === 'boolean' ? forceState : !_aiChatOpen;
     win.style.display = _aiChatOpen ? 'flex' : 'none';
     if (_aiChatOpen) {
+      checkAiBridgeStatus();
       setTimeout(() => {
         const inp = document.getElementById('ai-chat-input');
         if (inp) inp.focus();
@@ -11206,6 +11207,37 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       }, 100);
     }
   }
+
+  async function checkAiBridgeStatus() {
+    try {
+      const res = await fetch('/api/bridge/status');
+      if (!res.ok) return;
+      const data = await res.json();
+      const badge = document.getElementById('ai-chat-model-badge');
+      const dot = document.getElementById('ai-chat-status-dot');
+      const txt = document.getElementById('ai-chat-status-text');
+      if (data.online) {
+        if (badge) {
+          badge.innerText = '⚡ Antigravity Active';
+          badge.style.background = 'rgba(16, 185, 129, 0.2)';
+          badge.style.color = '#10b981';
+          badge.style.borderColor = 'rgba(16, 185, 129, 0.4)';
+        }
+        if (dot) dot.style.background = '#10b981';
+        if (txt) txt.innerText = 'Connected to Antigravity on your PC';
+      } else {
+        if (badge && badge.innerText.includes('Antigravity')) {
+          badge.innerText = 'Live Copilot';
+          badge.style.background = 'rgba(56, 189, 248, 0.2)';
+          badge.style.color = '#38bdf8';
+          badge.style.borderColor = 'rgba(56, 189, 248, 0.4)';
+        }
+        if (dot) dot.style.background = '#38bdf8';
+        if (txt) txt.innerText = 'Real-Time Market Context Active';
+      }
+    } catch (e) {}
+  }
+  setInterval(checkAiBridgeStatus, 15000);
 
   function scrollAiChatToBottom() {
     const el = document.getElementById('ai-chat-messages');
@@ -11303,7 +11335,14 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 
         const badge = document.getElementById('ai-chat-model-badge');
         if (badge && data.model) {
-          badge.innerText = data.model;
+          if (data.model === 'antigravity_bridge') {
+            badge.innerText = '⚡ Antigravity Agent';
+            badge.style.background = 'rgba(16, 185, 129, 0.2)';
+            badge.style.color = '#10b981';
+            badge.style.borderColor = 'rgba(16, 185, 129, 0.4)';
+          } else {
+            badge.innerText = data.model;
+          }
         }
       } else {
         const errDiv = document.createElement('div');
@@ -11341,8 +11380,8 @@ DASHBOARD_HTML = """<!DOCTYPE html>
             <span id="ai-chat-model-badge" style="font-size: 0.62rem; padding: 1px 6px; border-radius: 4px; background: rgba(56, 189, 248, 0.2); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4); font-weight: 700;">Live Render</span>
           </div>
           <div style="font-size: 0.68rem; color: #94a3b8; display: flex; align-items: center; gap: 4px;">
-            <span style="width: 6px; height: 6px; border-radius: 50%; background: #10b981; display: inline-block;"></span>
-            Real-Time Market Context Active
+            <span id="ai-chat-status-dot" style="width: 6px; height: 6px; border-radius: 50%; background: #10b981; display: inline-block;"></span>
+            <span id="ai-chat-status-text">Real-Time Market Context Active</span>
           </div>
         </div>
       </div>
@@ -12204,20 +12243,45 @@ class DashboardHTTPRequestHandler(BaseHTTPRequestHandler):
                 self.end_headers()
                 self.wfile.write(json.dumps({"status": "error", "message": str(ex)}).encode("utf-8"))
                 return
-        elif self.path == "/api/chat":
+        elif self.path.startswith("/api/bridge/status"):
             try:
-                content_length = int(self.headers.get("Content-Length", 0))
-                body = self.rfile.read(content_length).decode("utf-8")
-                req = json.loads(body) if body else {}
-                from nifty_trader.dashboard.chat_copilot import handle_ai_chat_request
-                res = handle_ai_chat_request(req)
+                from nifty_trader.dashboard.antigravity_bridge import get_bridge_manager
+                mgr = get_bridge_manager()
+                res = mgr.get_status()
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json")
                 self.end_headers()
                 self.wfile.write(json.dumps(res).encode("utf-8"))
                 return
             except Exception as ex:
-                logger.exception("Error in /api/chat")
+                logger.exception("Error in /api/bridge/status")
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": "error", "message": str(ex)}).encode("utf-8"))
+                return
+        elif self.path.startswith("/api/bridge/poll"):
+            try:
+                from urllib.parse import parse_qs, urlparse
+                parsed = urlparse(self.path)
+                params = parse_qs(parsed.query)
+                token = params.get("token", [""])[0]
+                from nifty_trader.dashboard.antigravity_bridge import get_bridge_manager
+                mgr = get_bridge_manager()
+                if mgr.secret_token and token != mgr.secret_token:
+                    self.send_response(401)
+                    self.send_header("Content-Type", "application/json")
+                    self.end_headers()
+                    self.wfile.write(json.dumps({"status": "error", "message": "Unauthorized bridge token"}).encode("utf-8"))
+                    return
+                job = mgr.poll_job(timeout=12.0)
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": "ok", "job": job}).encode("utf-8"))
+                return
+            except Exception as ex:
+                logger.exception("Error in /api/bridge/poll")
                 self.send_response(500)
                 self.send_header("Content-Type", "application/json")
                 self.end_headers()
@@ -12656,6 +12720,36 @@ class DashboardHTTPRequestHandler(BaseHTTPRequestHandler):
                 return
             except Exception as ex:
                 logger.exception("Error in /api/chat")
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": "error", "message": str(ex)}).encode("utf-8"))
+                return
+        elif self.path == "/api/bridge/reply":
+            try:
+                content_length = int(self.headers.get("Content-Length", 0))
+                body = self.rfile.read(content_length).decode("utf-8")
+                req = json.loads(body) if body else {}
+                from nifty_trader.dashboard.antigravity_bridge import get_bridge_manager
+                mgr = get_bridge_manager()
+                if mgr.secret_token and req.get("token") != mgr.secret_token:
+                    self.send_response(401)
+                    self.send_header("Content-Type", "application/json")
+                    self.end_headers()
+                    self.wfile.write(json.dumps({"status": "error", "message": "Unauthorized bridge token"}).encode("utf-8"))
+                    return
+                success = mgr.submit_reply(
+                    job_id=req.get("job_id", ""),
+                    reply=req.get("reply", ""),
+                    model=req.get("model", "antigravity_bridge")
+                )
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": "ok", "delivered": success}).encode("utf-8"))
+                return
+            except Exception as ex:
+                logger.exception("Error in /api/bridge/reply")
                 self.send_response(500)
                 self.send_header("Content-Type", "application/json")
                 self.end_headers()

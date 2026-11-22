@@ -1,15 +1,18 @@
 """
 AI Copilot Web Chat Service for NIFTY Autonomous Trader.
 Provides real-time conversational assistance directly inside the Render Web Dashboard.
-Seamlessly uses Google Gemini (or OpenAI) with real-time market context injection,
+Seamlessly bridges to local Antigravity when the user is logged in,
+uses Google Gemini / OpenAI with live market and historical context injection,
 and includes an intelligent autonomous rule engine as a built-in zero-dependency fallback.
 """
 
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 import json
 import logging
 import os
 from pathlib import Path
+import re
+import sqlite3
 from typing import Any, Dict, List, Optional
 import urllib.error
 import urllib.request
@@ -17,7 +20,165 @@ import urllib.request
 logger = logging.getLogger(__name__)
 
 
-def build_live_market_context(root_dir: Optional[Path] = None) -> Dict[str, Any]:
+def find_historical_ohlc(user_msg: str, root_dir: Optional[Path] = None) -> Optional[Dict[str, Any]]:
+    """
+    Parses dates or relative time expressions from the user's message and retrieves
+    exact historical OHLC session data from SQLite (data/market/nse_spot_data.db).
+    """
+    if not user_msg:
+        return None
+
+    msg = user_msg.lower()
+    target_date_str: Optional[str] = None
+    display_title: Optional[str] = None
+
+    month_map = {
+        "jan": "01", "january": "01",
+        "feb": "02", "february": "02",
+        "mar": "03", "march": "03",
+        "apr": "04", "april": "04",
+        "may": "05",
+        "jun": "06", "june": "06",
+        "jul": "07", "july": "07",
+        "aug": "08", "august": "08",
+        "sep": "09", "september": "09",
+        "oct": "10", "october": "10",
+        "nov": "11", "november": "11",
+        "dec": "12", "december": "12",
+    }
+
+    # 1. Pattern: "19th nov 2026", "19 nov 2026", "19th november 2026"
+    m = re.search(r"\b(\d{1,2})(?:st|nd|rd|th)?\s+([a-z]{3,9})\s+(\d{4})\b", msg)
+    if m:
+        day, mon_name, year = m.groups()
+        mon = month_map.get(mon_name[:3])
+        if mon:
+            target_date_str = f"{year}-{mon}-{int(day):02d}"
+            display_title = f"{int(day)} {mon_name.title()} {year}"
+
+    # 2. Pattern: "november 19 2026", "nov 19th, 2026"
+    if not target_date_str:
+        m = re.search(r"\b([a-z]{3,9})\s+(\d{1,2})(?:st|nd|rd|th)?,?\s+(\d{4})\b", msg)
+        if m:
+            mon_name, day, year = m.groups()
+            mon = month_map.get(mon_name[:3])
+            if mon:
+                target_date_str = f"{year}-{mon}-{int(day):02d}"
+                display_title = f"{int(day)} {mon_name.title()} {year}"
+
+    # 3. Pattern: "2026-11-19" or "2026/11/19"
+    if not target_date_str:
+        m = re.search(r"\b(\d{4})[-/](\d{1,2})[-/](\d{1,2})\b", msg)
+        if m:
+            year, mon, day = m.groups()
+            target_date_str = f"{year}-{int(mon):02d}-{int(day):02d}"
+            display_title = target_date_str
+
+    # 4. Pattern: "19-11-2026" or "19/11/2026"
+    if not target_date_str:
+        m = re.search(r"\b(\d{1,2})[-/](\d{1,2})[-/](\d{4})\b", msg)
+        if m:
+            day, mon, year = m.groups()
+            target_date_str = f"{year}-{int(mon):02d}-{int(day):02d}"
+            display_title = target_date_str
+
+    # 5. Pattern without year: "19th nov", "nov 19" (assume 2026)
+    if not target_date_str:
+        m = re.search(r"\b(\d{1,2})(?:st|nd|rd|th)?\s+([a-z]{3,9})\b", msg)
+        if m and m.group(2)[:3] in month_map:
+            day, mon_name = m.groups()
+            mon = month_map.get(mon_name[:3])
+            target_date_str = f"2026-{mon}-{int(day):02d}"
+            display_title = f"{int(day)} {mon_name.title()} 2026"
+
+    # 6. Relative: "yesterday"
+    if not target_date_str and "yesterday" in msg:
+        yest = datetime.now(timezone.utc) - timedelta(days=1)
+        target_date_str = yest.strftime("%Y-%m-%d")
+        display_title = f"Yesterday ({target_date_str})"
+
+    if not target_date_str:
+        return None
+
+    # Locate database
+    if root_dir is None:
+        root_dir = Path(__file__).resolve().parent.parent.parent
+    db_path = root_dir / "data" / "market" / "nse_spot_data.db"
+
+    if not db_path.exists():
+        return None
+
+    try:
+        conn = sqlite3.connect(str(db_path))
+        conn.row_factory = sqlite3.Row
+        cur = conn.cursor()
+        cur.execute(
+            """
+            SELECT date, time, symbol, spot_price, open_price, high_price, low_price,
+                   close_price, previous_close, change_pts, change_pct
+            FROM nse_spot_records
+            WHERE date LIKE ?
+            ORDER BY id DESC
+            """,
+            (f"%{target_date_str}%",),
+        )
+        rows = cur.fetchall()
+        conn.close()
+
+        if not rows:
+            return None
+
+        by_symbol: Dict[str, Dict[str, Any]] = {}
+        for r in rows:
+            sym = r["symbol"]
+            if sym not in by_symbol:
+                by_symbol[sym] = {
+                    "date": r["date"],
+                    "time": r["time"],
+                    "symbol": sym,
+                    "spot_price": r["spot_price"],
+                    "open_price": r["open_price"],
+                    "high_price": r["high_price"],
+                    "low_price": r["low_price"],
+                    "close_price": r["close_price"],
+                    "previous_close": r["previous_close"],
+                    "change_pts": r["change_pts"],
+                    "change_pct": r["change_pct"],
+                }
+
+        # Build clean markdown
+        md_lines = [
+            f"### 📅 Historical Market Session ({display_title or target_date_str})",
+        ]
+
+        for sym in ["NIFTY 50", "BANKNIFTY", "GIFT NIFTY"]:
+            if sym in by_symbol:
+                data = by_symbol[sym]
+                chg = data["change_pts"] or 0.0
+                chg_pct = data["change_pct"] or 0.0
+                sign = "+" if chg >= 0 else ""
+                md_lines.append(f"\n**{sym}:**")
+                md_lines.append(f"• **Open Spot Price**: **₹{data['open_price']:,.2f}**")
+                md_lines.append(f"• **Session High**: ₹{data['high_price']:,.2f}")
+                md_lines.append(f"• **Session Low**: ₹{data['low_price']:,.2f}")
+                md_lines.append(f"• **Closing / Last Spot**: ₹{data['close_price']:,.2f}")
+                if data["previous_close"]:
+                    md_lines.append(f"• **Previous Close**: ₹{data['previous_close']:,.2f}")
+                md_lines.append(f"• **Net Move**: **{sign}{chg:,.2f} pts ({sign}{chg_pct:.2f}%)**")
+
+        return {
+            "target_date": target_date_str,
+            "display_title": display_title,
+            "symbols": by_symbol,
+            "formatted_markdown": "\n".join(md_lines),
+        }
+
+    except Exception as ex:
+        logger.warning("Historical OHLC query error: %s", ex)
+        return None
+
+
+def build_live_market_context(root_dir: Optional[Path] = None, user_msg: str = "") -> Dict[str, Any]:
     """Compiles a structured real-time market snapshot from SQLite and runtime services."""
     ctx: Dict[str, Any] = {
         "timestamp_ist": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
@@ -87,6 +248,12 @@ def build_live_market_context(root_dir: Optional[Path] = None) -> Dict[str, Any]
     except Exception as ex:
         logger.warning("Could not compile complete market context: %s", ex)
 
+    # 5. Historical OHLC lookup if date or relative date present
+    if user_msg:
+        hist = find_historical_ohlc(user_msg, root_dir)
+        if hist:
+            ctx["historical"] = hist
+
     return ctx
 
 
@@ -96,10 +263,16 @@ def format_context_for_prompt(ctx: Dict[str, Any]) -> str:
         f"### LIVE MARKET CONTEXT (Server Time: {ctx.get('timestamp_ist', 'Now')})",
     ]
 
+    # Historical Session Data (if queried)
+    if "historical" in ctx:
+        hist = ctx["historical"]
+        lines.append("\n" + hist["formatted_markdown"])
+        lines.append("\n> [CRITICAL INSTRUCTION] Use these EXACT historical numbers above to answer the user's date query directly.")
+
     # Spot Prices
     spots = ctx.get("spots", {})
     if spots:
-        lines.append("\n**Current Spot Prices:**")
+        lines.append("\n**Current Live Spot Prices:**")
         if isinstance(spots, dict) and "symbol" in spots:
             sym = spots.get("symbol", "NIFTY")
             price = spots.get("spot_price") or spots.get("price") or "--"
@@ -242,7 +415,8 @@ def call_openai_api(api_key: str, system_prompt: str, user_prompt: str, history:
 def autonomous_copilot_rule_engine(user_msg: str, ctx: Dict[str, Any]) -> str:
     """
     Intelligent built-in algorithmic reasoning engine.
-    Executes if no external LLM API key (GEMINI_API_KEY) is supplied yet on Render.
+    Executes if no external LLM API key (GEMINI_API_KEY) is supplied yet on Render
+    or if local Antigravity bridge is offline.
     Accurately parses market queries and provides actionable quantitative answers.
     """
     msg_low = user_msg.lower().strip()
@@ -250,6 +424,10 @@ def autonomous_copilot_rule_engine(user_msg: str, ctx: Dict[str, Any]) -> str:
     sim = ctx.get("simulator", {})
     news = ctx.get("news", [])
     levels = ctx.get("levels", {})
+
+    # 0. Historical Session OHLC Lookup (e.g. "what is open spot price in 19th nov 2026")
+    if "historical" in ctx:
+        return ctx["historical"]["formatted_markdown"]
 
     nifty_spot = None
     if isinstance(spots, dict) and "symbol" in spots:
@@ -342,7 +520,7 @@ def autonomous_copilot_rule_engine(user_msg: str, ctx: Dict[str, Any]) -> str:
     # 5. Default Comprehensive Help
     resp = [
         "### 🤖 NIFTY Autonomous Trader Copilot",
-        f"Server is active on Render. Market telemetry & analysis engine ready.",
+        "Server is active on Render. Market telemetry & analysis engine ready.",
     ]
     if nifty_spot:
         resp.append(f"- **NIFTY 50 Spot**: ₹{nifty_spot:,.2f}")
@@ -351,10 +529,11 @@ def autonomous_copilot_rule_engine(user_msg: str, ctx: Dict[str, Any]) -> str:
         f"- **Armed Level Triggers**: {levels.get('armed_count', 0)} triggers standing by",
         "\n**You can ask me:**",
         "• *'What is today's POC and are we in Premium or Discount zone?'*",
+        "• *'What was open spot price in 19th nov 2026?'*",
         "• *'Show my active positions and current P&L'*",
         "• *'Summarize today's market news sentiment'*",
         "• *'Check NIFTY trend and key levels'*",
-        "\n> [!NOTE]\n> *To enable unrestricted conversational AI with live reasoning, add your free **GEMINI_API_KEY** in your Render Environment Variables.*",
+        "\n> [!TIP]\n> *Whenever you have Antigravity running on your computer, the chat automatically bridges directly to Antigravity for live interactive reasoning.*",
     ])
     return "\n".join(resp)
 
@@ -362,6 +541,9 @@ def autonomous_copilot_rule_engine(user_msg: str, ctx: Dict[str, Any]) -> str:
 def handle_ai_chat_request(data: Dict[str, Any], root_dir: Optional[Path] = None) -> Dict[str, Any]:
     """
     Main orchestration handler for the web chat endpoint `/api/chat`.
+    1. If Antigravity local bridge is online, routes directly to Antigravity.
+    2. Otherwise, uses Gemini API / OpenAI API with live context & historical SQLite lookup.
+    3. Seamlessly falls back to the autonomous algorithmic rule engine.
     """
     user_msg = (data.get("message") or "").strip()
     history = data.get("history") or []
@@ -369,33 +551,58 @@ def handle_ai_chat_request(data: Dict[str, Any], root_dir: Optional[Path] = None
     if not user_msg:
         return {"status": "error", "message": "Empty message provided"}
 
-    # Compile real-time context
-    ctx = build_live_market_context(root_dir)
+    # Compile real-time context + historical lookup
+    ctx = build_live_market_context(root_dir, user_msg=user_msg)
     context_text = format_context_for_prompt(ctx)
 
+    # -------------------------------------------------------------
+    # PRIORITY 0: Antigravity Local Agent Bridge
+    # -------------------------------------------------------------
+    try:
+        from nifty_trader.dashboard.antigravity_bridge import get_bridge_manager
+        bridge = get_bridge_manager()
+        if bridge.is_online():
+            bridge_resp = bridge.enqueue_message(
+                message=user_msg,
+                history=history,
+                context=ctx,
+                timeout=6.0,
+            )
+            if bridge_resp and bridge_resp.get("reply"):
+                return {
+                    "status": "ok",
+                    "reply": bridge_resp["reply"],
+                    "model": "antigravity_bridge",
+                    "timestamp": datetime.now(timezone.utc).strftime("%H:%M:%S UTC"),
+                }
+    except Exception as ex:
+        logger.debug("Bridge routing bypass: %s", ex)
+
+    # -------------------------------------------------------------
+    # PRIORITY 1: Cloud Gemini / OpenAI API
+    # -------------------------------------------------------------
     system_prompt = (
         "You are the NIFTY Autonomous Trader Copilot, an expert Indian markets quantitative options trader "
         "and algorithmic analyst. You assist the trader directly via the Render Web Dashboard.\n\n"
         "Guidelines:\n"
-        "1. Always cite exact numbers, price levels, and P&L from the live context.\n"
-        "2. Explain technical setups clearly using Volume Profile (POC, VAH, VAL), Supertrend, and EMA structure.\n"
-        "3. Emphasize strict risk management (1:3 Risk-to-Reward, hard stops, max daily drawdown ₹2,000).\n"
-        "4. Format your responses with clean Markdown, bullet points, and bold price highlights.\n"
-        "5. Keep responses concise, punchy, and actionable.\n\n"
+        "1. Always cite exact numbers, price levels, historical session data, and P&L from the provided context.\n"
+        "2. If the user asks for historical prices or past dates, use the exact numbers from the HISTORICAL MARKET SESSION block.\n"
+        "3. Explain technical setups clearly using Volume Profile (POC, VAH, VAL), Supertrend, and EMA structure.\n"
+        "4. Emphasize strict risk management (1:3 Risk-to-Reward, hard stops, max daily drawdown ₹2,000).\n"
+        "5. Format your responses with clean Markdown, bullet points, and bold price highlights.\n"
+        "6. Keep responses concise, punchy, and actionable.\n\n"
         f"{context_text}"
     )
 
     reply = None
     model_name = "autonomous_rules_engine"
 
-    # Priority 1: Gemini API
     gemini_key = os.environ.get("GEMINI_API_KEY", "").strip()
     if gemini_key:
         reply = call_gemini_api(gemini_key, system_prompt, user_msg, history)
         if reply:
             model_name = "gemini-2.5-flash"
 
-    # Priority 2: OpenAI API
     if not reply:
         openai_key = os.environ.get("OPENAI_API_KEY", "").strip()
         if openai_key:
@@ -403,7 +610,9 @@ def handle_ai_chat_request(data: Dict[str, Any], root_dir: Optional[Path] = None
             if reply:
                 model_name = "gpt-4o-mini"
 
-    # Priority 3: Built-in Autonomous Rule Engine
+    # -------------------------------------------------------------
+    # PRIORITY 2: Built-in Autonomous Rule Engine
+    # -------------------------------------------------------------
     if not reply:
         reply = autonomous_copilot_rule_engine(user_msg, ctx)
         model_name = "autonomous_copilot"

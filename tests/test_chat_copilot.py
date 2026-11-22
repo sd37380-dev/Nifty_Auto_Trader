@@ -1,10 +1,14 @@
+import threading
+import time
 import pytest
 from nifty_trader.dashboard.chat_copilot import (
     build_live_market_context,
     format_context_for_prompt,
     autonomous_copilot_rule_engine,
     handle_ai_chat_request,
+    find_historical_ohlc,
 )
+from nifty_trader.dashboard.antigravity_bridge import get_bridge_manager
 
 def test_build_live_market_context():
     ctx = build_live_market_context()
@@ -46,7 +50,51 @@ def test_autonomous_copilot_rule_engine():
     news_resp = autonomous_copilot_rule_engine("Give me latest news", ctx)
     assert "News" in news_resp
 
+def test_find_historical_ohlc():
+    # Test lookup for 19th nov 2026
+    res = find_historical_ohlc("what is open spot price in 19th nov 2026")
+    assert res is not None
+    assert "2026-11-19" in res["target_date"]
+    assert "NIFTY 50" in res["symbols"]
+    assert res["symbols"]["NIFTY 50"]["open_price"] == 25186.8
+    assert "25,186.80" in res["formatted_markdown"]
+
+    # Test direct handling through handle_ai_chat_request
+    chat_res = handle_ai_chat_request({"message": "what is open spot price in 19th nov 2026"})
+    assert chat_res["status"] == "ok"
+    assert "25,186.80" in chat_res["reply"]
+    assert "NIFTY 50" in chat_res["reply"]
+
+def test_antigravity_bridge_flow():
+    bridge = get_bridge_manager()
+    bridge.register_heartbeat()
+    assert bridge.is_online() is True
+
+    # Simulate worker answering in background thread
+    def bridge_worker():
+        job = bridge.poll_job(timeout=3.0)
+        if job:
+            bridge.submit_reply(
+                job_id=job["job_id"],
+                reply="Simulated response from Antigravity Bridge for: " + job["message"],
+                model="antigravity_bridge",
+            )
+
+    worker_thread = threading.Thread(target=bridge_worker)
+    worker_thread.start()
+
+    res = bridge.enqueue_message(
+        message="Hello from test",
+        timeout=4.0,
+    )
+    worker_thread.join()
+
+    assert res is not None
+    assert "Simulated response from Antigravity" in res["reply"]
+    assert res["model"] == "antigravity_bridge"
+
 def test_handle_ai_chat_request():
+    # Test normal request
     res = handle_ai_chat_request({"message": "What is the NIFTY trend and POC?"})
     assert res["status"] == "ok"
     assert "reply" in res
