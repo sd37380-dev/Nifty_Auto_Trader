@@ -185,6 +185,19 @@ class SupabaseAdapter:
         }
         self._async_post("nse_spot_data", clean, upsert=False)
 
+    def fetch_spot_records_from_cloud(self, date_str: str, limit: int = 20) -> List[Dict[str, Any]]:
+        """Fetches historical spot records from Supabase cloud for a given date (e.g. '2026-11-19')."""
+        if not self.is_enabled or not self._client:
+            return []
+        try:
+            url = f"/nse_spot_data?timestamp_ist=like.*{date_str}*&order=id.desc&limit={limit}"
+            resp = self._client.get(url)
+            if resp.status_code == 200:
+                return resp.json()
+        except Exception as e:
+            logger.debug("Failed to fetch spot records from Supabase: %s", e)
+        return []
+
     # -------------------------------------------------------------------------
     # 3. Paper Trades & Active Position Sync
     # -------------------------------------------------------------------------

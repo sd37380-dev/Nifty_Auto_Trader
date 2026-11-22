@@ -125,26 +125,52 @@ def find_historical_ohlc(user_msg: str, root_dir: Optional[Path] = None) -> Opti
         rows = cur.fetchall()
         conn.close()
 
-        if not rows:
-            return None
-
         by_symbol: Dict[str, Dict[str, Any]] = {}
-        for r in rows:
-            sym = r["symbol"]
-            if sym not in by_symbol:
-                by_symbol[sym] = {
-                    "date": r["date"],
-                    "time": r["time"],
-                    "symbol": sym,
-                    "spot_price": r["spot_price"],
-                    "open_price": r["open_price"],
-                    "high_price": r["high_price"],
-                    "low_price": r["low_price"],
-                    "close_price": r["close_price"],
-                    "previous_close": r["previous_close"],
-                    "change_pts": r["change_pts"],
-                    "change_pct": r["change_pct"],
-                }
+        if rows:
+            for r in rows:
+                sym = r["symbol"]
+                if sym not in by_symbol:
+                    by_symbol[sym] = {
+                        "date": r["date"],
+                        "time": r["time"],
+                        "symbol": sym,
+                        "spot_price": r["spot_price"],
+                        "open_price": r["open_price"],
+                        "high_price": r["high_price"],
+                        "low_price": r["low_price"],
+                        "close_price": r["close_price"],
+                        "previous_close": r["previous_close"],
+                        "change_pts": r["change_pts"],
+                        "change_pct": r["change_pct"],
+                    }
+        else:
+            # Fall back to Supabase Cloud Database (PostgreSQL)
+            try:
+                from nifty_trader.core.supabase_adapter import get_supabase_adapter
+                supa = get_supabase_adapter(root_dir)
+                cloud_records = supa.fetch_spot_records_from_cloud(target_date_str)
+                if cloud_records:
+                    for cr in cloud_records:
+                        sym = cr.get("symbol")
+                        if sym and sym not in by_symbol:
+                            by_symbol[sym] = {
+                                "date": target_date_str,
+                                "time": cr.get("timestamp_ist", "").split(" ")[1] if " " in cr.get("timestamp_ist", "") else "",
+                                "symbol": sym,
+                                "spot_price": cr.get("spot_price"),
+                                "open_price": cr.get("day_open"),
+                                "high_price": cr.get("day_high"),
+                                "low_price": cr.get("day_low"),
+                                "close_price": cr.get("day_close") or cr.get("spot_price"),
+                                "previous_close": cr.get("previous_close"),
+                                "change_pts": cr.get("change_pts"),
+                                "change_pct": cr.get("change_pct"),
+                            }
+            except Exception as ex:
+                logger.debug("Supabase cloud historical spot error: %s", ex)
+
+        if not by_symbol:
+            return None
 
         # Build clean markdown
         md_lines = [
