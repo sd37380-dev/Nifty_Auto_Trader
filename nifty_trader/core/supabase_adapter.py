@@ -106,6 +106,11 @@ class SupabaseAdapter:
             "mode": "SUPABASE_CLOUD",
             "url": self.supabase_url,
             "message": error_msg or "Connected to Supabase Cloud PostgreSQL.",
+            "separate_databases": {
+                "tick_data": "data/market/market_ticks.db",
+                "option_chain": "data/market/option_chain.db",
+                "spot_telemetry": "data/market/nse_spot_data.db",
+            },
         }
 
     def _async_post(self, table: str, payload: Dict[str, Any], upsert: bool = True) -> None:
@@ -283,7 +288,83 @@ class SupabaseAdapter:
         self._async_post("level_triggers", clean, upsert=True)
 
     # -------------------------------------------------------------------------
-    # 5. Cloud Hydration (Crucial for Render Ephemeral Storage!)
+    # 5. Dedicated Tick Data Sync (High-Frequency Market Ticks)
+    # -------------------------------------------------------------------------
+    def sync_tick_data(self, tick: Dict[str, Any]) -> None:
+        """Streams a high-resolution market tick to Supabase table `market_ticks`."""
+        clean = {
+            "timestamp_ist": str(tick.get("timestamp_ist", "")),
+            "timestamp_utc": str(tick.get("timestamp_utc", "")),
+            "symbol": str(tick.get("symbol", "")),
+            "price": float(tick.get("price", 0.0)),
+            "open": float(tick.get("open", 0.0)),
+            "high": float(tick.get("high", 0.0)),
+            "low": float(tick.get("low", 0.0)),
+            "close": float(tick.get("close", 0.0)),
+            "volume": int(tick.get("volume", 0)),
+            "change_pts": float(tick.get("change_pts", 0.0)),
+            "change_pct": float(tick.get("change_pct", 0.0)),
+            "bid": float(tick.get("bid", 0.0)),
+            "ask": float(tick.get("ask", 0.0)),
+        }
+        self._async_post("market_ticks", clean, upsert=False)
+
+    def fetch_ticks_from_cloud(self, symbol: str, limit: int = 100) -> List[Dict[str, Any]]:
+        """Fetches recent ticks for a symbol from Supabase cloud store."""
+        if not self.is_enabled or not self._client:
+            return []
+        try:
+            sym = symbol.strip().upper()
+            url = f"/market_ticks?symbol=eq.{sym}&order=id.desc&limit={limit}"
+            resp = self._client.get(url)
+            if resp.status_code == 200:
+                return resp.json()
+        except Exception as e:
+            logger.debug("Failed to fetch ticks from Supabase: %s", e)
+        return []
+
+    # -------------------------------------------------------------------------
+    # 6. Dedicated Option Chain Snapshots Sync
+    # -------------------------------------------------------------------------
+    def sync_option_chain_snapshot(self, snapshot: Dict[str, Any]) -> None:
+        """Upserts an option chain snapshot to Supabase table `option_chain_snapshots`."""
+        clean = {
+            "snapshot_id": str(snapshot.get("snapshot_id", "")),
+            "timestamp_ist": str(snapshot.get("timestamp_ist", "")),
+            "timestamp_utc": str(snapshot.get("timestamp_utc", "")),
+            "symbol": str(snapshot.get("symbol", "")),
+            "expiry": str(snapshot.get("expiry", "")),
+            "spot_price": float(snapshot.get("spot_price", 0.0)),
+            "atm_strike": float(snapshot.get("atm_strike", 0.0)),
+            "pcr": float(snapshot.get("pcr", 0.0)),
+            "max_pain": float(snapshot.get("max_pain")) if snapshot.get("max_pain") is not None else None,
+            "total_ce_oi": int(snapshot.get("total_ce_oi", 0)),
+            "total_pe_oi": int(snapshot.get("total_pe_oi", 0)),
+            "strikes_data": snapshot.get("strikes_data", []),
+        }
+        self._async_post("option_chain_snapshots", clean, upsert=True)
+
+    def fetch_option_chain_from_cloud(self, symbol: str, expiry: Optional[str] = None) -> Optional[Dict[str, Any]]:
+        """Fetches the latest option chain snapshot for a symbol/expiry from Supabase cloud store."""
+        if not self.is_enabled or not self._client:
+            return None
+        try:
+            sym = symbol.strip().upper()
+            url = f"/option_chain_snapshots?symbol=eq.{sym}"
+            if expiry:
+                url += f"&expiry=eq.{expiry.strip()}"
+            url += "&order=created_at.desc&limit=1"
+            resp = self._client.get(url)
+            if resp.status_code == 200:
+                rows = resp.json()
+                if rows and len(rows) > 0:
+                    return rows[0]
+        except Exception as e:
+            logger.debug("Failed to fetch option chain snapshot from Supabase: %s", e)
+        return None
+
+    # -------------------------------------------------------------------------
+    # 7. Cloud Hydration (Crucial for Render Ephemeral Storage!)
     # -------------------------------------------------------------------------
     def hydrate_local_sqlite_from_cloud(self) -> Dict[str, int]:
         """
@@ -293,7 +374,7 @@ class SupabaseAdapter:
         if not self.is_enabled or not self._client:
             return {"status": "disabled", "synced": 0}
 
-        counts = {"news": 0, "trades": 0, "triggers": 0}
+        counts = {"news": 0, "trades": 0, "triggers": 0, "option_chains": 0}
         try:
             # 1. Hydrate Market News
             news_items = self.fetch_news_from_cloud(limit=60)
@@ -314,6 +395,29 @@ class SupabaseAdapter:
                         published_at=item.get("published_at"),
                     )
                     counts["news"] += 1
+
+            # 2. Hydrate Latest Option Chain Snapshots
+            try:
+                from nifty_trader.market_data.option_chain_store import get_option_chain_store
+                ocs = get_option_chain_store(self.root_dir)
+                for sym in ["NIFTY", "BANKNIFTY"]:
+                    cloud_oc = self.fetch_option_chain_from_cloud(sym)
+                    if cloud_oc:
+                        ocs.save_snapshot(
+                            symbol=cloud_oc.get("symbol", sym),
+                            expiry=cloud_oc.get("expiry", ""),
+                            spot_price=float(cloud_oc.get("spot_price", 0.0)),
+                            atm_strike=float(cloud_oc.get("atm_strike", 0.0)),
+                            pcr=float(cloud_oc.get("pcr", 0.0)),
+                            max_pain=float(cloud_oc.get("max_pain")) if cloud_oc.get("max_pain") is not None else None,
+                            total_ce_oi=int(cloud_oc.get("total_ce_oi", 0)),
+                            total_pe_oi=int(cloud_oc.get("total_pe_oi", 0)),
+                            strikes=cloud_oc.get("strikes_data") or [],
+                            timestamp_ist=cloud_oc.get("timestamp_ist"),
+                        )
+                        counts["option_chains"] += 1
+            except Exception as oc_err:
+                logger.debug("Option chain cloud hydration skipped: %s", oc_err)
 
             logger.info("Hydrated local databases from Supabase Cloud: %s", counts)
         except Exception as e:

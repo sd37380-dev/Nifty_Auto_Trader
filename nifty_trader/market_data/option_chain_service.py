@@ -441,6 +441,26 @@ class NSEOptionChainService:
             "strikes": strikes_data,
         }
 
+    def _persist_to_dedicated_db(self, chain_data: Dict[str, Any]) -> None:
+        """Persists option chain snapshot to dedicated option_chain.db and Supabase Cloud."""
+        try:
+            from nifty_trader.market_data.option_chain_store import get_option_chain_store
+            store = get_option_chain_store(self.root_dir)
+            store.save_snapshot(
+                symbol=chain_data.get("symbol", "NIFTY"),
+                expiry=chain_data.get("expiry", ""),
+                spot_price=float(chain_data.get("spot_price", 0.0)),
+                atm_strike=float(chain_data.get("atm_strike", 0.0)),
+                pcr=float(chain_data.get("pcr", 0.0)),
+                max_pain=float(chain_data.get("max_pain")) if chain_data.get("max_pain") is not None else None,
+                total_ce_oi=int(chain_data.get("total_ce_oi", 0)),
+                total_pe_oi=int(chain_data.get("total_pe_oi", 0)),
+                strikes=chain_data.get("strikes", []),
+                timestamp_ist=chain_data.get("timestamp"),
+            )
+        except Exception as e:
+            logger.debug("Failed saving to dedicated option_chain.db: %s", e)
+
     def get_option_chain(
         self,
         symbol: str = "NIFTY",
@@ -453,8 +473,9 @@ class NSEOptionChainService:
         Priority:
         1. Live NiftyTrader Web API Fetch (Real Live Option Matrix)
         2. Cached Actual NiftyTrader Data from local disk (Ensures 100% actual non-synthetic data)
-        3. Live NSE Fetch
-        4. Emergency Real-Spot Fallback
+        3. Dedicated Option Chain Database (data/market/option_chain.db & Supabase)
+        4. Live NSE Fetch
+        5. Emergency Real-Spot Fallback
         """
         sym = "BANKNIFTY" if "BANK" in symbol.upper() else "NIFTY"
         now = time.time()
@@ -468,6 +489,7 @@ class NSEOptionChainService:
             try:
                 processed = self._process_niftytrader_raw_data(nt_raw, sym, expiry, is_cached=False)
                 if processed and len(processed.get("strikes", [])) > 0:
+                    self._persist_to_dedicated_db(processed)
                     self._cache[sym] = processed
                     self._cache_time[sym] = now
                     return processed
@@ -480,26 +502,42 @@ class NSEOptionChainService:
             try:
                 processed = self._process_niftytrader_raw_data(cached_actual, sym, expiry, is_cached=True)
                 if processed and len(processed.get("strikes", [])) > 0:
+                    self._persist_to_dedicated_db(processed)
                     self._cache[sym] = processed
                     self._cache_time[sym] = now
                     return processed
             except Exception as e:
                 logger.warning("Failed processing cached actual NiftyTrader data: %s", e)
 
-        # 3. Try Live NSE Fetch
+        # 3. Try Dedicated Option Chain Database (option_chain.db & Supabase)
+        try:
+            from nifty_trader.market_data.option_chain_store import get_option_chain_store
+            store = get_option_chain_store(self.root_dir)
+            stored = store.get_latest_snapshot(sym, expiry)
+            if stored and stored.get("strikes") and len(stored.get("strikes", [])) > 0:
+                stored["source"] = "DEDICATED_OPTION_CHAIN_DB"
+                self._cache[sym] = stored
+                self._cache_time[sym] = now
+                return stored
+        except Exception as e:
+            logger.debug("Failed loading from dedicated option_chain.db: %s", e)
+
+        # 4. Try Live NSE Fetch
         raw = self.fetch_live_chain_from_nse(sym)
         if raw and "records" in raw and "data" in raw["records"]:
             try:
                 processed = self._process_nse_raw_data(raw, sym, expiry)
                 if processed and len(processed.get("strikes", [])) > 0:
+                    self._persist_to_dedicated_db(processed)
                     self._cache[sym] = processed
                     self._cache_time[sym] = now
                     return processed
             except Exception as e:
                 logger.debug("Failed processing live NSE data: %s", e)
 
-        # 4. Fallback to Real-Spot Option Pricing Matrix
+        # 5. Fallback to Real-Spot Option Pricing Matrix
         synthetic = self.generate_synthetic_option_chain(sym)
+        self._persist_to_dedicated_db(synthetic)
         self._cache[sym] = synthetic
         self._cache_time[sym] = now
         return synthetic

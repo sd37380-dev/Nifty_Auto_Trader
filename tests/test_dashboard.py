@@ -130,6 +130,26 @@ def test_dashboard_server_endpoints():
             cancel_data = json.loads(res.read().decode("utf-8"))
             assert cancel_data["status"] == "ok"
             assert cancel_data["pending_id"] == pid
+
+        # 10. Test Separate Tick Data Database endpoint
+        url_ticks = "http://127.0.0.1:8899/api/ticks?symbol=NIFTY&limit=10"
+        req_ticks = urllib.request.Request(url_ticks)
+        with urllib.request.urlopen(req_ticks, timeout=5.0) as res:
+            assert res.status == 200
+            ticks_data = json.loads(res.read().decode("utf-8"))
+            assert ticks_data["status"] == "ok"
+            assert ticks_data["database"] == "data/market/market_ticks.db"
+            assert "ticks" in ticks_data
+
+        # 11. Test Separate Option Chain Database History endpoint
+        url_oc_hist = "http://127.0.0.1:8899/api/option_chain/history?symbol=NIFTY&limit=5"
+        req_oc_hist = urllib.request.Request(url_oc_hist)
+        with urllib.request.urlopen(req_oc_hist, timeout=5.0) as res:
+            assert res.status == 200
+            oc_hist_data = json.loads(res.read().decode("utf-8"))
+            assert oc_hist_data["status"] == "ok"
+            assert oc_hist_data["database"] == "data/market/option_chain.db"
+            assert "history" in oc_hist_data
     finally:
         server.shutdown()
         server.server_close()

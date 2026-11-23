@@ -344,6 +344,24 @@ class NSESpotService:
                         })
                     except Exception:
                         pass
+
+                    # Dedicated Tick Database persistence (data/market/market_ticks.db)
+                    try:
+                        from nifty_trader.market_data.tick_service import get_tick_service
+                        get_tick_service(self.root_dir).record_tick(
+                            symbol=rec.get("symbol", ""),
+                            price=rec.get("spot_price", 0.0),
+                            open_price=rec.get("open_price"),
+                            high_price=rec.get("high_price"),
+                            low_price=rec.get("low_price"),
+                            close_price=rec.get("close_price"),
+                            volume=rec.get("volume", 0),
+                            change_pts=rec.get("change_pts", 0.0),
+                            change_pct=rec.get("change_pct", 0.0),
+                            timestamp_ist=rec.get("timestamp_ist"),
+                        )
+                    except Exception:
+                        pass
         finally:
             conn.close()
 

@@ -12055,6 +12055,24 @@ class DashboardHTTPRequestHandler(BaseHTTPRequestHandler):
                         "previousClose": meta.get("chartPreviousClose") or meta.get("previousClose") or (candles[0]["open"] if candles else 0),
                         "candles": candles
                     }
+
+                    # Dedicated Tick Database persistence (data/market/market_ticks.db)
+                    if candles:
+                        try:
+                            last_c = candles[-1]
+                            from nifty_trader.market_data.tick_service import get_tick_service
+                            get_tick_service().record_tick(
+                                symbol=sym,
+                                price=last_c["close"],
+                                open_price=last_c.get("open"),
+                                high_price=last_c.get("high"),
+                                low_price=last_c.get("low"),
+                                close_price=last_c.get("close"),
+                                volume=last_c.get("volume", 0),
+                            )
+                        except Exception:
+                            pass
+
                     self.send_response(200)
                     self.send_header("Content-Type", "application/json")
                     self.send_header("Cache-Control", "no-cache")
@@ -12474,6 +12492,56 @@ class DashboardHTTPRequestHandler(BaseHTTPRequestHandler):
                 self.send_header("Content-Type", "application/json")
                 self.end_headers()
                 self.wfile.write(json.dumps({"status": "ok", "news": news_items, "summary": summary}).encode("utf-8"))
+            except Exception as ex:
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": "error", "message": str(ex)}).encode("utf-8"))
+        elif self.path.startswith("/api/option_chain/history"):
+            try:
+                from urllib.parse import parse_qs, urlparse
+                q = parse_qs(urlparse(self.path).query)
+                symbol = q.get("symbol", ["NIFTY"])[0]
+                expiry = q.get("expiry", [None])[0]
+                limit = int(q.get("limit", [20])[0])
+                from nifty_trader.market_data.option_chain_store import get_option_chain_store
+                store = get_option_chain_store()
+                history = store.get_historical_snapshots(symbol=symbol, expiry=expiry, limit=limit)
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({
+                    "status": "ok",
+                    "symbol": symbol,
+                    "expiry": expiry,
+                    "database": "data/market/option_chain.db",
+                    "history": history
+                }).encode("utf-8"))
+            except Exception as ex:
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": "error", "message": str(ex)}).encode("utf-8"))
+        elif self.path.startswith("/api/ticks"):
+            try:
+                from urllib.parse import parse_qs, urlparse
+                q = parse_qs(urlparse(self.path).query)
+                symbol = q.get("symbol", ["NIFTY"])[0]
+                limit = int(q.get("limit", [50])[0])
+                from nifty_trader.market_data.tick_service import get_tick_service
+                ts = get_tick_service()
+                ticks = ts.get_recent_ticks(symbol=symbol, limit=limit)
+                total_cnt = ts.get_tick_count(symbol=symbol)
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({
+                    "status": "ok",
+                    "symbol": symbol,
+                    "count": total_cnt,
+                    "database": "data/market/market_ticks.db",
+                    "ticks": ticks
+                }).encode("utf-8"))
             except Exception as ex:
                 self.send_response(500)
                 self.send_header("Content-Type", "application/json")
