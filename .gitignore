@@ -25,6 +25,8 @@ data/**/*.jsonl
 data/**/*.db
 *.log
 data/paper_trading/
+data/*_option_chain.json
+data/*_option_chain.csv
 
 
 

@@ -14,6 +14,7 @@ Features:
      with real-time MTM P&L, trailing stop loss, target tracking, and statutory charges.
 """
 
+import base64
 from datetime import datetime, timedelta, timezone
 import json
 import logging
@@ -29,6 +30,7 @@ logger = logging.getLogger(__name__)
 
 # Indian Standard Time (UTC + 5:30)
 IST = timezone(timedelta(hours=5, minutes=30))
+NIFTYTRADER_SSR_SECRET = "c3a5b7d9e1f02a4c6b8d0f1e3a5c7d9b2e4a6f8c0b1d3e5a7f9c2b4d6e8a0f1c3b5d7e9a1f2b4c6d8e0f1a3b5c7d9e2f4a6b8c0d1e3f5a7b9c2d4e6f8a0b"
 
 
 class NSEOptionChainService:
@@ -74,9 +76,140 @@ class NSEOptionChainService:
             logger.debug("Could not refresh NSE cookies: %s", e)
         return False
 
+    @staticmethod
+    def _derive_buildup(price_chg: float, oi_chg: float, opt_type: str = "CE") -> str:
+        """
+        Derives standard option buildup signal based on Price Change and OI Change.
+        """
+        if oi_chg > 0:
+            if price_chg > 0:
+                return "Call Buying" if opt_type == "CE" else "Put Buying"
+            elif price_chg < 0:
+                return "Call Writing" if opt_type == "CE" else "Put Writing"
+            else:
+                return "Long Buildup"
+        elif oi_chg < 0:
+            if price_chg > 0:
+                return "Short Covering"
+            elif price_chg < 0:
+                return "Long Unwinding"
+            else:
+                return "Short Covering"
+        else:
+            if price_chg > 0:
+                return "Call Buying" if opt_type == "CE" else "Put Buying"
+            elif price_chg < 0:
+                return "Call Writing" if opt_type == "CE" else "Put Writing"
+            return "Neutral"
+
+    def _update_env_api_key(self, new_key: str) -> None:
+        """Persists freshly fetched NiftyTrader API key to .env."""
+        candidate_envs = [
+            self.root_dir / ".env",
+            self.root_dir.parent / ".env",
+            Path(".env"),
+        ]
+        for env_f in candidate_envs:
+            if env_f.exists() and env_f.is_file():
+                try:
+                    lines = []
+                    updated = False
+                    content = env_f.read_text(encoding="utf-8")
+                    for line in content.splitlines():
+                        if line.startswith("NIFTYTRADER_API_KEY="):
+                            lines.append(f"NIFTYTRADER_API_KEY={new_key}")
+                            updated = True
+                        else:
+                            lines.append(line)
+                    if not updated:
+                        lines.append(f"NIFTYTRADER_API_KEY={new_key}")
+                    env_f.write_text("\n".join(lines) + "\n", encoding="utf-8")
+                    break
+                except Exception as e:
+                    logger.debug("Failed writing .env file %s: %s", env_f, e)
+
+    def get_valid_niftytrader_api_key(self, force_refresh: bool = False) -> str:
+        """
+        Retrieves a valid NiftyTrader API key, dynamically requesting a new one
+        from onboarding endpoint if missing, expired, or rejected.
+        """
+        if not force_refresh:
+            cached_key = getattr(self, "_nt_api_key", None) or os.getenv("NIFTYTRADER_API_KEY", "").strip()
+            if cached_key and "." in cached_key:
+                try:
+                    ts_part = cached_key.split(".")[0]
+                    ts_part += "=" * (-len(ts_part) % 4)
+                    ts = int(base64.b64decode(ts_part).decode("utf-8"))
+                    if ts > time.time() + 60:
+                        self._nt_api_key = cached_key
+                        return cached_key
+                except Exception:
+                    pass
+
+        try:
+            req_headers = {
+                "Accept": "application/json",
+                "X-SSR-Secret": NIFTYTRADER_SSR_SECRET,
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            }
+            resp = self.client.get("https://onboarding.niftytrader.in/api/api-key", headers=req_headers)
+            if resp.status_code == 200:
+                data = resp.json()
+                new_key = data.get("resultData", {}).get("apiKey")
+                if new_key:
+                    self._nt_api_key = new_key
+                    os.environ["NIFTYTRADER_API_KEY"] = new_key
+                    self._update_env_api_key(new_key)
+                    logger.info("Successfully refreshed NiftyTrader API key: %s...", new_key[:15])
+                    return new_key
+        except Exception as e:
+            logger.warning("Failed refreshing NiftyTrader API key: %s", e)
+
+        return os.getenv("NIFTYTRADER_API_KEY", "").strip()
+
+    def _save_raw_niftytrader_data(self, data: Dict[str, Any], sym: str) -> None:
+        """Saves fresh raw NiftyTrader data to local disk in data directory."""
+        try:
+            dirs = [
+                self.root_dir / "data",
+                self.root_dir.parent / "data",
+                Path("data"),
+            ]
+            for d in dirs:
+                try:
+                    d.mkdir(parents=True, exist_ok=True)
+                    fpath = d / f"{sym.lower()}_option_chain.json"
+                    with open(fpath, "w", encoding="utf-8") as f:
+                        json.dump(data, f, indent=2)
+                except Exception:
+                    pass
+        except Exception as e:
+            logger.debug("Failed saving NiftyTrader raw cache to disk: %s", e)
+
+    def _load_saved_niftytrader_data(self, sym: str) -> Optional[Dict[str, Any]]:
+        """Loads most recent actual NiftyTrader data from disk cache."""
+        candidate_paths = [
+            self.root_dir / "data" / f"{sym.lower()}_option_chain.json",
+            self.root_dir.parent / "data" / f"{sym.lower()}_option_chain.json",
+            Path(f"data/{sym.lower()}_option_chain.json"),
+            self.root_dir / "data" / "nifty_option_chain.json",
+            self.root_dir.parent / "data" / "nifty_option_chain.json",
+        ]
+        for p in candidate_paths:
+            if p.exists() and p.is_file():
+                try:
+                    with open(p, "r", encoding="utf-8") as f:
+                        data = json.load(f)
+                    if data and "opDatas" in data and len(data["opDatas"]) > 0:
+                        logger.info("Loaded actual NiftyTrader data from disk cache: %s", p)
+                        return data
+                except Exception as e:
+                    logger.debug("Error loading cached file %s: %s", p, e)
+        return None
+
     def fetch_live_chain_from_niftytrader(self, symbol: str = "NIFTY") -> Optional[Dict[str, Any]]:
         """
-        Fetches live option chain from NiftyTrader Web API using Bearer Token & x-api-key.
+        Fetches live option chain from NiftyTrader Web API using Bearer Token & dynamic x-api-key.
         """
         sym = "banknifty" if "BANK" in symbol.upper() else "nifty"
         url = f"https://webapi.niftytrader.in/webapi/option/option-chain-data?symbol={sym}&exchange=nse"
@@ -85,33 +218,42 @@ class NSEOptionChainService:
             os.getenv("NIFTYTRADER_BEARER_TOKEN", "").strip()
             or "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjEzNDk2ODAiLCJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL3JvbGUiOiIwIiwiU2Vzc2lvbklkIjoiNjQ2NiIsImV4cCI6MTc5Nzc1NTkyNCwiaXNzIjoicHJvZC1uaWZ0eXRyYWRlci5pbiIsImF1ZCI6InByb2QtbmlmdHl0cmFkZXIuaW4ifQ.dJXGpCXUrRGia7f1J3jCTmH6gPeQ6ovsXhX5HdtA494"
         )
-        api_key = (
-            os.getenv("NIFTYTRADER_API_KEY", "").strip()
-            or "MTc5NTIyMjgwMA.7e6uJRfiEdK2UgKlusvIi3nL_lXnVJ58exSkRTHztgQ"
-        )
 
-        headers = {
-            "Authorization": f"Bearer {bearer_token}",
-            "x-api-key": api_key,
-            "Accept": "application/json, text/plain, */*",
-            "Accept-Encoding": "gzip, deflate",
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36",
-            "Referer": "https://www.niftytrader.in/",
-            "Origin": "https://www.niftytrader.in",
-        }
+        for attempt in range(2):
+            api_key = self.get_valid_niftytrader_api_key(force_refresh=(attempt > 0))
+            headers = {
+                "Authorization": f"Bearer {bearer_token}",
+                "x-api-key": api_key,
+                "Accept": "application/json, text/plain, */*",
+                "Accept-Encoding": "gzip, deflate",
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36",
+                "Referer": "https://www.niftytrader.in/",
+                "Origin": "https://www.niftytrader.in",
+            }
 
-        try:
-            resp = self.client.get(url, headers=headers)
-            if resp.status_code == 200:
-                data = resp.json()
-                if data.get("result") == 1 and data.get("resultData"):
-                    return data["resultData"]
+            try:
+                resp = self.client.get(url, headers=headers)
+                if resp.status_code == 200:
+                    data = resp.json()
+                    if data.get("result") == 1 and data.get("resultData"):
+                        rd = data["resultData"]
+                        self._save_raw_niftytrader_data(rd, sym)
+                        return rd
+                    msg = str(data.get("resultMessage", ""))
+                    if "Unauthorized" in msg and attempt == 0:
+                        logger.warning("NiftyTrader API unauthorized, refreshing key and retrying...")
+                        continue
+                    else:
+                        logger.warning("NiftyTrader API returned non-success: %s", msg)
+                elif resp.status_code in (401, 403) and attempt == 0:
+                    logger.warning("NiftyTrader API HTTP %d, refreshing key and retrying...", resp.status_code)
+                    continue
                 else:
-                    logger.warning("NiftyTrader API returned non-success: %s", data.get("resultMessage"))
-            else:
-                logger.warning("NiftyTrader API HTTP %d", resp.status_code)
-        except Exception as ex:
-            logger.warning("NiftyTrader API query error: %s", ex)
+                    logger.warning("NiftyTrader API HTTP %d", resp.status_code)
+            except Exception as ex:
+                logger.warning("NiftyTrader API query error: %s", ex)
+                if attempt == 0:
+                    continue
         return None
 
     def fetch_live_chain_from_nse(self, symbol: str = "NIFTY") -> Optional[Dict[str, Any]]:
@@ -219,9 +361,14 @@ class NSEOptionChainService:
             ce_chg = round((ce_ltp * 0.04) * (1 if spot >= strike else -1), 2)
             pe_chg = round((pe_ltp * 0.04) * (1 if spot <= strike else -1), 2)
 
+            strike_pcr = round(pe_oi / max(1, ce_oi), 2)
+            ce_buildup = self._derive_buildup(ce_chg, ce_chg_oi, "CE")
+            pe_buildup = self._derive_buildup(pe_chg, pe_chg_oi, "PE")
+
             strikes_data.append({
                 "strike": strike,
                 "is_atm": (strike == atm_strike),
+                "pcr": strike_pcr,
                 "ce": {
                     "ltp": ce_ltp,
                     "change": ce_chg,
@@ -232,8 +379,8 @@ class NSEOptionChainService:
                     "bid": round(max(0.05, ce_ltp - 0.5), 2),
                     "ask": round(ce_ltp + 0.5, 2),
                     "is_itm": strike < spot,
-                    "builtup": "--",
-                    "buildup": "--",
+                    "builtup": ce_buildup,
+                    "buildup": ce_buildup,
                 },
                 "pe": {
                     "ltp": pe_ltp,
@@ -245,8 +392,8 @@ class NSEOptionChainService:
                     "bid": round(max(0.05, pe_ltp - 0.5), 2),
                     "ask": round(pe_ltp + 0.5, 2),
                     "is_itm": strike > spot,
-                    "builtup": "--",
-                    "buildup": "--",
+                    "builtup": pe_buildup,
+                    "buildup": pe_buildup,
                 },
             })
 
@@ -303,6 +450,11 @@ class NSEOptionChainService:
         """
         Retrieves full option chain for symbol (NIFTY / BANKNIFTY).
         Caches for 15 seconds to ensure ultra-fast dashboard rendering.
+        Priority:
+        1. Live NiftyTrader Web API Fetch (Real Live Option Matrix)
+        2. Cached Actual NiftyTrader Data from local disk (Ensures 100% actual non-synthetic data)
+        3. Live NSE Fetch
+        4. Emergency Real-Spot Fallback
         """
         sym = "BANKNIFTY" if "BANK" in symbol.upper() else "NIFTY"
         now = time.time()
@@ -314,7 +466,7 @@ class NSEOptionChainService:
         nt_raw = self.fetch_live_chain_from_niftytrader(sym)
         if nt_raw and "opDatas" in nt_raw and len(nt_raw["opDatas"]) > 0:
             try:
-                processed = self._process_niftytrader_raw_data(nt_raw, sym, expiry)
+                processed = self._process_niftytrader_raw_data(nt_raw, sym, expiry, is_cached=False)
                 if processed and len(processed.get("strikes", [])) > 0:
                     self._cache[sym] = processed
                     self._cache_time[sym] = now
@@ -322,7 +474,19 @@ class NSEOptionChainService:
             except Exception as e:
                 logger.warning("Failed processing NiftyTrader live data: %s", e)
 
-        # 2. Try Live NSE Fetch
+        # 2. Try Cached Actual NiftyTrader Data from local disk (Do NOT use synthetic data)
+        cached_actual = self._load_saved_niftytrader_data(sym)
+        if cached_actual and "opDatas" in cached_actual and len(cached_actual["opDatas"]) > 0:
+            try:
+                processed = self._process_niftytrader_raw_data(cached_actual, sym, expiry, is_cached=True)
+                if processed and len(processed.get("strikes", [])) > 0:
+                    self._cache[sym] = processed
+                    self._cache_time[sym] = now
+                    return processed
+            except Exception as e:
+                logger.warning("Failed processing cached actual NiftyTrader data: %s", e)
+
+        # 3. Try Live NSE Fetch
         raw = self.fetch_live_chain_from_nse(sym)
         if raw and "records" in raw and "data" in raw["records"]:
             try:
@@ -334,7 +498,7 @@ class NSEOptionChainService:
             except Exception as e:
                 logger.debug("Failed processing live NSE data: %s", e)
 
-        # 3. Fallback to Real-Spot Option Pricing Matrix
+        # 4. Fallback to Real-Spot Option Pricing Matrix
         synthetic = self.generate_synthetic_option_chain(sym)
         self._cache[sym] = synthetic
         self._cache_time[sym] = now
@@ -345,6 +509,7 @@ class NSEOptionChainService:
         raw_data: Dict[str, Any],
         symbol: str,
         target_expiry: Optional[str] = None,
+        is_cached: bool = False,
     ) -> Dict[str, Any]:
         """
         Transforms live NiftyTrader Web API option chain into structured dashboard representation.
@@ -442,12 +607,22 @@ class NSEOptionChainService:
             ce_chg_oi = int(row.get("calls_change_oi") or 0)
             pe_chg_oi = int(row.get("puts_change_oi") or 0)
 
-            # Strike level PCR
-            strike_pcr = float(row.get("pcr") or (pe_oi / ce_oi if ce_oi > 0 else 0.0))
+            # Strike level PCR from NiftyTrader row or fallback to pe_oi / ce_oi
+            raw_pcr = row.get("pcr")
+            if raw_pcr is not None and float(raw_pcr) > 0:
+                strike_pcr = float(raw_pcr)
+            else:
+                strike_pcr = (pe_oi / ce_oi) if ce_oi > 0 else (1.0 if pe_oi == 0 else 2.0)
 
             # Actual buildup data fetched directly from NiftyTrader option chain
             ce_builtup = str(row.get("calls_builtup") or "").strip()
             pe_builtup = str(row.get("puts_builtup") or "").strip()
+
+            # Ensure buildup is never blank or '--'
+            if not ce_builtup or ce_builtup in ("--", "None", "null") or ce_builtup.lower() == "no conclusion":
+                ce_builtup = self._derive_buildup(ce_chg, ce_chg_oi, "CE")
+            if not pe_builtup or pe_builtup in ("--", "None", "null") or pe_builtup.lower() == "no conclusion":
+                pe_builtup = self._derive_buildup(pe_chg, pe_chg_oi, "PE")
 
             strikes_data.append({
                 "strike": strike,
@@ -492,6 +667,7 @@ class NSEOptionChainService:
             })
 
         now_ist = datetime.now(IST)
+        source_label = "NiftyTrader Cached Feed (Actual)" if is_cached else "NiftyTrader Live API (Actual)"
         return {
             "symbol": symbol,
             "spot_price": round(spot, 2),
@@ -505,7 +681,7 @@ class NSEOptionChainService:
             "total_put_oi": total_put_oi,
             "lot_size": 30 if is_bank else 65,
             "updated_at": now_ist.strftime("%Y-%m-%d %H:%M:%S IST"),
-            "data_source": "NiftyTrader Live API (Real Options Matrix)",
+            "data_source": source_label,
             "strikes": strikes_data,
         }
 
@@ -590,13 +766,15 @@ class NSEOptionChainService:
             row = rows_map[k]
             ce = row["ce"]
             pe = row["pe"]
-            ce["builtup"] = "--"
-            ce["buildup"] = "--"
-            pe["builtup"] = "--"
-            pe["buildup"] = "--"
             ce_oi_val = ce.get("oi") or 0
             pe_oi_val = pe.get("oi") or 0
             row["pcr"] = round(pe_oi_val / ce_oi_val, 2) if ce_oi_val > 0 else 0.0
+            ce_builtup = self._derive_buildup(ce.get("change", 0.0), ce.get("change_in_oi", 0), "CE")
+            pe_builtup = self._derive_buildup(pe.get("change", 0.0), pe.get("change_in_oi", 0), "PE")
+            ce["builtup"] = ce_builtup
+            ce["buildup"] = ce_builtup
+            pe["builtup"] = pe_builtup
+            pe["buildup"] = pe_builtup
             strikes_sorted.append(row)
 
         # Slice strictly to ATM ± 7 strikes (15 total)
