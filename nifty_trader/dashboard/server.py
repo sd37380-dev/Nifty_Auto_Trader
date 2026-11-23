@@ -852,6 +852,55 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       </div>
     </div>
 
+    <!-- NIFTY 50 Live Chart Sync Strip -->
+    <div style="background: rgba(19, 27, 46, 0.85); border: 1px solid var(--border); border-left: 3px solid #38bdf8; border-radius: 6px; padding: 8px 12px; display: flex; flex-direction: column; gap: 4px; box-shadow: 0 0 10px rgba(56, 189, 248, 0.1);">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div style="display: flex; align-items: center; gap: 6px;">
+          <span style="font-weight: 800; font-size: 0.88rem; color: #38bdf8;">⚡ NIFTY 50 (LIVE SYNC)</span>
+          <span id="live-sync-nifty-badge" class="badge badge-green" style="font-size: 0.65rem; padding: 1px 6px;">🟢 9:15+ BAR</span>
+        </div>
+        <div>
+          <strong id="live-sync-nifty-close" style="font-size: 1.15rem; color: #38bdf8;">₹--</strong>
+          <span id="live-sync-nifty-change" style="font-size: 0.75rem; font-weight: 700; margin-left: 4px;">--</span>
+        </div>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; font-size: 0.72rem; background: rgba(0,0,0,0.25); padding: 4px 6px; border-radius: 4px;">
+        <div><span style="color: var(--text-secondary);">Open:</span> <strong id="live-sync-nifty-open">₹--</strong></div>
+        <div><span style="color: var(--text-secondary);">High:</span> <strong id="live-sync-nifty-high" style="color: var(--green);">₹--</strong></div>
+        <div><span style="color: var(--text-secondary);">Low:</span> <strong id="live-sync-nifty-low" style="color: var(--red);">₹--</strong></div>
+        <div><span style="color: var(--text-secondary);">Close:</span> <strong id="live-sync-nifty-cur">₹--</strong></div>
+      </div>
+      <div style="display: flex; gap: 4px; font-size: 0.69rem; justify-content: space-between; margin-top: 3px; padding-top: 3px; border-top: 1px dashed rgba(255,255,255,0.08);">
+        <div><span style="color: var(--text-secondary);">Bar Range:</span> <strong id="live-sync-nifty-range" style="color: #cbd5e1;">-- pts</strong></div>
+        <div><span style="color: var(--text-secondary);">Feed:</span> <strong style="color: #38bdf8;">Direct Chart Sync</strong></div>
+      </div>
+    </div>
+
+    <!-- BANKNIFTY Live Chart Sync Strip -->
+    <div style="background: rgba(19, 27, 46, 0.85); border: 1px solid var(--border); border-left: 3px solid #a855f7; border-radius: 6px; padding: 8px 12px; display: flex; flex-direction: column; gap: 4px; box-shadow: 0 0 10px rgba(168, 85, 247, 0.1);">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div style="display: flex; align-items: center; gap: 6px;">
+          <span style="font-weight: 800; font-size: 0.88rem; color: #c084fc;">⚡ BANKNIFTY (LIVE SYNC)</span>
+          <span id="live-sync-bank-badge" class="badge badge-green" style="font-size: 0.65rem; padding: 1px 6px;">🟢 9:15+ BAR</span>
+        </div>
+        <div>
+          <strong id="live-sync-bank-close" style="font-size: 1.15rem; color: #c084fc;">₹--</strong>
+          <span id="live-sync-bank-change" style="font-size: 0.75rem; font-weight: 700; margin-left: 4px;">--</span>
+        </div>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; font-size: 0.72rem; background: rgba(0,0,0,0.25); padding: 4px 6px; border-radius: 4px;">
+        <div><span style="color: var(--text-secondary);">Open:</span> <strong id="live-sync-bank-open">₹--</strong></div>
+        <div><span style="color: var(--text-secondary);">High:</span> <strong id="live-sync-bank-high" style="color: var(--green);">₹--</strong></div>
+        <div><span style="color: var(--text-secondary);">Low:</span> <strong id="live-sync-bank-low" style="color: var(--red);">₹--</strong></div>
+        <div><span style="color: var(--text-secondary);">Close:</span> <strong id="live-sync-bank-cur">₹--</strong></div>
+      </div>
+      <div style="display: flex; gap: 4px; font-size: 0.69rem; justify-content: space-between; margin-top: 3px; padding-top: 3px; border-top: 1px dashed rgba(255,255,255,0.08);">
+        <div><span style="color: var(--text-secondary);">Bar Range:</span> <strong id="live-sync-bank-range" style="color: #cbd5e1;">-- pts</strong></div>
+        <div><span style="color: var(--text-secondary);">Feed:</span> <strong style="color: #a855f7;">Direct Chart Sync</strong></div>
+      </div>
+    </div>
+
+
   </div>
 </div>
 
@@ -11606,6 +11655,94 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     inp.value = '';
     quickAiPrompt(val);
   }
+
+
+  // ==========================================================================
+  // REAL-TIME 9:15+ CHART SYNC TELEMETRY (NIFTY & BANKNIFTY)
+  // ==========================================================================
+  async function updateLiveChartSyncBoxes() {
+    try {
+      // 1. Fetch NIFTY Live Candle
+      const nRes = await fetch('/api/chart/candles?symbol=NIFTY&interval=5m');
+      if (nRes.ok) {
+        const nData = await nRes.json();
+        if (nData.candles && nData.candles.length > 0) {
+          const candles = nData.candles;
+          const last = candles[candles.length - 1];
+          const first = candles[0];
+          const prev = nData.previousClose || first.open;
+          const diff = last.close - prev;
+          const pct = prev > 0 ? (diff / prev) * 100 : 0;
+          const isUp = diff >= 0;
+          const range = last.high - last.low;
+
+          const closeEl = document.getElementById('live-sync-nifty-close');
+          const curEl = document.getElementById('live-sync-nifty-cur');
+          const chgEl = document.getElementById('live-sync-nifty-change');
+          const openEl = document.getElementById('live-sync-nifty-open');
+          const highEl = document.getElementById('live-sync-nifty-high');
+          const lowEl = document.getElementById('live-sync-nifty-low');
+          const rangeEl = document.getElementById('live-sync-nifty-range');
+
+          if (closeEl) closeEl.innerText = `₹${last.close.toLocaleString('en-IN', {minimumFractionDigits: 2})}`;
+          if (curEl) curEl.innerText = `₹${last.close.toLocaleString('en-IN', {minimumFractionDigits: 2})}`;
+          if (chgEl) {
+            chgEl.innerText = `${isUp ? '+' : ''}${diff.toFixed(2)} (${isUp ? '+' : ''}${pct.toFixed(2)}%)`;
+            chgEl.style.color = isUp ? 'var(--green)' : 'var(--red)';
+          }
+          if (openEl) openEl.innerText = `₹${last.open.toLocaleString('en-IN', {minimumFractionDigits: 2})}`;
+          if (highEl) highEl.innerText = `₹${last.high.toLocaleString('en-IN', {minimumFractionDigits: 2})}`;
+          if (lowEl) lowEl.innerText = `₹${last.low.toLocaleString('en-IN', {minimumFractionDigits: 2})}`;
+          if (rangeEl) rangeEl.innerText = `${range.toFixed(2)} pts`;
+        }
+      }
+    } catch(err) {
+      console.debug('NIFTY chart sync telemetry error:', err);
+    }
+
+    try {
+      // 2. Fetch BANKNIFTY Live Candle
+      const bRes = await fetch('/api/chart/candles?symbol=BANKNIFTY&interval=5m');
+      if (bRes.ok) {
+        const bData = await bRes.json();
+        if (bData.candles && bData.candles.length > 0) {
+          const candles = bData.candles;
+          const last = candles[candles.length - 1];
+          const first = candles[0];
+          const prev = bData.previousClose || first.open;
+          const diff = last.close - prev;
+          const pct = prev > 0 ? (diff / prev) * 100 : 0;
+          const isUp = diff >= 0;
+          const range = last.high - last.low;
+
+          const closeEl = document.getElementById('live-sync-bank-close');
+          const curEl = document.getElementById('live-sync-bank-cur');
+          const chgEl = document.getElementById('live-sync-bank-change');
+          const openEl = document.getElementById('live-sync-bank-open');
+          const highEl = document.getElementById('live-sync-bank-high');
+          const lowEl = document.getElementById('live-sync-bank-low');
+          const rangeEl = document.getElementById('live-sync-bank-range');
+
+          if (closeEl) closeEl.innerText = `₹${last.close.toLocaleString('en-IN', {minimumFractionDigits: 2})}`;
+          if (curEl) curEl.innerText = `₹${last.close.toLocaleString('en-IN', {minimumFractionDigits: 2})}`;
+          if (chgEl) {
+            chgEl.innerText = `${isUp ? '+' : ''}${diff.toFixed(2)} (${isUp ? '+' : ''}${pct.toFixed(2)}%)`;
+            chgEl.style.color = isUp ? 'var(--green)' : 'var(--red)';
+          }
+          if (openEl) openEl.innerText = `₹${last.open.toLocaleString('en-IN', {minimumFractionDigits: 2})}`;
+          if (highEl) highEl.innerText = `₹${last.high.toLocaleString('en-IN', {minimumFractionDigits: 2})}`;
+          if (lowEl) lowEl.innerText = `₹${last.low.toLocaleString('en-IN', {minimumFractionDigits: 2})}`;
+          if (rangeEl) rangeEl.innerText = `${range.toFixed(2)} pts`;
+        }
+      }
+    } catch(err) {
+      console.debug('BANKNIFTY chart sync telemetry error:', err);
+    }
+  }
+
+  // Poll chart sync telemetry every 10 seconds starting immediately
+  setInterval(updateLiveChartSyncBoxes, 10000);
+  setTimeout(updateLiveChartSyncBoxes, 800);
 
 </script>
 
