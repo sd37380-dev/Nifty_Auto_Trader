@@ -665,6 +665,31 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     height: calc(50vh - 28px) !important;
     min-height: 280px !important;
   }
+
+  /* Multi-Function Tab & Sub-Nav Styling */
+  .mf-subtab {
+    background: rgba(19, 27, 46, 0.85);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    padding: 7px 15px;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+  }
+  .mf-subtab:hover {
+    background: var(--bg-card-hover);
+    color: var(--text-primary);
+  }
+  .mf-subtab.active {
+    background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+    color: #ffffff;
+    border-color: #a78bfa;
+    box-shadow: 0 0 12px rgba(139, 92, 246, 0.35);
+  }
+
 </style>
 <script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
 </head>
@@ -835,14 +860,10 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   <button class="nav-tab" onclick="switchTab('tab-simulator', this)">⚡ Option Paper Simulator</button>
   <button class="nav-tab" onclick="switchTab('tab-option-chain', this)" id="nav-btn-option-chain">📊 NSE Option Chain &amp; Trade</button>
   <button class="nav-tab" onclick="switchTab('tab-charts', this)" id="nav-btn-charts">📈 TradingView Live Charts</button>
-  <button class="nav-tab" onclick="toggleAiChatWindow(true)" id="nav-btn-chat" style="color: #38bdf8; font-weight: 800; border: 1px solid rgba(56, 189, 248, 0.4); background: rgba(56, 189, 248, 0.1);">💬 AI Copilot</button>
-  <button class="nav-tab" onclick="switchTab('tab-backtest', this)" id="nav-btn-backtest">🧪 Automated Backtest</button>
   <button class="nav-tab" onclick="switchTab('tab-news', this)" id="nav-btn-news">📰 Market News &amp; Impact <span id="nav-news-count-badge" class="badge badge-green" style="font-size: 0.65rem; padding: 1px 6px; margin-left: 4px;">--</span></button>
-  <button class="nav-tab" onclick="switchTab('tab-telegram', this)" id="nav-btn-telegram">📱 Telegram &amp; 15-Min Execution <span id="nav-pending-badge" class="badge badge-yellow" style="font-size: 0.65rem; padding: 1px 6px; margin-left: 4px; display: none;">0</span></button>
-  <button class="nav-tab" onclick="switchTab('tab-brain', this)">AI Brain Reasoning</button>
-  <button class="nav-tab" onclick="switchTab('tab-positions', this)">Paper Trades &amp; Monitoring</button>
-  <button class="nav-tab" onclick="switchTab('tab-experience', this)">Experience Memory</button>
-  <button class="nav-tab" onclick="switchTab('tab-research', this)">Hermes Research Zone (Isolated)</button>
+  <button class="nav-tab" onclick="switchTab('tab-multi-function', this)" id="nav-btn-multi-function" style="background: rgba(139, 92, 246, 0.12); color: #c084fc; border: 1px solid rgba(139, 92, 246, 0.4); font-weight: 700;">
+    🧩 Multi-Function <span id="nav-pending-badge" class="badge badge-yellow" style="font-size: 0.65rem; padding: 1px 6px; margin-left: 4px; display: none;">0</span>
+  </button>
 </div>
 
 <!-- Tab 1: Overview -->
@@ -1112,164 +1133,16 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 </div>
 
 <!-- Tab 2: Brain -->
-<div id="tab-brain" class="tab-content">
-  <div class="card" style="margin-bottom: 16px; border-left: 4px solid var(--accent); background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(19, 27, 46, 0.95) 100%);">
-    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-      <div>
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <span style="font-size: 1.05rem; font-weight: 800; color: var(--text-primary);">🧠 Gemini 2.5 Flash Autonomous Cognitive AI Brain</span>
-          <span class="badge badge-green">ARMED &amp; STANDBY</span>
-        </div>
-        <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 3px;">
-          Evaluates multi-timeframe 1H macro bias, 15M tactical candle state, and volume order flow. Scheduled automatically during active trading sessions (09:15–15:30 IST).
-        </div>
-      </div>
-      <div style="display: flex; gap: 8px;">
-        <button class="btn" onclick="analyzeChartNow()" style="background: var(--accent); color: white; border: none; font-weight: 700; padding: 6px 14px; border-radius: 6px; cursor: pointer;">
-          🔬 Trigger Brain Evaluation Now
-        </button>
-      </div>
-    </div>
-  </div>
 
-  <div class="card">
-    <div class="card-header">Recent Cognitive Brain Reasoning Verdicts (data/brain_history.db)</div>
-    <table>
-      <thead>
-        <tr><th>Timestamp</th><th>Setup State</th><th>1H Macro Bias</th><th>15M Tactical State</th><th>Recommended Action</th><th>Key Reasoning</th></tr>
-      </thead>
-      <tbody id="brain-table-body">
-        <tr><td colspan="6" style="text-align: center; color: var(--text-secondary); padding: 24px;">🧠 Cognitive AI Brain is ready &amp; armed. Awaiting 15M candle evaluation during market session (09:15–15:30 IST) or click "Trigger Brain Evaluation Now" above.</td></tr>
-      </tbody>
-    </table>
-  </div>
-</div>
 
 <!-- Tab 3: Positions -->
-<div id="tab-positions" class="tab-content">
-  <div class="card" style="margin-bottom: 16px; border-left: 4px solid var(--yellow); background: linear-gradient(135deg, rgba(245, 158, 11, 0.08) 0%, rgba(19, 27, 46, 0.95) 100%);">
-    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-      <div>
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <span style="font-size: 1.05rem; font-weight: 800; color: var(--text-primary);">🛡️ Sensibull Virtual Paper Execution &amp; Position Guard</span>
-          <span class="badge badge-yellow">SAFE VIRTUAL MODE</span>
-          <span class="badge badge-red">LIVE BROKER: DISABLED</span>
-        </div>
-        <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 3px;">
-          Live real-money broker execution is strictly disabled for safety. Simulated option positions and Sensibull virtual trades are monitored here with real-time MTM, SL, and Target alerts.
-        </div>
-      </div>
-      <button class="btn" onclick="switchTab('tab-simulator', document.querySelectorAll('.nav-tab')[1])" style="background: rgba(59, 130, 246, 0.2); border: 1px solid var(--accent); color: var(--text-primary); font-size: 0.78rem; padding: 6px 12px; border-radius: 6px; cursor: pointer;">
-        ⚡ Go to Option Paper Simulator
-      </button>
-    </div>
-  </div>
 
-  <div class="card" style="margin-bottom: 20px;">
-    <div class="card-header">Sensibull Virtual Positions (data/paper_positions.db)</div>
-    <table>
-      <thead>
-        <tr><th>Position ID</th><th>Symbol &amp; Strike</th><th>Action</th><th>Lots</th><th>Entry Price</th><th>Current Price</th><th>Unrealized P&amp;L</th><th>Status</th></tr>
-      </thead>
-      <tbody id="positions-table-body">
-        <tr><td colspan="8" style="text-align: center; color: var(--text-secondary); padding: 24px;">🟢 Safe Virtual Mode Active &bull; No active positions currently open (Portfolio Flat). Active positions with real-time MTM, SL, and Target tracking will display here as soon as a custom level or AI setup triggers.</td></tr>
-      </tbody>
-    </table>
-  </div>
-  <div class="card">
-    <div class="card-header">Autonomous Position Monitoring &amp; Reassessment Triggers (data/position_monitoring.db)</div>
-    <table>
-      <thead>
-        <tr><th>Timestamp</th><th>Position ID</th><th>Trigger Event</th><th>Price Move</th><th>Brain Reassessment Action</th><th>P&amp;L Recorded</th></tr>
-      </thead>
-      <tbody id="monitoring-table-body">
-        <tr><td colspan="6" style="text-align: center; color: var(--text-secondary); padding: 20px;">Position monitoring active. Checks occur continuously every 15 seconds whenever positions are active.</td></tr>
-      </tbody>
-    </table>
-  </div>
-</div>
 
 <!-- Tab 4: Experience -->
-<div id="tab-experience" class="tab-content">
-  <div class="card" style="margin-bottom: 16px; border-left: 4px solid var(--green); background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(19, 27, 46, 0.95) 100%);">
-    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-      <div>
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <span style="font-size: 1.05rem; font-weight: 800; color: var(--text-primary);">📚 Trade Experience Memory &amp; Cognitive Post-Mortem Store</span>
-          <span class="badge badge-green">ACTIVE STORE</span>
-        </div>
-        <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 3px;">
-          Persists closed trades in <code>data/experience.db</code>. Every closed trade undergoes an automatic cognitive post-mortem to score edge fidelity, record lessons learned, and eliminate repeating mistakes.
-        </div>
-      </div>
-      <a href="/api/simulator/report" target="_blank" class="btn" style="text-decoration: none; padding: 6px 12px; font-size: 0.78rem;">
-        📥 Download Simulator Report
-      </a>
-    </div>
-  </div>
 
-  <div class="card">
-    <div class="card-header">Completed Trade Post-Mortems &amp; Experience Memory (data/experience.db)</div>
-    <table>
-      <thead>
-        <tr><th>Trade ID</th><th>Instrument</th><th>Outcome</th><th>Realized P&amp;L</th><th>Holding Duration</th><th>Reasoning Evaluation</th><th>Execution Fidelity</th></tr>
-      </thead>
-      <tbody id="experience-table-body">
-        <tr><td colspan="7" style="text-align: center; color: var(--text-secondary); padding: 24px;">📘 Experience Memory Store is active (data/experience.db). Closed simulator &amp; paper trades will be analyzed here for edge validation, win-rate attribution, and risk lessons.</td></tr>
-      </tbody>
-    </table>
-  </div>
-</div>
 
 <!-- Tab 5: Research -->
-<div id="tab-research" class="tab-content">
-  <div class="grid">
-    <div class="card">
-      <div class="card-header">Dhan Broker Data Adapter</div>
-      <div class="card-value" style="color: var(--green);">ONLINE</div>
-      <div class="card-subtext">Mock Provider (Offline Deterministic Walk)</div>
-    </div>
-    <div class="card">
-      <div class="card-header">Normalized Bars Stored</div>
-      <div class="card-value" id="res-bars-count">0</div>
-      <div class="card-subtext">data/hermes_research/market_data.db</div>
-    </div>
-    <div class="card">
-      <div class="card-header">Negative Knowledge Catalog</div>
-      <div class="card-value" style="color: var(--red);" id="res-fails-count">0</div>
-      <div class="card-subtext">Preserved Failed Hypotheses in Memory</div>
-    </div>
-    <div class="card">
-      <div class="card-header">Dynamic Assessments</div>
-      <div class="card-value" style="color: var(--purple);" id="res-ass-count">0</div>
-      <div class="card-subtext">Dynamic Segment Importance Weights</div>
-    </div>
-  </div>
 
-  <div class="card" style="margin-bottom: 20px;">
-    <div class="card-header">Latest Hermes Research Dynamic Assessments (data/hermes_research/assessments.db)</div>
-    <table>
-      <thead>
-        <tr><th>Assessment ID</th><th>Timestamp</th><th>Instrument</th><th>Direction</th><th>Total Score</th><th>Confidence</th><th>Dynamic Segments Breakdown</th></tr>
-      </thead>
-      <tbody id="research-ass-body">
-        <tr><td colspan="7" style="text-align: center; color: var(--text-secondary);">Loading research assessments...</td></tr>
-      </tbody>
-    </table>
-  </div>
-
-  <div class="card">
-    <div class="card-header">Negative Knowledge Catalog — Disproven Hypotheses (data/hermes_research/research_memory.db)</div>
-    <table>
-      <thead>
-        <tr><th>Failed ID</th><th>Hypothesis Statement</th><th>Failure Reason</th><th>Lessons Learned</th><th>Recorded At</th></tr>
-      </thead>
-      <tbody id="research-fails-body">
-        <tr><td colspan="5" style="text-align: center; color: var(--text-secondary);">Loading negative knowledge catalog...</td></tr>
-      </tbody>
-    </table>
-  </div>
-</div>
 
 <!-- Tab 6: Simulator -->
 <div id="tab-simulator" class="tab-content">
@@ -2958,228 +2831,41 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 </div>
 
 <!-- Tab Telegram: Real-Time Alerts, 15-Minute Countdown Safety Gate & News Updater -->
-<div id="tab-telegram" class="tab-content">
-  <!-- Header Banner -->
-  <div class="card" style="margin-bottom: 20px; border-left: 4px solid #38bdf8; background: linear-gradient(135deg, rgba(56, 189, 248, 0.08) 0%, rgba(19, 27, 46, 0.95) 100%);">
-    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
-      <div>
-        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-          <span style="font-size: 1.25rem; font-weight: 800; color: var(--text-primary);">📱 Telegram Notification Engine &amp; 15-Minute Execution Gate</span>
-          <span class="badge" id="tele-status-tag" style="background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.4); color: #38bdf8;">CHECKING...</span>
-        </div>
-        <div style="font-size: 0.82rem; color: var(--text-secondary); margin-top: 4px; max-width: 900px;">
-          Autonomous alert bridge for NIFTY &amp; BANKNIFTY: Dispatches instant breakout alerts, sudden high-impact market news, and <strong>trade confirmations with full AI reasoning ("Why system takes trade")</strong> that count down for <strong>15 minutes</strong> before auto-executing into the simulator.
-        </div>
-      </div>
-      <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-        <button class="btn" onclick="sendTelegramTest()" style="background: rgba(56, 189, 248, 0.2); border: 1px solid #38bdf8; color: #38bdf8; font-weight: 700; padding: 6px 14px; border-radius: 6px;">
-          📨 Send Test Alert
-        </button>
-        <button class="btn" onclick="fetchPendingTrades()" style="background: var(--bg-card); border: 1px solid var(--border); color: var(--text-primary); font-weight: 600; padding: 6px 14px; border-radius: 6px;">
-          🔄 Refresh Orders
-        </button>
-      </div>
-    </div>
-  </div>
 
-  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px;">
-    <!-- Telegram Bot Settings Card -->
-    <div class="card" style="border: 1px solid var(--border);">
-      <h3 style="font-size: 1.05rem; color: var(--text-primary); margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
-        ⚙️ Bot Credentials &amp; Channel
-      </h3>
-      <form onsubmit="saveTelegramCredentials(event)" style="display: flex; flex-direction: column; gap: 12px;">
-        <div>
-          <label style="display: block; font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 4px;">Telegram Bot Token</label>
-          <input type="password" id="tele-input-token" placeholder="e.g. 7123456789:AAHk..." style="width: 100%; background: var(--bg-main); border: 1px solid var(--border); padding: 8px 12px; border-radius: 6px; color: var(--text-primary); font-size: 0.85rem; font-family: monospace;" />
-          <span style="font-size: 0.7rem; color: var(--text-secondary);">Obtain via <a href="https://t.me/BotFather" target="_blank" style="color: #38bdf8;">@BotFather</a> on Telegram with <code>/newbot</code>.</span>
-        </div>
-        <div>
-          <label style="display: block; font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 4px;">Telegram Chat ID / Channel ID</label>
-          <input type="text" id="tele-input-chat" placeholder="e.g. 123456789 or -100..." style="width: 100%; background: var(--bg-main); border: 1px solid var(--border); padding: 8px 12px; border-radius: 6px; color: var(--text-primary); font-size: 0.85rem; font-family: monospace;" />
-          <span style="font-size: 0.7rem; color: var(--text-secondary);">Your personal user ID (from <a href="https://t.me/userinfobot" target="_blank" style="color: #38bdf8;">@userinfobot</a>) or group/channel ID.</span>
-        </div>
-        <div style="display: flex; gap: 10px; align-items: center; margin-top: 4px;">
-          <button type="submit" class="btn" style="background: #38bdf8; color: #000; border: none; font-weight: 700; padding: 8px 18px; border-radius: 6px;">
-            💾 Save Telegram Credentials
-          </button>
-          <span id="tele-save-feedback" style="font-size: 0.75rem; color: var(--green);"></span>
-        </div>
-      </form>
-    </div>
-
-    <!-- 15-Minute Auto-Execution Gate Architecture Card -->
-    <div class="card" style="border: 1px solid var(--border); background: rgba(19, 27, 46, 0.6);">
-      <h3 style="font-size: 1.05rem; color: var(--text-primary); margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
-        ⏱️ How the 15-Minute Execution Gate Works
-      </h3>
-      <div style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.6;">
-        <ol style="margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 8px;">
-          <li><strong style="color: var(--text-primary);">Level Breakout / Trade Condition Met:</strong> System spots a high-probability breakout or option setup.</li>
-          <li><strong style="color: var(--text-primary);">Telegram Alert Dispatched:</strong> Sends an instant message detailing the <em>exact technical reason</em> ("Why system takes trade"), strike, target, and stop loss.</li>
-          <li><strong style="color: var(--yellow);">15-Minute Confirmation Window:</strong> System enters an armed hold state for 900 seconds. You receive ample time to review market context.</li>
-          <li><strong style="color: var(--green);">Automatic Execution:</strong> If not cancelled via the Cancel button below, the system auto-fires the paper trade right when the 15-minute timer hits zero and sends an execution confirmation to Telegram.</li>
-          <li><strong style="color: var(--red);">Manual Cancellation:</strong> Click <em>Cancel Order</em> anytime during the 15 minutes to abort the trade.</li>
-        </ol>
-      </div>
-    </div>
-  </div>
-
-  <!-- Active 15-Minute Countdown Orders Table -->
-  <div class="card" style="margin-bottom: 24px; border: 1px solid var(--border);">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;">
-      <div style="display: flex; align-items: center; gap: 8px;">
-        <span style="font-size: 1.1rem; font-weight: 800; color: var(--text-primary);">⏳ Active Armed Orders (15-Minute Countdown)</span>
-        <span class="badge badge-yellow" id="pending-count-badge">0 ARMED</span>
-      </div>
-      <div style="font-size: 0.78rem; color: var(--text-secondary);">
-        Live auto-executing countdown &bull; Updates every second
-      </div>
-    </div>
-
-    <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
-      <table style="width: 100%; border-collapse: collapse; font-size: 0.82rem;">
-        <thead>
-          <tr style="border-bottom: 1px solid var(--border); text-align: left; color: var(--text-secondary); background: rgba(0,0,0,0.2);">
-            <th style="padding: 10px 12px;">Order ID</th>
-            <th style="padding: 10px 12px;">Contract</th>
-            <th style="padding: 10px 12px;">Lots / Qty</th>
-            <th style="padding: 10px 12px;">Spot / Premium</th>
-            <th style="padding: 10px 12px;">SL / Target</th>
-            <th style="padding: 10px 12px;">Time Remaining</th>
-            <th style="padding: 10px 12px;">Status</th>
-            <th style="padding: 10px 12px;">Technical Rationale ("Why Trade")</th>
-            <th style="padding: 10px 12px; text-align: right;">Action</th>
-          </tr>
-        </thead>
-        <tbody id="pending-trades-tbody">
-          <tr>
-            <td colspan="9" style="text-align: center; color: var(--text-secondary); padding: 30px;">
-              No armed trades currently counting down. When a custom level or option setup triggers, it will appear here with a live 15-minute countdown.
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- Manual 15-Minute Arm Test Form -->
-  <div class="card" style="border: 1px solid var(--border); background: rgba(19, 27, 46, 0.4);">
-    <h3 style="font-size: 1.05rem; color: var(--text-primary); margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
-      🧪 Test Armed 15-Minute Execution Workflow
-    </h3>
-    <div style="font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 14px;">
-      Manually arm an order to simulate the exact production workflow: dispatches the Telegram intent alert with technical reasoning, counts down 15 minutes (or custom seconds for testing), and auto-executes into the Option Paper Simulator upon timer completion.
-    </div>
-    <form onsubmit="submitManualArmTrade(event)" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)) 2fr auto; gap: 10px; align-items: flex-end;">
-      <div>
-        <label style="display: block; font-size: 0.72rem; color: var(--text-secondary); margin-bottom: 3px;">Index</label>
-        <select id="arm-test-symbol" style="width: 100%; background: var(--bg-main); border: 1px solid var(--border); padding: 7px; border-radius: 6px; color: var(--text-primary); font-size: 0.8rem;">
-          <option value="NIFTY">NIFTY</option>
-          <option value="BANKNIFTY">BANKNIFTY</option>
-        </select>
-      </div>
-      <div>
-        <label style="display: block; font-size: 0.72rem; color: var(--text-secondary); margin-bottom: 3px;">Strike Price</label>
-        <input type="number" id="arm-test-strike" value="23500" step="50" style="width: 100%; background: var(--bg-main); border: 1px solid var(--border); padding: 7px; border-radius: 6px; color: var(--text-primary); font-size: 0.8rem;" />
-      </div>
-      <div>
-        <label style="display: block; font-size: 0.72rem; color: var(--text-secondary); margin-bottom: 3px;">Option Type</label>
-        <select id="arm-test-type" style="width: 100%; background: var(--bg-main); border: 1px solid var(--border); padding: 7px; border-radius: 6px; color: var(--text-primary); font-size: 0.8rem;">
-          <option value="CE">CALL (CE)</option>
-          <option value="PE">PUT (PE)</option>
-        </select>
-      </div>
-      <div>
-        <label style="display: block; font-size: 0.72rem; color: var(--text-secondary); margin-bottom: 3px;">Est. Premium (₹)</label>
-        <input type="number" id="arm-test-premium" value="125.50" step="0.05" style="width: 100%; background: var(--bg-main); border: 1px solid var(--border); padding: 7px; border-radius: 6px; color: var(--text-primary); font-size: 0.8rem;" />
-      </div>
-      <div>
-        <label style="display: block; font-size: 0.72rem; color: var(--text-secondary); margin-bottom: 3px;">Countdown (Sec)</label>
-        <input type="number" id="arm-test-countdown" value="900" min="10" max="1800" title="900s = 15 minutes standard" style="width: 100%; background: var(--bg-main); border: 1px solid var(--border); padding: 7px; border-radius: 6px; color: var(--yellow); font-size: 0.8rem; font-weight: 700;" />
-      </div>
-      <div>
-        <label style="display: block; font-size: 0.72rem; color: var(--text-secondary); margin-bottom: 3px;">Technical Reason ("Why System Takes Trade")</label>
-        <input type="text" id="arm-test-reason" value="Bullish breakout above PDH (23,500) confirmed on 15M candle with OI support" style="width: 100%; background: var(--bg-main); border: 1px solid var(--border); padding: 7px; border-radius: 6px; color: var(--text-primary); font-size: 0.8rem;" />
-      </div>
-      <div>
-        <button type="submit" class="btn" style="background: #f59e0b; color: #000; border: none; font-weight: 800; padding: 8px 16px; border-radius: 6px; font-size: 0.82rem; white-space: nowrap;">
-          ⏱️ Arm 15-Min Trade
-        </button>
-      </div>
-    </form>
-  </div>
-</div>
-
-<!-- Add Custom News Event Modal -->
-<div id="add-news-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); z-index: 2000; justify-content: center; align-items: center; padding: 20px;">
-  <div style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; max-width: 600px; width: 100%; padding: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.7);">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 10px;">
-      <h3 style="font-size: 1.15rem; color: var(--text-primary);">➕ Add Market News / Event</h3>
-      <button onclick="closeAddNewsModal()" style="background: none; border: none; color: var(--text-secondary); font-size: 1.4rem; cursor: pointer;">&times;</button>
-    </div>
-    <form onsubmit="submitAddNews(event)" style="display: flex; flex-direction: column; gap: 12px;">
-      <div>
-        <label style="display: block; font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 4px;">News Headline / Title *</label>
-        <input type="text" id="modal-news-title" required placeholder="e.g. RBI Keeps Repo Rate Unchanged; Upgrades GDP Growth Forecast" style="width: 100%; background: var(--bg-main); border: 1px solid var(--border); padding: 8px 12px; border-radius: 6px; color: var(--text-primary); font-size: 0.85rem;" />
-      </div>
-      <div>
-        <label style="display: block; font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 4px;">Summary / Description</label>
-        <textarea id="modal-news-summary" rows="3" placeholder="Context, figures, key quotes..." style="width: 100%; background: var(--bg-main); border: 1px solid var(--border); padding: 8px 12px; border-radius: 6px; color: var(--text-primary); font-size: 0.85rem;"></textarea>
-      </div>
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-        <div>
-          <label style="display: block; font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 4px;">Category</label>
-          <select id="modal-news-category" style="width: 100%; background: var(--bg-main); border: 1px solid var(--border); padding: 8px; border-radius: 6px; color: var(--text-primary); font-size: 0.82rem;">
-            <option value="GOOD_NEWS">Good News for Market</option>
-            <option value="MARKET_IMPACT">High Market Impact</option>
-            <option value="MACRO_POLICY">Macro &amp; RBI Policy</option>
-            <option value="GLOBAL_CUES">Global Cues &amp; Crude</option>
-            <option value="BAD_NEWS">Market Risk / Negative</option>
-            <option value="EARNINGS">Corporate Earnings</option>
-          </select>
-        </div>
-        <div>
-          <label style="display: block; font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 4px;">Expected Market Effect</label>
-          <select id="modal-news-impact" style="width: 100%; background: var(--bg-main); border: 1px solid var(--border); padding: 8px; border-radius: 6px; color: var(--text-primary); font-size: 0.82rem;">
-            <option value="BULLISH">🟢 BULLISH (Supports Rally)</option>
-            <option value="BEARISH">🔴 BEARISH (Downside Risk)</option>
-            <option value="VOLATILE">⚡ VOLATILE (Sharp Swings)</option>
-            <option value="NEUTRAL">⚪ NEUTRAL (Rangebound)</option>
-          </select>
-        </div>
-      </div>
-      <div>
-        <label style="display: block; font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 4px;">Direct Market Effect on NIFTY &amp; BANKNIFTY *</label>
-        <input type="text" id="modal-news-effect" required placeholder="e.g. Bullish catalyst for BankNifty; supports higher lows and call buying" style="width: 100%; background: var(--bg-main); border: 1px solid var(--border); padding: 8px 12px; border-radius: 6px; color: var(--text-primary); font-size: 0.85rem;" />
-      </div>
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-        <div>
-          <label style="display: block; font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 4px;">Source Name</label>
-          <input type="text" id="modal-news-source" value="Market Wire / Analyst" style="width: 100%; background: var(--bg-main); border: 1px solid var(--border); padding: 8px 12px; border-radius: 6px; color: var(--text-primary); font-size: 0.82rem;" />
-        </div>
-        <div>
-          <label style="display: block; font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 4px;">Article URL (Optional)</label>
-          <input type="url" id="modal-news-url" placeholder="https://..." style="width: 100%; background: var(--bg-main); border: 1px solid var(--border); padding: 8px 12px; border-radius: 6px; color: var(--text-primary); font-size: 0.82rem;" />
-        </div>
-      </div>
-      <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px;">
-        <input type="checkbox" id="modal-news-important" checked style="accent-color: var(--accent); transform: scale(1.15);" />
-        <label for="modal-news-important" style="font-size: 0.82rem; color: var(--text-primary); cursor: pointer;">
-          ⚡ <strong>Mark as Important: Scroll at Dashboard Top ticker</strong>
-        </label>
-      </div>
-      <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 14px;">
-        <button type="button" onclick="closeAddNewsModal()" class="btn" style="padding: 8px 16px;">Cancel</button>
-        <button type="submit" class="btn" style="background: var(--accent); color: white; border: none; font-weight: 700; padding: 8px 20px;">Save &amp; Post News</button>
-      </div>
-    </form>
-  </div>
-</div>
 
 <!-- Tab: Automated Backtest -->
-<div id="tab-backtest" class="tab-content" style="display: none;">
-  <!-- Header Card -->
+
+<!-- Tab: Multi-Function (Combined 7-in-1 Suite) -->
+<div id="tab-multi-function" class="tab-content" style="display: none;">
+  <!-- Header Sub-Navigation Card -->
+  <div class="card" style="margin-bottom: 16px; border-left: 4px solid #8b5cf6; background: linear-gradient(135deg, rgba(139, 92, 246, 0.08) 0%, rgba(19, 27, 46, 0.95) 100%);">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+      <div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 1.15rem; font-weight: 800; color: #c084fc;">🧩 Multi-Function Command Suite</span>
+          <span class="badge badge-blue">7 INTEGRATED MODULES</span>
+        </div>
+        <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 3px;">
+          Consolidated operations desk: Backtesting, AI Copilot, Telegram 15M Gate, Brain Reasoning, Paper Trades, Experience Memory, and Hermes Research.
+        </div>
+      </div>
+    </div>
+
+    <!-- Sub-tab Pills -->
+    <div style="display: flex; gap: 8px; flex-wrap: wrap; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 10px;">
+      <button type="button" class="mf-subtab active" onclick="switchMfSubtab('mf-backtest', this)" id="mf-subbtn-backtest">🧪 Automated Backtest</button>
+      <button type="button" class="mf-subtab" onclick="switchMfSubtab('mf-copilot', this)" id="mf-subbtn-copilot">💬 AI Copilot</button>
+      <button type="button" class="mf-subtab" onclick="switchMfSubtab('mf-telegram', this)" id="mf-subbtn-telegram">📱 Telegram &amp; 15-Min Execution</button>
+      <button type="button" class="mf-subtab" onclick="switchMfSubtab('mf-brain', this)" id="mf-subbtn-brain">🧠 AI Brain Reasoning</button>
+      <button type="button" class="mf-subtab" onclick="switchMfSubtab('mf-positions', this)" id="mf-subbtn-positions">💼 Paper Trades &amp; Monitoring</button>
+      <button type="button" class="mf-subtab" onclick="switchMfSubtab('mf-experience', this)" id="mf-subbtn-experience">🧬 Experience Memory</button>
+      <button type="button" class="mf-subtab" onclick="switchMfSubtab('mf-research', this)" id="mf-subbtn-research">🔬 Hermes Research Zone</button>
+    </div>
+  </div>
+
+  <!-- Sub-Panel 1: Backtest -->
+  <div id="mf-backtest" class="mf-subcontent" style="display: block;">
+    <!-- Header Card -->
   <div class="card" style="margin-bottom: 18px; background: linear-gradient(135deg, rgba(59, 130, 246, 0.10) 0%, rgba(19, 27, 46, 0.95) 100%); border-left: 4px solid var(--accent);">
     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
       <div>
@@ -3565,10 +3251,444 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       </table>
     </div>
   </div>
+  </div>
+
+  <!-- Sub-Panel 2: Copilot -->
+  <div id="mf-copilot" class="mf-subcontent" style="display: none;">
+    
+  <div class="card" style="border-left: 4px solid #38bdf8; background: linear-gradient(135deg, rgba(56, 189, 248, 0.08) 0%, rgba(19, 27, 46, 0.95) 100%); margin-bottom: 16px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+      <div>
+        <span style="font-size: 1.15rem; font-weight: 800; color: #38bdf8;">💬 AI Trading Copilot Workspace</span>
+        <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 3px;">
+          Interactive Gemini-powered assistant with live access to Spot prices, Value Area (VAH/VAL/POC), open positions, and market sentiment.
+        </div>
+      </div>
+      <button type="button" onclick="toggleAiChatWindow(true)" class="btn" style="background: rgba(56, 189, 248, 0.2); border: 1px solid #38bdf8; color: #38bdf8; font-weight: 700; padding: 6px 14px; border-radius: 6px; cursor: pointer;">
+        🗖 Open Full Floating Window
+      </button>
+    </div>
+    <!-- Quick prompt chips -->
+    <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px;">
+      <button type="button" onclick="quickAiPrompt('What is the current NIFTY Fair Value POC and Value Area (VAH/VAL)?')" class="btn" style="background: rgba(0,0,0,0.3); border: 1px solid var(--border); color: #cbd5e1; font-size: 0.75rem; padding: 5px 10px; border-radius: 4px; cursor: pointer;">📍 POC &amp; Zones</button>
+      <button type="button" onclick="quickAiPrompt('Summarize our current open paper positions and active risk status.')" class="btn" style="background: rgba(0,0,0,0.3); border: 1px solid var(--border); color: #cbd5e1; font-size: 0.75rem; padding: 5px 10px; border-radius: 4px; cursor: pointer;">💼 Open Positions</button>
+      <button type="button" onclick="quickAiPrompt('What is the latest breaking market news sentiment and bias?')" class="btn" style="background: rgba(0,0,0,0.3); border: 1px solid var(--border); color: #cbd5e1; font-size: 0.75rem; padding: 5px 10px; border-radius: 4px; cursor: pointer;">📰 News Sentiment</button>
+      <button type="button" onclick="quickAiPrompt('Analyze current NIFTY intraday trend relative to VWAP and 9/21 EMAs.')" class="btn" style="background: rgba(0,0,0,0.3); border: 1px solid var(--border); color: #cbd5e1; font-size: 0.75rem; padding: 5px 10px; border-radius: 4px; cursor: pointer;">📈 NIFTY Trend</button>
+    </div>
+    <div style="background: #0f172a; border: 1px solid var(--border); border-radius: 8px; padding: 14px; display: flex; gap: 10px;">
+      <input type="text" id="mf-copilot-input" placeholder="Ask AI Copilot about setups, option chain, or live bias..." style="flex: 1; background: rgba(0,0,0,0.4); border: 1px solid var(--border); color: #fff; padding: 10px 14px; border-radius: 6px; font-size: 0.88rem;" onkeydown="if(event.key==='Enter') sendMfCopilotMessage();">
+      <button type="button" onclick="sendMfCopilotMessage()" class="btn" style="background: #38bdf8; color: #0b0f19; font-weight: 800; padding: 10px 18px; border-radius: 6px; border: none; cursor: pointer;">Send ⚡</button>
+    </div>
+  </div>
+
+  </div>
+
+  <!-- Sub-Panel 3: Telegram -->
+  <div id="mf-telegram" class="mf-subcontent" style="display: none;">
+    <!-- Header Banner -->
+  <div class="card" style="margin-bottom: 20px; border-left: 4px solid #38bdf8; background: linear-gradient(135deg, rgba(56, 189, 248, 0.08) 0%, rgba(19, 27, 46, 0.95) 100%);">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+      <div>
+        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+          <span style="font-size: 1.25rem; font-weight: 800; color: var(--text-primary);">📱 Telegram Notification Engine &amp; 15-Minute Execution Gate</span>
+          <span class="badge" id="tele-status-tag" style="background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.4); color: #38bdf8;">CHECKING...</span>
+        </div>
+        <div style="font-size: 0.82rem; color: var(--text-secondary); margin-top: 4px; max-width: 900px;">
+          Autonomous alert bridge for NIFTY &amp; BANKNIFTY: Dispatches instant breakout alerts, sudden high-impact market news, and <strong>trade confirmations with full AI reasoning ("Why system takes trade")</strong> that count down for <strong>15 minutes</strong> before auto-executing into the simulator.
+        </div>
+      </div>
+      <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+        <button class="btn" onclick="sendTelegramTest()" style="background: rgba(56, 189, 248, 0.2); border: 1px solid #38bdf8; color: #38bdf8; font-weight: 700; padding: 6px 14px; border-radius: 6px;">
+          📨 Send Test Alert
+        </button>
+        <button class="btn" onclick="fetchPendingTrades()" style="background: var(--bg-card); border: 1px solid var(--border); color: var(--text-primary); font-weight: 600; padding: 6px 14px; border-radius: 6px;">
+          🔄 Refresh Orders
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px;">
+    <!-- Telegram Bot Settings Card -->
+    <div class="card" style="border: 1px solid var(--border);">
+      <h3 style="font-size: 1.05rem; color: var(--text-primary); margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
+        ⚙️ Bot Credentials &amp; Channel
+      </h3>
+      <form onsubmit="saveTelegramCredentials(event)" style="display: flex; flex-direction: column; gap: 12px;">
+        <div>
+          <label style="display: block; font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 4px;">Telegram Bot Token</label>
+          <input type="password" id="tele-input-token" placeholder="e.g. 7123456789:AAHk..." style="width: 100%; background: var(--bg-main); border: 1px solid var(--border); padding: 8px 12px; border-radius: 6px; color: var(--text-primary); font-size: 0.85rem; font-family: monospace;" />
+          <span style="font-size: 0.7rem; color: var(--text-secondary);">Obtain via <a href="https://t.me/BotFather" target="_blank" style="color: #38bdf8;">@BotFather</a> on Telegram with <code>/newbot</code>.</span>
+        </div>
+        <div>
+          <label style="display: block; font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 4px;">Telegram Chat ID / Channel ID</label>
+          <input type="text" id="tele-input-chat" placeholder="e.g. 123456789 or -100..." style="width: 100%; background: var(--bg-main); border: 1px solid var(--border); padding: 8px 12px; border-radius: 6px; color: var(--text-primary); font-size: 0.85rem; font-family: monospace;" />
+          <span style="font-size: 0.7rem; color: var(--text-secondary);">Your personal user ID (from <a href="https://t.me/userinfobot" target="_blank" style="color: #38bdf8;">@userinfobot</a>) or group/channel ID.</span>
+        </div>
+        <div style="display: flex; gap: 10px; align-items: center; margin-top: 4px;">
+          <button type="submit" class="btn" style="background: #38bdf8; color: #000; border: none; font-weight: 700; padding: 8px 18px; border-radius: 6px;">
+            💾 Save Telegram Credentials
+          </button>
+          <span id="tele-save-feedback" style="font-size: 0.75rem; color: var(--green);"></span>
+        </div>
+      </form>
+    </div>
+
+    <!-- 15-Minute Auto-Execution Gate Architecture Card -->
+    <div class="card" style="border: 1px solid var(--border); background: rgba(19, 27, 46, 0.6);">
+      <h3 style="font-size: 1.05rem; color: var(--text-primary); margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
+        ⏱️ How the 15-Minute Execution Gate Works
+      </h3>
+      <div style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.6;">
+        <ol style="margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 8px;">
+          <li><strong style="color: var(--text-primary);">Level Breakout / Trade Condition Met:</strong> System spots a high-probability breakout or option setup.</li>
+          <li><strong style="color: var(--text-primary);">Telegram Alert Dispatched:</strong> Sends an instant message detailing the <em>exact technical reason</em> ("Why system takes trade"), strike, target, and stop loss.</li>
+          <li><strong style="color: var(--yellow);">15-Minute Confirmation Window:</strong> System enters an armed hold state for 900 seconds. You receive ample time to review market context.</li>
+          <li><strong style="color: var(--green);">Automatic Execution:</strong> If not cancelled via the Cancel button below, the system auto-fires the paper trade right when the 15-minute timer hits zero and sends an execution confirmation to Telegram.</li>
+          <li><strong style="color: var(--red);">Manual Cancellation:</strong> Click <em>Cancel Order</em> anytime during the 15 minutes to abort the trade.</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+
+  <!-- Active 15-Minute Countdown Orders Table -->
+  <div class="card" style="margin-bottom: 24px; border: 1px solid var(--border);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span style="font-size: 1.1rem; font-weight: 800; color: var(--text-primary);">⏳ Active Armed Orders (15-Minute Countdown)</span>
+        <span class="badge badge-yellow" id="pending-count-badge">0 ARMED</span>
+      </div>
+      <div style="font-size: 0.78rem; color: var(--text-secondary);">
+        Live auto-executing countdown &bull; Updates every second
+      </div>
+    </div>
+
+    <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+      <table style="width: 100%; border-collapse: collapse; font-size: 0.82rem;">
+        <thead>
+          <tr style="border-bottom: 1px solid var(--border); text-align: left; color: var(--text-secondary); background: rgba(0,0,0,0.2);">
+            <th style="padding: 10px 12px;">Order ID</th>
+            <th style="padding: 10px 12px;">Contract</th>
+            <th style="padding: 10px 12px;">Lots / Qty</th>
+            <th style="padding: 10px 12px;">Spot / Premium</th>
+            <th style="padding: 10px 12px;">SL / Target</th>
+            <th style="padding: 10px 12px;">Time Remaining</th>
+            <th style="padding: 10px 12px;">Status</th>
+            <th style="padding: 10px 12px;">Technical Rationale ("Why Trade")</th>
+            <th style="padding: 10px 12px; text-align: right;">Action</th>
+          </tr>
+        </thead>
+        <tbody id="pending-trades-tbody">
+          <tr>
+            <td colspan="9" style="text-align: center; color: var(--text-secondary); padding: 30px;">
+              No armed trades currently counting down. When a custom level or option setup triggers, it will appear here with a live 15-minute countdown.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Manual 15-Minute Arm Test Form -->
+  <div class="card" style="border: 1px solid var(--border); background: rgba(19, 27, 46, 0.4);">
+    <h3 style="font-size: 1.05rem; color: var(--text-primary); margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
+      🧪 Test Armed 15-Minute Execution Workflow
+    </h3>
+    <div style="font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 14px;">
+      Manually arm an order to simulate the exact production workflow: dispatches the Telegram intent alert with technical reasoning, counts down 15 minutes (or custom seconds for testing), and auto-executes into the Option Paper Simulator upon timer completion.
+    </div>
+    <form onsubmit="submitManualArmTrade(event)" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)) 2fr auto; gap: 10px; align-items: flex-end;">
+      <div>
+        <label style="display: block; font-size: 0.72rem; color: var(--text-secondary); margin-bottom: 3px;">Index</label>
+        <select id="arm-test-symbol" style="width: 100%; background: var(--bg-main); border: 1px solid var(--border); padding: 7px; border-radius: 6px; color: var(--text-primary); font-size: 0.8rem;">
+          <option value="NIFTY">NIFTY</option>
+          <option value="BANKNIFTY">BANKNIFTY</option>
+        </select>
+      </div>
+      <div>
+        <label style="display: block; font-size: 0.72rem; color: var(--text-secondary); margin-bottom: 3px;">Strike Price</label>
+        <input type="number" id="arm-test-strike" value="23500" step="50" style="width: 100%; background: var(--bg-main); border: 1px solid var(--border); padding: 7px; border-radius: 6px; color: var(--text-primary); font-size: 0.8rem;" />
+      </div>
+      <div>
+        <label style="display: block; font-size: 0.72rem; color: var(--text-secondary); margin-bottom: 3px;">Option Type</label>
+        <select id="arm-test-type" style="width: 100%; background: var(--bg-main); border: 1px solid var(--border); padding: 7px; border-radius: 6px; color: var(--text-primary); font-size: 0.8rem;">
+          <option value="CE">CALL (CE)</option>
+          <option value="PE">PUT (PE)</option>
+        </select>
+      </div>
+      <div>
+        <label style="display: block; font-size: 0.72rem; color: var(--text-secondary); margin-bottom: 3px;">Est. Premium (₹)</label>
+        <input type="number" id="arm-test-premium" value="125.50" step="0.05" style="width: 100%; background: var(--bg-main); border: 1px solid var(--border); padding: 7px; border-radius: 6px; color: var(--text-primary); font-size: 0.8rem;" />
+      </div>
+      <div>
+        <label style="display: block; font-size: 0.72rem; color: var(--text-secondary); margin-bottom: 3px;">Countdown (Sec)</label>
+        <input type="number" id="arm-test-countdown" value="900" min="10" max="1800" title="900s = 15 minutes standard" style="width: 100%; background: var(--bg-main); border: 1px solid var(--border); padding: 7px; border-radius: 6px; color: var(--yellow); font-size: 0.8rem; font-weight: 700;" />
+      </div>
+      <div>
+        <label style="display: block; font-size: 0.72rem; color: var(--text-secondary); margin-bottom: 3px;">Technical Reason ("Why System Takes Trade")</label>
+        <input type="text" id="arm-test-reason" value="Bullish breakout above PDH (23,500) confirmed on 15M candle with OI support" style="width: 100%; background: var(--bg-main); border: 1px solid var(--border); padding: 7px; border-radius: 6px; color: var(--text-primary); font-size: 0.8rem;" />
+      </div>
+      <div>
+        <button type="submit" class="btn" style="background: #f59e0b; color: #000; border: none; font-weight: 800; padding: 8px 16px; border-radius: 6px; font-size: 0.82rem; white-space: nowrap;">
+          ⏱️ Arm 15-Min Trade
+        </button>
+      </div>
+    </form>
+  </div>
 </div>
+
+<!-- Add Custom News Event Modal -->
+<div id="add-news-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); z-index: 2000; justify-content: center; align-items: center; padding: 20px;">
+  <div style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; max-width: 600px; width: 100%; padding: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.7);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 10px;">
+      <h3 style="font-size: 1.15rem; color: var(--text-primary);">➕ Add Market News / Event</h3>
+      <button onclick="closeAddNewsModal()" style="background: none; border: none; color: var(--text-secondary); font-size: 1.4rem; cursor: pointer;">&times;</button>
+    </div>
+    <form onsubmit="submitAddNews(event)" style="display: flex; flex-direction: column; gap: 12px;">
+      <div>
+        <label style="display: block; font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 4px;">News Headline / Title *</label>
+        <input type="text" id="modal-news-title" required placeholder="e.g. RBI Keeps Repo Rate Unchanged; Upgrades GDP Growth Forecast" style="width: 100%; background: var(--bg-main); border: 1px solid var(--border); padding: 8px 12px; border-radius: 6px; color: var(--text-primary); font-size: 0.85rem;" />
+      </div>
+      <div>
+        <label style="display: block; font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 4px;">Summary / Description</label>
+        <textarea id="modal-news-summary" rows="3" placeholder="Context, figures, key quotes..." style="width: 100%; background: var(--bg-main); border: 1px solid var(--border); padding: 8px 12px; border-radius: 6px; color: var(--text-primary); font-size: 0.85rem;"></textarea>
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+        <div>
+          <label style="display: block; font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 4px;">Category</label>
+          <select id="modal-news-category" style="width: 100%; background: var(--bg-main); border: 1px solid var(--border); padding: 8px; border-radius: 6px; color: var(--text-primary); font-size: 0.82rem;">
+            <option value="GOOD_NEWS">Good News for Market</option>
+            <option value="MARKET_IMPACT">High Market Impact</option>
+            <option value="MACRO_POLICY">Macro &amp; RBI Policy</option>
+            <option value="GLOBAL_CUES">Global Cues &amp; Crude</option>
+            <option value="BAD_NEWS">Market Risk / Negative</option>
+            <option value="EARNINGS">Corporate Earnings</option>
+          </select>
+        </div>
+        <div>
+          <label style="display: block; font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 4px;">Expected Market Effect</label>
+          <select id="modal-news-impact" style="width: 100%; background: var(--bg-main); border: 1px solid var(--border); padding: 8px; border-radius: 6px; color: var(--text-primary); font-size: 0.82rem;">
+            <option value="BULLISH">🟢 BULLISH (Supports Rally)</option>
+            <option value="BEARISH">🔴 BEARISH (Downside Risk)</option>
+            <option value="VOLATILE">⚡ VOLATILE (Sharp Swings)</option>
+            <option value="NEUTRAL">⚪ NEUTRAL (Rangebound)</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <label style="display: block; font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 4px;">Direct Market Effect on NIFTY &amp; BANKNIFTY *</label>
+        <input type="text" id="modal-news-effect" required placeholder="e.g. Bullish catalyst for BankNifty; supports higher lows and call buying" style="width: 100%; background: var(--bg-main); border: 1px solid var(--border); padding: 8px 12px; border-radius: 6px; color: var(--text-primary); font-size: 0.85rem;" />
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+        <div>
+          <label style="display: block; font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 4px;">Source Name</label>
+          <input type="text" id="modal-news-source" value="Market Wire / Analyst" style="width: 100%; background: var(--bg-main); border: 1px solid var(--border); padding: 8px 12px; border-radius: 6px; color: var(--text-primary); font-size: 0.82rem;" />
+        </div>
+        <div>
+          <label style="display: block; font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 4px;">Article URL (Optional)</label>
+          <input type="url" id="modal-news-url" placeholder="https://..." style="width: 100%; background: var(--bg-main); border: 1px solid var(--border); padding: 8px 12px; border-radius: 6px; color: var(--text-primary); font-size: 0.82rem;" />
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px;">
+        <input type="checkbox" id="modal-news-important" checked style="accent-color: var(--accent); transform: scale(1.15);" />
+        <label for="modal-news-important" style="font-size: 0.82rem; color: var(--text-primary); cursor: pointer;">
+          ⚡ <strong>Mark as Important: Scroll at Dashboard Top ticker</strong>
+        </label>
+      </div>
+      <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 14px;">
+        <button type="button" onclick="closeAddNewsModal()" class="btn" style="padding: 8px 16px;">Cancel</button>
+        <button type="submit" class="btn" style="background: var(--accent); color: white; border: none; font-weight: 700; padding: 8px 20px;">Save &amp; Post News</button>
+      </div>
+    </form>
+  </div>
+  </div>
+
+  <!-- Sub-Panel 4: Brain -->
+  <div id="mf-brain" class="mf-subcontent" style="display: none;">
+    <div class="card" style="margin-bottom: 16px; border-left: 4px solid var(--accent); background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(19, 27, 46, 0.95) 100%);">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+      <div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 1.05rem; font-weight: 800; color: var(--text-primary);">🧠 Gemini 2.5 Flash Autonomous Cognitive AI Brain</span>
+          <span class="badge badge-green">ARMED &amp; STANDBY</span>
+        </div>
+        <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 3px;">
+          Evaluates multi-timeframe 1H macro bias, 15M tactical candle state, and volume order flow. Scheduled automatically during active trading sessions (09:15–15:30 IST).
+        </div>
+      </div>
+      <div style="display: flex; gap: 8px;">
+        <button class="btn" onclick="analyzeChartNow()" style="background: var(--accent); color: white; border: none; font-weight: 700; padding: 6px 14px; border-radius: 6px; cursor: pointer;">
+          🔬 Trigger Brain Evaluation Now
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">Recent Cognitive Brain Reasoning Verdicts (data/brain_history.db)</div>
+    <table>
+      <thead>
+        <tr><th>Timestamp</th><th>Setup State</th><th>1H Macro Bias</th><th>15M Tactical State</th><th>Recommended Action</th><th>Key Reasoning</th></tr>
+      </thead>
+      <tbody id="brain-table-body">
+        <tr><td colspan="6" style="text-align: center; color: var(--text-secondary); padding: 24px;">🧠 Cognitive AI Brain is ready &amp; armed. Awaiting 15M candle evaluation during market session (09:15–15:30 IST) or click "Trigger Brain Evaluation Now" above.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  </div>
+
+  <!-- Sub-Panel 5: Positions -->
+  <div id="mf-positions" class="mf-subcontent" style="display: none;">
+    <div class="card" style="margin-bottom: 16px; border-left: 4px solid var(--yellow); background: linear-gradient(135deg, rgba(245, 158, 11, 0.08) 0%, rgba(19, 27, 46, 0.95) 100%);">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+      <div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 1.05rem; font-weight: 800; color: var(--text-primary);">🛡️ Sensibull Virtual Paper Execution &amp; Position Guard</span>
+          <span class="badge badge-yellow">SAFE VIRTUAL MODE</span>
+          <span class="badge badge-red">LIVE BROKER: DISABLED</span>
+        </div>
+        <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 3px;">
+          Live real-money broker execution is strictly disabled for safety. Simulated option positions and Sensibull virtual trades are monitored here with real-time MTM, SL, and Target alerts.
+        </div>
+      </div>
+      <button class="btn" onclick="switchTab('tab-simulator', document.querySelectorAll('.nav-tab')[1])" style="background: rgba(59, 130, 246, 0.2); border: 1px solid var(--accent); color: var(--text-primary); font-size: 0.78rem; padding: 6px 12px; border-radius: 6px; cursor: pointer;">
+        ⚡ Go to Option Paper Simulator
+      </button>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom: 20px;">
+    <div class="card-header">Sensibull Virtual Positions (data/paper_positions.db)</div>
+    <table>
+      <thead>
+        <tr><th>Position ID</th><th>Symbol &amp; Strike</th><th>Action</th><th>Lots</th><th>Entry Price</th><th>Current Price</th><th>Unrealized P&amp;L</th><th>Status</th></tr>
+      </thead>
+      <tbody id="positions-table-body">
+        <tr><td colspan="8" style="text-align: center; color: var(--text-secondary); padding: 24px;">🟢 Safe Virtual Mode Active &bull; No active positions currently open (Portfolio Flat). Active positions with real-time MTM, SL, and Target tracking will display here as soon as a custom level or AI setup triggers.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="card">
+    <div class="card-header">Autonomous Position Monitoring &amp; Reassessment Triggers (data/position_monitoring.db)</div>
+    <table>
+      <thead>
+        <tr><th>Timestamp</th><th>Position ID</th><th>Trigger Event</th><th>Price Move</th><th>Brain Reassessment Action</th><th>P&amp;L Recorded</th></tr>
+      </thead>
+      <tbody id="monitoring-table-body">
+        <tr><td colspan="6" style="text-align: center; color: var(--text-secondary); padding: 20px;">Position monitoring active. Checks occur continuously every 15 seconds whenever positions are active.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  </div>
+
+  <!-- Sub-Panel 6: Experience -->
+  <div id="mf-experience" class="mf-subcontent" style="display: none;">
+    <div class="card" style="margin-bottom: 16px; border-left: 4px solid var(--green); background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(19, 27, 46, 0.95) 100%);">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+      <div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 1.05rem; font-weight: 800; color: var(--text-primary);">📚 Trade Experience Memory &amp; Cognitive Post-Mortem Store</span>
+          <span class="badge badge-green">ACTIVE STORE</span>
+        </div>
+        <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 3px;">
+          Persists closed trades in <code>data/experience.db</code>. Every closed trade undergoes an automatic cognitive post-mortem to score edge fidelity, record lessons learned, and eliminate repeating mistakes.
+        </div>
+      </div>
+      <a href="/api/simulator/report" target="_blank" class="btn" style="text-decoration: none; padding: 6px 12px; font-size: 0.78rem;">
+        📥 Download Simulator Report
+      </a>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">Completed Trade Post-Mortems &amp; Experience Memory (data/experience.db)</div>
+    <table>
+      <thead>
+        <tr><th>Trade ID</th><th>Instrument</th><th>Outcome</th><th>Realized P&amp;L</th><th>Holding Duration</th><th>Reasoning Evaluation</th><th>Execution Fidelity</th></tr>
+      </thead>
+      <tbody id="experience-table-body">
+        <tr><td colspan="7" style="text-align: center; color: var(--text-secondary); padding: 24px;">📘 Experience Memory Store is active (data/experience.db). Closed simulator &amp; paper trades will be analyzed here for edge validation, win-rate attribution, and risk lessons.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  </div>
+
+  <!-- Sub-Panel 7: Research -->
+  <div id="mf-research" class="mf-subcontent" style="display: none;">
+    <div class="grid">
+    <div class="card">
+      <div class="card-header">Dhan Broker Data Adapter</div>
+      <div class="card-value" style="color: var(--green);">ONLINE</div>
+      <div class="card-subtext">Mock Provider (Offline Deterministic Walk)</div>
+    </div>
+    <div class="card">
+      <div class="card-header">Normalized Bars Stored</div>
+      <div class="card-value" id="res-bars-count">0</div>
+      <div class="card-subtext">data/hermes_research/market_data.db</div>
+    </div>
+    <div class="card">
+      <div class="card-header">Negative Knowledge Catalog</div>
+      <div class="card-value" style="color: var(--red);" id="res-fails-count">0</div>
+      <div class="card-subtext">Preserved Failed Hypotheses in Memory</div>
+    </div>
+    <div class="card">
+      <div class="card-header">Dynamic Assessments</div>
+      <div class="card-value" style="color: var(--purple);" id="res-ass-count">0</div>
+      <div class="card-subtext">Dynamic Segment Importance Weights</div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom: 20px;">
+    <div class="card-header">Latest Hermes Research Dynamic Assessments (data/hermes_research/assessments.db)</div>
+    <table>
+      <thead>
+        <tr><th>Assessment ID</th><th>Timestamp</th><th>Instrument</th><th>Direction</th><th>Total Score</th><th>Confidence</th><th>Dynamic Segments Breakdown</th></tr>
+      </thead>
+      <tbody id="research-ass-body">
+        <tr><td colspan="7" style="text-align: center; color: var(--text-secondary);">Loading research assessments...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <div class="card-header">Negative Knowledge Catalog — Disproven Hypotheses (data/hermes_research/research_memory.db)</div>
+    <table>
+      <thead>
+        <tr><th>Failed ID</th><th>Hypothesis Statement</th><th>Failure Reason</th><th>Lessons Learned</th><th>Recorded At</th></tr>
+      </thead>
+      <tbody id="research-fails-body">
+        <tr><td colspan="5" style="text-align: center; color: var(--text-secondary);">Loading negative knowledge catalog...</td></tr>
+      </tbody>
+    </table>
+  </div>
+  </div>
+
+  <!-- Hidden Alias Anchors for ID Compatibility -->
+  <div id="tab-backtest" style="display:none;"></div>
+  <div id="tab-telegram" style="display:none;"></div>
+  <div id="tab-brain" style="display:none;"></div>
+  <div id="tab-positions" style="display:none;"></div>
+  <div id="tab-experience" style="display:none;"></div>
+  <div id="tab-research" style="display:none;"></div>
+</div>
+
 
 <script>
   function switchTab(tabId, btn) {
+    const mfAliasMap = {
+      'tab-backtest': 'mf-backtest',
+      'tab-telegram': 'mf-telegram',
+      'tab-brain': 'mf-brain',
+      'tab-positions': 'mf-positions',
+      'tab-experience': 'mf-experience',
+      'tab-research': 'mf-research',
+      'tab-copilot': 'mf-copilot'
+    };
+    if (mfAliasMap[tabId]) {
+      switchTab('tab-multi-function', document.getElementById('nav-btn-multi-function'));
+      switchMfSubtab(mfAliasMap[tabId]);
+      return;
+    }
     document.querySelectorAll('.tab-content').forEach(el => {
       el.classList.remove('active');
       el.style.display = 'none';
@@ -11459,6 +11579,34 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     }
     scrollAiChatToBottom();
   }
+
+  // Multi-Function Subtab Navigation
+  function switchMfSubtab(subId, btn) {
+    document.querySelectorAll('.mf-subcontent').forEach(el => el.style.display = 'none');
+    document.querySelectorAll('.mf-subtab').forEach(b => b.classList.remove('active'));
+
+    const target = document.getElementById(subId);
+    if (target) target.style.display = 'block';
+
+    if (btn && btn.classList) {
+      btn.classList.add('active');
+    } else {
+      document.querySelectorAll('.mf-subtab').forEach(b => {
+        const oc = b.getAttribute('onclick') || '';
+        if (oc.includes(subId)) b.classList.add('active');
+      });
+    }
+    try { localStorage.setItem('nt_mf_subtab', subId); } catch(e) {}
+  }
+
+  function sendMfCopilotMessage() {
+    const inp = document.getElementById('mf-copilot-input');
+    if (!inp || !inp.value.trim()) return;
+    const val = inp.value.trim();
+    inp.value = '';
+    quickAiPrompt(val);
+  }
+
 </script>
 
   <!-- Floating AI Copilot Chat Widget for Render Web Dashboard -->
