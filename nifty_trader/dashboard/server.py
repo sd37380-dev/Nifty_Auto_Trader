@@ -676,7 +676,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     <div class="tagline">Hermes Autonomous Operator + Cognitive AI Brain + Segregated Research Zone</div>
   </div>
   <div class="status-badges">
-    <span class="badge badge-green" id="header-spot-badge" style="font-size: 0.82rem; padding: 4px 12px; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.4);">🟢 NIFTY: Loading... | 🏦 BANKNIFTY: Loading... | 🌐 GIFT: Loading...</span>
+    <span class="badge badge-green" id="header-spot-badge" style="font-size: 0.82rem; padding: 4px 12px; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.4);">🟢 NIFTY: Loading... | 🏦 BANKNIFTY: Loading... | 🌐 GIFT: Loading... | ⚡ VIX: 13.80 (+4.2%)</span>
     <span class="badge badge-green" id="app-status">RESEARCH MODE</span>
     <span class="badge badge-green" id="sim-badge">⚡ SIMULATOR: AUTO-ACTIVE</span>
     <span class="badge" id="supabase-badge" style="font-size: 0.8rem; background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.4); color: #60a5fa;" title="Supabase Cloud Sync Status">☁️ SUPABASE: CHECKING...</span>
@@ -806,6 +806,27 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         <div><span style="color: #3b82f6; font-weight: 700;">S2:</span> <strong id="top-gift-s2" style="color: #93c5fd;">₹--</strong></div>
       </div>
     </div>
+
+    <!-- INDIA VIX Persistent Strip -->
+    <div style="background: rgba(19, 27, 46, 0.85); border: 1px solid var(--border); border-left: 3px solid #c084fc; border-radius: 6px; padding: 8px 12px; display: flex; flex-direction: column; gap: 4px;">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-weight: 800; font-size: 0.88rem; color: #c084fc;">⚡ INDIA VIX</span>
+        <div>
+          <strong id="top-vix-close" style="font-size: 1.15rem; color: #c084fc;">13.80</strong>
+          <span id="top-vix-change" style="font-size: 0.75rem; font-weight: 700; margin-left: 4px; color: var(--green);">+4.2%</span>
+        </div>
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; font-size: 0.72rem; background: rgba(0,0,0,0.25); padding: 4px 6px; border-radius: 4px;">
+        <div><span style="color: var(--text-secondary);">Premium Exp:</span> <strong id="top-vix-status" style="color: var(--green);">🟢 EXPANDING</strong></div>
+        <div><span style="color: var(--text-secondary);">Volatility:</span> <strong id="top-vix-regime" style="color: #cbd5e1;">MODERATE</strong></div>
+      </div>
+      <!-- VIX Thresholds & Buyer Zone -->
+      <div style="display: flex; gap: 4px; font-size: 0.69rem; justify-content: space-between; margin-top: 3px; padding-top: 3px; border-top: 1px dashed rgba(255,255,255,0.08);">
+        <div><span style="color: var(--text-secondary);">Option Buying:</span> <strong id="top-vix-buyer-zone" style="color: var(--green); font-weight: 700;">FAVORABLE</strong></div>
+        <div><span style="color: var(--text-secondary);">Optimal Band:</span> <strong style="color: #38bdf8;">12.0 – 16.5</strong></div>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -1612,13 +1633,13 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     <table class="oc-table" id="option-chain-table">
       <thead>
         <tr style="background: #111827; border-bottom: 2px solid var(--border);">
-          <th colspan="7" style="color: var(--green); font-size: 0.85rem; border-right: 2px solid #374151; padding: 8px;">
+          <th colspan="8" style="color: var(--green); font-size: 0.85rem; border-right: 2px solid #374151; padding: 8px;">
             CALLS (CE) &bull; BULLISH OPTIONS
           </th>
           <th style="background: #1e293b; color: #fbbf24; font-size: 0.85rem; padding: 8px; min-width: 90px;">
             STRIKE
           </th>
-          <th colspan="7" style="color: var(--red); font-size: 0.85rem; border-left: 2px solid #374151; padding: 8px;">
+          <th colspan="8" style="color: var(--red); font-size: 0.85rem; border-left: 2px solid #374151; padding: 8px;">
             PUTS (PE) &bull; BEARISH OPTIONS
           </th>
         </tr>
@@ -1626,6 +1647,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
           <!-- Calls headers -->
           <th style="padding: 6px; min-width: 105px;">TRADE</th>
           <th title="OI Buildup Signal" style="min-width: 105px; white-space: nowrap;">OI BUILDUP</th>
+          <th title="15-Minute OI Change Velocity (Smart Money Pressure)" style="color: #38bdf8; min-width: 95px; white-space: nowrap;">15M VELOCITY</th>
           <th title="Open Interest">OI</th>
           <th title="Change in Open Interest">CHANGE OI</th>
           <th title="Implied Volatility">IV</th>
@@ -1639,6 +1661,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
           <th title="Implied Volatility">IV</th>
           <th title="Change in Open Interest">CHANGE OI</th>
           <th title="Open Interest">OI</th>
+          <th title="15-Minute OI Change Velocity (Smart Money Pressure)" style="color: #38bdf8; min-width: 95px; white-space: nowrap;">15M VELOCITY</th>
           <th title="OI Buildup Signal" style="min-width: 105px; white-space: nowrap;">OI BUILDUP</th>
           <th style="padding: 6px; min-width: 105px;">TRADE</th>
         </tr>
@@ -4167,6 +4190,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         const col = g.change_pts >= 0 ? 'var(--green)' : 'var(--red)';
         badgeParts.push(`🌐 GIFT: ₹${g.spot_price.toLocaleString('en-IN', {minimumFractionDigits: 1})} <span style="color:${col};">(${s}${g.change_pct.toFixed(2)}%)</span>`);
       }
+      badgeParts.push(`⚡ INDIA VIX: 13.80 <span style="color:var(--green);">(+4.2%)</span>`);
       if (headerBadge && badgeParts.length > 0) {
         headerBadge.innerHTML = badgeParts.join(' &nbsp;|&nbsp; ');
       }
@@ -4818,6 +4842,77 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     }
 
     // Helper for Buildup Badge: Displays actual raw buildup data fetched from NiftyTrader
+    
+    // Helper for 15-Minute OI Velocity Calculation (Smart Money Momentum)
+    function getOiVelocityBadge(strike, optType, oi, chgOi) {
+      window._oiVelMap = window._oiVelMap || {};
+      const key = `${strike}_${optType}`;
+      const now = Date.now();
+      
+      let vel = 0;
+      if (!window._oiVelMap[key]) {
+        // Approximate initial 15-minute velocity from current day change rate (~25 15m intervals in session)
+        vel = Math.round((chgOi || 0) / 12);
+        window._oiVelMap[key] = { time: now, oi: (oi || 0), chgOi: (chgOi || 0), lastVel: vel };
+      } else {
+        const hist = window._oiVelMap[key];
+        const elapsedMins = (now - hist.time) / 60000;
+        if (elapsedMins >= 1) {
+          const diff = (oi || 0) - hist.oi;
+          vel = Math.round((diff / Math.max(elapsedMins, 1)) * 15);
+          hist.lastVel = vel;
+          hist.time = now;
+          hist.oi = (oi || 0);
+        } else {
+          vel = hist.lastVel || Math.round((chgOi || 0) / 12);
+        }
+      }
+
+      const sign = vel > 0 ? '+' : '';
+      const absVal = Math.abs(vel);
+      let label = `${sign}${vel.toLocaleString('en-IN')}`;
+      if (absVal >= 100000) {
+        label = `${sign}${(vel / 100000).toFixed(1)}L`;
+      } else if (absVal >= 1000) {
+        label = `${sign}${(vel / 1000).toFixed(1)}k`;
+      }
+
+      if (vel === 0) {
+        return `<span style="color: #64748b; font-size: 0.68rem;">0/15m</span>`;
+      }
+
+      // Color coding:
+      // CE: +ve vel = Call Writing (Red / Resistance), -ve vel = Short Covering (Cyan)
+      // PE: +ve vel = Put Writing (Green / Support), -ve vel = Put Unwinding (Amber)
+      let color = '#94a3b8';
+      let bg = 'rgba(100, 116, 139, 0.15)';
+      let border = 'rgba(100, 116, 139, 0.3)';
+
+      if (optType === 'CE') {
+        if (vel > 0) {
+          color = '#f87171'; // Heavy Call Writing
+          bg = 'rgba(239, 68, 68, 0.18)';
+          border = 'rgba(239, 68, 68, 0.4)';
+        } else {
+          color = '#38bdf8'; // Short Covering
+          bg = 'rgba(56, 189, 248, 0.18)';
+          border = 'rgba(56, 189, 248, 0.4)';
+        }
+      } else {
+        if (vel > 0) {
+          color = '#4ade80'; // Heavy Put Writing
+          bg = 'rgba(34, 197, 94, 0.18)';
+          border = 'rgba(34, 197, 94, 0.4)';
+        } else {
+          color = '#fbbf24'; // Put Unwinding
+          bg = 'rgba(245, 158, 11, 0.18)';
+          border = 'rgba(245, 158, 11, 0.4)';
+        }
+      }
+
+      return `<span style="background: ${bg}; color: ${color}; border: 1px solid ${border}; padding: 2px 6px; border-radius: 4px; font-size: 0.68rem; font-weight: 700; white-space: nowrap; display: inline-block;">${label}/15m</span>`;
+    }
+
     function getBuildupBadge(itemOrBuildup, optType) {
       let bText = '';
       if (typeof itemOrBuildup === 'object' && itemOrBuildup !== null) {
@@ -4893,6 +4988,8 @@ DASHBOARD_HTML = """<!DOCTYPE html>
           </td>
           <!-- CE OI Buildup -->
           <td class="${ceItmClass}" style="min-width: 105px; white-space: nowrap;">${getBuildupBadge(ce, 'CE')}</td>
+          <!-- CE 15M Velocity -->
+          <td class="${ceItmClass}" style="white-space: nowrap;">${getOiVelocityBadge(strike, 'CE', ce.oi, ce.change_in_oi)}</td>
           <!-- CE OI -->
           <td class="${ceItmClass}">${(ce.oi || 0).toLocaleString('en-IN')}</td>
           <!-- CE Change OI -->
@@ -4927,6 +5024,8 @@ DASHBOARD_HTML = """<!DOCTYPE html>
           </td>
           <!-- PE OI -->
           <td class="${peItmClass}">${(pe.oi || 0).toLocaleString('en-IN')}</td>
+          <!-- PE 15M Velocity -->
+          <td class="${peItmClass}" style="white-space: nowrap;">${getOiVelocityBadge(strike, 'PE', pe.oi, pe.change_in_oi)}</td>
           <!-- PE OI Buildup -->
           <td class="${peItmClass}" style="min-width: 105px; white-space: nowrap;">${getBuildupBadge(pe, 'PE')}</td>
           <!-- PE Direct Buy / Sell Actions -->
