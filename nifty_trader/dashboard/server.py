@@ -753,7 +753,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     </div>
   </div>
 
-  <div id="persistent-market-cards" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 10px;">
+    <div id="persistent-market-cards" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 10px;">
     <!-- NIFTY 50 Persistent Strip -->
     <div style="background: rgba(19, 27, 46, 0.85); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 6px; padding: 8px 12px; display: flex; flex-direction: column; gap: 4px;">
       <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -770,15 +770,6 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         <div><span style="color: var(--text-secondary);">PDH:</span> <strong id="top-nifty-pdh" style="color: #60a5fa;">₹--</strong></div>
         <div><span style="color: var(--text-secondary);">PDL:</span> <strong id="top-nifty-pdl" style="color: #f87171;">₹--</strong></div>
       </div>
-      <!-- Calculated 2S & 2R Levels -->
-      <div style="display: flex; gap: 4px; font-size: 0.69rem; justify-content: space-between; margin-top: 3px; padding-top: 3px; border-top: 1px dashed rgba(255,255,255,0.08);">
-        <div><span style="color: #ef4444; font-weight: 700;">R2:</span> <strong id="top-nifty-r2" style="color: #fca5a5;">₹--</strong></div>
-        <div><span style="color: #f59e0b; font-weight: 700;">R1:</span> <strong id="top-nifty-r1" style="color: #fde68a;">₹--</strong></div>
-        <div><span style="color: #94a3b8; font-weight: 700;">PP:</span> <strong id="top-nifty-pp" style="color: #cbd5e1;">₹--</strong></div>
-        <div><span style="color: #10b981; font-weight: 700;">S1:</span> <strong id="top-nifty-s1" style="color: #86efac;">₹--</strong></div>
-        <div><span style="color: #3b82f6; font-weight: 700;">S2:</span> <strong id="top-nifty-s2" style="color: #93c5fd;">₹--</strong></div>
-      </div>
-    </div>
 
     <!-- BANKNIFTY Persistent Strip -->
     <div style="background: rgba(19, 27, 46, 0.85); border: 1px solid var(--border); border-left: 3px solid #8b5cf6; border-radius: 6px; padding: 8px 12px; display: flex; flex-direction: column; gap: 4px;">
@@ -796,15 +787,6 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         <div><span style="color: var(--text-secondary);">PDH:</span> <strong id="top-bank-pdh" style="color: #a78bfa;">₹--</strong></div>
         <div><span style="color: var(--text-secondary);">PDL:</span> <strong id="top-bank-pdl" style="color: #f87171;">₹--</strong></div>
       </div>
-      <!-- Calculated 2S & 2R Levels -->
-      <div style="display: flex; gap: 4px; font-size: 0.69rem; justify-content: space-between; margin-top: 3px; padding-top: 3px; border-top: 1px dashed rgba(255,255,255,0.08);">
-        <div><span style="color: #ef4444; font-weight: 700;">R2:</span> <strong id="top-bank-r2" style="color: #fca5a5;">₹--</strong></div>
-        <div><span style="color: #f59e0b; font-weight: 700;">R1:</span> <strong id="top-bank-r1" style="color: #fde68a;">₹--</strong></div>
-        <div><span style="color: #94a3b8; font-weight: 700;">PP:</span> <strong id="top-bank-pp" style="color: #cbd5e1;">₹--</strong></div>
-        <div><span style="color: #10b981; font-weight: 700;">S1:</span> <strong id="top-bank-s1" style="color: #86efac;">₹--</strong></div>
-        <div><span style="color: #3b82f6; font-weight: 700;">S2:</span> <strong id="top-bank-s2" style="color: #93c5fd;">₹--</strong></div>
-      </div>
-    </div>
 
     <!-- GIFT NIFTY Persistent Strip -->
     <div style="background: rgba(19, 27, 46, 0.85); border: 1px solid var(--border); border-left: 3px solid #f59e0b; border-radius: 6px; padding: 8px 12px; display: flex; flex-direction: column; gap: 4px;">
@@ -822,35 +804,6 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         <div><span style="color: var(--text-secondary);">PDH:</span> <strong id="top-gift-pdh" style="color: #fbbf24;">₹--</strong></div>
         <div><span style="color: var(--text-secondary);">PDL:</span> <strong id="top-gift-pdl" style="color: #f87171;">₹--</strong></div>
       </div>
-      <!-- Calculated 2S & 2R Levels -->
-      <div style="display: flex; gap: 4px; font-size: 0.69rem; justify-content: space-between; margin-top: 3px; padding-top: 3px; border-top: 1px dashed rgba(255,255,255,0.08);">
-        <div><span style="color: #ef4444; font-weight: 700;">R2:</span> <strong id="top-gift-r2" style="color: #fca5a5;">₹--</strong></div>
-        <div><span style="color: #f59e0b; font-weight: 700;">R1:</span> <strong id="top-gift-r1" style="color: #fde68a;">₹--</strong></div>
-        <div><span style="color: #94a3b8; font-weight: 700;">PP:</span> <strong id="top-gift-pp" style="color: #cbd5e1;">₹--</strong></div>
-        <div><span style="color: #10b981; font-weight: 700;">S1:</span> <strong id="top-gift-s1" style="color: #86efac;">₹--</strong></div>
-        <div><span style="color: #3b82f6; font-weight: 700;">S2:</span> <strong id="top-gift-s2" style="color: #93c5fd;">₹--</strong></div>
-      </div>
-    </div>
-
-    <!-- INDIA VIX Persistent Strip -->
-    <div style="background: rgba(19, 27, 46, 0.85); border: 1px solid var(--border); border-left: 3px solid #c084fc; border-radius: 6px; padding: 8px 12px; display: flex; flex-direction: column; gap: 4px;">
-      <div style="display: flex; justify-content: space-between; align-items: center;">
-        <span style="font-weight: 800; font-size: 0.88rem; color: #c084fc;">⚡ INDIA VIX</span>
-        <div>
-          <strong id="top-vix-close" style="font-size: 1.15rem; color: #c084fc;">13.80</strong>
-          <span id="top-vix-change" style="font-size: 0.75rem; font-weight: 700; margin-left: 4px; color: var(--green);">+4.2%</span>
-        </div>
-      </div>
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; font-size: 0.72rem; background: rgba(0,0,0,0.25); padding: 4px 6px; border-radius: 4px;">
-        <div><span style="color: var(--text-secondary);">Premium Exp:</span> <strong id="top-vix-status" style="color: var(--green);">🟢 EXPANDING</strong></div>
-        <div><span style="color: var(--text-secondary);">Volatility:</span> <strong id="top-vix-regime" style="color: #cbd5e1;">MODERATE</strong></div>
-      </div>
-      <!-- VIX Thresholds & Buyer Zone -->
-      <div style="display: flex; gap: 4px; font-size: 0.69rem; justify-content: space-between; margin-top: 3px; padding-top: 3px; border-top: 1px dashed rgba(255,255,255,0.08);">
-        <div><span style="color: var(--text-secondary);">Option Buying:</span> <strong id="top-vix-buyer-zone" style="color: var(--green); font-weight: 700;">FAVORABLE</strong></div>
-        <div><span style="color: var(--text-secondary);">Optimal Band:</span> <strong style="color: #38bdf8;">12.0 – 16.5</strong></div>
-      </div>
-    </div>
 
     <!-- NIFTY 50 Live Chart Sync Strip -->
     <div style="background: rgba(19, 27, 46, 0.85); border: 1px solid var(--border); border-left: 3px solid #38bdf8; border-radius: 6px; padding: 8px 12px; display: flex; flex-direction: column; gap: 4px; box-shadow: 0 0 10px rgba(56, 189, 248, 0.1);">
@@ -900,7 +853,19 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       </div>
     </div>
 
-
+    <!-- INDIA VIX Persistent Strip -->
+    <div style="background: rgba(19, 27, 46, 0.85); border: 1px solid var(--border); border-left: 3px solid #c084fc; border-radius: 6px; padding: 8px 12px; display: flex; flex-direction: column; gap: 4px;">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-weight: 800; font-size: 0.88rem; color: #c084fc;">⚡ INDIA VIX</span>
+        <div>
+          <strong id="top-vix-close" style="font-size: 1.15rem; color: #c084fc;">13.80</strong>
+          <span id="top-vix-change" style="font-size: 0.75rem; font-weight: 700; margin-left: 4px; color: var(--green);">+4.2%</span>
+        </div>
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; font-size: 0.72rem; background: rgba(0,0,0,0.25); padding: 4px 6px; border-radius: 4px;">
+        <div><span style="color: var(--text-secondary);">Premium Exp:</span> <strong id="top-vix-status" style="color: var(--green);">🟢 EXPANDING</strong></div>
+        <div><span style="color: var(--text-secondary);">Volatility:</span> <strong id="top-vix-regime" style="color: #cbd5e1;">MODERATE</strong></div>
+      </div>
   </div>
 </div>
 
