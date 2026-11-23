@@ -753,7 +753,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     </div>
   </div>
 
-    <div id="persistent-market-cards" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 10px;">
+    <div id="persistent-market-cards" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
     <!-- NIFTY 50 Persistent Strip -->
     <div style="background: rgba(19, 27, 46, 0.85); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 6px; padding: 8px 12px; display: flex; flex-direction: column; gap: 4px;">
       <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -770,6 +770,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         <div><span style="color: var(--text-secondary);">PDH:</span> <strong id="top-nifty-pdh" style="color: #60a5fa;">₹--</strong></div>
         <div><span style="color: var(--text-secondary);">PDL:</span> <strong id="top-nifty-pdl" style="color: #f87171;">₹--</strong></div>
       </div>
+    </div>
 
     <!-- BANKNIFTY Persistent Strip -->
     <div style="background: rgba(19, 27, 46, 0.85); border: 1px solid var(--border); border-left: 3px solid #8b5cf6; border-radius: 6px; padding: 8px 12px; display: flex; flex-direction: column; gap: 4px;">
@@ -787,6 +788,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         <div><span style="color: var(--text-secondary);">PDH:</span> <strong id="top-bank-pdh" style="color: #a78bfa;">₹--</strong></div>
         <div><span style="color: var(--text-secondary);">PDL:</span> <strong id="top-bank-pdl" style="color: #f87171;">₹--</strong></div>
       </div>
+    </div>
 
     <!-- GIFT NIFTY Persistent Strip -->
     <div style="background: rgba(19, 27, 46, 0.85); border: 1px solid var(--border); border-left: 3px solid #f59e0b; border-radius: 6px; padding: 8px 12px; display: flex; flex-direction: column; gap: 4px;">
@@ -804,52 +806,41 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         <div><span style="color: var(--text-secondary);">PDH:</span> <strong id="top-gift-pdh" style="color: #fbbf24;">₹--</strong></div>
         <div><span style="color: var(--text-secondary);">PDL:</span> <strong id="top-gift-pdl" style="color: #f87171;">₹--</strong></div>
       </div>
+    </div>
 
     <!-- NIFTY 50 Live Chart Sync Strip -->
-    <div style="background: rgba(19, 27, 46, 0.85); border: 1px solid var(--border); border-left: 3px solid #38bdf8; border-radius: 6px; padding: 8px 12px; display: flex; flex-direction: column; gap: 4px; box-shadow: 0 0 10px rgba(56, 189, 248, 0.1);">
+    <div style="background: rgba(19, 27, 46, 0.85); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 6px; padding: 8px 12px; display: flex; flex-direction: column; gap: 4px;">
       <div style="display: flex; justify-content: space-between; align-items: center;">
-        <div style="display: flex; align-items: center; gap: 6px;">
-          <span style="font-weight: 800; font-size: 0.88rem; color: #38bdf8;">⚡ NIFTY 50 (LIVE SYNC)</span>
-          <span id="live-sync-nifty-badge" class="badge badge-green" style="font-size: 0.65rem; padding: 1px 6px;">🟢 9:15+ BAR</span>
-        </div>
+        <span style="font-weight: 800; font-size: 0.88rem; color: #60a5fa;">⚡ NIFTY 50 (LIVE)</span>
         <div>
-          <strong id="live-sync-nifty-close" style="font-size: 1.15rem; color: #38bdf8;">₹--</strong>
+          <strong id="live-sync-nifty-close" style="font-size: 1.15rem; color: var(--text-primary);">₹--</strong>
           <span id="live-sync-nifty-change" style="font-size: 0.75rem; font-weight: 700; margin-left: 4px;">--</span>
         </div>
       </div>
-      <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; font-size: 0.72rem; background: rgba(0,0,0,0.25); padding: 4px 6px; border-radius: 4px;">
+      <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; font-size: 0.72rem; background: rgba(0,0,0,0.25); padding: 4px 6px; border-radius: 4px;">
         <div><span style="color: var(--text-secondary);">Open:</span> <strong id="live-sync-nifty-open">₹--</strong></div>
         <div><span style="color: var(--text-secondary);">High:</span> <strong id="live-sync-nifty-high" style="color: var(--green);">₹--</strong></div>
         <div><span style="color: var(--text-secondary);">Low:</span> <strong id="live-sync-nifty-low" style="color: var(--red);">₹--</strong></div>
         <div><span style="color: var(--text-secondary);">Close:</span> <strong id="live-sync-nifty-cur">₹--</strong></div>
-      </div>
-      <div style="display: flex; gap: 4px; font-size: 0.69rem; justify-content: space-between; margin-top: 3px; padding-top: 3px; border-top: 1px dashed rgba(255,255,255,0.08);">
-        <div><span style="color: var(--text-secondary);">Bar Range:</span> <strong id="live-sync-nifty-range" style="color: #cbd5e1;">-- pts</strong></div>
-        <div><span style="color: var(--text-secondary);">Feed:</span> <strong style="color: #38bdf8;">Direct Chart Sync</strong></div>
+        <div><span style="color: var(--text-secondary);">Range:</span> <strong id="live-sync-nifty-range" style="color: #cbd5e1;">--</strong></div>
       </div>
     </div>
 
     <!-- BANKNIFTY Live Chart Sync Strip -->
-    <div style="background: rgba(19, 27, 46, 0.85); border: 1px solid var(--border); border-left: 3px solid #a855f7; border-radius: 6px; padding: 8px 12px; display: flex; flex-direction: column; gap: 4px; box-shadow: 0 0 10px rgba(168, 85, 247, 0.1);">
+    <div style="background: rgba(19, 27, 46, 0.85); border: 1px solid var(--border); border-left: 3px solid #8b5cf6; border-radius: 6px; padding: 8px 12px; display: flex; flex-direction: column; gap: 4px;">
       <div style="display: flex; justify-content: space-between; align-items: center;">
-        <div style="display: flex; align-items: center; gap: 6px;">
-          <span style="font-weight: 800; font-size: 0.88rem; color: #c084fc;">⚡ BANKNIFTY (LIVE SYNC)</span>
-          <span id="live-sync-bank-badge" class="badge badge-green" style="font-size: 0.65rem; padding: 1px 6px;">🟢 9:15+ BAR</span>
-        </div>
+        <span style="font-weight: 800; font-size: 0.88rem; color: #a78bfa;">⚡ BANKNIFTY (LIVE)</span>
         <div>
-          <strong id="live-sync-bank-close" style="font-size: 1.15rem; color: #c084fc;">₹--</strong>
+          <strong id="live-sync-bank-close" style="font-size: 1.15rem; color: var(--text-primary);">₹--</strong>
           <span id="live-sync-bank-change" style="font-size: 0.75rem; font-weight: 700; margin-left: 4px;">--</span>
         </div>
       </div>
-      <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; font-size: 0.72rem; background: rgba(0,0,0,0.25); padding: 4px 6px; border-radius: 4px;">
+      <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; font-size: 0.72rem; background: rgba(0,0,0,0.25); padding: 4px 6px; border-radius: 4px;">
         <div><span style="color: var(--text-secondary);">Open:</span> <strong id="live-sync-bank-open">₹--</strong></div>
         <div><span style="color: var(--text-secondary);">High:</span> <strong id="live-sync-bank-high" style="color: var(--green);">₹--</strong></div>
         <div><span style="color: var(--text-secondary);">Low:</span> <strong id="live-sync-bank-low" style="color: var(--red);">₹--</strong></div>
         <div><span style="color: var(--text-secondary);">Close:</span> <strong id="live-sync-bank-cur">₹--</strong></div>
-      </div>
-      <div style="display: flex; gap: 4px; font-size: 0.69rem; justify-content: space-between; margin-top: 3px; padding-top: 3px; border-top: 1px dashed rgba(255,255,255,0.08);">
-        <div><span style="color: var(--text-secondary);">Bar Range:</span> <strong id="live-sync-bank-range" style="color: #cbd5e1;">-- pts</strong></div>
-        <div><span style="color: var(--text-secondary);">Feed:</span> <strong style="color: #a855f7;">Direct Chart Sync</strong></div>
+        <div><span style="color: var(--text-secondary);">Range:</span> <strong id="live-sync-bank-range" style="color: #cbd5e1;">--</strong></div>
       </div>
     </div>
 
@@ -862,12 +853,15 @@ DASHBOARD_HTML = """<!DOCTYPE html>
           <span id="top-vix-change" style="font-size: 0.75rem; font-weight: 700; margin-left: 4px; color: var(--green);">+4.2%</span>
         </div>
       </div>
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; font-size: 0.72rem; background: rgba(0,0,0,0.25); padding: 4px 6px; border-radius: 4px;">
+      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; font-size: 0.72rem; background: rgba(0,0,0,0.25); padding: 4px 6px; border-radius: 4px;">
         <div><span style="color: var(--text-secondary);">Premium Exp:</span> <strong id="top-vix-status" style="color: var(--green);">🟢 EXPANDING</strong></div>
         <div><span style="color: var(--text-secondary);">Volatility:</span> <strong id="top-vix-regime" style="color: #cbd5e1;">MODERATE</strong></div>
+        <div><span style="color: var(--text-secondary);">IV Implication:</span> <strong id="top-vix-implication" style="color: #60a5fa;">PE Favored</strong></div>
       </div>
+    </div>
   </div>
-</div>
+
+
 
 <div class="nav-tabs">
   <button class="nav-tab active" onclick="switchTab('tab-overview', this)">System Overview</button>
