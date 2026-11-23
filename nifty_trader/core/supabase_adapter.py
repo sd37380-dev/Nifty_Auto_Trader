@@ -291,11 +291,12 @@ class SupabaseAdapter:
     # 5. Dedicated Tick Data Sync (High-Frequency Market Ticks)
     # -------------------------------------------------------------------------
     def sync_tick_data(self, tick: Dict[str, Any]) -> None:
-        """Streams a high-resolution market tick to Supabase table `market_ticks`."""
+        """Streams a high-resolution market tick to dedicated Supabase tables."""
+        sym = str(tick.get("symbol", "")).upper()
         clean = {
             "timestamp_ist": str(tick.get("timestamp_ist", "")),
             "timestamp_utc": str(tick.get("timestamp_utc", "")),
-            "symbol": str(tick.get("symbol", "")),
+            "symbol": sym,
             "price": float(tick.get("price", 0.0)),
             "open": float(tick.get("open", 0.0)),
             "high": float(tick.get("high", 0.0)),
@@ -307,18 +308,31 @@ class SupabaseAdapter:
             "bid": float(tick.get("bid", 0.0)),
             "ask": float(tick.get("ask", 0.0)),
         }
+        # Post to dedicated instrument table
+        if "BANK" in sym:
+            self._async_post("banknifty_ticks", clean, upsert=False)
+        elif "NIFTY" in sym and "GIFT" not in sym:
+            self._async_post("nifty_ticks", clean, upsert=False)
+
+        # Also post to unified market_ticks for global aggregation
         self._async_post("market_ticks", clean, upsert=False)
 
     def fetch_ticks_from_cloud(self, symbol: str, limit: int = 100) -> List[Dict[str, Any]]:
-        """Fetches recent ticks for a symbol from Supabase cloud store."""
+        """Fetches recent ticks for a symbol from dedicated Supabase cloud store."""
         if not self.is_enabled or not self._client:
             return []
+        sym = symbol.strip().upper()
+        target_table = "banknifty_ticks" if "BANK" in sym else ("nifty_ticks" if "NIFTY" in sym and "GIFT" not in sym else "market_ticks")
         try:
-            sym = symbol.strip().upper()
-            url = f"/market_ticks?symbol=eq.{sym}&order=id.desc&limit={limit}"
+            url = f"/{target_table}?symbol=eq.{sym}&order=id.desc&limit={limit}"
             resp = self._client.get(url)
             if resp.status_code == 200:
                 return resp.json()
+            elif resp.status_code == 404 and target_table != "market_ticks":
+                # Fallback to market_ticks if dedicated table not yet migrated
+                fallback_resp = self._client.get(f"/market_ticks?symbol=eq.{sym}&order=id.desc&limit={limit}")
+                if fallback_resp.status_code == 200:
+                    return fallback_resp.json()
         except Exception as e:
             logger.debug("Failed to fetch ticks from Supabase: %s", e)
         return []

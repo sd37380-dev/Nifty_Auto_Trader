@@ -22,9 +22,11 @@ class TestSeparateDatabases(unittest.TestCase):
         self.temp_dir.cleanup()
 
     def test_tick_data_service_isolation_and_crud(self):
-        """Verify TickDataService uses dedicated market_ticks.db and records ticks accurately."""
+        """Verify TickDataService uses dedicated isolated nifty_ticks.db and banknifty_ticks.db."""
         service = TickDataService(root_dir=self.root_dir)
-        self.assertTrue(service.db_path.name == "market_ticks.db")
+        self.assertEqual(service.get_db_path("NIFTY").name, "nifty_ticks.db")
+        self.assertEqual(service.get_db_path("BANKNIFTY").name, "banknifty_ticks.db")
+        self.assertEqual(service.get_db_path("GIFT NIFTY").name, "market_ticks.db")
 
         # Record ticks
         t1 = service.record_tick(
@@ -69,10 +71,11 @@ class TestSeparateDatabases(unittest.TestCase):
 
         self.assertEqual(service.get_tick_count("NIFTY"), 2)
         self.assertEqual(service.get_tick_count("BANKNIFTY"), 1)
-        self.assertEqual(service.get_tick_count(), 3)
 
-        # Ensure no other database files were touched
-        self.assertTrue((self.root_dir / "data" / "market" / "market_ticks.db").exists())
+        # Ensure isolated physical database files exist
+        self.assertTrue((self.root_dir / "data" / "market" / "nifty_ticks.db").exists())
+        self.assertTrue((self.root_dir / "data" / "market" / "banknifty_ticks.db").exists())
+        self.assertFalse((self.root_dir / "data" / "market" / "option_chain.db").exists())
         self.assertFalse((self.root_dir / "data" / "market" / "option_chain.db").exists())
 
     def test_option_chain_store_isolation_and_crud(self):
@@ -132,14 +135,23 @@ class TestSeparateDatabases(unittest.TestCase):
             )
 
             with patch.object(adapter, "_async_post") as mock_post:
-                # 1. Sync tick
+                # 1. Sync Nifty tick
                 adapter.sync_tick_data({"symbol": "NIFTY", "price": 24150.0})
-                mock_post.assert_called_once()
-                self.assertEqual(mock_post.call_args[0][0], "market_ticks")
+                called_tables = [c[0][0] for c in mock_post.call_args_list]
+                self.assertIn("nifty_ticks", called_tables)
+                self.assertIn("market_ticks", called_tables)
 
                 mock_post.reset_mock()
 
-                # 2. Sync option chain
+                # 2. Sync BankNifty tick
+                adapter.sync_tick_data({"symbol": "BANKNIFTY", "price": 51800.0})
+                called_tables = [c[0][0] for c in mock_post.call_args_list]
+                self.assertIn("banknifty_ticks", called_tables)
+                self.assertIn("market_ticks", called_tables)
+
+                mock_post.reset_mock()
+
+                # 3. Sync option chain
                 adapter.sync_option_chain_snapshot({"snapshot_id": "test_id", "symbol": "NIFTY", "spot_price": 24150.0})
                 mock_post.assert_called_once()
                 self.assertEqual(mock_post.call_args[0][0], "option_chain_snapshots")

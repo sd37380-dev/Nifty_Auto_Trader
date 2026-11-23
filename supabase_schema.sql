@@ -132,7 +132,52 @@ CREATE TABLE IF NOT EXISTS public.brain_history (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- 7. High-Resolution Market Ticks Table (Separate Dedicated Tick Store)
+-- 7. High-Resolution Market Ticks Tables (Dedicated Per-Instrument Stores)
+-- 7A. NIFTY 50 Dedicated Ticks Table
+CREATE TABLE IF NOT EXISTS public.nifty_ticks (
+    id BIGSERIAL PRIMARY KEY,
+    timestamp_ist TEXT NOT NULL,
+    timestamp_utc TEXT NOT NULL,
+    symbol TEXT DEFAULT 'NIFTY',
+    price NUMERIC(10, 2) NOT NULL,
+    open NUMERIC(10, 2),
+    high NUMERIC(10, 2),
+    low NUMERIC(10, 2),
+    close NUMERIC(10, 2),
+    volume BIGINT DEFAULT 0,
+    change_pts NUMERIC(10, 2) DEFAULT 0.0,
+    change_pct NUMERIC(6, 2) DEFAULT 0.0,
+    bid NUMERIC(10, 2) DEFAULT 0.0,
+    ask NUMERIC(10, 2) DEFAULT 0.0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_supabase_nifty_ticks_time ON public.nifty_ticks(timestamp_ist DESC);
+CREATE INDEX IF NOT EXISTS idx_supabase_nifty_ticks_created ON public.nifty_ticks(created_at DESC);
+
+-- 7B. BANKNIFTY Dedicated Ticks Table
+CREATE TABLE IF NOT EXISTS public.banknifty_ticks (
+    id BIGSERIAL PRIMARY KEY,
+    timestamp_ist TEXT NOT NULL,
+    timestamp_utc TEXT NOT NULL,
+    symbol TEXT DEFAULT 'BANKNIFTY',
+    price NUMERIC(10, 2) NOT NULL,
+    open NUMERIC(10, 2),
+    high NUMERIC(10, 2),
+    low NUMERIC(10, 2),
+    close NUMERIC(10, 2),
+    volume BIGINT DEFAULT 0,
+    change_pts NUMERIC(10, 2) DEFAULT 0.0,
+    change_pct NUMERIC(6, 2) DEFAULT 0.0,
+    bid NUMERIC(10, 2) DEFAULT 0.0,
+    ask NUMERIC(10, 2) DEFAULT 0.0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_supabase_bank_ticks_time ON public.banknifty_ticks(timestamp_ist DESC);
+CREATE INDEX IF NOT EXISTS idx_supabase_bank_ticks_created ON public.banknifty_ticks(created_at DESC);
+
+-- 7C. General / Global Market Ticks Table (e.g. GIFT NIFTY, INDIA VIX)
 CREATE TABLE IF NOT EXISTS public.market_ticks (
     id BIGSERIAL PRIMARY KEY,
     timestamp_ist TEXT NOT NULL,
@@ -184,6 +229,8 @@ ALTER TABLE public.paper_trades ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.active_positions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.level_triggers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.brain_history ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.nifty_ticks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.banknifty_ticks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.market_ticks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.option_chain_snapshots ENABLE ROW LEVEL SECURITY;
 
@@ -193,7 +240,7 @@ DECLARE
     tbl text;
 BEGIN
     FOR tbl IN SELECT tablename FROM pg_tables WHERE schemaname = 'public' AND tablename IN (
-        'market_news', 'nse_spot_data', 'paper_trades', 'active_positions', 'level_triggers', 'brain_history', 'market_ticks', 'option_chain_snapshots'
+        'market_news', 'nse_spot_data', 'paper_trades', 'active_positions', 'level_triggers', 'brain_history', 'nifty_ticks', 'banknifty_ticks', 'market_ticks', 'option_chain_snapshots'
     )
     LOOP
         EXECUTE format('DROP POLICY IF EXISTS "Public access policy" ON public.%I', tbl);

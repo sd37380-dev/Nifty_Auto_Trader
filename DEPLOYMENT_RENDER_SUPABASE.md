@@ -7,12 +7,13 @@ This guide details how to deploy **NIFTY Autonomous Trader** to **[Render.com](h
 ## 🏗️ Architecture Overview
 
 - **Local Mode (Default)**: Runs seamlessly offline using dedicated SQLite databases in `data/market/` and `data/paper_trading/`. Zero external database required.
-  - `data/market/market_ticks.db`: **Dedicated Tick Database** storing high-resolution market ticks (LTP, bid/ask, volume, price changes).
+  - `data/market/nifty_ticks.db`: **Dedicated NIFTY 50 Tick Database** storing high-resolution NIFTY market ticks (LTP, bid/ask, volume, price changes).
+  - `data/market/banknifty_ticks.db`: **Dedicated BANKNIFTY Tick Database** storing high-resolution BANKNIFTY ticks.
   - `data/market/option_chain.db`: **Dedicated Option Chain Database** storing complete derivatives strike ladders, PCR, Max Pain, and Greeks.
   - `data/market/nse_spot_data.db`: 5-minute multi-instrument spot telemetry (NIFTY 50, BANKNIFTY, GIFT NIFTY).
   - `data/paper_trading/`: Simulator audit databases and active position tracking.
 - **Render Cloud Web Service**: Runs headless with continuous 5-minute spot data telemetry, Indian market news classifier, and interactive dashboard bound to dynamic `$PORT` (`0.0.0.0`).
-- **Supabase Cloud Dual-Persistence**: Every high-resolution tick, option chain snapshot, news item, spot record, level trigger, and paper trade is non-blockingly synchronized to Supabase PostgreSQL via PostgREST REST API. When Render restarts (or deploys a fresh container), local SQLite is automatically hydrated from the cloud.
+- **Supabase Cloud Dual-Persistence**: Every high-resolution tick (to `nifty_ticks` and `banknifty_ticks`), option chain snapshot, news item, spot record, level trigger, and paper trade is non-blockingly synchronized to Supabase PostgreSQL via PostgREST REST API. When Render restarts (or deploys a fresh container), local SQLite is automatically hydrated from the cloud.
 
 ---
 
@@ -21,15 +22,17 @@ This guide details how to deploy **NIFTY Autonomous Trader** to **[Render.com](h
 1. Create a free account at **[supabase.com](https://supabase.com)** and create a new project (e.g., `nifty-trader`).
 2. Go to **SQL Editor** in your Supabase dashboard.
 3. Open [`supabase_schema.sql`](./supabase_schema.sql) in this repository, copy all contents, paste into the SQL Editor, and click **Run**.
-   - This creates 8 dedicated tables:
-     1. `market_ticks` (Dedicated high-frequency tick store)
-     2. `option_chain_snapshots` (Dedicated full option chain matrix store)
-     3. `market_news` (Financial news, category, sentiment & impact)
-     4. `nse_spot_data` (5-minute multi-instrument spot bars)
-     5. `paper_trades` (Completed option simulator audits)
-     6. `active_positions` (Real-time active open position & MTM P&L)
-     7. `level_triggers` (Custom breakout/breakdown level triggers)
-     8. `brain_history` (Gemini AI Brain reasoning evaluations)
+   - This creates 10 dedicated tables:
+     1. `nifty_ticks` (Dedicated NIFTY tick store)
+     2. `banknifty_ticks` (Dedicated BANKNIFTY tick store)
+     3. `market_ticks` (General / Global market ticks e.g. GIFT NIFTY)
+     4. `option_chain_snapshots` (Dedicated full option chain matrix store)
+     5. `market_news` (Financial news, category, sentiment & impact)
+     6. `nse_spot_data` (5-minute multi-instrument spot bars)
+     7. `paper_trades` (Completed option simulator audits)
+     8. `active_positions` (Real-time active open position & MTM P&L)
+     9. `level_triggers` (Custom breakout/breakdown level triggers)
+     10. `brain_history` (Gemini AI Brain reasoning evaluations)
    - Sets up indexes, updated_at triggers, and Row Level Security (RLS) policies.
 4. Go to **Project Settings -> API**:
    - Copy **Project URL** (e.g., `https://xyzcompany.supabase.co`).
