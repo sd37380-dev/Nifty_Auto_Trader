@@ -184,6 +184,23 @@ class DashboardDataAggregator:
                 "recent_news": [],
             }
 
+    def get_contributors_summary(self, force_refresh: bool = False) -> Dict[str, Any]:
+        try:
+            from nifty_trader.market_data.contributors_service import get_contributors_service
+            return get_contributors_service(self.root_dir).get_contributors_summary(force_refresh=force_refresh)
+        except Exception as e:
+            logger.debug("Contributors summary read error: %s", e)
+            return {
+                "status": "error",
+                "contributors": [],
+                "bn_total_pts": 0.0,
+                "n50_total_pts": 0.0,
+                "advances": 0,
+                "declines": 0,
+                "unchanged": 0,
+                "last_updated": "Unavailable",
+            }
+
 
 DASHBOARD_HTML = """<!DOCTYPE html>
 <html lang="en">
@@ -420,6 +437,111 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     animation-play-state: paused;
   }
 
+  /* Scrolling Contributors Ticker Bar */
+  .contributors-ticker-container {
+    background: linear-gradient(90deg, #0d1424 0%, #111a33 50%, #0d1424 100%);
+    border: 1px solid var(--border);
+    border-left: 4px solid #3b82f6;
+    border-radius: 8px;
+    padding: 7px 12px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.35);
+  }
+  .contrib-ticker-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+    border-right: 1px solid var(--border);
+    padding-right: 12px;
+    font-size: 0.74rem;
+    font-weight: 800;
+    color: #60a5fa;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  .contrib-live-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #3b82f6;
+    display: inline-block;
+    animation: pulseLiveDot 1.8s infinite;
+  }
+  .contrib-ticker-viewport {
+    overflow: hidden;
+    white-space: nowrap;
+    position: relative;
+    flex: 1;
+    min-width: 0;
+    width: 100%;
+    cursor: pointer;
+  }
+  .contrib-ticker-track {
+    display: inline-flex;
+    gap: 10px;
+    align-items: center;
+    will-change: transform;
+    animation: marqueeTickerAnim 130s linear infinite;
+  }
+  .contrib-ticker-viewport:hover .contrib-ticker-track {
+    animation-play-state: paused;
+  }
+  .contrib-pill-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.78rem;
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 6px;
+    padding: 3px 8px;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+    user-select: none;
+  }
+  .contrib-pill-item:hover {
+    background: rgba(59, 130, 246, 0.22);
+    border-color: #38bdf8;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(56, 189, 248, 0.25);
+  }
+  .contrib-weight-tag {
+    font-size: 0.64rem;
+    font-weight: 800;
+    padding: 1px 5px;
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #fbbf24;
+  }
+  .contrib-impact-badge {
+    font-size: 0.67rem;
+    font-weight: 800;
+    padding: 1px 5px;
+    border-radius: 3px;
+  }
+  .contrib-impact-up {
+    background: rgba(16, 185, 129, 0.18);
+    color: #34d399;
+    border: 1px solid rgba(16, 185, 129, 0.4);
+  }
+  .contrib-impact-down {
+    background: rgba(239, 68, 68, 0.18);
+    color: #f87171;
+    border: 1px solid rgba(239, 68, 68, 0.4);
+  }
+  .contrib-impact-flat {
+    background: rgba(148, 163, 184, 0.15);
+    color: #cbd5e1;
+    border: 1px solid rgba(148, 163, 184, 0.3);
+  }
+
   /* Option Chain Styles */
   .oc-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
   .oc-table th { padding: 6px 8px; text-align: center; font-weight: 700; font-size: 0.72rem; }
@@ -554,6 +676,36 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       padding: 2px 0;
     }
     .news-ticker-container > div:last-child {
+      border-left: none !important;
+      padding-left: 0 !important;
+      border-top: 1px solid var(--border);
+      padding-top: 6px;
+      justify-content: space-between;
+      width: 100%;
+      flex-wrap: wrap;
+    }
+
+    /* Contributors Ticker Mobile Layout */
+    .contributors-ticker-container {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 6px;
+      padding: 8px 10px;
+    }
+    .contrib-ticker-badge {
+      border-right: none;
+      border-bottom: 1px solid var(--border);
+      padding-right: 0;
+      padding-bottom: 4px;
+      font-size: 0.68rem;
+      width: 100%;
+      flex-wrap: wrap;
+    }
+    .contrib-ticker-viewport {
+      width: 100%;
+      padding: 2px 0;
+    }
+    .contributors-ticker-container > div:last-child {
       border-left: none !important;
       padding-left: 0 !important;
       border-top: 1px solid var(--border);
@@ -710,6 +862,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     <span class="badge badge-yellow">Paper Trading: READY</span>
     <span class="badge badge-red">Live Broker: DISABLED</span>
     <button class="btn" onclick="fetchData()">🔄 Refresh</button>
+    <a href="/report" target="_blank" class="btn" style="text-decoration: none; display: inline-flex; align-items: center; gap: 4px; background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.4); padding: 4px 10px; border-radius: 4px; font-weight: 700; font-size: 0.72rem;" title="Open Latest 15-Minute Trade Intelligence Report in new tab">📄 15M Report</a>
   </div>
 </header>
 
@@ -734,6 +887,30 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     </div>
     <button onclick="openNewsTab()" class="btn" style="padding: 3px 8px; font-size: 0.72rem; background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 4px; cursor: pointer; font-weight: 700;">📰 All News</button>
     <button onclick="refreshNewsNow()" class="btn" style="padding: 3px 8px; font-size: 0.72rem; background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 4px; cursor: pointer; font-weight: 700;" title="Refresh live RSS feeds now">🔄 Sync</button>
+  </div>
+</div>
+
+<!-- PERSISTENT TOP NIFTY & BANK NIFTY CONTRIBUTORS LIVE SCROLLING TICKER -->
+<div id="persistent-contributors-ticker" class="contributors-ticker-container">
+  <div class="contrib-ticker-viewport" title="Click any stock to open its Live Chart. Hover mouse to pause scrolling.">
+    <div class="contrib-ticker-track" id="top-contrib-ticker-track">
+      <span style="color: var(--text-secondary); font-size: 0.8rem;">Loading live NIFTY 50 &amp; BANK NIFTY main contributors telemetry...</span>
+    </div>
+  </div>
+  <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0; border-left: 1px solid var(--border); padding-left: 10px;">
+    <!-- Group Filter Buttons -->
+    <div style="display: flex; gap: 3px; align-items: center; background: rgba(0,0,0,0.35); padding: 2px 4px; border-radius: 4px; border: 1px solid var(--border);">
+      <button onclick="filterContribTicker('all', this)" id="contrib-filter-all" class="btn" style="padding: 2px 6px; font-size: 0.68rem; font-weight: 700; background: var(--accent); color: white; border: none; border-radius: 3px;" title="Show all 25 main contributors">All (25)</button>
+      <button onclick="filterContribTicker('bn', this)" id="contrib-filter-bn" class="btn" style="padding: 2px 6px; font-size: 0.68rem; font-weight: 600; background: transparent; color: #38bdf8; border: none; border-radius: 3px;" title="Bank Nifty main drivers (~95% weight)">🏦 Bank Nifty</button>
+      <button onclick="filterContribTicker('n50', this)" id="contrib-filter-n50" class="btn" style="padding: 2px 6px; font-size: 0.68rem; font-weight: 600; background: transparent; color: #34d399; border: none; border-radius: 3px;" title="Nifty 50 top heavyweights (~65% weight)">🏆 Nifty 50</button>
+    </div>
+    <!-- Speed Controls -->
+    <div style="display: flex; gap: 3px; align-items: center; background: rgba(0,0,0,0.35); padding: 2px 4px; border-radius: 4px; border: 1px solid var(--border);">
+      <button onclick="setContribTickerSpeed('slow')" id="contrib-speed-slow" class="btn" style="padding: 2px 6px; font-size: 0.68rem; font-weight: 700; background: var(--accent); color: white; border: none; border-radius: 3px;" title="Slow scroll speed">🐢 Slow</button>
+      <button onclick="setContribTickerSpeed('normal')" id="contrib-speed-normal" class="btn" style="padding: 2px 6px; font-size: 0.68rem; font-weight: 600; background: transparent; color: var(--text-secondary); border: none; border-radius: 3px;" title="Normal speed">▶️ Normal</button>
+      <button onclick="toggleContribTickerPause()" id="contrib-pause-btn" class="btn" style="padding: 2px 6px; font-size: 0.68rem; font-weight: 700; background: rgba(245, 158, 11, 0.2); color: var(--yellow); border: 1px solid rgba(245, 158, 11, 0.4); border-radius: 3px;" title="Pause or Resume scrolling">⏸️</button>
+    </div>
+    <button onclick="refreshContributorsNow()" class="btn" style="padding: 3px 8px; font-size: 0.72rem; background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 4px; cursor: pointer; font-weight: 700;" title="Refresh live contributor quotes now">🔄 Sync</button>
   </div>
 </div>
 
@@ -4018,6 +4195,11 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   }
 
   function renderDashboard(data) {
+    // 0. Contributors live scrolling ticker
+    if (data.contributors) {
+      renderContributorsTicker(data.contributors);
+    }
+
     // 1. Brain history
     const brainBody = document.getElementById('brain-table-body');
     if (data.brain && data.brain.length > 0) {
@@ -4880,6 +5062,163 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       }
     } catch (e) {
       console.error('Delete news error:', e);
+    }
+  }
+
+  // ==========================================
+  // NIFTY & BANK NIFTY CONTRIBUTORS TICKER JS
+  // ==========================================
+  window._contribFilter = 'all';
+  window._contribSpeedMultiplier = 1.0;
+  window._contribPaused = false;
+  window._currentContribData = null;
+
+  function setContribTickerSpeed(speed) {
+    if (speed === 'slow') window._contribSpeedMultiplier = 1.6;
+    else window._contribSpeedMultiplier = 1.0;
+
+    ['slow', 'normal'].forEach(s => {
+      const b = document.getElementById(`contrib-speed-${s}`);
+      if (b) {
+        if (s === speed) {
+          b.style.background = 'var(--accent)';
+          b.style.color = 'white';
+          b.style.fontWeight = '700';
+        } else {
+          b.style.background = 'transparent';
+          b.style.color = 'var(--text-secondary)';
+          b.style.fontWeight = '600';
+        }
+      }
+    });
+    applyContribTickerSpeed();
+  }
+
+  function applyContribTickerSpeed() {
+    const track = document.getElementById('top-contrib-ticker-track');
+    if (!track) return;
+    const dur = (window._contribBaseDuration || 110) * (window._contribSpeedMultiplier || 1.0);
+    track.style.animationDuration = `${dur.toFixed(1)}s`;
+    track.style.animationPlayState = window._contribPaused ? 'paused' : 'running';
+  }
+
+  function toggleContribTickerPause() {
+    window._contribPaused = !window._contribPaused;
+    const btn = document.getElementById('contrib-pause-btn');
+    if (btn) {
+      btn.innerText = window._contribPaused ? '▶️' : '⏸️';
+      btn.title = window._contribPaused ? 'Resume scrolling' : 'Pause scrolling';
+      btn.style.background = window._contribPaused ? 'rgba(16, 185, 129, 0.25)' : 'rgba(245, 158, 11, 0.2)';
+      btn.style.color = window._contribPaused ? 'var(--green)' : 'var(--yellow)';
+    }
+    applyContribTickerSpeed();
+  }
+
+  function filterContribTicker(group, btnEl) {
+    window._contribFilter = group;
+    ['all', 'bn', 'n50'].forEach(g => {
+      const b = document.getElementById(`contrib-filter-${g}`);
+      if (b) {
+        if (g === group) {
+          b.style.background = 'var(--accent)';
+          b.style.color = 'white';
+          b.style.fontWeight = '700';
+        } else {
+          b.style.background = 'transparent';
+          b.style.color = g === 'bn' ? '#38bdf8' : (g === 'n50' ? '#34d399' : 'var(--text-secondary)');
+          b.style.fontWeight = '600';
+        }
+      }
+    });
+    if (window._currentContribData) {
+      renderContributorsTicker(window._currentContribData);
+    }
+  }
+
+  function renderContributorsTicker(data) {
+    if (!data || !data.contributors) return;
+    window._currentContribData = data;
+
+    const track = document.getElementById('top-contrib-ticker-track');
+    if (!track) return;
+
+    let items = data.contributors;
+    if (window._contribFilter === 'bn') {
+      items = items.filter(c => c.group === 'bn' || c.bn_weight > 0);
+    } else if (window._contribFilter === 'n50') {
+      items = items.filter(c => c.group === 'n50' || c.n50_weight > 0);
+    }
+
+    if (items.length === 0) {
+      track.innerHTML = '<span style="color:var(--text-secondary); font-size:0.8rem;">No contributors match filter.</span>';
+      return;
+    }
+
+    const bnSign = (data.bn_total_pts || 0) >= 0 ? '+' : '';
+    const n50Sign = (data.n50_total_pts || 0) >= 0 ? '+' : '';
+    const bnColor = (data.bn_total_pts || 0) >= 0 ? '#34d399' : '#f87171';
+    const n50Color = (data.n50_total_pts || 0) >= 0 ? '#34d399' : '#f87171';
+
+    const summaryHtml = `
+      <div class="contrib-pill-item" style="background: rgba(59, 130, 246, 0.18); border-color: rgba(59, 130, 246, 0.5); font-weight: 800;">
+        <span class="contrib-live-dot" style="margin-right: 2px;"></span>
+        <span style="color: #60a5fa; font-size: 0.76rem; letter-spacing: 0.5px;">⚡ NET IMPACT:</span>
+        <span style="color: ${bnColor};">BN: ${bnSign}${(data.bn_total_pts || 0).toFixed(1)} pts</span>
+        <span style="color: rgba(255,255,255,0.2);">|</span>
+        <span style="color: ${n50Color};">N50: ${n50Sign}${(data.n50_total_pts || 0).toFixed(1)} pts</span>
+        <span style="color: var(--text-secondary); font-size: 0.72rem;">(🟢${data.advances || 0} 🔴${data.declines || 0})</span>
+      </div>
+    `;
+
+    const pillsHtml = items.map(c => {
+      const chgColor = c.change_pct > 0 ? '#10b981' : (c.change_pct < 0 ? '#ef4444' : '#94a3b8');
+      const chgSign = c.change_pct > 0 ? '+' : '';
+      const impactClass = c.primary_pts > 0 ? 'contrib-impact-up' : (c.primary_pts < 0 ? 'contrib-impact-down' : 'contrib-impact-flat');
+      const impactSign = c.primary_pts > 0 ? '+' : '';
+      const impactLabel = `${c.primary_index}: ${impactSign}${c.primary_pts.toFixed(1)} pts`;
+
+      return `
+        <div class="contrib-pill-item" onclick="openContributorChart('${c.symbol}')" title="Click to view ${c.symbol} live chart (${c.name}). Impact: ${impactLabel}">
+          <span>${c.icon || '📈'}</span>
+          <strong style="color: var(--text-primary); font-size: 0.8rem;">${c.symbol}</strong>
+          <span class="contrib-weight-tag">${c.primary_weight_label}</span>
+          <span style="color: var(--text-primary); font-weight: 700;">₹${(c.ltp || 0).toFixed(2)}</span>
+          <span style="color: ${chgColor}; font-weight: 700; font-size: 0.72rem;">${chgSign}${(c.change_pct || 0).toFixed(2)}%</span>
+          <span class="contrib-impact-badge ${impactClass}">${impactLabel}</span>
+        </div>
+      `;
+    }).join('');
+
+    // Duplicate full sequence for seamless infinite marquee loop
+    const fullSequence = summaryHtml + pillsHtml;
+    track.innerHTML = fullSequence + fullSequence;
+    window._contribBaseDuration = Math.max(90, items.length * 5.5);
+    applyContribTickerSpeed();
+  }
+
+  function openContributorChart(symbol) {
+    try {
+      const chartTabBtn = document.getElementById('nav-btn-charts');
+      if (chartTabBtn) {
+        chartTabBtn.click();
+      }
+      if (typeof quickSelectContributor === 'function') {
+        quickSelectContributor(symbol);
+      }
+    } catch (e) {
+      console.debug("Open chart error:", e);
+    }
+  }
+
+  async function refreshContributorsNow() {
+    try {
+      const res = await fetch('/api/contributors/live?refresh=1');
+      if (res.ok) {
+        const d = await res.json();
+        renderContributorsTicker(d);
+      }
+    } catch (e) {
+      console.error("Manual contributors sync error:", e);
     }
   }
 
@@ -10589,6 +10928,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   } catch (e) {}
 
   fetchData();
+  refreshContributorsNow();
   fetchOptionChain();
   fetchTelegramStatus();
   fetchPendingTrades();
@@ -11783,6 +12123,32 @@ class DashboardHTTPRequestHandler(BaseHTTPRequestHandler):
                 "render": bool(os.environ.get("RENDER")),
             }).encode("utf-8"))
             return
+        elif self.path in ("/api/report/latest", "/api/report/15m", "/report", "/reports/latest"):
+            try:
+                report_path = self.aggregator.root_dir.parent / "reports" / "15m_reports" / "latest_15m_report.html"
+                if not report_path.exists():
+                    report_path = self.aggregator.root_dir / "reports" / "15m_reports" / "latest_15m_report.html"
+                if report_path.exists():
+                    with open(report_path, "rb") as rf:
+                        content = rf.read()
+                    self.send_response(200)
+                    self.send_header("Content-Type", "text/html; charset=utf-8")
+                    self.send_header("Cache-Control", "no-cache")
+                    self.end_headers()
+                    self.wfile.write(content)
+                    return
+                else:
+                    self.send_response(404)
+                    self.send_header("Content-Type", "text/plain")
+                    self.end_headers()
+                    self.wfile.write(b"Report not found. Generate one first.")
+                    return
+            except Exception as e:
+                self.send_response(500)
+                self.send_header("Content-Type", "text/plain")
+                self.end_headers()
+                self.wfile.write(f"Error serving report: {e}".encode("utf-8"))
+                return
         elif self.path == "/api/supabase/status":
             try:
                 from nifty_trader.core.supabase_adapter import get_supabase_adapter
@@ -12583,6 +12949,22 @@ class DashboardHTTPRequestHandler(BaseHTTPRequestHandler):
                 self.send_header("Content-Type", "application/json")
                 self.end_headers()
                 self.wfile.write(json.dumps({"status": "error", "message": str(ex)}).encode("utf-8"))
+        elif self.path.startswith("/api/contributors/live"):
+            try:
+                from urllib.parse import urlparse, parse_qs
+                parsed = urlparse(self.path)
+                params = parse_qs(parsed.query)
+                force = params.get("refresh", ["0"])[0] in ("1", "true")
+                data = self.aggregator.get_contributors_summary(force_refresh=force)
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps(data).encode("utf-8"))
+            except Exception as ex:
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": "error", "message": str(ex)}).encode("utf-8"))
         elif self.path == "/api/data":
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
@@ -12597,6 +12979,7 @@ class DashboardHTTPRequestHandler(BaseHTTPRequestHandler):
                 "spot": self.aggregator.get_spot_summary(),
                 "levels": self.aggregator.get_levels_summary(),
                 "news": self.aggregator.get_news_summary(),
+                "contributors": self.aggregator.get_contributors_summary(),
             }
             self.wfile.write(json.dumps(payload, default=str).encode("utf-8"))
         elif self.path == "/api/backtest/datasets":
@@ -13229,6 +13612,15 @@ def run_dashboard_server(
         print("📰 Live Market News & Sentiment Service Online (DB: data/market/market_news.db).")
     except Exception as news_err:
         logger.warning("Could not auto-start news service: %s", news_err)
+
+    # AUTO-ACTIVATE 15-Minute Trade Intelligence Report Background Generator
+    try:
+        from nifty_trader.market_data.report_service import get_report_service
+        report_service = get_report_service()
+        report_service.start_auto_generation(interval_seconds=900)
+        print("📄 Automated 15-Minute Trade Intelligence Report Service Online (Folder: reports/15m_reports).")
+    except Exception as rep_err:
+        logger.warning("Could not auto-start report service: %s", rep_err)
 
     server = ThreadingHTTPServer((host, port), DashboardHTTPRequestHandler)
     url = f"http://{host}:{port}"
