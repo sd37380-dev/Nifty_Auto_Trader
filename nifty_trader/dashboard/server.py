@@ -5747,6 +5747,26 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       });
       const data = await res.json();
       if (data.status === 'ok') {
+        try {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          if (AudioCtx) {
+            const ctx = new AudioCtx();
+            const playTone = (freq, start, dur) => {
+              const osc = ctx.createOscillator();
+              const gain = ctx.createGain();
+              osc.type = 'sine';
+              osc.frequency.setValueAtTime(freq, ctx.currentTime + start);
+              gain.gain.setValueAtTime(0.25, ctx.currentTime + start);
+              gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + start + dur);
+              osc.connect(gain);
+              gain.connect(ctx.destination);
+              osc.start(ctx.currentTime + start);
+              osc.stop(ctx.currentTime + start + dur);
+            };
+            playTone(880, 0, 0.14);
+            playTone(1320, 0.14, 0.22);
+          }
+        } catch (e) { console.warn('Audio beep skipped:', e); }
         closeOptionTradeModal();
         alert(`⚡ Paper Trade Executed Successfully!\n\nContract: ${data.symbol} ${data.strike} ${data.option_type}\nLots: ${data.lots} (${data.qty} Qty)\nEntry Premium: ₹${data.entry_premium.toFixed(2)}\nStop Loss: ₹${data.sl_price.toFixed(2)}\nTarget: ₹${data.target_price.toFixed(2)}\n\nPosition is now ACTIVE with live real-time MTM P&L tracking.`);
         // Switch to Simulator tab to watch live position
@@ -13121,6 +13141,15 @@ class DashboardHTTPRequestHandler(BaseHTTPRequestHandler):
                     trail_step=float(data.get("trail_step", 15.0)),
                     action=data.get("action", "BUY"),
                 )
+                if res.get("status") == "ok":
+                    def _play_trade_beep():
+                        try:
+                            import winsound
+                            winsound.Beep(880, 150)
+                            winsound.Beep(1320, 220)
+                        except Exception:
+                            pass
+                    threading.Thread(target=_play_trade_beep, daemon=True).start()
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json")
                 self.end_headers()
