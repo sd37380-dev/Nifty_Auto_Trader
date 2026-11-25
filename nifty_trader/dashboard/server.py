@@ -931,60 +931,6 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   </div>
 
     <div id="persistent-market-cards" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
-    <!-- NIFTY 50 Persistent Strip -->
-    <div style="background: rgba(19, 27, 46, 0.85); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 6px; padding: 8px 12px; display: flex; flex-direction: column; gap: 4px;">
-      <div style="display: flex; justify-content: space-between; align-items: center;">
-        <span style="font-weight: 800; font-size: 0.88rem; color: #60a5fa;">🇮🇳 NIFTY 50</span>
-        <div>
-          <strong id="top-nifty-close" style="font-size: 1.15rem; color: var(--text-primary);">₹--</strong>
-          <span id="top-nifty-change" style="font-size: 0.75rem; font-weight: 700; margin-left: 4px;">--</span>
-        </div>
-      </div>
-      <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; font-size: 0.72rem; background: rgba(0,0,0,0.25); padding: 4px 6px; border-radius: 4px;">
-        <div><span style="color: var(--text-secondary);">Open:</span> <strong id="top-nifty-open">₹--</strong></div>
-        <div><span style="color: var(--text-secondary);">High:</span> <strong id="top-nifty-high" style="color: var(--green);">₹--</strong></div>
-        <div><span style="color: var(--text-secondary);">Low:</span> <strong id="top-nifty-low" style="color: var(--red);">₹--</strong></div>
-        <div><span style="color: var(--text-secondary);">PDH:</span> <strong id="top-nifty-pdh" style="color: #60a5fa;">₹--</strong></div>
-        <div><span style="color: var(--text-secondary);">PDL:</span> <strong id="top-nifty-pdl" style="color: #f87171;">₹--</strong></div>
-      </div>
-    </div>
-
-    <!-- BANKNIFTY Persistent Strip -->
-    <div style="background: rgba(19, 27, 46, 0.85); border: 1px solid var(--border); border-left: 3px solid #8b5cf6; border-radius: 6px; padding: 8px 12px; display: flex; flex-direction: column; gap: 4px;">
-      <div style="display: flex; justify-content: space-between; align-items: center;">
-        <span style="font-weight: 800; font-size: 0.88rem; color: #a78bfa;">🏦 BANKNIFTY</span>
-        <div>
-          <strong id="top-bank-close" style="font-size: 1.15rem; color: var(--text-primary);">₹--</strong>
-          <span id="top-bank-change" style="font-size: 0.75rem; font-weight: 700; margin-left: 4px;">--</span>
-        </div>
-      </div>
-      <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; font-size: 0.72rem; background: rgba(0,0,0,0.25); padding: 4px 6px; border-radius: 4px;">
-        <div><span style="color: var(--text-secondary);">Open:</span> <strong id="top-bank-open">₹--</strong></div>
-        <div><span style="color: var(--text-secondary);">High:</span> <strong id="top-bank-high" style="color: var(--green);">₹--</strong></div>
-        <div><span style="color: var(--text-secondary);">Low:</span> <strong id="top-bank-low" style="color: var(--red);">₹--</strong></div>
-        <div><span style="color: var(--text-secondary);">PDH:</span> <strong id="top-bank-pdh" style="color: #a78bfa;">₹--</strong></div>
-        <div><span style="color: var(--text-secondary);">PDL:</span> <strong id="top-bank-pdl" style="color: #f87171;">₹--</strong></div>
-      </div>
-    </div>
-
-    <!-- GIFT NIFTY Persistent Strip -->
-    <div style="background: rgba(19, 27, 46, 0.85); border: 1px solid var(--border); border-left: 3px solid #f59e0b; border-radius: 6px; padding: 8px 12px; display: flex; flex-direction: column; gap: 4px;">
-      <div style="display: flex; justify-content: space-between; align-items: center;">
-        <span style="font-weight: 800; font-size: 0.88rem; color: #fbbf24;">🌐 GIFT NIFTY</span>
-        <div>
-          <strong id="top-gift-close" style="font-size: 1.15rem; color: var(--text-primary);">₹--</strong>
-          <span id="top-gift-change" style="font-size: 0.75rem; font-weight: 700; margin-left: 4px;">--</span>
-        </div>
-      </div>
-      <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; font-size: 0.72rem; background: rgba(0,0,0,0.25); padding: 4px 6px; border-radius: 4px;">
-        <div><span style="color: var(--text-secondary);">Open:</span> <strong id="top-gift-open">₹--</strong></div>
-        <div><span style="color: var(--text-secondary);">High:</span> <strong id="top-gift-high" style="color: var(--green);">₹--</strong></div>
-        <div><span style="color: var(--text-secondary);">Low:</span> <strong id="top-gift-low" style="color: var(--red);">₹--</strong></div>
-        <div><span style="color: var(--text-secondary);">PDH:</span> <strong id="top-gift-pdh" style="color: #fbbf24;">₹--</strong></div>
-        <div><span style="color: var(--text-secondary);">PDL:</span> <strong id="top-gift-pdl" style="color: #f87171;">₹--</strong></div>
-      </div>
-    </div>
-
     <!-- NIFTY 50 Live Chart Sync Strip -->
     <div style="background: rgba(19, 27, 46, 0.85); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 6px; padding: 8px 12px; display: flex; flex-direction: column; gap: 4px;">
       <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -1030,10 +976,12 @@ DASHBOARD_HTML = """<!DOCTYPE html>
           <span id="top-vix-change" style="font-size: 0.75rem; font-weight: 700; margin-left: 4px; color: var(--green);">+4.2%</span>
         </div>
       </div>
-      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; font-size: 0.72rem; background: rgba(0,0,0,0.25); padding: 4px 6px; border-radius: 4px;">
+      <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; font-size: 0.72rem; background: rgba(0,0,0,0.25); padding: 4px 6px; border-radius: 4px;">
         <div><span style="color: var(--text-secondary);">Premium Exp:</span> <strong id="top-vix-status" style="color: var(--green);">🟢 EXPANDING</strong></div>
         <div><span style="color: var(--text-secondary);">Volatility:</span> <strong id="top-vix-regime" style="color: #cbd5e1;">MODERATE</strong></div>
         <div><span style="color: var(--text-secondary);">IV Implication:</span> <strong id="top-vix-implication" style="color: #60a5fa;">PE Favored</strong></div>
+        <div><span style="color: var(--text-secondary);">OI Support:</span> <strong id="top-vix-oi-support" style="color: var(--green);">--</strong></div>
+        <div><span style="color: var(--text-secondary);">OI Resistance:</span> <strong id="top-vix-oi-resistance" style="color: var(--red);">--</strong></div>
       </div>
     </div>
   </div>
@@ -1044,7 +992,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   <button class="nav-tab active" onclick="switchTab('tab-overview', this)">System Overview</button>
   <button class="nav-tab" onclick="switchTab('tab-simulator', this)">⚡ Option Paper Simulator</button>
   <button class="nav-tab" onclick="switchTab('tab-option-chain', this)" id="nav-btn-option-chain">📊 NSE Option Chain &amp; Trade</button>
-  <button class="nav-tab" onclick="switchTab('tab-charts', this)" id="nav-btn-charts">📈 TradingView Live Charts</button>
+  <button class="nav-tab" onclick="switchTab('tab-charts', this)" id="nav-btn-charts">📈 Live Charts</button>
   <button class="nav-tab" onclick="switchTab('tab-news', this)" id="nav-btn-news">📰 Market News &amp; Impact <span id="nav-news-count-badge" class="badge badge-green" style="font-size: 0.65rem; padding: 1px 6px; margin-left: 4px;">--</span></button>
   <button class="nav-tab" onclick="switchTab('tab-multi-function', this)" id="nav-btn-multi-function" style="background: rgba(139, 92, 246, 0.12); color: #c084fc; border: 1px solid rgba(139, 92, 246, 0.4); font-weight: 700;">
     🧩 Multi-Function <span id="nav-pending-badge" class="badge badge-yellow" style="font-size: 0.65rem; padding: 1px 6px; margin-left: 4px; display: none;">0</span>
@@ -1331,102 +1279,6 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 
 <!-- Tab 6: Simulator -->
 <div id="tab-simulator" class="tab-content">
-  <!-- TradingView Perception & Manual Control Center -->
-  <div class="card" style="margin-bottom: 20px; background: rgba(59, 130, 246, 0.04); border-left: 4px solid var(--accent);">
-    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 14px;">
-      <div>
-        <div style="font-weight: 700; font-size: 1.05rem; color: var(--text-primary); margin-bottom: 4px;">
-          🎯 TradingView NIFTY Chart Perception &amp; Local Rule Analysis
-        </div>
-        <div style="font-size: 0.82rem; color: var(--text-secondary); max-width: 750px;">
-          Manually capture a live chart screenshot from TradingView or run local rule analysis on the latest market bar. If rule conditions pass, a paper trade is placed immediately.
-        </div>
-      </div>
-      <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-        <button id="btn-manual-screenshot" class="btn" onclick="captureTradingViewScreenshot()" style="background: #0284c7; color: white; border: none; padding: 9px 16px; border-radius: 6px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px;">
-          📸 Take TradingView Screenshot
-        </button>
-        <button id="btn-manual-upload" class="btn" onclick="triggerUploadChart()" style="background: #0d9488; color: white; border: none; padding: 9px 16px; border-radius: 6px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px;">
-          📤 Upload / Paste Real Chart
-        </button>
-        <button id="btn-manual-analyze" class="btn" onclick="analyzeChartNow()" style="background: #2563eb; color: white; border: none; padding: 9px 16px; border-radius: 6px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px;">
-          🔬 Analyze Chart Now
-        </button>
-        <input type="file" id="chart-file-input" accept="image/*" style="display: none;" onchange="uploadChartScreenshot(this)">
-      </div>
-    </div>
-    <div style="font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 12px; background: rgba(0,0,0,0.25); padding: 6px 12px; border-radius: 6px; border: 1px dashed var(--border);">
-      💡 <strong>Real Chart Sync:</strong> You can paste your TradingView chart screenshot anytime with <kbd style="background: var(--bg-card); padding: 1px 5px; border-radius: 3px; border: 1px solid var(--border);">Ctrl + V</kbd>, click <strong>📤 Upload</strong>, or run <code style="color: var(--accent);">login_tradingview.bat</code> to connect your real TradingView account.
-    </div>
-
-    <!-- Live Dual-Panel: Left = Screenshot Preview, Right = Analysis Breakdown -->
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; align-items: stretch;">
-      <!-- Left: TradingView Screenshot Card -->
-      <div style="background: var(--bg-main); border: 1px solid var(--border); border-radius: 8px; padding: 12px; display: flex; flex-direction: column;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-          <span style="font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase;">
-            📊 Live Chart Snapshot (NSE:NIFTY)
-          </span>
-          <a id="sim-tv-link" href="/api/simulator/screenshot_image" target="_blank" style="font-size: 0.75rem; color: var(--accent); text-decoration: none; font-weight: 600;">
-            🔍 Open Full Image ↗
-          </a>
-        </div>
-        <div style="position: relative; flex: 1; min-height: 200px; display: flex; align-items: center; justify-content: center; background: #060911; border-radius: 6px; overflow: hidden; border: 1px solid rgba(255,255,255,0.05);">
-          <img id="sim-tv-img" src="/api/simulator/screenshot_image" alt="TradingView Chart Snapshot" style="width: 100%; max-height: 240px; object-fit: contain;" onerror="this.style.display='none'; document.getElementById('sim-tv-img-fallback').style.display='block';">
-          <div id="sim-tv-img-fallback" style="display: none; padding: 20px; text-align: center; color: var(--text-secondary); font-size: 0.8rem;">
-            No TradingView screenshot captured yet.<br>Click <strong>📸 Take TradingView Screenshot</strong> above to capture one now.
-          </div>
-        </div>
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px; font-size: 0.75rem; color: var(--text-secondary);">
-          <span>File: <code id="sim-tv-filename" style="color: var(--text-primary);">-</code></span>
-          <span id="sim-tv-timestamp">Awaiting capture</span>
-        </div>
-      </div>
-
-      <!-- Right: Technical Indicators & Rule Verdict Card -->
-      <div style="background: var(--bg-main); border: 1px solid var(--border); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; justify-content: space-between;">
-        <div>
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-            <span style="font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase;">
-              🧠 Technical Indicators &amp; Rule Verdict
-            </span>
-            <span id="sim-ana-badge" class="badge badge-yellow">Awaiting Analysis</span>
-          </div>
-
-          <!-- Indicator pills -->
-          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px;">
-            <div style="background: var(--bg-card); padding: 8px; border-radius: 6px; text-align: center; border: 1px solid var(--border);">
-              <div style="font-size: 0.7rem; color: var(--text-secondary); text-transform: uppercase;">NIFTY Spot</div>
-              <div id="sim-ana-spot" style="font-weight: 800; font-size: 0.95rem; color: var(--text-primary);">₹--</div>
-            </div>
-            <div style="background: var(--bg-card); padding: 8px; border-radius: 6px; text-align: center; border: 1px solid var(--border);">
-              <div style="font-size: 0.7rem; color: var(--text-secondary); text-transform: uppercase;">Trend (EMA 9/21)</div>
-              <div id="sim-ana-trend" style="font-weight: 800; font-size: 0.95rem; color: var(--accent);">--</div>
-            </div>
-            <div style="background: var(--bg-card); padding: 8px; border-radius: 6px; text-align: center; border: 1px solid var(--border);">
-              <div style="font-size: 0.7rem; color: var(--text-secondary); text-transform: uppercase;">RSI (14)</div>
-              <div id="sim-ana-rsi" style="font-weight: 800; font-size: 0.95rem; color: var(--yellow);">--</div>
-            </div>
-          </div>
-
-          <div style="font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 6px;">
-            Active Rule: <strong id="sim-ana-rule-name" style="color: var(--text-primary);">user_rule.py</strong> | Candle: <span id="sim-ana-candle-time">--</span>
-          </div>
-
-          <!-- Rule condition explanation -->
-          <div id="sim-ana-reason-box" style="background: rgba(15, 23, 42, 0.8); border: 1px solid var(--border); padding: 10px; border-radius: 6px; font-size: 0.82rem; color: var(--text-primary); margin-bottom: 10px; min-height: 40px; display: flex; align-items: center;">
-            Click <strong>"🔬 Analyze Chart Now"</strong> to evaluate current market candle against your rule.
-          </div>
-        </div>
-
-        <!-- Simulator Action -->
-        <div id="sim-ana-action-box" style="background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.25); padding: 8px 12px; border-radius: 6px; font-size: 0.8rem; color: var(--accent); font-weight: 600;">
-          Status: Ready for manual analysis.
-        </div>
-      </div>
-    </div>
-  </div>
-
   <div class="grid">
     <div class="card">
       <div class="card-header">Simulator Engine Status</div>
@@ -2038,7 +1890,6 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         <button type="button" class="btn nc-contrib-pill contrib-tag-n50" onclick="quickSelectContributor('TATASTEEL')" title="Tata Steel — 1.6% Nifty 50">🔩 TATASTEEL <span class="weight-badge">1.6%</span></button>
       </div>
     </div>
-    </div>
   </div>
 
   <!-- Main Chart Viewport: Handles both Single View & Quad 4-Chart View -->
@@ -2383,7 +2234,6 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         <span id="chart-drawings-empty-msg" style="color: var(--text-secondary); font-style: italic;">No active drawings for this symbol yet.</span>
       </div>
     </div>
-  </div>
 
   <!-- Dedicated Candle Bar Replay Control Bar -->
   <div id="chart-replay-panel" style="display: none; margin-top: 8px; margin-bottom: 8px; background: linear-gradient(135deg, rgba(15, 23, 42, 0.98) 0%, rgba(30, 41, 59, 0.95) 100%); padding: 10px 14px; border-radius: 6px; border: 1px solid #f59e0b; box-shadow: 0 4px 20px rgba(245, 158, 11, 0.2);">
@@ -5314,6 +5164,34 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 
     const lotEl = document.getElementById('oc-stat-lotsize');
     if (lotEl) lotEl.innerText = `${chain.lot_size || (chain.symbol === 'BANKNIFTY' ? 30 : 65)} Qty / Lot`;
+
+    // Update OI Support & Resistance in INDIA VIX Persistent Strip
+    if (chain.strikes && chain.strikes.length > 0) {
+      let maxPutOi = -1, oiSupportStrike = null;
+      let maxCallOi = -1, oiResistanceStrike = null;
+      chain.strikes.forEach(r => {
+        const putOi = (r.pe && r.pe.oi) ? Number(r.pe.oi) : 0;
+        const callOi = (r.ce && r.ce.oi) ? Number(r.ce.oi) : 0;
+        if (putOi > maxPutOi) {
+          maxPutOi = putOi;
+          oiSupportStrike = r.strike;
+        }
+        if (callOi > maxCallOi) {
+          maxCallOi = callOi;
+          oiResistanceStrike = r.strike;
+        }
+      });
+      const oiSupEl = document.getElementById('top-vix-oi-support');
+      if (oiSupEl && oiSupportStrike != null) {
+        oiSupEl.innerText = `₹${Number(oiSupportStrike).toLocaleString('en-IN')}`;
+        oiSupEl.title = `${chain.symbol || 'NIFTY'} Max Put OI: ${maxPutOi.toLocaleString('en-IN')}`;
+      }
+      const oiResEl = document.getElementById('top-vix-oi-resistance');
+      if (oiResEl && oiResistanceStrike != null) {
+        oiResEl.innerText = `₹${Number(oiResistanceStrike).toLocaleString('en-IN')}`;
+        oiResEl.title = `${chain.symbol || 'NIFTY'} Max Call OI: ${maxCallOi.toLocaleString('en-IN')}`;
+      }
+    }
 
     // 2. Expiry Select Options
     const expirySel = document.getElementById('oc-expiry-select');
