@@ -1,5 +1,5 @@
 # 📊 NIFTY 15-MINUTE TRADE INTELLIGENCE REPORT
-**Generated:** `2026-11-25 23:09:37 IST`  
+**Generated:** `2026-11-25 23:54:09 IST`  
 **Instrument:** `NIFTY 50` & `BANKNIFTY`  
 **Cognitive State:** **`WAIT / MONITOR 25,500–25,562 RESISTANCE WALL`**  
 **Market Regime:** **`BEARISH (Sell-on-Rise Bias)`**

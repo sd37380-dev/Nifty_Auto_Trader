@@ -818,6 +818,49 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     min-height: 280px !important;
   }
 
+  @keyframes nearLevelBlink {
+    0%, 100% {
+      background-color: rgba(250, 204, 21, 0.28);
+      box-shadow: 0 0 8px rgba(250, 204, 21, 0.65);
+      transform: scale(1.02);
+    }
+    50% {
+      background-color: rgba(250, 204, 21, 0.05);
+      box-shadow: 0 0 0 rgba(250, 204, 21, 0);
+      transform: scale(1);
+    }
+  }
+  .near-level-blink {
+    animation: nearLevelBlink 1s ease-in-out infinite;
+    border-radius: 4px;
+    outline: 1px solid rgba(250, 204, 21, 0.75);
+  }
+  @keyframes levelActionPulse {
+    0%, 100% { opacity: 1; transform: scale(1.01); }
+    50% { opacity: 0.45; transform: scale(0.99); }
+  }
+  .level-action-blink-bull {
+    animation: levelActionPulse 1.1s ease-in-out infinite;
+    background: rgba(16, 185, 129, 0.22);
+    border: 1px solid rgba(16, 185, 129, 0.75);
+    color: #34d399;
+    box-shadow: 0 0 8px rgba(16, 185, 129, 0.35);
+  }
+  .level-action-blink-bear {
+    animation: levelActionPulse 1.1s ease-in-out infinite;
+    background: rgba(239, 68, 68, 0.22);
+    border: 1px solid rgba(239, 68, 68, 0.75);
+    color: #f87171;
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.35);
+  }
+  .level-action-blink-respect {
+    animation: levelActionPulse 1.1s ease-in-out infinite;
+    background: rgba(245, 158, 11, 0.22);
+    border: 1px solid rgba(245, 158, 11, 0.75);
+    color: #fbbf24;
+    box-shadow: 0 0 8px rgba(245, 158, 11, 0.35);
+  }
+
   /* Multi-Function Tab & Sub-Nav Styling */
   .mf-subtab {
     background: rgba(19, 27, 46, 0.85);
@@ -930,58 +973,126 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     </div>
   </div>
 
-    <div id="persistent-market-cards" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
-    <!-- NIFTY 50 Live Chart Sync Strip -->
-    <div style="background: rgba(19, 27, 46, 0.85); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 6px; padding: 8px 12px; display: flex; flex-direction: column; gap: 4px;">
-      <div style="display: flex; justify-content: space-between; align-items: center;">
-        <span style="font-weight: 800; font-size: 0.88rem; color: #60a5fa;">⚡ NIFTY 50 (LIVE)</span>
-        <div>
-          <strong id="live-sync-nifty-close" style="font-size: 1.15rem; color: var(--text-primary);">₹--</strong>
-          <span id="live-sync-nifty-change" style="font-size: 0.75rem; font-weight: 700; margin-left: 4px;">--</span>
+    <div id="persistent-market-cards" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; align-items: stretch;">
+    <!-- Column 1: NIFTY 50 Live + Key Levels -->
+    <div style="display: flex; flex-direction: column; gap: 8px;">
+      <!-- NIFTY 50 Live Chart Sync Strip -->
+      <div style="background: rgba(19, 27, 46, 0.85); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 6px; padding: 8px 12px; display: flex; flex-direction: column; gap: 4px;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span style="font-weight: 800; font-size: 0.88rem; color: #60a5fa;">⚡ NIFTY 50 (LIVE)</span>
+          <div>
+            <strong id="live-sync-nifty-close" style="font-size: 1.15rem; color: var(--text-primary);">₹--</strong>
+            <span id="live-sync-nifty-change" style="font-size: 0.75rem; font-weight: 700; margin-left: 4px;">--</span>
+          </div>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; font-size: 0.72rem; background: rgba(0,0,0,0.25); padding: 4px 6px; border-radius: 4px;">
+          <div><span style="color: var(--text-secondary);">Open:</span> <strong id="live-sync-nifty-open">₹--</strong></div>
+          <div><span style="color: var(--text-secondary);">High:</span> <strong id="live-sync-nifty-high" style="color: var(--green);">₹--</strong></div>
+          <div><span style="color: var(--text-secondary);">Low:</span> <strong id="live-sync-nifty-low" style="color: var(--red);">₹--</strong></div>
+          <div><span style="color: var(--text-secondary);">Close:</span> <strong id="live-sync-nifty-cur">₹--</strong></div>
+          <div><span style="color: var(--text-secondary);">Range:</span> <strong id="live-sync-nifty-range" style="color: #cbd5e1;">--</strong></div>
         </div>
       </div>
-      <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; font-size: 0.72rem; background: rgba(0,0,0,0.25); padding: 4px 6px; border-radius: 4px;">
-        <div><span style="color: var(--text-secondary);">Open:</span> <strong id="live-sync-nifty-open">₹--</strong></div>
-        <div><span style="color: var(--text-secondary);">High:</span> <strong id="live-sync-nifty-high" style="color: var(--green);">₹--</strong></div>
-        <div><span style="color: var(--text-secondary);">Low:</span> <strong id="live-sync-nifty-low" style="color: var(--red);">₹--</strong></div>
-        <div><span style="color: var(--text-secondary);">Close:</span> <strong id="live-sync-nifty-cur">₹--</strong></div>
-        <div><span style="color: var(--text-secondary);">Range:</span> <strong id="live-sync-nifty-range" style="color: #cbd5e1;">--</strong></div>
+
+      <!-- NIFTY 50 Pivots, PDH & Volume Profile Card -->
+      <div style="background: rgba(19, 27, 46, 0.85); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 6px; padding: 7px 12px; display: flex; flex-direction: column; gap: 4px;">
+        <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; font-size: 0.71rem; background: rgba(0,0,0,0.25); padding: 4px 6px; border-radius: 4px;">
+          <div><span style="color: var(--text-secondary);">P:</span> <strong id="top-nifty-pp" style="color: #cbd5e1;">₹--</strong></div>
+          <div><span style="color: var(--text-secondary);">R1:</span> <strong id="top-nifty-r1" style="color: #f59e0b;">₹--</strong></div>
+          <div><span style="color: var(--text-secondary);">R2:</span> <strong id="top-nifty-r2" style="color: #ef4444;">₹--</strong></div>
+          <div><span style="color: var(--text-secondary);">S1:</span> <strong id="top-nifty-s1" style="color: #10b981;">₹--</strong></div>
+          <div><span style="color: var(--text-secondary);">S2:</span> <strong id="top-nifty-s2" style="color: #3b82f6;">₹--</strong></div>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; font-size: 0.71rem; background: rgba(0,0,0,0.25); padding: 4px 6px; border-radius: 4px;">
+          <div><span style="color: var(--text-secondary);">PDH:</span> <strong id="top-nifty-pdh" style="color: #60a5fa;">₹--</strong></div>
+          <div><span style="color: var(--text-secondary);">Prev POC:</span> <strong id="live-sync-nifty-prev-poc" style="color: #c084fc;">₹--</strong></div>
+          <div><span style="color: var(--text-secondary);">Cur POC:</span> <strong id="live-sync-nifty-cur-poc" style="color: #fde047;">₹--</strong></div>
+          <div><span style="color: var(--text-secondary);">VAL:</span> <strong id="live-sync-nifty-val" style="color: #38bdf8;">₹--</strong></div>
+          <div><span style="color: var(--text-secondary);">VAH:</span> <strong id="live-sync-nifty-vah" style="color: #38bdf8;">₹--</strong></div>
+        </div>
       </div>
     </div>
 
-    <!-- BANKNIFTY Live Chart Sync Strip -->
-    <div style="background: rgba(19, 27, 46, 0.85); border: 1px solid var(--border); border-left: 3px solid #8b5cf6; border-radius: 6px; padding: 8px 12px; display: flex; flex-direction: column; gap: 4px;">
-      <div style="display: flex; justify-content: space-between; align-items: center;">
-        <span style="font-weight: 800; font-size: 0.88rem; color: #a78bfa;">⚡ BANKNIFTY (LIVE)</span>
-        <div>
-          <strong id="live-sync-bank-close" style="font-size: 1.15rem; color: var(--text-primary);">₹--</strong>
-          <span id="live-sync-bank-change" style="font-size: 0.75rem; font-weight: 700; margin-left: 4px;">--</span>
+    <!-- Column 2: BANKNIFTY Live + Key Levels -->
+    <div style="display: flex; flex-direction: column; gap: 8px;">
+      <!-- BANKNIFTY Live Chart Sync Strip -->
+      <div style="background: rgba(19, 27, 46, 0.85); border: 1px solid var(--border); border-left: 3px solid #8b5cf6; border-radius: 6px; padding: 8px 12px; display: flex; flex-direction: column; gap: 4px;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span style="font-weight: 800; font-size: 0.88rem; color: #a78bfa;">⚡ BANKNIFTY (LIVE)</span>
+          <div>
+            <strong id="live-sync-bank-close" style="font-size: 1.15rem; color: var(--text-primary);">₹--</strong>
+            <span id="live-sync-bank-change" style="font-size: 0.75rem; font-weight: 700; margin-left: 4px;">--</span>
+          </div>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; font-size: 0.72rem; background: rgba(0,0,0,0.25); padding: 4px 6px; border-radius: 4px;">
+          <div><span style="color: var(--text-secondary);">Open:</span> <strong id="live-sync-bank-open">₹--</strong></div>
+          <div><span style="color: var(--text-secondary);">High:</span> <strong id="live-sync-bank-high" style="color: var(--green);">₹--</strong></div>
+          <div><span style="color: var(--text-secondary);">Low:</span> <strong id="live-sync-bank-low" style="color: var(--red);">₹--</strong></div>
+          <div><span style="color: var(--text-secondary);">Close:</span> <strong id="live-sync-bank-cur">₹--</strong></div>
+          <div><span style="color: var(--text-secondary);">Range:</span> <strong id="live-sync-bank-range" style="color: #cbd5e1;">--</strong></div>
         </div>
       </div>
-      <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; font-size: 0.72rem; background: rgba(0,0,0,0.25); padding: 4px 6px; border-radius: 4px;">
-        <div><span style="color: var(--text-secondary);">Open:</span> <strong id="live-sync-bank-open">₹--</strong></div>
-        <div><span style="color: var(--text-secondary);">High:</span> <strong id="live-sync-bank-high" style="color: var(--green);">₹--</strong></div>
-        <div><span style="color: var(--text-secondary);">Low:</span> <strong id="live-sync-bank-low" style="color: var(--red);">₹--</strong></div>
-        <div><span style="color: var(--text-secondary);">Close:</span> <strong id="live-sync-bank-cur">₹--</strong></div>
-        <div><span style="color: var(--text-secondary);">Range:</span> <strong id="live-sync-bank-range" style="color: #cbd5e1;">--</strong></div>
+
+      <!-- BANKNIFTY Pivots, PDH & Volume Profile Card -->
+      <div style="background: rgba(19, 27, 46, 0.85); border: 1px solid var(--border); border-left: 3px solid #8b5cf6; border-radius: 6px; padding: 7px 12px; display: flex; flex-direction: column; gap: 4px;">
+        <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; font-size: 0.71rem; background: rgba(0,0,0,0.25); padding: 4px 6px; border-radius: 4px;">
+          <div><span style="color: var(--text-secondary);">P:</span> <strong id="top-bank-pp" style="color: #cbd5e1;">₹--</strong></div>
+          <div><span style="color: var(--text-secondary);">R1:</span> <strong id="top-bank-r1" style="color: #f59e0b;">₹--</strong></div>
+          <div><span style="color: var(--text-secondary);">R2:</span> <strong id="top-bank-r2" style="color: #ef4444;">₹--</strong></div>
+          <div><span style="color: var(--text-secondary);">S1:</span> <strong id="top-bank-s1" style="color: #10b981;">₹--</strong></div>
+          <div><span style="color: var(--text-secondary);">S2:</span> <strong id="top-bank-s2" style="color: #3b82f6;">₹--</strong></div>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; font-size: 0.71rem; background: rgba(0,0,0,0.25); padding: 4px 6px; border-radius: 4px;">
+          <div><span style="color: var(--text-secondary);">PDH:</span> <strong id="top-bank-pdh" style="color: #a78bfa;">₹--</strong></div>
+          <div><span style="color: var(--text-secondary);">Prev POC:</span> <strong id="live-sync-bank-prev-poc" style="color: #c084fc;">₹--</strong></div>
+          <div><span style="color: var(--text-secondary);">Cur POC:</span> <strong id="live-sync-bank-cur-poc" style="color: #fde047;">₹--</strong></div>
+          <div><span style="color: var(--text-secondary);">VAL:</span> <strong id="live-sync-bank-val" style="color: #38bdf8;">₹--</strong></div>
+          <div><span style="color: var(--text-secondary);">VAH:</span> <strong id="live-sync-bank-vah" style="color: #38bdf8;">₹--</strong></div>
+        </div>
       </div>
     </div>
 
     <!-- INDIA VIX Persistent Strip -->
-    <div style="background: rgba(19, 27, 46, 0.85); border: 1px solid var(--border); border-left: 3px solid #c084fc; border-radius: 6px; padding: 8px 12px; display: flex; flex-direction: column; gap: 4px;">
+    <div style="background: rgba(19, 27, 46, 0.85); border: 1px solid var(--border); border-left: 3px solid #c084fc; border-radius: 6px; padding: 8px 12px; display: flex; flex-direction: column; justify-content: space-between; gap: 5px; height: 100%; box-sizing: border-box;">
       <div style="display: flex; justify-content: space-between; align-items: center;">
-        <span style="font-weight: 800; font-size: 0.88rem; color: #c084fc;">⚡ INDIA VIX</span>
+        <span style="font-weight: 800; font-size: 0.88rem; color: #c084fc;">⚡ INDIA VIX &amp; NIFTY TECHNICALS</span>
         <div>
           <strong id="top-vix-close" style="font-size: 1.15rem; color: #c084fc;">13.80</strong>
           <span id="top-vix-change" style="font-size: 0.75rem; font-weight: 700; margin-left: 4px; color: var(--green);">+4.2%</span>
         </div>
       </div>
-      <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; font-size: 0.72rem; background: rgba(0,0,0,0.25); padding: 4px 6px; border-radius: 4px;">
+      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; font-size: 0.71rem; background: rgba(0,0,0,0.25); padding: 4px 6px; border-radius: 4px;">
         <div><span style="color: var(--text-secondary);">Premium Exp:</span> <strong id="top-vix-status" style="color: var(--green);">🟢 EXPANDING</strong></div>
         <div><span style="color: var(--text-secondary);">Volatility:</span> <strong id="top-vix-regime" style="color: #cbd5e1;">MODERATE</strong></div>
         <div><span style="color: var(--text-secondary);">IV Implication:</span> <strong id="top-vix-implication" style="color: #60a5fa;">PE Favored</strong></div>
-        <div><span style="color: var(--text-secondary);">OI Support:</span> <strong id="top-vix-oi-support" style="color: var(--green);">--</strong></div>
-        <div><span style="color: var(--text-secondary);">OI Resistance:</span> <strong id="top-vix-oi-resistance" style="color: var(--red);">--</strong></div>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; font-size: 0.71rem; background: rgba(0,0,0,0.25); padding: 4px 6px; border-radius: 4px;">
+        <div><span style="color: var(--text-secondary);">Wk High:</span> <strong id="top-vix-week-high" style="color: var(--green);">₹--</strong></div>
+        <div><span style="color: var(--text-secondary);">Wk Low:</span> <strong id="top-vix-week-low" style="color: var(--red);">₹--</strong></div>
+        <div><span style="color: var(--text-secondary);">PCR:</span> <strong id="top-vix-pcr" style="color: #fbbf24;">--</strong></div>
+        <div><span style="color: var(--text-secondary);">OI S/R:</span> <strong id="top-vix-oi-support" style="color: var(--green);">--</strong><span style="color: var(--text-secondary);">/</span><strong id="top-vix-oi-resistance" style="color: var(--red);">--</strong></div>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; font-size: 0.71rem; background: rgba(0,0,0,0.25); padding: 4px 6px; border-radius: 4px;">
+        <div><span style="color: var(--text-secondary);">ST(10,3):</span> <strong id="top-vix-supertrend" style="color: #cbd5e1;">--</strong></div>
+        <div><span style="color: var(--text-secondary);">20 EMA:</span> <strong id="top-vix-ema20" style="color: #cbd5e1;">--</strong></div>
+        <div><span style="color: var(--text-secondary);">200 EMA:</span> <strong id="top-vix-ema200" style="color: #cbd5e1;">--</strong></div>
+        <div><span style="color: var(--text-secondary);">VWAP:</span> <strong id="top-vix-vwap" style="color: #cbd5e1;">--</strong></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Full-Width Compact Breakout / Breakdown / Respecting Level Bar -->
+  <div id="level-action-ticker-bar" style="margin-top: 8px; background: rgba(19, 27, 46, 0.9); border: 1px solid var(--border); border-left: 3px solid #f59e0b; border-radius: 6px; padding: 6px 12px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; align-items: center;">
+    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; min-height: 24px;">
+      <span style="font-size: 0.74rem; font-weight: 800; color: #60a5fa; white-space: nowrap;">⚡ NIFTY LEVEL ACTION:</span>
+      <div id="level-action-nifty" style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 0.73rem; color: var(--text-secondary);">
+        <span>Scanning levels...</span>
+      </div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; min-height: 24px; border-left: 1px solid rgba(255,255,255,0.08); padding-left: 12px;">
+      <span style="font-size: 0.74rem; font-weight: 800; color: #a78bfa; white-space: nowrap;">🏦 BANKNIFTY LEVEL ACTION:</span>
+      <div id="level-action-bank" style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 0.73rem; color: var(--text-secondary);">
+        <span>Scanning levels...</span>
       </div>
     </div>
   </div>
@@ -4457,6 +4568,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       updateTopBarInst('nifty', n);
       updateTopBarInst('bank', b);
       updateTopBarInst('gift', g);
+      if (typeof updateNearLevelBlinks === 'function') updateNearLevelBlinks();
 
       // Populate Overview S/R Matrix
       if (sp.sr_levels) {
@@ -5191,6 +5303,12 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         oiResEl.innerText = `₹${Number(oiResistanceStrike).toLocaleString('en-IN')}`;
         oiResEl.title = `${chain.symbol || 'NIFTY'} Max Call OI: ${maxCallOi.toLocaleString('en-IN')}`;
       }
+      const vixPcrEl = document.getElementById('top-vix-pcr');
+      if (vixPcrEl && chain.pcr != null) {
+        vixPcrEl.innerText = Number(chain.pcr).toFixed(2);
+        vixPcrEl.style.color = chain.pcr >= 1.15 ? 'var(--green)' : (chain.pcr <= 0.85 ? 'var(--red)' : '#fbbf24');
+      }
+      if (typeof updateNearLevelBlinks === 'function') updateNearLevelBlinks();
     }
 
     // 2. Expiry Select Options
@@ -6429,11 +6547,11 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   }
 
   // --- Auto Volume Profile & Fair Value Engine (POC, VAH, VAL, vPOC) ---
-  function calculateVolumeProfile(candles) {
+  function calculateVolumeProfile(candles, binStepOverride = null) {
     if (!candles || candles.length === 0) return null;
     const avgSpread = (candles.reduce((acc, c) => acc + Math.abs(c.high - c.low), 0) / candles.length) || 10.0;
     const isBank = (typeof _lwSymbol !== 'undefined' && _lwSymbol.includes('BANK'));
-    const binStep = isBank ? 10.0 : 5.0; // 5 pts for Nifty, 10 pts for BankNifty
+    const binStep = binStepOverride || (isBank ? 10.0 : 5.0); // 5 pts for Nifty, 10 pts for BankNifty
 
     // Separate candles into Today vs Prior Sessions
     let dayMap = {};
@@ -6546,11 +6664,13 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     const todayProfile = computeProfileForSet(todayCandles);
     if (!todayProfile) return null;
 
-    // Check Virgin POC (vPOC) from yesterday
+    // Check Virgin POC (vPOC) & Previous Day POC from yesterday
     let vpoc = null;
+    let prevPoc = null;
     if (yesterdayCandles && yesterdayCandles.length > 0) {
       const yProfile = computeProfileForSet(yesterdayCandles);
       if (yProfile) {
+        prevPoc = yProfile.poc;
         // If today's trading range never crossed yesterday's POC, it's a Virgin POC!
         if (todayProfile.minPrice > yProfile.poc || todayProfile.maxPrice < yProfile.poc) {
           vpoc = yProfile.poc;
@@ -6559,6 +6679,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     }
 
     todayProfile.vpoc = vpoc;
+    todayProfile.prevPoc = prevPoc;
     return todayProfile;
   }
 
@@ -11871,6 +11992,68 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 
 
   // ==========================================================================
+  // PROXIMITY BLINKING FOR KEY LEVELS (±20 POINTS)
+  // ==========================================================================
+  function updateNearLevelBlinks() {
+    const parsePrice = (el) => {
+      if (!el) return NaN;
+      const num = parseFloat(String(el.innerText || '').replace(/[₹,\s]/g, ''));
+      return isFinite(num) && num > 0 ? num : NaN;
+    };
+
+    const niftyLive = parsePrice(document.getElementById('live-sync-nifty-close'));
+    const bankLive = parsePrice(document.getElementById('live-sync-bank-close'));
+
+    const toggleBlink = (el, isNear, targetSelf = false) => {
+      if (!el) return;
+      const target = targetSelf ? el : (el.parentElement || el);
+      if (isNear) {
+        target.classList.add('near-level-blink');
+      } else {
+        target.classList.remove('near-level-blink');
+      }
+    };
+
+    const niftyLevelIds = [
+      'top-nifty-pp', 'top-nifty-r1', 'top-nifty-r2', 'top-nifty-s1', 'top-nifty-s2',
+      'top-nifty-pdh', 'live-sync-nifty-prev-poc', 'live-sync-nifty-cur-poc',
+      'live-sync-nifty-val', 'live-sync-nifty-vah',
+      'top-vix-week-high', 'top-vix-week-low'
+    ];
+    niftyLevelIds.forEach(id => {
+      const el = document.getElementById(id);
+      const lvl = parsePrice(el);
+      toggleBlink(el, !isNaN(niftyLive) && !isNaN(lvl) && Math.abs(niftyLive - lvl) <= 20);
+    });
+
+    // OI Support & Resistance share one cell, so blink the matching strong tag directly
+    ['top-vix-oi-support', 'top-vix-oi-resistance'].forEach(id => {
+      const el = document.getElementById(id);
+      const lvl = parsePrice(el);
+      toggleBlink(el, !isNaN(niftyLive) && !isNaN(lvl) && Math.abs(niftyLive - lvl) <= 20, true);
+    });
+
+    // Indicator delta cells already display signed distance from live NIFTY price
+    ['top-vix-supertrend', 'top-vix-ema20', 'top-vix-ema200', 'top-vix-vwap'].forEach(id => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const dist = parseFloat(String(el.innerText || '').replace(/[^\d.+-]/g, ''));
+      toggleBlink(el, isFinite(dist) && Math.abs(dist) <= 20);
+    });
+
+    const bankLevelIds = [
+      'top-bank-pp', 'top-bank-r1', 'top-bank-r2', 'top-bank-s1', 'top-bank-s2',
+      'top-bank-pdh', 'live-sync-bank-prev-poc', 'live-sync-bank-cur-poc',
+      'live-sync-bank-val', 'live-sync-bank-vah'
+    ];
+    bankLevelIds.forEach(id => {
+      const el = document.getElementById(id);
+      const lvl = parsePrice(el);
+      toggleBlink(el, !isNaN(bankLive) && !isNaN(lvl) && Math.abs(bankLive - lvl) <= 20);
+    });
+  }
+
+  // ==========================================================================
   // REAL-TIME 9:15+ CHART SYNC TELEMETRY (NIFTY & BANKNIFTY)
   // ==========================================================================
   async function updateLiveChartSyncBoxes() {
@@ -11881,6 +12064,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         const nData = await nRes.json();
         if (nData.candles && nData.candles.length > 0) {
           const candles = nData.candles;
+          window._lastNiftyCandles = candles;
           const last = candles[candles.length - 1];
           const first = candles[0];
           const prev = nData.previousClose || first.open;
@@ -11907,6 +12091,62 @@ DASHBOARD_HTML = """<!DOCTYPE html>
           if (highEl) highEl.innerText = `₹${last.high.toLocaleString('en-IN', {minimumFractionDigits: 2})}`;
           if (lowEl) lowEl.innerText = `₹${last.low.toLocaleString('en-IN', {minimumFractionDigits: 2})}`;
           if (rangeEl) rangeEl.innerText = `${range.toFixed(2)} pts`;
+
+          if (typeof calculateVolumeProfile === 'function') {
+            const vp = calculateVolumeProfile(candles, 5.0);
+            if (vp) {
+              const prevPocEl = document.getElementById('live-sync-nifty-prev-poc');
+              const curPocEl = document.getElementById('live-sync-nifty-cur-poc');
+              const valEl = document.getElementById('live-sync-nifty-val');
+              const vahEl = document.getElementById('live-sync-nifty-vah');
+              if (prevPocEl) prevPocEl.innerText = vp.prevPoc != null ? `₹${vp.prevPoc.toLocaleString('en-IN', {minimumFractionDigits: 1})}` : '--';
+              if (curPocEl) curPocEl.innerText = `₹${vp.poc.toLocaleString('en-IN', {minimumFractionDigits: 1})}`;
+              if (valEl) valEl.innerText = `₹${vp.val.toLocaleString('en-IN', {minimumFractionDigits: 1})}`;
+              if (vahEl) vahEl.innerText = `₹${vp.vah.toLocaleString('en-IN', {minimumFractionDigits: 1})}`;
+            }
+          }
+
+          // Update Week High/Low & Indicator Distance Statuses in INDIA VIX card
+          let wkHigh = -Infinity, wkLow = Infinity;
+          for (let i = 0; i < candles.length; i++) {
+            if (candles[i].high > wkHigh) wkHigh = candles[i].high;
+            if (candles[i].low < wkLow) wkLow = candles[i].low;
+          }
+          const wkHighEl = document.getElementById('top-vix-week-high');
+          const wkLowEl = document.getElementById('top-vix-week-low');
+          if (wkHighEl && wkHigh > -Infinity) wkHighEl.innerText = `₹${wkHigh.toLocaleString('en-IN', {minimumFractionDigits: 1})}`;
+          if (wkLowEl && wkLow < Infinity) wkLowEl.innerText = `₹${wkLow.toLocaleString('en-IN', {minimumFractionDigits: 1})}`;
+
+          const setIndDelta = (id, refVal, labelPrefix) => {
+            const el = document.getElementById(id);
+            if (!el || refVal == null || isNaN(refVal)) return;
+            const d = last.close - refVal;
+            const sign = d >= 0 ? '+' : '';
+            el.innerText = `${sign}${d.toFixed(1)} pts`;
+            el.style.color = d >= 0 ? 'var(--green)' : 'var(--red)';
+            el.title = `${labelPrefix}: ₹${refVal.toLocaleString('en-IN', {minimumFractionDigits: 2})}`;
+          };
+
+          if (typeof calculateSupertrend === 'function') {
+            const st = calculateSupertrend(candles, 10, 3);
+            const lastBull = st.bull.length > 0 ? st.bull[st.bull.length - 1] : null;
+            const lastBear = st.bear.length > 0 ? st.bear[st.bear.length - 1] : null;
+            if (lastBull && lastBull.time === last.time) {
+              setIndDelta('top-vix-supertrend', lastBull.value, 'SuperTrend (BULL)');
+            } else if (lastBear && lastBear.time === last.time) {
+              setIndDelta('top-vix-supertrend', lastBear.value, 'SuperTrend (BEAR)');
+            }
+          }
+          if (typeof calculateEMA === 'function') {
+            const ema20 = calculateEMA(candles, 20);
+            if (ema20.length > 0) setIndDelta('top-vix-ema20', ema20[ema20.length - 1].value, '20 EMA');
+            const ema200 = calculateEMA(candles, 200);
+            if (ema200.length > 0) setIndDelta('top-vix-ema200', ema200[ema200.length - 1].value, '200 EMA');
+          }
+          if (typeof calculateVWAP === 'function') {
+            const vwap = calculateVWAP(candles);
+            if (vwap.length > 0) setIndDelta('top-vix-vwap', vwap[vwap.length - 1].value, 'VWAP');
+          }
         }
       }
     } catch(err) {
@@ -11920,6 +12160,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         const bData = await bRes.json();
         if (bData.candles && bData.candles.length > 0) {
           const candles = bData.candles;
+          window._lastBankCandles = candles;
           const last = candles[candles.length - 1];
           const first = candles[0];
           const prev = bData.previousClose || first.open;
@@ -11946,11 +12187,163 @@ DASHBOARD_HTML = """<!DOCTYPE html>
           if (highEl) highEl.innerText = `₹${last.high.toLocaleString('en-IN', {minimumFractionDigits: 2})}`;
           if (lowEl) lowEl.innerText = `₹${last.low.toLocaleString('en-IN', {minimumFractionDigits: 2})}`;
           if (rangeEl) rangeEl.innerText = `${range.toFixed(2)} pts`;
+
+          if (typeof calculateVolumeProfile === 'function') {
+            const vp = calculateVolumeProfile(candles, 10.0);
+            if (vp) {
+              const prevPocEl = document.getElementById('live-sync-bank-prev-poc');
+              const curPocEl = document.getElementById('live-sync-bank-cur-poc');
+              const valEl = document.getElementById('live-sync-bank-val');
+              const vahEl = document.getElementById('live-sync-bank-vah');
+              if (prevPocEl) prevPocEl.innerText = vp.prevPoc != null ? `₹${vp.prevPoc.toLocaleString('en-IN', {minimumFractionDigits: 1})}` : '--';
+              if (curPocEl) curPocEl.innerText = `₹${vp.poc.toLocaleString('en-IN', {minimumFractionDigits: 1})}`;
+              if (valEl) valEl.innerText = `₹${vp.val.toLocaleString('en-IN', {minimumFractionDigits: 1})}`;
+              if (vahEl) vahEl.innerText = `₹${vp.vah.toLocaleString('en-IN', {minimumFractionDigits: 1})}`;
+            }
+          }
         }
       }
     } catch(err) {
       console.debug('BANKNIFTY chart sync telemetry error:', err);
     }
+
+    if (typeof updateNearLevelBlinks === 'function') updateNearLevelBlinks();
+    if (typeof updateLevelActionTicker === 'function') updateLevelActionTicker();
+  }
+
+  function updateLevelActionTicker() {
+    const parsePrice = (id) => {
+      const el = document.getElementById(id);
+      if (!el) return NaN;
+      const num = parseFloat(String(el.innerText || '').replace(/[₹,\s]/g, ''));
+      return isFinite(num) && num > 0 ? num : NaN;
+    };
+
+    const analyzeSymbolLevels = (candles, levels) => {
+      if (!candles || candles.length < 3) return [];
+      const getDateKey = (t) => {
+        const sec = (typeof getUnixSec === 'function') ? getUnixSec(t) : Number(t);
+        return new Date((sec + 19800) * 1000).toISOString().slice(0, 10);
+      };
+      const todayKey = getDateKey(candles[candles.length - 1].time);
+      const todayCandles = candles.filter(c => getDateKey(c.time) === todayKey);
+      if (todayCandles.length === 0) return [];
+
+      const first = todayCandles[0];
+      const last = todayCandles[todayCandles.length - 1];
+      const events = [];
+
+      levels.forEach(lv => {
+        if (!isFinite(lv.price) || lv.price <= 0) return;
+        const p = lv.price;
+
+        // 1. Check RESPECTING: >= 3 consecutive recent 5m candles (>= 15 min) near level (±20 pts)
+        let streak = 0;
+        for (let i = todayCandles.length - 1; i >= 0; i--) {
+          const c = todayCandles[i];
+          const near = Math.abs(c.close - p) <= 20 || (c.low <= p + 15 && c.high >= p - 15);
+          if (near) {
+            streak++;
+          } else {
+            break;
+          }
+        }
+        if (streak >= 3 && Math.abs(last.close - p) <= 25) {
+          events.push({
+            type: 'RESPECT',
+            label: `🛡️ RESPECTING ${lv.name} (₹${p.toLocaleString('en-IN', {maximumFractionDigits: 1})}) • ${streak * 5}m`,
+            cls: 'level-action-blink-respect',
+            priority: 1
+          });
+          return;
+        }
+
+        // 2. Check recent BREAKOUT or BREAKDOWN (in last 6 bars or vs session open)
+        let brokeOut = false;
+        let brokeDown = false;
+        const lookbackStart = Math.max(1, todayCandles.length - 6);
+        for (let i = todayCandles.length - 1; i >= lookbackStart; i--) {
+          const prevC = todayCandles[i - 1];
+          const curC = todayCandles[i];
+          if (prevC.close <= p && curC.close > p && last.close > p) {
+            brokeOut = true;
+            break;
+          }
+          if (prevC.close >= p && curC.close < p && last.close < p) {
+            brokeDown = true;
+            break;
+          }
+        }
+        if (!brokeOut && !brokeDown) {
+          if (first.open < p && last.close > p) brokeOut = true;
+          else if (first.open > p && last.close < p) brokeDown = true;
+        }
+
+        if (brokeOut) {
+          events.push({
+            type: 'BREAKOUT',
+            label: `🚀 BREAKOUT ${lv.name} (₹${p.toLocaleString('en-IN', {maximumFractionDigits: 1})})`,
+            cls: 'level-action-blink-bull',
+            priority: 2
+          });
+        } else if (brokeDown) {
+          events.push({
+            type: 'BREAKDOWN',
+            label: `🔻 BREAKDOWN ${lv.name} (₹${p.toLocaleString('en-IN', {maximumFractionDigits: 1})})`,
+            cls: 'level-action-blink-bear',
+            priority: 2
+          });
+        }
+      });
+
+      events.sort((a, b) => a.priority - b.priority);
+      return events.slice(0, 3);
+    };
+
+    const renderBadges = (containerId, events) => {
+      const box = document.getElementById(containerId);
+      if (!box) return;
+      if (!events || events.length === 0) {
+        box.innerHTML = `<span style="color: var(--text-secondary); font-size: 0.72rem;">Watching levels (15m hold / breakout / breakdown)...</span>`;
+        return;
+      }
+      box.innerHTML = events.map(ev =>
+        `<span class="${ev.cls}" style="padding: 2px 8px; border-radius: 4px; font-weight: 800; font-size: 0.72rem; white-space: nowrap;">${ev.label}</span>`
+      ).join('');
+    };
+
+    const niftyLevels = [
+      { name: 'PDH', price: parsePrice('top-nifty-pdh') },
+      { name: 'Prev POC', price: parsePrice('live-sync-nifty-prev-poc') },
+      { name: 'Cur POC', price: parsePrice('live-sync-nifty-cur-poc') },
+      { name: 'VAH', price: parsePrice('live-sync-nifty-vah') },
+      { name: 'VAL', price: parsePrice('live-sync-nifty-val') },
+      { name: 'R1', price: parsePrice('top-nifty-r1') },
+      { name: 'R2', price: parsePrice('top-nifty-r2') },
+      { name: 'S1', price: parsePrice('top-nifty-s1') },
+      { name: 'S2', price: parsePrice('top-nifty-s2') },
+      { name: 'P', price: parsePrice('top-nifty-pp') },
+      { name: 'OI Sup', price: parsePrice('top-vix-oi-support') },
+      { name: 'OI Res', price: parsePrice('top-vix-oi-resistance') },
+      { name: 'Wk High', price: parsePrice('top-vix-week-high') },
+      { name: 'Wk Low', price: parsePrice('top-vix-week-low') }
+    ];
+
+    const bankLevels = [
+      { name: 'PDH', price: parsePrice('top-bank-pdh') },
+      { name: 'Prev POC', price: parsePrice('live-sync-bank-prev-poc') },
+      { name: 'Cur POC', price: parsePrice('live-sync-bank-cur-poc') },
+      { name: 'VAH', price: parsePrice('live-sync-bank-vah') },
+      { name: 'VAL', price: parsePrice('live-sync-bank-val') },
+      { name: 'R1', price: parsePrice('top-bank-r1') },
+      { name: 'R2', price: parsePrice('top-bank-r2') },
+      { name: 'S1', price: parsePrice('top-bank-s1') },
+      { name: 'S2', price: parsePrice('top-bank-s2') },
+      { name: 'P', price: parsePrice('top-bank-pp') }
+    ];
+
+    renderBadges('level-action-nifty', analyzeSymbolLevels(window._lastNiftyCandles, niftyLevels));
+    renderBadges('level-action-bank', analyzeSymbolLevels(window._lastBankCandles, bankLevels));
   }
 
   // Poll chart sync telemetry every 10 seconds starting immediately
