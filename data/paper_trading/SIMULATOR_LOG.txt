@@ -162,3 +162,9 @@
 [2026-11-21 12:35:51 UTC] 🗑️ [MANUAL DELETE] Deleted trade log record: oc_108672
 [2026-11-21 12:35:58 UTC] 🗑️ [MANUAL DELETE] Deleted trade log record: oc_108672
 [2026-11-21 12:36:02 UTC] 🧹 [RESET] Cleared all simulated trade records and reset capital to Rs. 100,000.00.
+[2026-11-25 05:34:42 UTC] ⚡ [OPTION CHAIN PAPER TRADE] Placed: NIFTY 50 25900 CE | Lots: 1 (65 Qty) | Entry: ₹270.30 | SL: ₹250.30 | Tgt: ₹330.30 | Spot: ₹25836.55
+[2026-11-25 05:35] 🏁 EXIT TARGET | NIFTY 25900 CE | Buy: Rs. 270.30 | Exit: Rs. 329.80 | Gross: Rs. +3,867.50 | Charges: Rs. 92.46 | Net: Rs. +3,775.04 (+22.0%) | Rule: Level_Strategy
+[2026-11-25 06:17:16 UTC] ⚡ [OPTION CHAIN PAPER TRADE] Placed: NIFTY 50 25900 CE | Lots: 1 (65 Qty) | Entry: ₹296.60 | SL: ₹276.60 | Tgt: ₹356.60 | Spot: ₹25925.80
+[2026-11-25 06:21] 🏁 EXIT TARGET | NIFTY 25900 CE | Buy: Rs. 296.60 | Exit: Rs. 356.10 | Gross: Rs. +3,867.50 | Charges: Rs. 96.25 | Net: Rs. +3,771.25 (+20.1%) | Rule: Level_Strategy
+[2026-11-25 07:19:05 UTC] ⚡ [OPTION CHAIN PAPER TRADE] Placed: NIFTY 50 25800 PE | Lots: 1 (65 Qty) | Entry: ₹239.70 | SL: ₹219.70 | Tgt: ₹299.70 | Spot: ₹25867.80
+[2026-11-25 07:26] 🏁 EXIT STOP_LOSS | NIFTY 25800 PE | Buy: Rs. 239.70 | Exit: Rs. 273.27 | Gross: Rs. +2,182.05 | Charges: Rs. 85.34 | Net: Rs. +2,096.71 (+14.0%) | Rule: Level_Strategy

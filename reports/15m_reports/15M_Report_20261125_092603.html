@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NIFTY 15-Minute Trade Intelligence Report — 09:26 IST</title>
+<style>
+  :root {
+    --bg-main: #0b0f19;
+    --bg-card: #131b2e;
+    --border: #1f2b48;
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --accent: #3b82f6;
+    --green: #10b981;
+    --red: #ef4444;
+    --yellow: #f59e0b;
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg-main);
+    color: var(--text-primary);
+    line-height: 1.6;
+    padding: 24px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  .header-card {
+    background: linear-gradient(135deg, #131b2e 0%, #1e293b 100%);
+    border: 1px solid var(--border);
+    border-left: 5px solid var(--accent);
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin-bottom: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+  .badge-red { background: rgba(239, 68, 68, 0.15); color: var(--red); border: 1px solid rgba(239, 68, 68, 0.4); }
+  .badge-green { background: rgba(16, 185, 129, 0.15); color: var(--green); border: 1px solid rgba(16, 185, 129, 0.4); }
+  .badge-yellow { background: rgba(245, 158, 11, 0.15); color: var(--yellow); border: 1px solid rgba(245, 158, 11, 0.4); }
+  .badge-blue { background: rgba(59, 130, 246, 0.15); color: var(--accent); border: 1px solid rgba(59, 130, 246, 0.4); }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 24px; }
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+  }
+  .card-title { font-size: 0.8rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 6px; }
+  .card-val { font-size: 1.4rem; font-weight: 800; }
+  table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 0.85rem; }
+  th, td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); }
+  th { background: #162038; color: var(--text-secondary); text-transform: uppercase; font-size: 0.72rem; }
+  .plan-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 18px;
+    margin-bottom: 16px;
+  }
+  .plan-bear { border-left: 4px solid var(--red); }
+  .plan-bull { border-left: 4px solid var(--green); }
+</style>
+</head>
+<body>
+
+<div class="header-card">
+  <div>
+    <h1 style="font-size: 1.5rem; margin-bottom: 4px;">📊 NIFTY 15-Minute Trade Intelligence Report</h1>
+    <div style="color: var(--text-secondary); font-size: 0.85rem;">Generated: <strong>2026-11-25 09:26:03 IST</strong> • Multi-Timeframe Autonomous Analysis</div>
+  </div>
+  <div style="display: flex; gap: 8px; align-items: center;">
+    <span class="badge badge-yellow">STATE: WAIT / MONITOR 25,500–25,562 RESISTANCE WALL</span>
+    <span class="badge badge-red">BEARISH (Sell-on-Rise Bias)</span>
+  </div>
+</div>
+
+<div class="grid">
+  <div class="card" style="border-top: 3px solid var(--accent);">
+    <div class="card-title">🇮🇳 NIFTY 50 Spot</div>
+    <div class="card-val">₹25,658.35</div>
+    <div style="color: var(--red); font-size: 0.85rem; font-weight: 700;">+1.22% (+308.7 pts)</div>
+    <div style="font-size: 0.78rem; color: var(--text-secondary); margin-top: 6px;">Day Low: ₹25,658.35 • PP: ₹25,658.35</div>
+  </div>
+  <div class="card" style="border-top: 3px solid #8b5cf6;">
+    <div class="card-title">🏦 BANKNIFTY Spot</div>
+    <div class="card-val">₹63,408.60</div>
+    <div style="color: var(--red); font-size: 0.85rem; font-weight: 700;">+1.32% (+823.2 pts)</div>
+    <div style="font-size: 0.78rem; color: var(--text-secondary); margin-top: 6px;">Day Low: ₹63,408.60 • PP: ₹63,408.60</div>
+  </div>
+  <div class="card" style="border-top: 3px solid var(--green);">
+    <div class="card-title">🌐 GIFT NIFTY (Open Indicator)</div>
+    <div class="card-val">₹25,822.50</div>
+    <div style="color: var(--green); font-size: 0.85rem; font-weight: 700;">+1.28% (+164.2 pts Gap-Up)</div>
+    <div style="font-size: 0.78rem; color: var(--text-secondary); margin-top: 6px;">Pullback into Central Pivot Zone</div>
+  </div>
+  <div class="card" style="border-top: 3px solid #c084fc;">
+    <div class="card-title">⚡ INDIA VIX &amp; Volatility</div>
+    <div class="card-val" style="color: #c084fc;">13.80</div>
+    <div style="color: var(--green); font-size: 0.85rem; font-weight: 700;">+4.20% (Expanding)</div>
+    <div style="font-size: 0.78rem; color: var(--text-secondary); margin-top: 6px;">PE Buyer Favored • Premium Expanding</div>
+  </div>
+</div>
+
+<div class="card" style="margin-bottom: 24px;">
+  <h2 style="font-size: 1.1rem; margin-bottom: 12px; color: var(--accent);">📊 Derivatives &amp; Option Chain Matrix (Expiry: 01-DEC-2026)</h2>
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 14px;">
+    <div style="background: rgba(0,0,0,0.25); padding: 10px; border-radius: 6px;">
+      <div style="color: var(--text-secondary); font-size: 0.75rem;">PUT-CALL RATIO (PCR)</div>
+      <div style="font-size: 1.3rem; font-weight: 800; color: var(--red);">0.81</div>
+      <div style="font-size: 0.72rem; color: #f87171;">NEUTRAL / RANGE-BOUND</div>
+    </div>
+    <div style="background: rgba(0,0,0,0.25); padding: 10px; border-radius: 6px;">
+      <div style="color: var(--text-secondary); font-size: 0.75rem;">MAX PAIN STRIKE</div>
+      <div style="font-size: 1.3rem; font-weight: 800; color: var(--yellow);">₹25,600</div>
+      <div style="font-size: 0.72rem; color: var(--text-secondary);">Exact alignment with PP (₹25,658)</div>
+    </div>
+    <div style="background: rgba(0,0,0,0.25); padding: 10px; border-radius: 6px;">
+      <div style="color: var(--text-secondary); font-size: 0.75rem;">ATM STRIKE</div>
+      <div style="font-size: 1.3rem; font-weight: 800; color: var(--text-primary);">₹25,700</div>
+      <div style="font-size: 0.72rem; color: var(--text-secondary);">Straddle Level</div>
+    </div>
+    <div style="background: rgba(0,0,0,0.25); padding: 10px; border-radius: 6px;">
+      <div style="color: var(--text-secondary); font-size: 0.75rem;">CALL OI vs PUT OI</div>
+      <div style="font-size: 1.1rem; font-weight: 800; color: #f87171;">9.66 Cr CE vs 6.73 Cr PE</div>
+      <div style="font-size: 0.72rem; color: var(--text-secondary);">1.43x Call Dominance (Resistance Wall)</div>
+    </div>
+  </div>
+  <div style="background: rgba(239, 68, 68, 0.08); border-left: 3px solid var(--red); padding: 10px 14px; border-radius: 4px; font-size: 0.85rem;">
+    <strong>Option Chain Conclusion:</strong> Heavy Call resistance is concentrated at <strong>25,500 – 25,550</strong>. An opening gap-up will meet intense institutional selling unless massive Call unwinding is confirmed.
+  </div>
+</div>
+
+<div class="plan-card plan-bear">
+  <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px;">
+    <h3 style="color: var(--red); font-size: 1.1rem;">🔴 Primary Trade Plan: SELL ON RISE (65% Probability)</h3>
+    <span class="badge badge-red">PE BUY BIAS</span>
+  </div>
+  <p style="font-size: 0.85rem; margin-bottom: 8px;">Wait for opening gap-up to test <strong>₹25,500 – ₹25,560</strong> between 09:15 and 09:30 AM.</p>
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; font-size: 0.85rem;">
+    <div><strong>Trigger:</strong> Rejection wick below 25,562</div>
+    <div><strong>SL:</strong> ₹25,585 (Spot)</div>
+    <div><strong>Target 1:</strong> ₹25,420 (Trail SL to Cost)</div>
+    <div><strong>Target 2:</strong> ₹25,340 (Day Low)</div>
+    <div><strong>Target 3:</strong> ₹25,130 (S1 Pivot)</div>
+    <div><strong>Risk-Reward:</strong> 1 : 2.8</div>
+  </div>
+</div>
+
+<footer style="margin-top: 30px; text-align: center; color: var(--text-secondary); font-size: 0.78rem;">
+  NIFTY Autonomous Trader • Automated Quantitative Trade Intelligence Engine
+</footer>
+
+</body>
+</html>

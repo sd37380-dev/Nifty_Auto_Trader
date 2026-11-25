@@ -1,5 +1,5 @@
 # 📊 NIFTY 15-MINUTE TRADE INTELLIGENCE REPORT
-**Generated:** `2026-11-24 23:43:55 IST`  
+**Generated:** `2026-11-25 15:20:55 IST`  
 **Instrument:** `NIFTY 50` & `BANKNIFTY`  
 **Cognitive State:** **`WAIT / MONITOR 25,500–25,562 RESISTANCE WALL`**  
 **Market Regime:** **`BEARISH (Sell-on-Rise Bias)`**
@@ -10,28 +10,28 @@
 
 | Instrument | Spot / LTP | Change (%) | Day High | Day Low | PDH / PDL | Pivotal Level |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **NIFTY 50** | **₹25,349.65** | `-1.75%` (-450.9 pts) | ₹25,992.60 | ₹25,343.85 | PDH: ₹25,808.80<br>PDL: ₹25,345.20 | **PP: ₹25,562.03** |
-| **BANKNIFTY** | **₹62,585.35** | `-3.17%` (-2049.8 pts) | ₹65,193.40 | ₹62,546.20 | Day Range: 2,647 pts | **PP: ₹63,441.65** |
-| **GIFT NIFTY** | **₹25,549.50** | `+0.79%` (+199.8 pts Gap-Up) | -- | -- | Benchmark Shift | **Lead Indicator** |
+| **NIFTY 50** | **₹25,777.30** | `+1.69%` (+427.6 pts) | ₹25,951.65 | ₹25,619.00 | PDH: ₹25,992.60<br>PDL: ₹25,343.85 | **PP: ₹25,782.65** |
+| **BANKNIFTY** | **₹63,618.50** | `+1.65%` (+1033.2 pts) | ₹64,133.80 | ₹63,247.90 | Day Range: 886 pts | **PP: ₹63,666.73** |
+| **GIFT NIFTY** | **₹25,929.00** | `+1.70%` (+151.7 pts Gap-Up) | -- | -- | Benchmark Shift | **Lead Indicator** |
 | **INDIA VIX** | **13.80** | `+4.20%` (Expanding) | -- | -- | Volatility Regime | **PE Favored** |
 
 ### NIFTY 50 Floor Pivot Ladders:
-* **Resistance 2 (R2):** `₹26,210.78`
-* **Resistance 1 (R1):** `₹25,780.21`
-* **Central Pivot (PP):** `₹25,562.03` *(Immediate Bull/Bear Deciding Level)*
-* **Support 1 (S1):** `₹25,131.46`
-* **Support 2 (S2):** `₹24,913.28`
+* **Resistance 2 (R2):** `₹26,115.30`
+* **Resistance 1 (R1):** `₹25,946.30`
+* **Central Pivot (PP):** `₹25,782.65` *(Immediate Bull/Bear Deciding Level)*
+* **Support 1 (S1):** `₹25,613.65`
+* **Support 2 (S2):** `₹25,450.00`
 
 ---
 
 ## 📊 2. Derivatives & Option Chain Intelligence (Expiry: `01-DEC-2026`)
 
-* **Put-Call Ratio (PCR):** **`0.70`** $\rightarrow$ **`DEEP BEARISH (Aggressive Call writing ceiling)`**
-* **Max Pain Strike:** **`₹25,500`** *(Exact confluence with Central Pivot PP `₹25,562`)*
-* **At-The-Money (ATM) Strike:** `₹25,350`
+* **Put-Call Ratio (PCR):** **`0.90`** $\rightarrow$ **`NEUTRAL / RANGE-BOUND`**
+* **Max Pain Strike:** **`₹25,700`** *(Exact confluence with Central Pivot PP `₹25,783`)*
+* **At-The-Money (ATM) Strike:** `₹25,800`
 * **Total Open Interest Distribution:**
-  * **Call OI (Resistance Force):** `96,647,460` contracts (~9.66 Cr)
-  * **Put OI (Support Force):** `67,374,970` contracts (~6.73 Cr)
+  * **Call OI (Resistance Force):** `134,188,535` contracts (~9.66 Cr)
+  * **Put OI (Support Force):** `121,319,380` contracts (~6.73 Cr)
   * **OI Imbalance Ratio:** Call writers hold a **1.43x dominance**, signaling institutions heavily faded the prior session's intraday bounce.
 * **Option Chain Conclusion:**
   * The **25,500 – 25,550** zone is fortified with massive Call open interest.
@@ -41,16 +41,16 @@
 
 ## ⚡ 3. Heavyweight Contributors & Market Movers (~95% Weight Coverage)
 
-* **Net Bank Nifty Points Contribution:** **`-1959.2 pts`**
-* **Net Nifty 50 Points Contribution:** **`-342.8 pts`**
-* **Breadth:** `🟢 4 Advancing` | `🔴 20 Declining`
+* **Net Bank Nifty Points Contribution:** **`+1318.1 pts`**
+* **Net Nifty 50 Points Contribution:** **`+359.2 pts`**
+* **Breadth:** `🟢 19 Advancing` | `🔴 6 Declining`
 
 ### Top Market Movers:
-* **Top Bullish Driver:** `TCS` (`3.53%`, `35.76 pts`)
+* **Top Bullish Driver:** `HDFCBANK` (`2.96%`, `536.53 pts`)
 * **Top Bearish Drags:**
-  * `HDFCBANK` (`-3.33%`, `-594.56 pts to BN`)
-  * `ICICIBANK` (`-3.32%`, `-499.16 pts to BN`)
-  * `AXISBANK` (`-3.97%`, `-236.02 pts to N50`)
+  * `PNB` (`-1.58%`, `-21.14 pts to BN`)
+  * `FEDERALBNK` (`-1.08%`, `-13.1 pts to BN`)
+  * `TATASTEEL` (`-2.44%`, `-10.07 pts to N50`)
 
 ---
 

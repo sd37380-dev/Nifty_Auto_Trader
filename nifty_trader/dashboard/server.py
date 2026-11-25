@@ -4354,14 +4354,30 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       }
 
       // Trades Table
+      const formatSimTimeIST = (ts) => {
+        if (!ts || typeof ts !== 'string') return ts || '-';
+        if (ts.includes('IST')) return ts;
+        let clean = ts.trim().replace(/\s*UTC$/i, 'Z').replace(' ', 'T');
+        if (!clean.endsWith('Z') && !/[+-]\d{2}:?\d{2}$/.test(clean)) clean += 'Z';
+        const d = new Date(clean);
+        if (isNaN(d.getTime())) return ts;
+        const ist = new Date(d.getTime() + 5.5 * 3600 * 1000);
+        const y = ist.getUTCFullYear();
+        const m = String(ist.getUTCMonth() + 1).padStart(2, '0');
+        const day = String(ist.getUTCDate()).padStart(2, '0');
+        const hh = String(ist.getUTCHours()).padStart(2, '0');
+        const mm = String(ist.getUTCMinutes()).padStart(2, '0');
+        const ss = String(ist.getUTCSeconds()).padStart(2, '0');
+        return `${y}-${m}-${day} ${hh}:${mm}:${ss} IST`;
+      };
       const simTable = document.getElementById('sim-trades-table-body');
       if (sim.recent_trades && sim.recent_trades.length > 0) {
         simTable.innerHTML = sim.recent_trades.map(t => `
           <tr>
             <td><code>${t.trade_id}</code></td>
             <td><strong>NIFTY ${t.strike} ${t.option_type}</strong></td>
-            <td>${t.entry_time}</td>
-            <td>${t.exit_time}</td>
+            <td>${formatSimTimeIST(t.entry_time)}</td>
+            <td>${formatSimTimeIST(t.exit_time)}</td>
             <td>₹${t.entry_premium.toFixed(2)}</td>
             <td>₹${t.exit_premium.toFixed(2)}</td>
             <td><span class="badge ${t.net_pnl >= 0 ? 'badge-green' : 'badge-red'}">${t.exit_reason}</span></td>
