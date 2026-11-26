@@ -960,7 +960,13 @@ class NSEOptionChainService:
                         processed["top_pe_strike"] = analytics["top_pe_strike"]
                         processed["top_pe_oi"] = analytics["top_pe_oi"]
                         processed["week_offset"] = idx
-                        self._persist_to_dedicated_db(processed)
+                        try:
+                            from nifty_trader.market_data.expiry_option_chain_store import get_expiry_option_chain_store
+                            db_path = get_expiry_option_chain_store(self.root_dir).save_snapshot(processed)
+                            if db_path:
+                                processed["db_file"] = str(db_path)
+                        except Exception as db_ex:
+                            logger.debug("Could not persist expiry %s to separate DB: %s", exp, db_ex)
                         chains.append(processed)
 
                 if chains:

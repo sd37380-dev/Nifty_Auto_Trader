@@ -1102,7 +1102,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 <div class="nav-tabs">
   <button class="nav-tab active" onclick="switchTab('tab-overview', this)">System Overview</button>
   <button class="nav-tab" onclick="switchTab('tab-simulator', this)">⚡ Option Paper Simulator</button>
-  <button class="nav-tab" onclick="switchTab('tab-option-chain', this)" id="nav-btn-option-chain">📊 NSE Option Chain &amp; Trade</button>
+  <button class="nav-tab" onclick="switchTab('tab-option-chain', this)" id="nav-btn-option-chain">📊 Current Option</button>
   <button class="nav-tab" onclick="switchTab('tab-next-expiries', this)" id="nav-btn-next-expiries">📅 Next 3 Expiries (NSE)</button>
   <button class="nav-tab" onclick="switchTab('tab-charts', this)" id="nav-btn-charts">📈 Live Charts</button>
   <button class="nav-tab" onclick="switchTab('tab-news', this)" id="nav-btn-news">📰 Market News &amp; Impact <span id="nav-news-count-badge" class="badge badge-green" style="font-size: 0.65rem; padding: 1px 6px; margin-left: 4px;">--</span></button>
