@@ -1103,6 +1103,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   <button class="nav-tab active" onclick="switchTab('tab-overview', this)">System Overview</button>
   <button class="nav-tab" onclick="switchTab('tab-simulator', this)">⚡ Option Paper Simulator</button>
   <button class="nav-tab" onclick="switchTab('tab-option-chain', this)" id="nav-btn-option-chain">📊 NSE Option Chain &amp; Trade</button>
+  <button class="nav-tab" onclick="switchTab('tab-next-expiries', this)" id="nav-btn-next-expiries">📅 Next 3 Expiries (NSE)</button>
   <button class="nav-tab" onclick="switchTab('tab-charts', this)" id="nav-btn-charts">📈 Live Charts</button>
   <button class="nav-tab" onclick="switchTab('tab-news', this)" id="nav-btn-news">📰 Market News &amp; Impact <span id="nav-news-count-badge" class="badge badge-green" style="font-size: 0.65rem; padding: 1px 6px; margin-left: 4px;">--</span></button>
   <button class="nav-tab" onclick="switchTab('tab-multi-function', this)" id="nav-btn-multi-function" style="background: rgba(139, 92, 246, 0.12); color: #c084fc; border: 1px solid rgba(139, 92, 246, 0.4); font-weight: 700;">
@@ -1810,6 +1811,76 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         <button type="submit" id="nt-key-save-btn" class="btn" style="background: var(--green); color: black; padding: 8px 18px; border: none; border-radius: 6px; font-weight: 800; cursor: pointer;">💾 Save &amp; Test Live Key</button>
       </div>
     </form>
+  </div>
+</div>
+
+<!-- Tab: Next 3 Expiries Option Chain (NSE 300s Always-Active) -->
+<div id="tab-next-expiries" class="tab-content">
+  <div class="card" style="margin-bottom: 16px; border-left: 4px solid #38bdf8; background: linear-gradient(135deg, rgba(56, 189, 248, 0.08) 0%, rgba(19, 27, 46, 0.95) 100%);">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+      <div>
+        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+          <span style="font-size: 1.25rem; font-weight: 800; color: var(--text-primary);">📅 Next 3 Expiries Option Chain (NSE)</span>
+          <span id="ne-source-badge" class="badge badge-blue">NSE 300s AUTO-SYNC</span>
+          <span id="ne-sync-time" class="badge badge-green">Updated: --</span>
+          <span id="ne-countdown-badge" class="badge badge-yellow">Next Refresh: 300s</span>
+        </div>
+        <div style="font-size: 0.82rem; color: var(--text-secondary); margin-top: 4px; max-width: 850px;">
+          Always-active 300-second background NSE feed for positional &amp; monthly OI walls, PCR, and Max Pain across the next 3 expiries (current week remains on NiftyTrader).
+        </div>
+      </div>
+      <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+        <div style="display: flex; background: var(--bg-main); border: 1px solid var(--border); border-radius: 6px; padding: 2px;">
+          <button id="ne-btn-sym-nifty" onclick="switchNextExpirySymbol('NIFTY')" class="btn" style="padding: 5px 12px; font-size: 0.8rem; font-weight: 700; background: var(--accent); color: white; border: none; border-radius: 4px;">🇮🇳 NIFTY 50</button>
+          <button id="ne-btn-sym-bank" onclick="switchNextExpirySymbol('BANKNIFTY')" class="btn" style="padding: 5px 12px; font-size: 0.8rem; font-weight: 600; background: transparent; color: var(--text-secondary); border: none; border-radius: 4px;">🏦 BANKNIFTY</button>
+        </div>
+        <button class="btn" onclick="fetchNextExpiries(true)" style="background: #38bdf8; color: black; border: none; font-weight: 700; padding: 6px 14px; border-radius: 6px; cursor: pointer;">
+          🔄 Refresh Now
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3 Expiry Summary Cards (Week +1, +2, +3) -->
+  <div id="ne-cards-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; margin-bottom: 16px;">
+    <div style="background: var(--bg-card); padding: 14px; border-radius: 8px; border: 1px solid var(--border); color: var(--text-secondary);">
+      Loading next 3 NSE expiries...
+    </div>
+  </div>
+
+  <!-- Selected Expiry Table -->
+  <div class="card" style="padding: 0; overflow-x: auto; margin-bottom: 24px;">
+    <div style="padding: 10px 14px; background: #111827; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+      <strong id="ne-table-title" style="color: #38bdf8; font-size: 0.92rem;">Selected Expiry: --</strong>
+      <span id="ne-table-subtitle" style="font-size: 0.76rem; color: var(--text-secondary);">Spot: -- | ATM: -- | PCR: --</span>
+    </div>
+    <table class="oc-table" id="next-expiries-table">
+      <thead>
+        <tr style="background: #111827; border-bottom: 2px solid var(--border);">
+          <th colspan="6" style="color: var(--green); font-size: 0.82rem; border-right: 2px solid #374151; padding: 8px;">CALLS (CE)</th>
+          <th style="background: #1e293b; color: #fbbf24; font-size: 0.82rem; padding: 8px; min-width: 85px;">STRIKE</th>
+          <th colspan="6" style="color: var(--red); font-size: 0.82rem; border-left: 2px solid #374151; padding: 8px;">PUTS (PE)</th>
+        </tr>
+        <tr style="background: #182238; font-size: 0.72rem; color: var(--text-secondary);">
+          <th style="padding: 6px;">OI BUILDUP</th>
+          <th style="padding: 6px;">OI</th>
+          <th style="padding: 6px;">CHG OI</th>
+          <th style="padding: 6px;">VOL</th>
+          <th style="padding: 6px;">IV %</th>
+          <th style="padding: 6px; border-right: 2px solid #374151;">LTP</th>
+          <th style="background: #1e293b; color: #fbbf24; padding: 6px;">STRIKE</th>
+          <th style="padding: 6px; border-left: 2px solid #374151;">LTP</th>
+          <th style="padding: 6px;">IV %</th>
+          <th style="padding: 6px;">VOL</th>
+          <th style="padding: 6px;">CHG OI</th>
+          <th style="padding: 6px;">OI</th>
+          <th style="padding: 6px;">OI BUILDUP</th>
+        </tr>
+      </thead>
+      <tbody id="next-expiries-tbody">
+        <tr><td colspan="13" style="text-align:center; padding: 24px; color: var(--text-secondary);">Loading NSE next-3-expiry option chain...</td></tr>
+      </tbody>
+    </table>
   </div>
 </div>
 
@@ -3863,6 +3934,9 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       if (tabId === 'tab-option-chain' && typeof fetchOptionChain === 'function') {
         fetchOptionChain();
       }
+      if (tabId === 'tab-next-expiries' && typeof fetchNextExpiries === 'function') {
+        fetchNextExpiries();
+      }
       if (tabId === 'tab-charts') {
         if (typeof initTradingViewChart === 'function') {
           initTradingViewChart();
@@ -5244,6 +5318,151 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       if (badge) badge.innerText = 'FETCH ERROR';
     }
   }
+
+  // -------------------------------------------------------------
+  // NEXT 3 EXPIRIES (NSE 300s ALWAYS-ACTIVE) FUNCTIONS
+  // -------------------------------------------------------------
+  window._currentNeSymbol = 'NIFTY';
+  window._currentNeData = null;
+  window._selectedNeIndex = 0;
+  window._neCountdownSec = 300;
+
+  function switchNextExpirySymbol(sym) {
+    window._currentNeSymbol = sym;
+    window._selectedNeIndex = 0;
+    const btnN = document.getElementById('ne-btn-sym-nifty');
+    const btnB = document.getElementById('ne-btn-sym-bank');
+    if (btnN && btnB) {
+      if (sym === 'NIFTY') {
+        btnN.style.background = 'var(--accent)'; btnN.style.color = 'white'; btnN.style.fontWeight = '700';
+        btnB.style.background = 'transparent'; btnB.style.color = 'var(--text-secondary)'; btnB.style.fontWeight = '600';
+      } else {
+        btnB.style.background = 'var(--accent)'; btnB.style.color = 'white'; btnB.style.fontWeight = '700';
+        btnN.style.background = 'transparent'; btnN.style.color = 'var(--text-secondary)'; btnN.style.fontWeight = '600';
+      }
+    }
+    fetchNextExpiries(false);
+  }
+
+  function selectNextExpiryWeek(idx) {
+    window._selectedNeIndex = idx;
+    if (window._currentNeData) renderNextExpiries(window._currentNeData);
+  }
+
+  async function fetchNextExpiries(force = false) {
+    const sym = window._currentNeSymbol || 'NIFTY';
+    const badge = document.getElementById('ne-source-badge');
+    const syncTime = document.getElementById('ne-sync-time');
+    if (badge) badge.innerText = force ? 'REFRESHING NSE...' : 'SYNCING...';
+
+    try {
+      const url = `/api/option_chain/next_expiries?symbol=${encodeURIComponent(sym)}&count=3${force ? '&refresh=1' : ''}`;
+      const res = await fetch(url);
+      const data = await res.json();
+      window._currentNeData = data;
+      window._neCountdownSec = typeof data.next_refresh_in_seconds === 'number' ? data.next_refresh_in_seconds : 300;
+      if (badge) {
+        badge.innerText = data.data_source || 'NSE 300s AUTO-SYNC';
+        badge.className = data.is_stale ? 'badge badge-yellow' : 'badge badge-blue';
+      }
+      if (syncTime) syncTime.innerText = `Updated: ${data.updated_at || '--'}`;
+      renderNextExpiries(data);
+    } catch (e) {
+      console.error('Next expiries fetch error:', e);
+      if (badge) badge.innerText = 'NSE FETCH ERROR';
+    }
+  }
+
+  function renderNextExpiries(payload) {
+    const cardsGrid = document.getElementById('ne-cards-grid');
+    const tbody = document.getElementById('next-expiries-tbody');
+    const titleEl = document.getElementById('ne-table-title');
+    const subEl = document.getElementById('ne-table-subtitle');
+    const chains = (payload && payload.chains) || [];
+
+    if (!chains.length) {
+      if (cardsGrid) {
+        cardsGrid.innerHTML = `<div style="background: var(--bg-card); padding: 14px; border-radius: 8px; border: 1px solid var(--border); color: var(--yellow);">NSE multi-expiry data not yet available (${payload && payload.data_source ? payload.data_source : 'waiting for 300s cycle'}). Click <strong>Refresh Now</strong> to retry.</div>`;
+      }
+      if (tbody) {
+        tbody.innerHTML = `<tr><td colspan="13" style="text-align:center; padding: 24px; color: var(--text-secondary);">No NSE next-expiry rows available right now.</td></tr>`;
+      }
+      return;
+    }
+
+    if (window._selectedNeIndex >= chains.length) window._selectedNeIndex = 0;
+
+    if (cardsGrid) {
+      cardsGrid.innerHTML = chains.map((c, idx) => {
+        const active = idx === window._selectedNeIndex;
+        const pcrColor = c.pcr >= 1.15 ? 'var(--green)' : (c.pcr <= 0.85 ? 'var(--red)' : '#fbbf24');
+        const borderCol = active ? '#38bdf8' : 'var(--border)';
+        const bg = active ? 'rgba(56, 189, 248, 0.10)' : 'var(--bg-card)';
+        return `
+          <div onclick="selectNextExpiryWeek(${idx})" style="cursor:pointer; background:${bg}; padding:12px 14px; border-radius:8px; border:2px solid ${borderCol}; transition: all 0.15s;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+              <span style="font-weight:800; font-size:0.95rem; color:${active ? '#38bdf8' : 'var(--text-primary)'};">Week +${c.week_offset || (idx + 1)}: ${c.expiry}</span>
+              <span style="font-weight:800; font-size:0.85rem; color:${pcrColor};">PCR ${c.pcr}</span>
+            </div>
+            <div style="font-size:0.76rem; color:var(--text-secondary); display:grid; grid-template-columns:1fr 1fr; gap:4px;">
+              <span>Max Pain: <strong style="color:#fbbf24;">${c.max_pain}</strong></span>
+              <span>Bias: <strong>${(c.sentiment || '').split(' ')[0]}</strong></span>
+              <span>CE Wall: <strong style="color:var(--red);">${c.top_ce_strike || '--'}</strong> (${((c.top_ce_oi || 0) / 100000).toFixed(1)}L)</span>
+              <span>PE Wall: <strong style="color:var(--green);">${c.top_pe_strike || '--'}</strong> (${((c.top_pe_oi || 0) / 100000).toFixed(1)}L)</span>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    const sel = chains[window._selectedNeIndex];
+    if (titleEl) titleEl.innerText = `${sel.symbol} — Expiry ${sel.expiry} (Week +${sel.week_offset || (window._selectedNeIndex + 1)})`;
+    if (subEl) subEl.innerText = `Spot: ₹${(sel.spot_price || 0).toLocaleString('en-IN')} | ATM: ${sel.atm_strike} | PCR: ${sel.pcr} | Max Pain: ${sel.max_pain}`;
+
+    if (tbody) {
+      tbody.innerHTML = (sel.strikes || []).map(row => {
+        const ce = row.ce || {};
+        const pe = row.pe || {};
+        const rowBg = row.is_atm ? 'rgba(251, 191, 36, 0.12)' : 'transparent';
+        const fmtOi = v => v ? Number(v).toLocaleString('en-IN') : '0';
+        const fmtChg = v => {
+          const n = Number(v || 0);
+          const cls = n > 0 ? 'var(--green)' : (n < 0 ? 'var(--red)' : 'var(--text-secondary)');
+          return `<span style="color:${cls};">${n > 0 ? '+' : ''}${n.toLocaleString('en-IN')}</span>`;
+        };
+        return `
+          <tr style="background:${rowBg}; border-bottom:1px solid rgba(255,255,255,0.05); font-size:0.78rem;">
+            <td style="padding:6px; color:var(--text-secondary);">${ce.buildup || '-'}</td>
+            <td style="padding:6px; font-weight:600;">${fmtOi(ce.oi)}</td>
+            <td style="padding:6px;">${fmtChg(ce.change_in_oi)}</td>
+            <td style="padding:6px; color:var(--text-secondary);">${fmtOi(ce.volume)}</td>
+            <td style="padding:6px; color:var(--text-secondary);">${Number(ce.iv || 0).toFixed(1)}%</td>
+            <td style="padding:6px; font-weight:700; color:var(--green); border-right:2px solid #374151;">₹${Number(ce.ltp || 0).toFixed(2)}</td>
+            <td style="padding:6px; font-weight:800; background:#1e293b; color:${row.is_atm ? '#fbbf24' : 'var(--text-primary)'}; text-align:center;">${row.strike}${row.is_atm ? ' ⚡' : ''}</td>
+            <td style="padding:6px; font-weight:700; color:var(--red); border-left:2px solid #374151;">₹${Number(pe.ltp || 0).toFixed(2)}</td>
+            <td style="padding:6px; color:var(--text-secondary);">${Number(pe.iv || 0).toFixed(1)}%</td>
+            <td style="padding:6px; color:var(--text-secondary);">${fmtOi(pe.volume)}</td>
+            <td style="padding:6px;">${fmtChg(pe.change_in_oi)}</td>
+            <td style="padding:6px; font-weight:600;">${fmtOi(pe.oi)}</td>
+            <td style="padding:6px; color:var(--text-secondary);">${pe.buildup || '-'}</td>
+          </tr>`;
+      }).join('');
+    }
+  }
+
+  // Always-active 1s countdown & 300s sync trigger
+  setInterval(() => {
+    const cd = document.getElementById('ne-countdown-badge');
+    if (window._neCountdownSec > 0) {
+      window._neCountdownSec -= 1;
+    } else {
+      window._neCountdownSec = 300;
+      const tab = document.getElementById('tab-next-expiries');
+      if (tab && tab.classList.contains('active')) {
+        fetchNextExpiries(false);
+      }
+    }
+    if (cd) cd.innerText = `Next Refresh: ${window._neCountdownSec}s`;
+  }, 1000);
 
   function renderOptionChain(chain) {
     // 1. Analytics Bar
@@ -12430,16 +12649,33 @@ class DashboardHTTPRequestHandler(BaseHTTPRequestHandler):
                 "render": bool(os.environ.get("RENDER")),
             }).encode("utf-8"))
             return
-        elif self.path in ("/api/report/latest", "/api/report/15m", "/report", "/reports/latest"):
+        elif self.path in ("/api/report/latest", "/api/report/15m", "/api/report/5m", "/report", "/reports/latest"):
             try:
-                report_path = self.aggregator.root_dir.parent / "reports" / "15m_reports" / "latest_15m_report.html"
-                if not report_path.exists():
-                    report_path = self.aggregator.root_dir / "reports" / "15m_reports" / "latest_15m_report.html"
-                if report_path.exists():
+                is_5m = self.path == "/api/report/5m"
+                sub_folder = "5m_reports" if is_5m else "15m_reports"
+                today_ist = datetime.now(timezone(timedelta(hours=5, minutes=30))).strftime("%Y-%m-%d")
+
+                report_path = None
+                for base in (self.aggregator.root_dir.parent / "reports", self.aggregator.root_dir / "reports"):
+                    today_dir = base / today_ist / sub_folder
+                    if today_dir.exists():
+                        pdfs = sorted(today_dir.glob("Market_Bulletin_*.pdf"), reverse=True)
+                        if pdfs:
+                            report_path = pdfs[0]
+                            break
+                if report_path is None:
+                    for base in (self.aggregator.root_dir.parent / "reports", self.aggregator.root_dir / "reports"):
+                        if base.exists():
+                            pdfs = sorted(base.glob(f"*/{sub_folder}/Market_Bulletin_*.pdf"), reverse=True)
+                            if pdfs:
+                                report_path = pdfs[0]
+                                break
+
+                if report_path and report_path.exists():
                     with open(report_path, "rb") as rf:
                         content = rf.read()
                     self.send_response(200)
-                    self.send_header("Content-Type", "text/html; charset=utf-8")
+                    self.send_header("Content-Type", "application/pdf")
                     self.send_header("Cache-Control", "no-cache")
                     self.end_headers()
                     self.wfile.write(content)
@@ -13220,6 +13456,25 @@ class DashboardHTTPRequestHandler(BaseHTTPRequestHandler):
                 self.send_header("Content-Type", "application/json")
                 self.end_headers()
                 self.wfile.write(json.dumps({"status": "error", "message": str(ex)}).encode("utf-8"))
+        elif self.path.startswith("/api/option_chain/next_expiries"):
+            try:
+                from urllib.parse import parse_qs, urlparse
+                q = parse_qs(urlparse(self.path).query)
+                symbol = q.get("symbol", ["NIFTY"])[0]
+                count = int(q.get("count", ["3"])[0])
+                force = q.get("refresh", ["0"])[0] in ("1", "true", "True")
+                from nifty_trader.market_data.option_chain_service import get_option_chain_service
+                ocs = get_option_chain_service()
+                data = ocs.get_next_expiries_from_nse(symbol=symbol, count=count, force_refresh=force)
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps(data).encode("utf-8"))
+            except Exception as ex:
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": "error", "message": str(ex)}).encode("utf-8"))
         elif self.path.startswith("/api/option_chain"):
             try:
                 from urllib.parse import parse_qs, urlparse
@@ -13929,14 +14184,27 @@ def run_dashboard_server(
     except Exception as news_err:
         logger.warning("Could not auto-start news service: %s", news_err)
 
-    # AUTO-ACTIVATE 15-Minute Trade Intelligence Report Background Generator
+    # AUTO-ACTIVATE 5-Minute & 15-Minute Trade Intelligence Report Background Generators
     try:
-        from nifty_trader.market_data.report_service import get_report_service
-        report_service = get_report_service()
-        report_service.start_auto_generation(interval_seconds=900)
-        print("📄 Automated 15-Minute Trade Intelligence Report Service Online (Folder: reports/15m_reports).")
+        from nifty_trader.market_data.report_service import get_5m_report_service, get_15m_report_service
+        report_service_5m = get_5m_report_service()
+        report_service_5m.start_auto_generation(interval_seconds=300)
+        print("📄 Automated 5-Minute Trade Intelligence Report Service Online (Folder: reports/<YYYY-MM-DD>/5m_reports).")
+
+        report_service_15m = get_15m_report_service()
+        report_service_15m.start_auto_generation(interval_seconds=900)
+        print("📄 Automated 15-Minute Trade Intelligence Report Service Online (Folder: reports/<YYYY-MM-DD>/15m_reports).")
     except Exception as rep_err:
-        logger.warning("Could not auto-start report service: %s", rep_err)
+        logger.warning("Could not auto-start report services: %s", rep_err)
+
+    # AUTO-ACTIVATE Always-Active 300s NSE Next-3-Expiries Option Chain Background Loop
+    try:
+        from nifty_trader.market_data.option_chain_service import get_option_chain_service
+        oc_service = get_option_chain_service()
+        oc_service.start_next_expiries_auto_fetch(interval_seconds=300, symbols=["NIFTY", "BANKNIFTY"])
+        print("📅 NSE Next-3-Expiries Option Chain Auto-Fetcher Online (Always-Active 300s Refresh).")
+    except Exception as oc_err:
+        logger.warning("Could not auto-start NSE next-expiries fetcher: %s", oc_err)
 
     server = ThreadingHTTPServer((host, port), DashboardHTTPRequestHandler)
     url = f"http://{host}:{port}"

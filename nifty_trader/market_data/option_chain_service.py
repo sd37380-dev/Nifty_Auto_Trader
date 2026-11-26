@@ -56,7 +56,7 @@ class NSEOptionChainService:
             headers={
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
                 "Accept-Language": "en-US,en;q=0.9",
-                "Accept-Encoding": "gzip, deflate, br",
+                "Accept-Encoding": "gzip, deflate",
             },
             timeout=8.0,
             follow_redirects=True,
@@ -64,11 +64,17 @@ class NSEOptionChainService:
         self._cookies_initialized = False
         self._cache: Dict[str, Dict[str, Any]] = {}
         self._cache_time: Dict[str, float] = {}
+        self._next_expiries_cache: Dict[str, Dict[str, Any]] = {}
+        self._next_expiries_cache_time: Dict[str, float] = {}
+        self._next_expiries_lock = threading.Lock()
+        self._next_expiries_thread: Optional[threading.Thread] = None
+        self._next_expiries_running = False
+        self._next_expiries_interval = 300
 
     def _init_cookies(self) -> bool:
-        """Visits NSE homepage to acquire required session cookies."""
+        """Visits NSE option-chain page to acquire required session cookies."""
         try:
-            r = self.client.get("https://www.nseindia.com")
+            r = self.client.get("https://www.nseindia.com/option-chain")
             if r.status_code == 200:
                 self._cookies_initialized = True
                 return True
@@ -755,7 +761,7 @@ class NSEOptionChainService:
             if abs(strike - atm_strike) > (16 * step):
                 continue
 
-            exp = item.get("expiryDate")
+            exp = item.get("expiryDates") or item.get("expiryDate")
             if exp and exp != chosen_expiry:
                 continue
 
@@ -778,8 +784,8 @@ class NSEOptionChainService:
                     "change_in_oi": int(c.get("changeinOpenInterest", 0)),
                     "volume": int(c.get("totalTradedVolume", 0)),
                     "iv": float(c.get("impliedVolatility", 0.0)),
-                    "bid": float(c.get("bidprice", 0.0)),
-                    "ask": float(c.get("askPrice", 0.0)),
+                    "bid": float(c.get("bidprice", c.get("buyPrice1", 0.0))),
+                    "ask": float(c.get("askPrice", c.get("sellPrice1", 0.0))),
                     "is_itm": strike < spot,
                 }
 
@@ -794,8 +800,8 @@ class NSEOptionChainService:
                     "change_in_oi": int(p.get("changeinOpenInterest", 0)),
                     "volume": int(p.get("totalTradedVolume", 0)),
                     "iv": float(p.get("impliedVolatility", 0.0)),
-                    "bid": float(p.get("bidprice", 0.0)),
-                    "ask": float(p.get("askPrice", 0.0)),
+                    "bid": float(p.get("bidprice", p.get("buyPrice1", 0.0))),
+                    "ask": float(p.get("askPrice", p.get("sellPrice1", 0.0))),
                     "is_itm": strike > spot,
                 }
 
@@ -847,6 +853,253 @@ class NSEOptionChainService:
             "data_source": "NSE Live Option Chain API",
             "strikes": strikes_sliced,
         }
+
+    @staticmethod
+    def _compute_max_pain_and_walls(
+        strikes: List[Dict[str, Any]],
+        fallback_atm: int,
+    ) -> Dict[str, Any]:
+        """Computes Max Pain strike and top Call/Put OI walls from processed strikes."""
+        if not strikes:
+            return {
+                "max_pain": fallback_atm,
+                "top_ce_strike": None,
+                "top_ce_oi": 0,
+                "top_pe_strike": None,
+                "top_pe_oi": 0,
+            }
+
+        top_ce_strike = None
+        top_ce_oi = -1
+        top_pe_strike = None
+        top_pe_oi = -1
+
+        for row in strikes:
+            ce_oi = int(row.get("ce", {}).get("oi", 0) or 0)
+            pe_oi = int(row.get("pe", {}).get("oi", 0) or 0)
+            if ce_oi > top_ce_oi:
+                top_ce_oi = ce_oi
+                top_ce_strike = row.get("strike")
+            if pe_oi > top_pe_oi:
+                top_pe_oi = pe_oi
+                top_pe_strike = row.get("strike")
+
+        best_strike = fallback_atm
+        min_pain = float("inf")
+        for cand in strikes:
+            k = cand["strike"]
+            pain = 0.0
+            for row in strikes:
+                s = row["strike"]
+                ce_oi = int(row.get("ce", {}).get("oi", 0) or 0)
+                pe_oi = int(row.get("pe", {}).get("oi", 0) or 0)
+                if k > s:
+                    pain += (k - s) * ce_oi
+                elif k < s:
+                    pain += (s - k) * pe_oi
+            if pain < min_pain:
+                min_pain = pain
+                best_strike = k
+
+        return {
+            "max_pain": best_strike,
+            "top_ce_strike": top_ce_strike,
+            "top_ce_oi": max(0, top_ce_oi),
+            "top_pe_strike": top_pe_strike,
+            "top_pe_oi": max(0, top_pe_oi),
+        }
+
+    def _fetch_nse_v3_next_expiries(self, sym: str, count: int = 3) -> Optional[Dict[str, Any]]:
+        """
+        Fetches the upcoming expiry list from NSE NextApi dropdown and fetches
+        the next `count` expiries via NSE option-chain-v3.
+        """
+        nse_headers = {
+            "Referer": "https://www.nseindia.com/option-chain",
+            "Accept": "application/json, text/plain, */*",
+        }
+        for attempt in range(2):
+            try:
+                if not self._cookies_initialized:
+                    self._init_cookies()
+
+                dd_url = f"https://www.nseindia.com/api/NextApi/apiClient/GetQuoteApi?functionName=getOptionChainDropdown&symbol={sym}"
+                dd_resp = self.client.get(dd_url, headers=nse_headers)
+                if dd_resp.status_code in (401, 403) and attempt == 0:
+                    self._cookies_initialized = False
+                    self._init_cookies()
+                    continue
+                if dd_resp.status_code != 200:
+                    return None
+
+                dd_json = dd_resp.json()
+                all_expiries = dd_json.get("expiryDates", []) or []
+                next_expiries = all_expiries[1 : 1 + count]
+                if not next_expiries:
+                    return None
+
+                chains: List[Dict[str, Any]] = []
+                for idx, exp in enumerate(next_expiries, start=1):
+                    v3_url = f"https://www.nseindia.com/api/option-chain-v3?type=Indices&symbol={sym}&expiry={exp}"
+                    v3_resp = self.client.get(v3_url, headers=nse_headers)
+                    if v3_resp.status_code != 200:
+                        continue
+                    v3_json = v3_resp.json()
+                    if not (v3_json and "records" in v3_json and v3_json["records"].get("data")):
+                        continue
+                    v3_json["records"]["expiryDates"] = all_expiries
+                    processed = self._process_nse_raw_data(v3_json, sym, target_expiry=exp)
+                    if processed and processed.get("strikes"):
+                        analytics = self._compute_max_pain_and_walls(
+                            processed["strikes"],
+                            processed.get("atm_strike", 0),
+                        )
+                        processed["max_pain"] = analytics["max_pain"]
+                        processed["top_ce_strike"] = analytics["top_ce_strike"]
+                        processed["top_ce_oi"] = analytics["top_ce_oi"]
+                        processed["top_pe_strike"] = analytics["top_pe_strike"]
+                        processed["top_pe_oi"] = analytics["top_pe_oi"]
+                        processed["week_offset"] = idx
+                        self._persist_to_dedicated_db(processed)
+                        chains.append(processed)
+
+                if chains:
+                    return {
+                        "all_expiries": all_expiries,
+                        "chains": chains,
+                    }
+            except Exception as ex:
+                logger.warning("NSE v3 next-expiries fetch error (%s): %s", sym, ex)
+                if attempt == 0:
+                    self._cookies_initialized = False
+                    time.sleep(0.5)
+        return None
+
+    def get_next_expiries_from_nse(
+        self,
+        symbol: str = "NIFTY",
+        count: int = 3,
+        force_refresh: bool = False,
+    ) -> Dict[str, Any]:
+        """
+        Fetches the next `count` weekly/monthly expiries (skipping current expiry[0])
+        from the official NSE Option Chain v3 API, with 300s caching.
+        Leaves the primary NiftyTrader current-expiry flow completely untouched.
+        """
+        sym = "BANKNIFTY" if "BANK" in symbol.upper() else "NIFTY"
+        ttl = float(self._next_expiries_interval or 300)
+
+        with self._next_expiries_lock:
+            now = time.time()
+            cached = self._next_expiries_cache.get(sym)
+            cached_at = self._next_expiries_cache_time.get(sym, 0.0)
+            if not force_refresh and cached is not None and (now - cached_at) < ttl:
+                resp = dict(cached)
+                resp["next_refresh_in_seconds"] = max(0, int(ttl - (now - cached_at)))
+                return resp
+
+            fetched = self._fetch_nse_v3_next_expiries(sym, count=count)
+            if fetched and fetched.get("chains"):
+                all_expiries = fetched["all_expiries"]
+                chains = fetched["chains"]
+                payload = {
+                    "status": "ok",
+                    "symbol": sym,
+                    "current_expiry_skipped": all_expiries[0] if all_expiries else None,
+                    "expiries": [c["expiry"] for c in chains],
+                    "chains": chains,
+                    "spot_price": chains[0].get("spot_price", 0.0),
+                    "atm_strike": chains[0].get("atm_strike", 0),
+                    "lot_size": chains[0].get("lot_size", 65),
+                    "updated_at": datetime.now(IST).strftime("%Y-%m-%d %H:%M:%S IST"),
+                    "fetched_at_ts": now,
+                    "refresh_interval_seconds": int(ttl),
+                    "next_refresh_in_seconds": int(ttl),
+                    "data_source": "NSE Live Option Chain v3 API (300s Auto-Refresh)",
+                    "is_stale": False,
+                }
+                self._next_expiries_cache[sym] = payload
+                self._next_expiries_cache_time[sym] = now
+                return dict(payload)
+
+            # Fallback to last valid in-memory snapshot if NSE temporarily failed
+            if cached is not None:
+                stale_resp = dict(cached)
+                stale_resp["is_stale"] = True
+                stale_resp["data_source"] = "NSE Cached Snapshot (Retry in next 300s cycle)"
+                stale_resp["next_refresh_in_seconds"] = max(0, int(ttl - (now - cached_at)))
+                return stale_resp
+
+            return {
+                "status": "unavailable",
+                "symbol": sym,
+                "current_expiry_skipped": None,
+                "expiries": [],
+                "chains": [],
+                "spot_price": self.get_current_spot(sym),
+                "atm_strike": 0,
+                "lot_size": 30 if "BANK" in sym else 65,
+                "updated_at": datetime.now(IST).strftime("%Y-%m-%d %H:%M:%S IST"),
+                "refresh_interval_seconds": int(ttl),
+                "next_refresh_in_seconds": int(ttl),
+                "data_source": "NSE Option Chain Unavailable (Will retry in 300s)",
+                "is_stale": True,
+            }
+
+    @staticmethod
+    def _is_nse_market_hours() -> bool:
+        """Returns True during NSE market hours (Mon-Fri, 09:05 - 15:40 IST)."""
+        now_ist = datetime.now(IST)
+        if now_ist.weekday() >= 5:
+            return False
+        hhmm = now_ist.hour * 100 + now_ist.minute
+        return 905 <= hhmm <= 1540
+
+    def start_next_expiries_auto_fetch(
+        self,
+        interval_seconds: int = 300,
+        symbols: Optional[List[str]] = None,
+    ) -> None:
+        """
+        Starts an always-active background daemon thread refreshing the next 3 NSE
+        expiries every `interval_seconds` (default 300s) for live market monitoring.
+        """
+        if self._next_expiries_running:
+            return
+
+        self._next_expiries_interval = max(60, int(interval_seconds))
+        target_symbols = symbols or ["NIFTY", "BANKNIFTY"]
+        self._next_expiries_running = True
+
+        def _loop() -> None:
+            # Initial warm-up fetch on startup regardless of market hours
+            for sym in target_symbols:
+                if not self._next_expiries_running:
+                    return
+                try:
+                    self.get_next_expiries_from_nse(sym, count=3, force_refresh=True)
+                except Exception as ex:
+                    logger.debug("Initial NSE next-expiries fetch error (%s): %s", sym, ex)
+
+            while self._next_expiries_running:
+                time.sleep(self._next_expiries_interval)
+                if not self._next_expiries_running:
+                    break
+                if not self._is_nse_market_hours():
+                    continue
+                for sym in target_symbols:
+                    try:
+                        self.get_next_expiries_from_nse(sym, count=3, force_refresh=True)
+                    except Exception as ex:
+                        logger.debug("Background NSE next-expiries refresh error (%s): %s", sym, ex)
+
+        self._next_expiries_thread = threading.Thread(
+            target=_loop,
+            name="nse-next-expiries-300s",
+            daemon=True,
+        )
+        self._next_expiries_thread.start()
+        logger.info("Started always-active NSE next-3-expiries background loop (%ds).", self._next_expiries_interval)
 
     def execute_option_chain_paper_trade(
         self,
