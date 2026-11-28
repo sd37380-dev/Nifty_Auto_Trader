@@ -28,3 +28,7 @@ services:
         sync: false
       - key: OPENAI_API_KEY
         sync: false
+      - key: DHAN_CLIENT_ID
+        sync: false
+      - key: DHAN_ACCESS_TOKEN
+        sync: false

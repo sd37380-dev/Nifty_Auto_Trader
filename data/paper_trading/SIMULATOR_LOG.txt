@@ -195,3 +195,8 @@
 [2026-11-27 09:51] 🏁 EXIT STOP_LOSS | NIFTY 25650 PE | Buy: Rs. 159.75 | Exit: Rs. 183.10 | Gross: Rs. +1,517.75 | Charges: Rs. 72.71 | Net: Rs. +1,445.04 (+14.6%) | Rule: Level_Strategy
 [2026-11-27 09:55] 🏁 EXIT STOP_LOSS | NIFTY 25650 PE | Buy: Rs. 159.75 | Exit: Rs. 183.10 | Gross: Rs. +1,517.75 | Charges: Rs. 72.71 | Net: Rs. +1,445.04 (+14.6%) | Rule: Level_Strategy
 [2026-11-27 09:56] 🏁 EXIT STOP_LOSS | NIFTY 25650 PE | Buy: Rs. 159.75 | Exit: Rs. 183.10 | Gross: Rs. +1,517.75 | Charges: Rs. 72.71 | Net: Rs. +1,445.04 (+14.6%) | Rule: Level_Strategy
+[2026-09-25 10:30] 🏁 EXIT STOP_LOSS | NIFTY 25650 PE | Buy: Rs. 159.75 | Exit: Rs. 477.58 | Gross: Rs. +20,658.95 | Charges: Rs. 103.28 | Net: Rs. +20,555.67 (+198.9%) | Rule: My_Custom_Strategy
+[2026-11-28 13:41:43 UTC] 🔍 [15M CHART ANALYZED | 1H=NEUTRAL] NIFTY Spot: 25005.0 | Rule: My_Custom_Strategy -> Waiting for setup (Standard 15M confirmation) | No trade taken.
+[2026-11-28 13:41:56 UTC] 🔍 [15M CHART ANALYZED | 1H=NEUTRAL] NIFTY Spot: 25005.0 | Rule: My_Custom_Strategy -> Waiting for setup (Standard 15M confirmation) | No trade taken.
+[2026-11-28 13:42:04 UTC] 🔍 [15M CHART ANALYZED | 1H=NEUTRAL] NIFTY Spot: 25005.0 | Rule: My_Custom_Strategy -> Waiting for setup (Standard 15M confirmation) | No trade taken.
+[2026-11-28 13:42:12 UTC] 🔍 [15M CHART ANALYZED | 1H=NEUTRAL] NIFTY Spot: 25005.0 | Rule: My_Custom_Strategy -> Waiting for setup (Standard 15M confirmation) | No trade taken.

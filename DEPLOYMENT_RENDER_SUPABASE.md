@@ -51,6 +51,8 @@ This guide details how to deploy **NIFTY Autonomous Trader** to **[Render.com](h
 5. Set your environment variables:
    - `SUPABASE_URL`: Your Supabase URL (e.g. `https://xyzcompany.supabase.co`)
    - `SUPABASE_KEY`: Your Supabase anon or service-role key
+   - `DHAN_CLIENT_ID`: Your Dhan Client ID (e.g. `1106429867`)
+   - `DHAN_ACCESS_TOKEN`: Your Dhan Access Token (JWT token from Dhan developer portal)
    - `GEMINI_API_KEY`: Your Google Gemini API key (optional, for LLM Brain)
 6. Click **Apply**. Render will build and deploy the service.
 
@@ -67,6 +69,8 @@ If setting up manually without Blueprints:
   - `HOST`: `0.0.0.0`
   - `SUPABASE_URL`: (your Supabase URL)
   - `SUPABASE_KEY`: (your Supabase key)
+  - `DHAN_CLIENT_ID`: (your Dhan Client ID)
+  - `DHAN_ACCESS_TOKEN`: (your Dhan Access Token)
 
 ---
 

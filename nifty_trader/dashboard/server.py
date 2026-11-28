@@ -1140,8 +1140,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 <div class="nav-tabs">
   <button class="nav-tab active" onclick="switchTab('tab-overview', this)">System Overview</button>
   <button class="nav-tab" onclick="switchTab('tab-simulator', this)">⚡ Option Paper Simulator</button>
-  <button class="nav-tab" onclick="switchTab('tab-option-chain', this)" id="nav-btn-option-chain">📊 Current Option</button>
-  <button class="nav-tab" onclick="switchTab('tab-next-expiries', this)" id="nav-btn-next-expiries">📅 Next 3 Expiries (NSE)</button>
+  <button class="nav-tab" onclick="switchTab('tab-option-chain', this)" id="nav-btn-option-chain">📊 Option Chain</button>
   <button class="nav-tab" onclick="switchTab('tab-charts', this)" id="nav-btn-charts">📈 Live Charts</button>
   <button class="nav-tab" onclick="switchTab('tab-news', this)" id="nav-btn-news">📰 Market News &amp; Impact <span id="nav-news-count-badge" class="badge badge-green" style="font-size: 0.65rem; padding: 1px 6px; margin-left: 4px;">--</span></button>
     <button class="nav-tab" onclick="switchTab('tab-swing', this)" id="nav-btn-swing" style="background: rgba(14, 165, 233, 0.12); color: #38bdf8; border: 1px solid rgba(14, 165, 233, 0.4); font-weight: 700;">
@@ -1702,12 +1701,12 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
       <div>
         <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-          <span style="font-size: 1.25rem; font-weight: 800; color: var(--text-primary);">📊 Live NSE Option Chain &amp; 1-Click Paper Trading</span>
-          <span id="oc-source-badge" class="badge badge-green">LIVE NSE FEED</span>
+          <span style="font-size: 1.25rem; font-weight: 800; color: var(--text-primary);">📊 Option Chain (Dhan HQ API) &amp; 1-Click Paper Trading</span>
+          <span id="oc-source-badge" class="badge badge-green">DHAN LIVE API</span>
           <span id="oc-sync-time" class="badge badge-blue">Updated: Just now</span>
         </div>
         <div style="font-size: 0.82rem; color: var(--text-secondary); margin-top: 4px; max-width: 850px;">
-          Directly inspect Open Interest (OI), LTP, and PCR across all active strikes. Click <strong style="color: var(--green);">BUY CE</strong> or <strong style="color: var(--red);">BUY PE</strong> on any strike to instantly execute a paper trade in the Option Simulator!
+          Directly inspect Open Interest (OI), LTP, and PCR across all active strikes fetched exclusively via Dhan HQ API. Click <strong style="color: var(--green);">BUY CE</strong> or <strong style="color: var(--red);">BUY PE</strong> on any strike to instantly execute a paper trade in the Option Simulator!
         </div>
       </div>
       <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
@@ -1716,14 +1715,16 @@ DASHBOARD_HTML = """<!DOCTYPE html>
           <button id="oc-btn-sym-nifty" onclick="switchOptionChainSymbol('NIFTY')" class="btn" style="padding: 5px 12px; font-size: 0.8rem; font-weight: 700; background: var(--accent); color: white; border: none; border-radius: 4px;">🇮🇳 NIFTY 50</button>
           <button id="oc-btn-sym-bank" onclick="switchOptionChainSymbol('BANKNIFTY')" class="btn" style="padding: 5px 12px; font-size: 0.8rem; font-weight: 600; background: transparent; color: var(--text-secondary); border: none; border-radius: 4px;">🏦 BANKNIFTY</button>
         </div>
-        <select id="oc-expiry-select" onchange="fetchOptionChain()" style="background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border); padding: 6px 10px; border-radius: 6px; font-size: 0.8rem; font-weight: 600;">
-          <option value="">Nearest Expiry</option>
+        <!-- 4-Week Expiry Quick Pills & Selector -->
+        <div id="oc-quick-expiry-pills" style="display: inline-flex; gap: 4px; align-items: center; background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 6px; padding: 2px 4px;"></div>
+        <select id="oc-expiry-select" onchange="fetchOptionChain()" style="background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border); padding: 6px 10px; border-radius: 6px; font-size: 0.8rem; font-weight: 600;" title="Select from next 4 weekly option expiries via Dhan HQ">
+          <option value="">Nearest Expiry (Week 1)</option>
         </select>
         <button class="btn" onclick="fetchOptionChain(true)" style="background: var(--green); color: black; border: none; font-weight: 700; padding: 6px 14px; border-radius: 6px; cursor: pointer;">
           🔄 Refresh Chain
         </button>
-        <button class="btn" onclick="openNiftyTraderKeyModal()" style="background: #1e293b; color: #fbbf24; border: 1px solid #d97706; font-weight: 700; padding: 6px 14px; border-radius: 6px; cursor: pointer;" title="Update NiftyTrader API Key or Token">
-          🔑 Update API Key
+        <button class="btn" onclick="openBrokerModal()" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.25) 0%, rgba(79, 70, 229, 0.35) 100%); color: #a5b4fc; border: 1px solid #6366f1; font-weight: 700; padding: 6px 14px; border-radius: 6px; cursor: pointer;" title="Configure Dhan HQ Broker API Credentials">
+          🏦 Dhan Broker Setup
         </button>
       </div>
     </div>
@@ -1800,7 +1801,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         </tr>
       </thead>
       <tbody id="oc-table-body">
-        <tr><td colspan="15" style="text-align: center; color: var(--text-secondary); padding: 40px;">Loading Live NiftyTrader Option Chain...</td></tr>
+        <tr><td colspan="15" style="text-align: center; color: var(--text-secondary); padding: 40px;">Loading Live Option Chain via Dhan HQ API...</td></tr>
       </tbody>
     </table>
   </div>
@@ -1874,124 +1875,6 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         </button>
       </div>
     </form>
-  </div>
-</div>
-
-<!-- NiftyTrader API Key & Bearer Token Modal -->
-<div id="nt-key-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 2600; justify-content: center; align-items: center; padding: 20px;">
-  <div style="background: var(--bg-card); border: 2px solid #d97706; border-radius: 12px; max-width: 560px; width: 100%; padding: 24px; box-shadow: 0 16px 48px rgba(0,0,0,0.9);">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 12px;">
-      <div style="display: flex; align-items: center; gap: 8px;">
-        <span style="font-size: 1.3rem;">🔑</span>
-        <strong style="font-size: 1.15rem; color: var(--text-primary);">NiftyTrader API Key &amp; Token Settings</strong>
-      </div>
-      <button onclick="closeNiftyTraderKeyModal()" style="background: transparent; border: none; color: var(--text-secondary); font-size: 1.4rem; cursor: pointer;">&times;</button>
-    </div>
-
-    <!-- Instructions / One-liner helper -->
-    <div style="background: rgba(217, 119, 6, 0.1); border: 1px solid rgba(217, 119, 6, 0.3); border-radius: 8px; padding: 12px; margin-bottom: 16px;">
-      <div style="font-size: 0.76rem; color: #fbbf24; font-weight: 700; margin-bottom: 4px;">⚡ 2-Second Console Helper for Tomorrow's Key:</div>
-      <div style="font-size: 0.72rem; color: var(--text-secondary); margin-bottom: 6px;">
-        In NiftyTrader, press <strong>F12 &rarr; Console</strong>, run this code to copy your daily key in 1 second:
-      </div>
-      <div style="display: flex; gap: 6px;">
-        <input type="text" readonly id="nt-console-helper-code" value='JSON.parse(localStorage.getItem("niftytrader-api-key-cache-v1")).apiKey' style="background: #0f172a; color: #38bdf8; border: 1px solid #334155; border-radius: 4px; padding: 5px 8px; font-size: 0.70rem; font-family: monospace; width: 100%;">
-        <button type="button" onclick="copyConsoleHelperCode()" style="background: var(--accent); color: white; border: none; border-radius: 4px; padding: 5px 12px; font-size: 0.72rem; font-weight: 700; cursor: pointer; white-space: nowrap;">📋 Copy</button>
-      </div>
-    </div>
-
-    <form onsubmit="saveNiftyTraderKeys(event)">
-      <div style="margin-bottom: 14px;">
-        <label style="font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); display: block; margin-bottom: 6px;">
-          x-api-key (Rotates daily at 06:30 AM IST) *
-        </label>
-        <input type="text" id="nt-input-api-key" placeholder="Paste your fresh x-api-key here..." required style="background: var(--bg-main); color: var(--text-primary); border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; font-size: 0.82rem; font-family: monospace; width: 100%;">
-      </div>
-
-      <div style="margin-bottom: 18px;">
-        <label style="font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); display: block; margin-bottom: 6px;">
-          Bearer JWT Token (Valid for 30 days &mdash; only change if expired)
-        </label>
-        <textarea id="nt-input-bearer" rows="3" placeholder="Leave empty to keep current active Bearer token..." style="background: var(--bg-main); color: var(--text-primary); border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; font-size: 0.76rem; font-family: monospace; width: 100%; resize: vertical;"></textarea>
-      </div>
-
-      <div id="nt-key-status-msg" style="display: none; font-size: 0.80rem; padding: 8px 12px; border-radius: 6px; margin-bottom: 14px;"></div>
-
-      <div style="display: flex; justify-content: flex-end; gap: 10px;">
-        <button type="button" onclick="closeNiftyTraderKeyModal()" class="btn" style="background: #334155; color: white; padding: 8px 16px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer;">Cancel</button>
-        <button type="submit" id="nt-key-save-btn" class="btn" style="background: var(--green); color: black; padding: 8px 18px; border: none; border-radius: 6px; font-weight: 800; cursor: pointer;">💾 Save &amp; Test Live Key</button>
-      </div>
-    </form>
-  </div>
-</div>
-
-<!-- Tab: Next 3 Expiries Option Chain (NSE 300s Always-Active) -->
-<div id="tab-next-expiries" class="tab-content">
-  <div class="card" style="margin-bottom: 16px; border-left: 4px solid #38bdf8; background: linear-gradient(135deg, rgba(56, 189, 248, 0.08) 0%, rgba(19, 27, 46, 0.95) 100%);">
-    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
-      <div>
-        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-          <span style="font-size: 1.25rem; font-weight: 800; color: var(--text-primary);">📅 Next 3 Expiries Option Chain (NSE)</span>
-          <span id="ne-source-badge" class="badge badge-blue">NSE 300s AUTO-SYNC</span>
-          <span id="ne-sync-time" class="badge badge-green">Updated: --</span>
-          <span id="ne-countdown-badge" class="badge badge-yellow">Next Refresh: 300s</span>
-        </div>
-        <div style="font-size: 0.82rem; color: var(--text-secondary); margin-top: 4px; max-width: 850px;">
-          Always-active 300-second background NSE feed for positional &amp; monthly OI walls, PCR, and Max Pain across the next 3 expiries (current week remains on NiftyTrader).
-        </div>
-      </div>
-      <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-        <div style="display: flex; background: var(--bg-main); border: 1px solid var(--border); border-radius: 6px; padding: 2px;">
-          <button id="ne-btn-sym-nifty" onclick="switchNextExpirySymbol('NIFTY')" class="btn" style="padding: 5px 12px; font-size: 0.8rem; font-weight: 700; background: var(--accent); color: white; border: none; border-radius: 4px;">🇮🇳 NIFTY 50</button>
-          <button id="ne-btn-sym-bank" onclick="switchNextExpirySymbol('BANKNIFTY')" class="btn" style="padding: 5px 12px; font-size: 0.8rem; font-weight: 600; background: transparent; color: var(--text-secondary); border: none; border-radius: 4px;">🏦 BANKNIFTY</button>
-        </div>
-        <button class="btn" onclick="fetchNextExpiries(true)" style="background: #38bdf8; color: black; border: none; font-weight: 700; padding: 6px 14px; border-radius: 6px; cursor: pointer;">
-          🔄 Refresh Now
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- 3 Expiry Summary Cards (Week +1, +2, +3) -->
-  <div id="ne-cards-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; margin-bottom: 16px;">
-    <div style="background: var(--bg-card); padding: 14px; border-radius: 8px; border: 1px solid var(--border); color: var(--text-secondary);">
-      Loading next 3 NSE expiries...
-    </div>
-  </div>
-
-  <!-- Selected Expiry Table -->
-  <div class="card" style="padding: 0; overflow-x: auto; margin-bottom: 24px;">
-    <div style="padding: 10px 14px; background: #111827; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-      <strong id="ne-table-title" style="color: #38bdf8; font-size: 0.92rem;">Selected Expiry: --</strong>
-      <span id="ne-table-subtitle" style="font-size: 0.76rem; color: var(--text-secondary);">Spot: -- | ATM: -- | PCR: --</span>
-    </div>
-    <table class="oc-table" id="next-expiries-table">
-      <thead>
-        <tr style="background: #111827; border-bottom: 2px solid var(--border);">
-          <th colspan="6" style="color: var(--green); font-size: 0.82rem; border-right: 2px solid #374151; padding: 8px;">CALLS (CE)</th>
-          <th style="background: #1e293b; color: #fbbf24; font-size: 0.82rem; padding: 8px; min-width: 85px;">STRIKE</th>
-          <th colspan="6" style="color: var(--red); font-size: 0.82rem; border-left: 2px solid #374151; padding: 8px;">PUTS (PE)</th>
-        </tr>
-        <tr style="background: #182238; font-size: 0.72rem; color: var(--text-secondary);">
-          <th style="padding: 6px;">OI BUILDUP</th>
-          <th style="padding: 6px;">OI</th>
-          <th style="padding: 6px;">CHG OI</th>
-          <th style="padding: 6px;">VOL</th>
-          <th style="padding: 6px;">IV %</th>
-          <th style="padding: 6px; border-right: 2px solid #374151;">LTP</th>
-          <th style="background: #1e293b; color: #fbbf24; padding: 6px;">STRIKE</th>
-          <th style="padding: 6px; border-left: 2px solid #374151;">LTP</th>
-          <th style="padding: 6px;">IV %</th>
-          <th style="padding: 6px;">VOL</th>
-          <th style="padding: 6px;">CHG OI</th>
-          <th style="padding: 6px;">OI</th>
-          <th style="padding: 6px;">OI BUILDUP</th>
-        </tr>
-      </thead>
-      <tbody id="next-expiries-tbody">
-        <tr><td colspan="13" style="text-align:center; padding: 24px; color: var(--text-secondary);">Loading NSE next-3-expiry option chain...</td></tr>
-      </tbody>
-    </table>
   </div>
 </div>
 
@@ -4589,9 +4472,6 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       if (tabId === 'tab-option-chain' && typeof fetchOptionChain === 'function') {
         fetchOptionChain();
       }
-      if (tabId === 'tab-next-expiries' && typeof fetchNextExpiries === 'function') {
-        fetchNextExpiries();
-      }
       if (tabId === 'tab-charts') {
         if (typeof initTradingViewChart === 'function') {
           initTradingViewChart();
@@ -6367,6 +6247,8 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 
   function switchOptionChainSymbol(sym) {
     window._currentOcSymbol = sym;
+    const expirySel = document.getElementById('oc-expiry-select');
+    if (expirySel) expirySel.value = '';
     const btnNifty = document.getElementById('oc-btn-sym-nifty');
     const btnBank = document.getElementById('oc-btn-sym-bank');
     if (sym === 'NIFTY') {
@@ -6377,6 +6259,14 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       if (btnBank) { btnBank.style.background = 'var(--accent)'; btnBank.style.color = 'white'; }
     }
     fetchOptionChain(true);
+  }
+
+  function selectQuickExpiry(exp) {
+    const expirySel = document.getElementById('oc-expiry-select');
+    if (expirySel) {
+      expirySel.value = exp;
+    }
+    fetchOptionChain();
   }
 
   async function fetchOptionChain(force = false) {
@@ -6403,150 +6293,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     }
   }
 
-  // -------------------------------------------------------------
-  // NEXT 3 EXPIRIES (NSE 300s ALWAYS-ACTIVE) FUNCTIONS
-  // -------------------------------------------------------------
-  window._currentNeSymbol = 'NIFTY';
-  window._currentNeData = null;
-  window._selectedNeIndex = 0;
-  window._neCountdownSec = 300;
 
-  function switchNextExpirySymbol(sym) {
-    window._currentNeSymbol = sym;
-    window._selectedNeIndex = 0;
-    const btnN = document.getElementById('ne-btn-sym-nifty');
-    const btnB = document.getElementById('ne-btn-sym-bank');
-    if (btnN && btnB) {
-      if (sym === 'NIFTY') {
-        btnN.style.background = 'var(--accent)'; btnN.style.color = 'white'; btnN.style.fontWeight = '700';
-        btnB.style.background = 'transparent'; btnB.style.color = 'var(--text-secondary)'; btnB.style.fontWeight = '600';
-      } else {
-        btnB.style.background = 'var(--accent)'; btnB.style.color = 'white'; btnB.style.fontWeight = '700';
-        btnN.style.background = 'transparent'; btnN.style.color = 'var(--text-secondary)'; btnN.style.fontWeight = '600';
-      }
-    }
-    fetchNextExpiries(false);
-  }
-
-  function selectNextExpiryWeek(idx) {
-    window._selectedNeIndex = idx;
-    if (window._currentNeData) renderNextExpiries(window._currentNeData);
-  }
-
-  async function fetchNextExpiries(force = false) {
-    const sym = window._currentNeSymbol || 'NIFTY';
-    const badge = document.getElementById('ne-source-badge');
-    const syncTime = document.getElementById('ne-sync-time');
-    if (badge) badge.innerText = force ? 'REFRESHING NSE...' : 'SYNCING...';
-
-    try {
-      const url = `/api/option_chain/next_expiries?symbol=${encodeURIComponent(sym)}&count=3${force ? '&refresh=1' : ''}`;
-      const res = await fetch(url);
-      const data = await res.json();
-      window._currentNeData = data;
-      window._neCountdownSec = typeof data.next_refresh_in_seconds === 'number' ? data.next_refresh_in_seconds : 300;
-      if (badge) {
-        badge.innerText = data.data_source || 'NSE 300s AUTO-SYNC';
-        badge.className = data.is_stale ? 'badge badge-yellow' : 'badge badge-blue';
-      }
-      if (syncTime) syncTime.innerText = `Updated: ${data.updated_at || '--'}`;
-      renderNextExpiries(data);
-    } catch (e) {
-      console.error('Next expiries fetch error:', e);
-      if (badge) badge.innerText = 'NSE FETCH ERROR';
-    }
-  }
-
-  function renderNextExpiries(payload) {
-    const cardsGrid = document.getElementById('ne-cards-grid');
-    const tbody = document.getElementById('next-expiries-tbody');
-    const titleEl = document.getElementById('ne-table-title');
-    const subEl = document.getElementById('ne-table-subtitle');
-    const chains = (payload && payload.chains) || [];
-
-    if (!chains.length) {
-      if (cardsGrid) {
-        cardsGrid.innerHTML = `<div style="background: var(--bg-card); padding: 14px; border-radius: 8px; border: 1px solid var(--border); color: var(--yellow);">NSE multi-expiry data not yet available (${payload && payload.data_source ? payload.data_source : 'waiting for 300s cycle'}). Click <strong>Refresh Now</strong> to retry.</div>`;
-      }
-      if (tbody) {
-        tbody.innerHTML = `<tr><td colspan="13" style="text-align:center; padding: 24px; color: var(--text-secondary);">No NSE next-expiry rows available right now.</td></tr>`;
-      }
-      return;
-    }
-
-    if (window._selectedNeIndex >= chains.length) window._selectedNeIndex = 0;
-
-    if (cardsGrid) {
-      cardsGrid.innerHTML = chains.map((c, idx) => {
-        const active = idx === window._selectedNeIndex;
-        const pcrColor = c.pcr >= 1.15 ? 'var(--green)' : (c.pcr <= 0.85 ? 'var(--red)' : '#fbbf24');
-        const borderCol = active ? '#38bdf8' : 'var(--border)';
-        const bg = active ? 'rgba(56, 189, 248, 0.10)' : 'var(--bg-card)';
-        return `
-          <div onclick="selectNextExpiryWeek(${idx})" style="cursor:pointer; background:${bg}; padding:12px 14px; border-radius:8px; border:2px solid ${borderCol}; transition: all 0.15s;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-              <span style="font-weight:800; font-size:0.95rem; color:${active ? '#38bdf8' : 'var(--text-primary)'};">Week +${c.week_offset || (idx + 1)}: ${c.expiry}</span>
-              <span style="font-weight:800; font-size:0.85rem; color:${pcrColor};">PCR ${c.pcr}</span>
-            </div>
-            <div style="font-size:0.76rem; color:var(--text-secondary); display:grid; grid-template-columns:1fr 1fr; gap:4px;">
-              <span>Max Pain: <strong style="color:#fbbf24;">${c.max_pain}</strong></span>
-              <span>Bias: <strong>${(c.sentiment || '').split(' ')[0]}</strong></span>
-              <span>CE Wall: <strong style="color:var(--red);">${c.top_ce_strike || '--'}</strong> (${((c.top_ce_oi || 0) / 100000).toFixed(1)}L)</span>
-              <span>PE Wall: <strong style="color:var(--green);">${c.top_pe_strike || '--'}</strong> (${((c.top_pe_oi || 0) / 100000).toFixed(1)}L)</span>
-            </div>
-          </div>`;
-      }).join('');
-    }
-
-    const sel = chains[window._selectedNeIndex];
-    if (titleEl) titleEl.innerText = `${sel.symbol} — Expiry ${sel.expiry} (Week +${sel.week_offset || (window._selectedNeIndex + 1)})`;
-    if (subEl) subEl.innerText = `Spot: ₹${(sel.spot_price || 0).toLocaleString('en-IN')} | ATM: ${sel.atm_strike} | PCR: ${sel.pcr} | Max Pain: ${sel.max_pain}`;
-
-    if (tbody) {
-      tbody.innerHTML = (sel.strikes || []).map(row => {
-        const ce = row.ce || {};
-        const pe = row.pe || {};
-        const rowBg = row.is_atm ? 'rgba(251, 191, 36, 0.12)' : 'transparent';
-        const fmtOi = v => v ? Number(v).toLocaleString('en-IN') : '0';
-        const fmtChg = v => {
-          const n = Number(v || 0);
-          const cls = n > 0 ? 'var(--green)' : (n < 0 ? 'var(--red)' : 'var(--text-secondary)');
-          return `<span style="color:${cls};">${n > 0 ? '+' : ''}${n.toLocaleString('en-IN')}</span>`;
-        };
-        return `
-          <tr style="background:${rowBg}; border-bottom:1px solid rgba(255,255,255,0.05); font-size:0.78rem;">
-            <td style="padding:6px; color:var(--text-secondary);">${ce.buildup || '-'}</td>
-            <td style="padding:6px; font-weight:600;">${fmtOi(ce.oi)}</td>
-            <td style="padding:6px;">${fmtChg(ce.change_in_oi)}</td>
-            <td style="padding:6px; color:var(--text-secondary);">${fmtOi(ce.volume)}</td>
-            <td style="padding:6px; color:var(--text-secondary);">${Number(ce.iv || 0).toFixed(1)}%</td>
-            <td style="padding:6px; font-weight:700; color:var(--green); border-right:2px solid #374151;">₹${Number(ce.ltp || 0).toFixed(2)}</td>
-            <td style="padding:6px; font-weight:800; background:#1e293b; color:${row.is_atm ? '#fbbf24' : 'var(--text-primary)'}; text-align:center;">${row.strike}${row.is_atm ? ' ⚡' : ''}</td>
-            <td style="padding:6px; font-weight:700; color:var(--red); border-left:2px solid #374151;">₹${Number(pe.ltp || 0).toFixed(2)}</td>
-            <td style="padding:6px; color:var(--text-secondary);">${Number(pe.iv || 0).toFixed(1)}%</td>
-            <td style="padding:6px; color:var(--text-secondary);">${fmtOi(pe.volume)}</td>
-            <td style="padding:6px;">${fmtChg(pe.change_in_oi)}</td>
-            <td style="padding:6px; font-weight:600;">${fmtOi(pe.oi)}</td>
-            <td style="padding:6px; color:var(--text-secondary);">${pe.buildup || '-'}</td>
-          </tr>`;
-      }).join('');
-    }
-  }
-
-  // Always-active 1s countdown & 300s sync trigger
-  setInterval(() => {
-    const cd = document.getElementById('ne-countdown-badge');
-    if (window._neCountdownSec > 0) {
-      window._neCountdownSec -= 1;
-    } else {
-      window._neCountdownSec = 300;
-      const tab = document.getElementById('tab-next-expiries');
-      if (tab && tab.classList.contains('active')) {
-        fetchNextExpiries(false);
-      }
-    }
-    if (cd) cd.innerText = `Next Refresh: ${window._neCountdownSec}s`;
-  }, 1000);
 
   function renderOptionChain(chain) {
     // 1. Analytics Bar
@@ -6614,13 +6361,29 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       if (typeof updateNearLevelBlinks === 'function') updateNearLevelBlinks();
     }
 
-    // 2. Expiry Select Options
+    // 2. Expiry Select Options & 4-Week Quick Switch Pills
     const expirySel = document.getElementById('oc-expiry-select');
-    if (expirySel && chain.expiry_dates && chain.expiry_dates.length > 0) {
-      const currentVal = expirySel.value;
-      expirySel.innerHTML = chain.expiry_dates.map(exp => `
-        <option value="${exp}" ${exp === (currentVal || chain.expiry) ? 'selected' : ''}>${exp}</option>
-      `).join('');
+    const pillsContainer = document.getElementById('oc-quick-expiry-pills');
+    if (chain.expiry_dates && chain.expiry_dates.length > 0) {
+      const activeExpiry = (expirySel && expirySel.value) ? expirySel.value : (chain.expiry || chain.expiry_dates[0]);
+      if (expirySel) {
+        expirySel.innerHTML = chain.expiry_dates.map((exp, idx) => {
+          const weekLabel = idx === 0 ? 'Current Week' : `Week ${idx + 1}`;
+          const isSelected = exp === activeExpiry;
+          return `<option value="${exp}" ${isSelected ? 'selected' : ''}>📅 ${exp} (${weekLabel})</option>`;
+        }).join('');
+      }
+      if (pillsContainer) {
+        pillsContainer.innerHTML = chain.expiry_dates.map((exp, idx) => {
+          const isSelected = exp === activeExpiry || (idx === 0 && (!expirySel || !expirySel.value));
+          const bg = isSelected ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : 'rgba(30, 41, 59, 0.6)';
+          const color = isSelected ? '#ffffff' : '#94a3b8';
+          const border = isSelected ? '1px solid #10b981' : '1px solid rgba(255, 255, 255, 0.12)';
+          const shadow = isSelected ? '0 0 8px rgba(16, 185, 129, 0.4)' : 'none';
+          const label = idx === 0 ? 'W1 (Current)' : `W${idx + 1}`;
+          return `<button type="button" onclick="selectQuickExpiry('${exp}')" class="btn" style="padding: 3px 8px; font-size: 0.72rem; font-weight: 700; background: ${bg}; color: ${color}; border: ${border}; box-shadow: ${shadow}; border-radius: 4px; cursor: pointer; transition: all 0.2s;" title="Select Expiry: ${exp}">${label}</button>`;
+        }).join('');
+      }
     }
 
     // Helper for Buildup Badge: Displays actual raw buildup data fetched from NiftyTrader
@@ -6746,6 +6509,23 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     // 3. Option Chain Matrix Table (ATM ± 7 Strikes with exact requested fields)
     const tbody = document.getElementById('oc-table-body');
     if (!tbody || !chain.strikes) return;
+
+    if (chain.strikes.length === 0) {
+      const msg = chain.error || 'No strikes returned by Dhan HQ API for this expiry.';
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="17" style="text-align: center; padding: 40px 16px; color: #94a3b8; font-size: 0.95rem;">
+            <div style="margin-bottom: 8px; font-size: 1.35rem;">🏦 Dhan HQ Option Chain (Exclusive Feed)</div>
+            <div style="color: #facc15; font-weight: 700; margin-bottom: 8px;">${msg}</div>
+            <div style="font-size: 0.8rem; color: #64748b;">
+              Option chain is configured strictly for <strong>Dhan HQ API</strong>.
+              <button type="button" onclick="openBrokerModal()" class="btn" style="padding: 3px 10px; font-size: 0.74rem; margin-left: 6px; background: rgba(99, 102, 241, 0.3); border: 1px solid #6366f1; color: #a5b4fc; cursor: pointer;">🏦 Connect Dhan API Keys</button>
+            </div>
+          </td>
+        </tr>
+      `;
+      return;
+    }
 
     tbody.innerHTML = chain.strikes.map(row => {
       const isAtm = row.is_atm;
@@ -6890,89 +6670,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     if (tgtCalc) tgtCalc.innerText = `Target Price: ₹${(isSell ? Math.max(1, p.ltp - tgtPts) : p.ltp + tgtPts).toFixed(2)}`;
   }
 
-  // --- NiftyTrader Key Management Modal Helpers ---
-  function openNiftyTraderKeyModal() {
-    const modal = document.getElementById('nt-key-modal');
-    if (modal) modal.style.display = 'flex';
-    fetch('/api/niftytrader/config')
-      .then(r => r.json())
-      .then(d => {
-        if (d.status === 'ok') {
-          if (d.api_key) document.getElementById('nt-input-api-key').value = d.api_key;
-          if (d.bearer_token) document.getElementById('nt-input-bearer').value = d.bearer_token;
-        }
-      })
-      .catch(() => {});
-  }
 
-  function closeNiftyTraderKeyModal() {
-    const modal = document.getElementById('nt-key-modal');
-    if (modal) modal.style.display = 'none';
-  }
-
-  function copyConsoleHelperCode() {
-    const inp = document.getElementById('nt-console-helper-code');
-    if (inp) {
-      inp.select();
-      navigator.clipboard.writeText(inp.value);
-      alert('📋 Copied console code! In NiftyTrader, press F12 -> Console -> Paste and run it to get your fresh key.');
-    }
-  }
-
-  async function saveNiftyTraderKeys(e) {
-    e.preventDefault();
-    const apiKey = document.getElementById('nt-input-api-key').value.trim();
-    const bearer = document.getElementById('nt-input-bearer').value.trim();
-    const saveBtn = document.getElementById('nt-key-save-btn');
-    const msgEl = document.getElementById('nt-key-status-msg');
-
-    if (!apiKey) {
-      alert('Please enter a valid x-api-key');
-      return;
-    }
-
-    if (saveBtn) saveBtn.innerText = 'TESTING & SAVING...';
-    if (msgEl) {
-      msgEl.style.display = 'block';
-      msgEl.style.background = 'rgba(59, 130, 246, 0.15)';
-      msgEl.style.color = '#60a5fa';
-      msgEl.innerText = 'Verifying key against NiftyTrader live API...';
-    }
-
-    try {
-      const res = await fetch('/api/niftytrader/config', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ api_key: apiKey, bearer_token: bearer })
-      });
-      const data = await res.json();
-      if (data.status === 'ok') {
-        if (msgEl) {
-          msgEl.style.background = 'rgba(16, 185, 129, 0.2)';
-          msgEl.style.color = 'var(--green)';
-          msgEl.innerText = '✅ ' + (data.message || 'Key verified and saved successfully!');
-        }
-        setTimeout(() => {
-          closeNiftyTraderKeyModal();
-          fetchOptionChain(true);
-        }, 1200);
-      } else {
-        if (msgEl) {
-          msgEl.style.background = 'rgba(239, 68, 68, 0.2)';
-          msgEl.style.color = 'var(--red)';
-          msgEl.innerText = '❌ Verification Failed: ' + (data.message || 'Key rejected by API');
-        }
-      }
-    } catch (err) {
-      if (msgEl) {
-        msgEl.style.background = 'rgba(239, 68, 68, 0.2)';
-        msgEl.style.color = 'var(--red)';
-        msgEl.innerText = '❌ Error saving key: ' + err;
-      }
-    } finally {
-      if (saveBtn) saveBtn.innerText = '💾 Save & Test Live Key';
-    }
-  }
 
   async function submitOptionTrade(e, mode = 'instant') {
     e.preventDefault();
@@ -7033,6 +6731,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         action: p.action || 'BUY',
         lots: lots,
         premium: p.ltp,
+        expiry: (document.getElementById('oc-expiry-select')?.value || ''),
         sl_points: slPts,
         target_points: tgtPts,
         trailing_sl: trailing,
@@ -11307,30 +11006,37 @@ DASHBOARD_HTML = """<!DOCTYPE html>
           loadLiveBrokerData();
         } else {
           if (badgeBtn) {
-            badgeBtn.innerHTML = '🏦 Broker: 📄 Paper Mode';
-            badgeBtn.style.color = '#a5b4fc';
-            badgeBtn.style.borderColor = '#6366f1';
+            badgeBtn.innerHTML = (data.auth_status === 'AUTH_FAILED') ? '🏦 Broker: ⚠️ Auth Failed' : '🏦 Broker: 📄 Paper Mode';
+            badgeBtn.style.color = (data.auth_status === 'AUTH_FAILED') ? '#ef4444' : '#a5b4fc';
+            badgeBtn.style.borderColor = (data.auth_status === 'AUTH_FAILED') ? '#ef4444' : '#6366f1';
           }
           if (headerBadge) {
             headerBadge.className = 'badge badge-red';
-            headerBadge.innerHTML = '🏦 Live Broker: DISABLED (Click to Connect)';
-            headerBadge.style.background = '';
-            headerBadge.style.borderColor = '';
-            headerBadge.style.color = '';
+            headerBadge.innerHTML = (data.auth_status === 'AUTH_FAILED') ? '🏦 Live Broker: ⚠️ Auth Failed (Click to Update)' : '🏦 Live Broker: DISABLED (Click to Connect)';
+            headerBadge.style.background = (data.auth_status === 'AUTH_FAILED') ? 'rgba(239, 68, 68, 0.2)' : '';
+            headerBadge.style.borderColor = (data.auth_status === 'AUTH_FAILED') ? '#ef4444' : '';
+            headerBadge.style.color = (data.auth_status === 'AUTH_FAILED') ? '#fca5a5' : '';
           }
           if (navBrokerBtn) {
-            navBrokerBtn.innerHTML = '🏦 Broker Connection (Dhan)';
-            navBrokerBtn.style.color = '#a5b4fc';
-            navBrokerBtn.style.borderColor = '#6366f1';
+            navBrokerBtn.innerHTML = (data.auth_status === 'AUTH_FAILED') ? '🏦 Broker: ⚠️ Auth Failed' : '🏦 Broker Connection (Dhan)';
+            navBrokerBtn.style.color = (data.auth_status === 'AUTH_FAILED') ? '#fca5a5' : '#a5b4fc';
+            navBrokerBtn.style.borderColor = (data.auth_status === 'AUTH_FAILED') ? '#ef4444' : '#6366f1';
           }
           if (suiteBadge) {
-            suiteBadge.className = 'badge badge-yellow';
-            suiteBadge.innerHTML = '🟡 READY FOR CREDENTIALS';
+            suiteBadge.className = (data.auth_status === 'AUTH_FAILED') ? 'badge badge-red' : 'badge badge-yellow';
+            suiteBadge.innerHTML = (data.auth_status === 'AUTH_FAILED') ? '❌ AUTH FAILED (HTTP 401)' : '🟡 READY FOR CREDENTIALS';
           }
-          if (teleClient) teleClient.innerText = 'NOT CONNECTED';
+          if (teleClient) teleClient.innerText = (data.auth_status === 'AUTH_FAILED') ? 'AUTH FAILED' : 'NOT CONNECTED';
           if (modePill) {
-            modePill.className = 'badge badge-yellow';
-            modePill.innerText = '📄 PAPER MODE';
+            modePill.className = (data.auth_status === 'AUTH_FAILED') ? 'badge badge-red' : 'badge badge-yellow';
+            modePill.innerText = (data.auth_status === 'AUTH_FAILED') ? '⚠️ AUTH FAILED' : '📄 PAPER MODE';
+          }
+          if (tabStatus) {
+            if (data.auth_status === 'AUTH_FAILED') {
+              tabStatus.innerHTML = `<span style="color:#ef4444;">❌ Authentication Failed (HTTP 401): Client ID or 24-hour daily Access Token is invalid or expired. Enter your 10-digit Dhan Client ID and active 24-hour token below.</span>`;
+            } else {
+              tabStatus.innerHTML = `<span>Ready for credentials.</span>`;
+            }
           }
         }
 
@@ -11438,6 +11144,8 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     if (statusEl) {
       if (_brokerStatusCache.connected) {
         statusEl.innerHTML = `<span style="color:#10b981;">🟢 Dhan HQ Broker Connected (Client ID: <b>${_brokerStatusCache.client_id_masked}</b>). Live order routing enabled!</span>`;
+      } else if (_brokerStatusCache.auth_status === 'AUTH_FAILED') {
+        statusEl.innerHTML = `<span style="color:#ef4444;">❌ Dhan Authentication Failed (HTTP 401). Your 10-digit Client ID or 24h daily Access Token is invalid or expired. Enter fresh credentials below.</span>`;
       } else {
         statusEl.innerHTML = `<span style="color:#facc15;">🟡 Running in Paper Simulator mode. Enter Dhan Client ID &amp; Token below to connect live broker.</span>`;
       }
@@ -15242,11 +14950,28 @@ class DashboardHTTPRequestHandler(BaseHTTPRequestHandler):
                 force = q.get("refresh", ["0"])[0] in ("1", "true", "True")
                 from nifty_trader.market_data.option_chain_service import get_option_chain_service
                 ocs = get_option_chain_service()
-                data = ocs.get_next_expiries_from_nse(symbol=symbol, count=count, force_refresh=force)
+                data = ocs.get_next_expiries(symbol=symbol, count=count, force_refresh=force)
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json")
                 self.end_headers()
                 self.wfile.write(json.dumps(data).encode("utf-8"))
+            except Exception as ex:
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": "error", "message": str(ex)}).encode("utf-8"))
+        elif self.path.startswith("/api/option_chain/expiries"):
+            try:
+                from urllib.parse import parse_qs, urlparse
+                q = parse_qs(urlparse(self.path).query)
+                symbol = q.get("symbol", ["NIFTY"])[0]
+                from nifty_trader.market_data.option_chain_service import get_option_chain_service
+                ocs = get_option_chain_service()
+                expiries = ocs._get_4_weekly_expiries(symbol)
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": "ok", "symbol": symbol, "expiries": expiries}).encode("utf-8"))
             except Exception as ex:
                 self.send_response(500)
                 self.send_header("Content-Type", "application/json")
@@ -15271,23 +14996,7 @@ class DashboardHTTPRequestHandler(BaseHTTPRequestHandler):
                 self.send_header("Content-Type", "application/json")
                 self.end_headers()
                 self.wfile.write(json.dumps({"status": "error", "message": str(ex)}).encode("utf-8"))
-        elif self.path == "/api/niftytrader/config":
-            try:
-                api_key = os.getenv("NIFTYTRADER_API_KEY", "")
-                bearer = os.getenv("NIFTYTRADER_BEARER_TOKEN", "")
-                self.send_response(200)
-                self.send_header("Content-Type", "application/json")
-                self.end_headers()
-                self.wfile.write(json.dumps({
-                    "status": "ok",
-                    "api_key": api_key,
-                    "bearer_token": bearer,
-                }).encode("utf-8"))
-            except Exception as ex:
-                self.send_response(500)
-                self.send_header("Content-Type", "application/json")
-                self.end_headers()
-                self.wfile.write(json.dumps({"status": "error", "message": str(ex)}).encode("utf-8"))
+
         elif self.path.startswith("/api/contributors/live"):
             try:
                 from urllib.parse import urlparse, parse_qs
@@ -15490,6 +15199,7 @@ class DashboardHTTPRequestHandler(BaseHTTPRequestHandler):
                     symbol=data.get("symbol", "NIFTY"),
                     strike=int(data.get("strike")),
                     option_type=data.get("option_type", "CE"),
+                    expiry=data.get("expiry"),
                     lots=int(data.get("lots", 1)),
                     premium=float(data.get("premium", 0.0)),
                     sl_points=float(data.get("sl_points", 20.0)),
@@ -15516,62 +15226,7 @@ class DashboardHTTPRequestHandler(BaseHTTPRequestHandler):
                 self.send_header("Content-Type", "application/json")
                 self.end_headers()
                 self.wfile.write(json.dumps({"status": "error", "message": str(ex)}).encode("utf-8"))
-        elif self.path == "/api/niftytrader/config":
-            try:
-                content_length = int(self.headers.get("Content-Length", 0))
-                body = self.rfile.read(content_length).decode("utf-8")
-                data = json.loads(body)
-                api_key = data.get("api_key", "").strip()
-                bearer_token = data.get("bearer_token", "").strip()
 
-                if api_key:
-                    os.environ["NIFTYTRADER_API_KEY"] = api_key
-                if bearer_token:
-                    os.environ["NIFTYTRADER_BEARER_TOKEN"] = bearer_token
-
-                # Update .env file permanently
-                env_path = Path("D:/AI_Trading/nifty-autonomous-trader/.env")
-                if env_path.exists():
-                    try:
-                        content = env_path.read_text(encoding="utf-8")
-                        import re
-                        if api_key:
-                            content = re.sub(r"NIFTYTRADER_API_KEY=.*", f"NIFTYTRADER_API_KEY={api_key}", content)
-                        if bearer_token:
-                            content = re.sub(r"NIFTYTRADER_BEARER_TOKEN=.*", f"NIFTYTRADER_BEARER_TOKEN={bearer_token}", content)
-                        env_path.write_text(content, encoding="utf-8")
-                    except Exception as env_err:
-                        logger.warning("Could not update .env file: %s", env_err)
-
-                # Clear cache and verify key immediately
-                from nifty_trader.market_data.option_chain_service import get_option_chain_service
-                ocs = get_option_chain_service()
-                ocs._cache.clear()
-                ocs._cache_time.clear()
-
-                test_raw = ocs.fetch_live_chain_from_niftytrader("NIFTY")
-                if test_raw and "opDatas" in test_raw:
-                    strikes_count = len(test_raw["opDatas"])
-                    self.send_response(200)
-                    self.send_header("Content-Type", "application/json")
-                    self.end_headers()
-                    self.wfile.write(json.dumps({
-                        "status": "ok",
-                        "message": f"Verified successfully! Retrieved {strikes_count} live strikes."
-                    }).encode("utf-8"))
-                else:
-                    self.send_response(400)
-                    self.send_header("Content-Type", "application/json")
-                    self.end_headers()
-                    self.wfile.write(json.dumps({
-                        "status": "error",
-                        "message": "NiftyTrader rejected the key. Please verify your x-api-key."
-                    }).encode("utf-8"))
-            except Exception as ex:
-                self.send_response(500)
-                self.send_header("Content-Type", "application/json")
-                self.end_headers()
-                self.wfile.write(json.dumps({"status": "error", "message": str(ex)}).encode("utf-8"))
         elif self.path == "/api/telegram/config":
             try:
                 content_length = int(self.headers.get("Content-Length", 0))
@@ -16074,14 +15729,14 @@ def run_dashboard_server(
     except Exception as rep_err:
         logger.warning("Could not auto-start report services: %s", rep_err)
 
-    # AUTO-ACTIVATE Always-Active 300s NSE Next-3-Expiries Option Chain Background Loop
+    # AUTO-ACTIVATE Always-Active 300s Dhan 4-Week Expiries Option Chain Background Loop
     try:
         from nifty_trader.market_data.option_chain_service import get_option_chain_service
         oc_service = get_option_chain_service()
         oc_service.start_next_expiries_auto_fetch(interval_seconds=300, symbols=["NIFTY", "BANKNIFTY"])
-        print("📅 NSE Next-3-Expiries Option Chain Auto-Fetcher Online (Always-Active 300s Refresh).")
+        print("📅 Dhan 4-Week Expiries Option Chain Auto-Fetcher Online (Always-Active 300s Refresh).")
     except Exception as oc_err:
-        logger.warning("Could not auto-start NSE next-expiries fetcher: %s", oc_err)
+        logger.warning("Could not auto-start Dhan next-expiries fetcher: %s", oc_err)
 
     # AUTO-ACTIVATE Decoupled Autonomous Swing Trade Agent
     try:

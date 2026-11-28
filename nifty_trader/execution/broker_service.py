@@ -42,12 +42,24 @@ class BrokerService:
 
     def __init__(self, root_dir: Optional[Path] = None):
         self.root_dir = root_dir or Path(__file__).resolve().parent.parent.parent
+        # Try loading .env if environment variables are not already present
+        if not os.environ.get("DHAN_CLIENT_ID") or not os.environ.get("DHAN_ACCESS_TOKEN"):
+            env_file = self.root_dir / ".env"
+            if env_file.exists():
+                try:
+                    from dotenv import load_dotenv
+                    load_dotenv(env_file)
+                except Exception:
+                    pass
         self.dhan_client_id = os.environ.get("DHAN_CLIENT_ID", "").strip()
         self.dhan_access_token = os.environ.get("DHAN_ACCESS_TOKEN", "").strip()
         self.trading_mode = os.environ.get("TRADING_MODE", "PAPER").strip().upper()
         if self.trading_mode not in ("PAPER", "LIVE"):
             self.trading_mode = "PAPER"
         self.base_url = "https://api.dhan.co"
+        self._auth_verified: Optional[bool] = None
+        self._auth_message: str = ""
+        self._last_auth_check: float = 0.0
         self._init_db()
 
     def _init_db(self):
@@ -87,9 +99,54 @@ class BrokerService:
             logger.warning("Error initializing chart_trades table: %s", e)
 
     @property
-    def is_broker_connected(self) -> bool:
-        """Checks if live broker credentials (e.g. Dhan HQ) are configured."""
+    def is_configured(self) -> bool:
+        """Checks if Dhan credentials are present."""
         return bool(self.dhan_client_id and self.dhan_access_token and len(self.dhan_access_token) > 15)
+
+    def verify_credentials(self, force: bool = False) -> Dict[str, Any]:
+        """Validates credentials against live Dhan HQ API (/v2/profile)."""
+        now = time.time()
+        if not force and self._auth_verified is not None and (now - self._last_auth_check < 60.0):
+            return {"authenticated": bool(self._auth_verified), "message": self._auth_message}
+
+        if not self.is_configured:
+            self._auth_verified = False
+            self._auth_message = "Dhan credentials not configured"
+            self._last_auth_check = now
+            return {"authenticated": False, "message": self._auth_message}
+
+        headers = {
+            "access-token": self.dhan_access_token,
+            "client-id": self.dhan_client_id,
+            "Content-Type": "application/json",
+        }
+        try:
+            with httpx.Client(timeout=8.0, follow_redirects=True) as client:
+                resp = client.get(f"{self.base_url}/v2/profile", headers=headers)
+                if resp.status_code == 200:
+                    self._auth_verified = True
+                    self._auth_message = "Successfully authenticated with Dhan HQ API"
+                elif resp.status_code == 401:
+                    self._auth_verified = False
+                    self._auth_message = "Authentication Failed (HTTP 401): Client ID or 24h daily Access Token is invalid or expired."
+                else:
+                    self._auth_verified = False
+                    self._auth_message = f"Dhan API HTTP {resp.status_code}: {resp.text[:120]}"
+        except Exception as ex:
+            self._auth_verified = False
+            self._auth_message = f"Network connection error: {ex}"
+
+        self._last_auth_check = now
+        return {"authenticated": bool(self._auth_verified), "message": self._auth_message}
+
+    @property
+    def is_broker_connected(self) -> bool:
+        """Checks if live broker credentials are valid and active."""
+        if not self.is_configured:
+            return False
+        if self._auth_verified is not None:
+            return bool(self._auth_verified)
+        return self.verify_credentials().get("authenticated", False)
 
     def get_status(self) -> Dict[str, Any]:
         """Returns live broker connectivity status and trading mode."""
@@ -98,23 +155,29 @@ class BrokerService:
             if len(self.dhan_client_id) > 4
             else ("SET" if self.dhan_client_id else "NOT_SET")
         )
-        is_live_active = self.is_broker_connected and self.trading_mode == "LIVE"
+        auth_info = self.verify_credentials()
+        is_auth = auth_info.get("authenticated", False)
+        is_live_active = is_auth and self.trading_mode == "LIVE"
+
+        if is_live_active:
+            status_msg = "Connected to Dhan HQ API (LIVE REAL-MONEY TRADING ACTIVE)"
+        elif is_auth:
+            status_msg = "Connected to Dhan HQ API (PAPER SIMULATOR ACTIVE • 100% Risk-Free)"
+        elif self.is_configured:
+            status_msg = "Dhan credentials present but authentication failed (HTTP 401). Verify Client ID & active 24h token."
+        else:
+            status_msg = "Running in Paper Simulator mode (No live broker credentials)"
+
         return {
-            "broker_name": "Dhan HQ" if self.is_broker_connected else "None (Paper Mode)",
-            "connected": self.is_broker_connected,
+            "broker_name": "Dhan HQ" if is_auth else ("Dhan HQ (Auth Failed)" if self.is_configured else "None (Paper Mode)"),
+            "connected": is_auth,
+            "is_configured": self.is_configured,
+            "auth_status": "AUTHENTICATED" if is_auth else ("AUTH_FAILED" if self.is_configured else "NOT_CONFIGURED"),
             "client_id_masked": masked_id,
             "has_token": bool(self.dhan_access_token),
             "trading_mode": self.trading_mode,
             "execution_mode": "BROKER_LIVE" if is_live_active else "PAPER_SIMULATOR",
-            "message": (
-                "Connected to Dhan HQ API (LIVE REAL-MONEY TRADING ACTIVE)"
-                if is_live_active
-                else (
-                    "Connected to Dhan HQ API (PAPER SIMULATOR ACTIVE • 100% Risk-Free)"
-                    if self.is_broker_connected
-                    else "Running in Paper Simulator mode (No live broker credentials)"
-                )
-            ),
+            "message": status_msg,
         }
 
     def set_trading_mode(self, mode: str) -> Dict[str, Any]:
@@ -127,20 +190,21 @@ class BrokerService:
 
         env_file = self.root_dir / ".env"
         try:
-            lines = []
             if env_file.exists():
                 lines = env_file.read_text(encoding="utf-8").splitlines()
-            mode_set = False
-            new_lines = []
-            for line in lines:
-                if line.startswith("TRADING_MODE="):
+                mode_set = False
+                new_lines = []
+                for line in lines:
+                    if line.startswith("TRADING_MODE="):
+                        new_lines.append(f"TRADING_MODE={mode_clean}")
+                        mode_set = True
+                    else:
+                        new_lines.append(line)
+                if not mode_set:
                     new_lines.append(f"TRADING_MODE={mode_clean}")
-                    mode_set = True
-                else:
-                    new_lines.append(line)
-            if not mode_set:
-                new_lines.append(f"TRADING_MODE={mode_clean}")
-            env_file.write_text("\n".join(new_lines) + "\n", encoding="utf-8")
+                env_file.write_text("\n".join(new_lines) + "\n", encoding="utf-8")
+            else:
+                env_file.write_text(f"TRADING_MODE={mode_clean}\n", encoding="utf-8")
         except Exception as e:
             logger.warning("Could not persist TRADING_MODE to .env: %s", e)
 
@@ -174,14 +238,31 @@ class BrokerService:
                 if not updated_token:
                     new_lines.append(f"DHAN_ACCESS_TOKEN={self.dhan_access_token}")
                 env_file.write_text("\n".join(new_lines) + "\n", encoding="utf-8")
+            else:
+                env_file.write_text(f"DHAN_CLIENT_ID={self.dhan_client_id}\nDHAN_ACCESS_TOKEN={self.dhan_access_token}\n", encoding="utf-8")
         except Exception as e:
             logger.warning("Could not persist Dhan credentials to .env: %s", e)
+
+        # Invalidate authentication cache and verify
+        self._auth_verified = None
+        self._last_auth_check = 0.0
+
+        # Invalidate option chain cache so fresh keys are used immediately
+        try:
+            from nifty_trader.market_data.option_chain_service import get_option_chain_service
+            ocs = get_option_chain_service(self.root_dir)
+            ocs._cache.clear()
+            ocs._cache_time.clear()
+            ocs._dhan_expiries_cache.clear()
+            ocs._dhan_expiries_cache_time.clear()
+        except Exception:
+            pass
 
         return self.get_status()
 
     def test_broker_connection(self) -> Dict[str, Any]:
-        """Tests Dhan HQ API connectivity."""
-        if not self.is_broker_connected:
+        """Tests Dhan HQ API connectivity using /v2/profile endpoint."""
+        if not self.is_configured:
             return {"status": "error", "message": "Dhan Client ID or Access Token is missing."}
 
         headers = {
@@ -190,12 +271,22 @@ class BrokerService:
             "Content-Type": "application/json",
         }
         try:
-            with httpx.Client(timeout=10.0) as client:
-                resp = client.get(f"{self.base_url}/profile", headers=headers)
+            with httpx.Client(timeout=10.0, follow_redirects=True) as client:
+                resp = client.get(f"{self.base_url}/v2/profile", headers=headers)
                 if resp.status_code == 200:
                     data = resp.json()
+                    self._auth_verified = True
+                    self._auth_message = "Successfully authenticated with Dhan HQ"
                     return {"status": "ok", "message": "Successfully authenticated with Dhan HQ!", "profile": data}
+                elif resp.status_code == 401:
+                    self._auth_verified = False
+                    self._auth_message = "Dhan API rejected credentials (HTTP 401). Please check Client ID and 24-hour Access Token."
+                    return {
+                        "status": "error",
+                        "message": "Dhan API returned HTTP 401: Client ID or 24h daily Access Token is invalid or expired. Please generate a fresh token at web.dhan.co.",
+                    }
                 else:
+                    self._auth_verified = False
                     return {"status": "error", "message": f"Dhan API returned HTTP {resp.status_code}: {resp.text}"}
         except Exception as ex:
             return {"status": "error", "message": f"Connection error: {ex}"}
@@ -388,11 +479,11 @@ class BrokerService:
         try:
             from nifty_trader.market_data.option_chain_service import get_option_chain_service
             ocs = get_option_chain_service(self.root_dir)
-            chain = ocs.fetch_live_chain_from_niftytrader(symbol)
-            if chain and "opDatas" in chain:
-                for row in chain["opDatas"]:
-                    if int(row.get("strike_price", 0)) == strike:
-                        est_premium = float(row.get("ce_ltp" if is_long else "pe_ltp", 120.0))
+            chain = ocs.get_option_chain(symbol)
+            if chain and "strikes" in chain:
+                for row in chain["strikes"]:
+                    if int(row.get("strike", 0)) == strike:
+                        est_premium = float(row.get(option_type.lower(), {}).get("ltp", 120.0))
                         break
         except Exception:
             pass
