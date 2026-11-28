@@ -599,8 +599,8 @@ class TelegramNotificationService:
                             if text:
                                 self._handle_command(text, sender_chat_id)
                     elif resp.status_code == 409:
-                        # Another instance polling or webhook active; backoff
-                        time.sleep(5.0)
+                        # Another instance polling (e.g. Render cloud deployment); gracefully back off
+                        time.sleep(15.0)
                     else:
                         time.sleep(2.0)
             except Exception as ex:
