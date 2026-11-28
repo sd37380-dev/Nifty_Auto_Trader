@@ -44,7 +44,7 @@ DHAN_SECURITY_MAP: Dict[str, Tuple[str, str, str]] = {
     "BANK NIFTY": ("25", EXCHANGE_IDX, INSTRUMENT_INDEX),
     "NSE:BANKNIFTY": ("25", EXCHANGE_IDX, INSTRUMENT_INDEX),
     "FINNIFTY": ("27", EXCHANGE_IDX, INSTRUMENT_INDEX),
-    "MIDCPNIFTY": ("50", EXCHANGE_IDX, INSTRUMENT_INDEX),
+    "MIDCPNIFTY": ("442", EXCHANGE_IDX, INSTRUMENT_INDEX),
     "SENSEX": ("51", EXCHANGE_IDX, INSTRUMENT_INDEX),
     "BSE:SENSEX": ("51", EXCHANGE_IDX, INSTRUMENT_INDEX),
 
@@ -104,8 +104,8 @@ DHAN_SECURITY_MAP: Dict[str, Tuple[str, str, str]] = {
     "NSE:SUNPHARMA": ("3351", EXCHANGE_EQ, INSTRUMENT_EQUITY),
     "TITAN": ("3506", EXCHANGE_EQ, INSTRUMENT_EQUITY),
     "NSE:TITAN": ("3506", EXCHANGE_EQ, INSTRUMENT_EQUITY),
-    "NTPC": ("2977", EXCHANGE_EQ, INSTRUMENT_EQUITY),
-    "NSE:NTPC": ("2977", EXCHANGE_EQ, INSTRUMENT_EQUITY),
+    "NTPC": ("11630", EXCHANGE_EQ, INSTRUMENT_EQUITY),
+    "NSE:NTPC": ("11630", EXCHANGE_EQ, INSTRUMENT_EQUITY),
     "POWERGRID": ("14977", EXCHANGE_EQ, INSTRUMENT_EQUITY),
     "NSE:POWERGRID": ("14977", EXCHANGE_EQ, INSTRUMENT_EQUITY),
     "WIPRO": ("3787", EXCHANGE_EQ, INSTRUMENT_EQUITY),
@@ -115,10 +115,19 @@ DHAN_SECURITY_MAP: Dict[str, Tuple[str, str, str]] = {
     "ASIANPAINT": ("236", EXCHANGE_EQ, INSTRUMENT_EQUITY),
     "NSE:ASIANPAINT": ("236", EXCHANGE_EQ, INSTRUMENT_EQUITY),
 
-    # Futures
-    "NIFTY_FUT": ("49557", EXCHANGE_FNO, INSTRUMENT_FUTIDX),
-    "BANKNIFTY_FUT": ("49558", EXCHANGE_FNO, INSTRUMENT_FUTIDX),
-    "FINNIFTY_FUT": ("49559", EXCHANGE_FNO, INSTRUMENT_FUTIDX),
+    # Futures (December 2026 Monthly Expiry Contracts)
+    "NIFTY_FUT": ("58875", EXCHANGE_FNO, INSTRUMENT_FUTIDX),
+    "NIFTY_DEC_FUT": ("58875", EXCHANGE_FNO, INSTRUMENT_FUTIDX),
+    "NIFTY DEC FUT": ("58875", EXCHANGE_FNO, INSTRUMENT_FUTIDX),
+    "BANKNIFTY_FUT": ("58872", EXCHANGE_FNO, INSTRUMENT_FUTIDX),
+    "BANKNIFTY_DEC_FUT": ("58872", EXCHANGE_FNO, INSTRUMENT_FUTIDX),
+    "BANKNIFTY DEC FUT": ("58872", EXCHANGE_FNO, INSTRUMENT_FUTIDX),
+    "FINNIFTY_FUT": ("58873", EXCHANGE_FNO, INSTRUMENT_FUTIDX),
+    "FINNIFTY_DEC_FUT": ("58873", EXCHANGE_FNO, INSTRUMENT_FUTIDX),
+    "FINNIFTY DEC FUT": ("58873", EXCHANGE_FNO, INSTRUMENT_FUTIDX),
+    "MIDCPNIFTY_FUT": ("58874", EXCHANGE_FNO, INSTRUMENT_FUTIDX),
+    "MIDCPNIFTY_DEC_FUT": ("58874", EXCHANGE_FNO, INSTRUMENT_FUTIDX),
+    "MIDCPNIFTY DEC FUT": ("58874", EXCHANGE_FNO, INSTRUMENT_FUTIDX),
 }
 
 
@@ -136,9 +145,10 @@ class DhanFuturesService:
     def __init__(self):
         self.base_url = "https://api.dhan.co"
         self._sec_id_cache: Dict[str, str] = {
-            "NIFTY_FUT": "49557",
-            "BANKNIFTY_FUT": "49558",
-            "FINNIFTY_FUT": "49559",
+            "NIFTY_FUT": "58875",
+            "BANKNIFTY_FUT": "58872",
+            "FINNIFTY_FUT": "58873",
+            "MIDCPNIFTY_FUT": "58874",
         }
 
     def _reload_env_if_needed(self):
@@ -197,15 +207,25 @@ class DhanFuturesService:
     def resolve_future_symbol(self, raw_symbol: str) -> Optional[Tuple[str, str]]:
         """
         Normalizes a symbol string to (StandardFutureKey, UnderlyingSpotSymbol).
-        Example: 'NIFTY FUT' -> ('NIFTY_FUT', 'NIFTY')
+        Supports: 'NIFTY FUT', 'NIFTY_FUT', 'NIFTY DEC FUT', 'NIFTY1!', etc.
         """
         s = raw_symbol.upper().replace(" ", "_").replace("-", "_").strip()
+        if "BANKNIFTY" in s and any(k in s for k in ("FUT", "1!", "DEC", "JAN", "FEB")):
+            return "BANKNIFTY_FUT", "BANKNIFTY"
+        if "FINNIFTY" in s and any(k in s for k in ("FUT", "1!", "DEC", "JAN", "FEB")):
+            return "FINNIFTY_FUT", "FINNIFTY"
+        if "MIDCPNIFTY" in s and any(k in s for k in ("FUT", "1!", "DEC", "JAN", "FEB")):
+            return "MIDCPNIFTY_FUT", "MIDCPNIFTY"
+        if "NIFTY" in s and any(k in s for k in ("FUT", "1!", "DEC", "JAN", "FEB")):
+            return "NIFTY_FUT", "NIFTY"
         if s in ("NIFTY_FUT", "NIFTY_FUTURE", "NIFTYFUT", "NIFTY1!", "NSE:NIFTY1!"):
             return "NIFTY_FUT", "NIFTY"
         if s in ("BANKNIFTY_FUT", "BANKNIFTY_FUTURE", "BANKNIFTYFUT", "BANKNIFTY1!", "NSE:BANKNIFTY1!"):
             return "BANKNIFTY_FUT", "BANKNIFTY"
         if s in ("FINNIFTY_FUT", "FINNIFTY_FUTURE", "FINNIFTYFUT", "FINNIFTY1!", "NSE:FINNIFTY1!"):
             return "FINNIFTY_FUT", "FINNIFTY"
+        if s in ("MIDCPNIFTY_FUT", "MIDCPNIFTY_FUTURE", "MIDCPNIFTYFUT", "MIDCPNIFTY1!", "NSE:MIDCPNIFTY1!"):
+            return "MIDCPNIFTY_FUT", "MIDCPNIFTY"
         return None
 
     def calculate_volume_profile(self, candles: List[Dict[str, Any]], num_bins: int = 24) -> Dict[str, Any]:
