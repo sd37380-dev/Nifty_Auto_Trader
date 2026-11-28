@@ -373,15 +373,36 @@ class NSEOptionChainService:
                 ce_ltp = round(float(ce_node.get("last_price", ce_node.get("ltp", 0.0)) or 0.0), 2)
                 pe_ltp = round(float(pe_node.get("last_price", pe_node.get("ltp", 0.0)) or 0.0), 2)
 
-                ce_chg = round(float(ce_node.get("change_price", ce_node.get("priceChange", 0.0)) or 0.0), 2)
-                pe_chg = round(float(pe_node.get("change_price", pe_node.get("priceChange", 0.0)) or 0.0), 2)
+                ce_prev_p = float(ce_node.get("previous_close_price", ce_node.get("prev_close", ce_ltp)) or ce_ltp)
+                pe_prev_p = float(pe_node.get("previous_close_price", pe_node.get("prev_close", pe_ltp)) or pe_ltp)
+                ce_chg = round(float(ce_node.get("change_price", ce_ltp - ce_prev_p) or (ce_ltp - ce_prev_p)), 2)
+                pe_chg = round(float(pe_node.get("change_price", pe_ltp - pe_prev_p) or (pe_ltp - pe_prev_p)), 2)
 
-                ce_chg_oi = int(ce_node.get("change_oi", ce_node.get("changeInOi", 0)) or 0)
-                pe_chg_oi = int(pe_node.get("change_oi", pe_node.get("changeInOi", 0)) or 0)
+                # Dhan HQ returns 'oi' and 'previous_oi'. Derive true Change in OI
+                ce_prev_oi = int(ce_node.get("previous_oi", ce_node.get("prev_oi", ce_oi)) or ce_oi)
+                pe_prev_oi = int(pe_node.get("previous_oi", pe_node.get("prev_oi", pe_oi)) or pe_oi)
+
+                if "change_oi" in ce_node or "changeInOi" in ce_node:
+                    ce_chg_oi = int(ce_node.get("change_oi", ce_node.get("changeInOi", 0)) or 0)
+                else:
+                    ce_chg_oi = ce_oi - ce_prev_oi
+
+                if "change_oi" in pe_node or "changeInOi" in pe_node:
+                    pe_chg_oi = int(pe_node.get("change_oi", pe_node.get("changeInOi", 0)) or 0)
+                else:
+                    pe_chg_oi = pe_oi - pe_prev_oi
 
                 strike_pcr = round(pe_oi / max(1, ce_oi), 2)
                 ce_buildup = self._derive_buildup(ce_chg, ce_chg_oi, "CE")
                 pe_buildup = self._derive_buildup(pe_chg, pe_chg_oi, "PE")
+
+                ce_iv = round(float(ce_node.get("implied_volatility", ce_node.get("impliedVolatility", ce_node.get("iv", 14.0))) or 14.0), 1)
+                pe_iv = round(float(pe_node.get("implied_volatility", pe_node.get("impliedVolatility", pe_node.get("iv", 14.0))) or 14.0), 1)
+
+                ce_bid = round(float(ce_node.get("top_bid_price", ce_node.get("bid", ce_node.get("bidPrice", max(0.05, ce_ltp - 0.5)))) or 0.0), 2)
+                ce_ask = round(float(ce_node.get("top_ask_price", ce_node.get("ask", ce_node.get("askPrice", ce_ltp + 0.5))) or 0.0), 2)
+                pe_bid = round(float(pe_node.get("top_bid_price", pe_node.get("bid", pe_node.get("bidPrice", max(0.05, pe_ltp - 0.5)))) or 0.0), 2)
+                pe_ask = round(float(pe_node.get("top_ask_price", pe_node.get("ask", pe_node.get("askPrice", pe_ltp + 0.5))) or 0.0), 2)
 
                 strikes_data.append({
                     "strike": strike,
@@ -390,12 +411,14 @@ class NSEOptionChainService:
                     "ce": {
                         "ltp": ce_ltp,
                         "change": ce_chg,
+                        "change_price": ce_chg,
                         "oi": ce_oi,
                         "change_in_oi": ce_chg_oi,
+                        "change_oi": ce_chg_oi,
                         "volume": int(ce_node.get("volume", 0) or 0),
-                        "iv": round(float(ce_node.get("iv", ce_node.get("impliedVolatility", 14.0)) or 14.0), 1),
-                        "bid": round(float(ce_node.get("bid", ce_node.get("bidPrice", max(0.05, ce_ltp - 0.5))) or 0.0), 2),
-                        "ask": round(float(ce_node.get("ask", ce_node.get("askPrice", ce_ltp + 0.5)) or 0.0), 2),
+                        "iv": ce_iv,
+                        "bid": ce_bid,
+                        "ask": ce_ask,
                         "buildup": ce_buildup,
                         "builtup": ce_buildup,
                         "is_itm": strike < spot,
@@ -403,12 +426,14 @@ class NSEOptionChainService:
                     "pe": {
                         "ltp": pe_ltp,
                         "change": pe_chg,
+                        "change_price": pe_chg,
                         "oi": pe_oi,
                         "change_in_oi": pe_chg_oi,
+                        "change_oi": pe_chg_oi,
                         "volume": int(pe_node.get("volume", 0) or 0),
-                        "iv": round(float(pe_node.get("iv", pe_node.get("impliedVolatility", 14.0)) or 14.0), 1),
-                        "bid": round(float(pe_node.get("bid", pe_node.get("bidPrice", max(0.05, pe_ltp - 0.5))) or 0.0), 2),
-                        "ask": round(float(pe_node.get("ask", pe_node.get("askPrice", pe_ltp + 0.5)) or 0.0), 2),
+                        "iv": pe_iv,
+                        "bid": pe_bid,
+                        "ask": pe_ask,
                         "buildup": pe_buildup,
                         "builtup": pe_buildup,
                         "is_itm": strike > spot,
