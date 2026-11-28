@@ -934,6 +934,13 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         🔴 REAL LIVE
       </button>
     </div>
+    <!-- Option C: Autonomous Trader 1-Click Master Control in Header -->
+    <div id="header-trader-control-container" style="display: inline-flex; align-items: center; background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(56, 189, 248, 0.5); border-radius: 20px; padding: 2px 6px; gap: 6px;" title="Option C: 1-Click Start/Stop for Autonomous Price Action Trader (3-Pillar Institutional Architecture)">
+      <span id="header-trader-status" style="font-size: 0.72rem; font-weight: 800; color: #94a3b8; padding-left: 4px;">⚡ TRADER: IDLE</span>
+      <button type="button" id="btn-toggle-trader" onclick="toggleAutonomousTrader()" style="border: none; border-radius: 14px; padding: 3px 12px; font-size: 0.72rem; font-weight: 800; cursor: pointer; background: #10b981; color: #fff; transition: all 0.2s; box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);">
+        ▶ START TRADING
+      </button>
+    </div>
     <span class="badge badge-red" id="header-broker-badge" onclick="openBrokerModal()" style="cursor: pointer; padding: 4px 10px; font-weight: 800;" title="Click to connect Dhan HQ Broker API credentials">🏦 Live Broker: DISABLED (Click to Connect)</span>
     <button class="btn" onclick="fetchData()">🔄 Refresh</button>
     <a href="/report" target="_blank" class="btn" style="text-decoration: none; display: inline-flex; align-items: center; gap: 4px; background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.4); padding: 4px 10px; border-radius: 4px; font-weight: 700; font-size: 0.72rem;" title="Open Latest 15-Minute Trade Intelligence Report in new tab">📄 15M Report</a>
@@ -1150,6 +1157,73 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 
 <!-- Tab 1: Overview -->
 <div id="tab-overview" class="tab-content active">
+
+  <!-- MASTER AUTONOMOUS TRADER CONSOLE (Option B: Telegram & Option C: 1-Click Dashboard) -->
+  <div class="card" style="margin-bottom: 20px; background: linear-gradient(135deg, rgba(14, 165, 233, 0.08) 0%, rgba(19, 27, 46, 0.98) 100%); border-left: 4px solid #0ea5e9; border: 1px solid rgba(14, 165, 233, 0.35); border-radius: 10px; padding: 16px 20px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; margin-bottom: 14px;">
+      <div>
+        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+          <span style="font-weight: 800; font-size: 1.2rem; color: #fff; display: flex; align-items: center; gap: 8px;">
+            <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #0ea5e9; box-shadow: 0 0 10px #0ea5e9;"></span>
+            ⚡ Autonomous Price Action Trader — Master Execution Console
+          </span>
+          <span id="trader-card-status-badge" class="badge" style="background: rgba(148, 163, 184, 0.2); color: #94a3b8; border: 1px solid #475569; font-weight: 800; font-size: 0.8rem; padding: 4px 10px;">⚪ IDLE (STOPPED)</span>
+          <span id="trader-mode-pill" class="badge badge-yellow" style="font-weight: 800; font-size: 0.8rem; padding: 4px 10px;">📄 PAPER SIMULATOR</span>
+        </div>
+        <div style="font-size: 0.82rem; color: var(--text-secondary); margin-top: 4px;">
+          Runs <strong>HermesTraderV2</strong> with the strict <strong>3-Pillar Institutional Architecture</strong>. Triggerable via <strong>1-Click Web Dashboard (Option C)</strong>, <strong>Telegram Remote Bot (Option B)</strong>, or <strong>Desktop CLI (Option D)</strong>.
+        </div>
+      </div>
+      <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+        <button id="btn-card-toggle-trader" class="btn" onclick="toggleAutonomousTrader()" style="background: #10b981; color: white; border: none; font-weight: 800; padding: 8px 18px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; box-shadow: 0 0 12px rgba(16, 185, 129, 0.4); transition: all 0.2s;">
+          ▶ START TRADING
+        </button>
+        <button class="btn" onclick="toggleTraderLogs()" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4); font-weight: 700; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 0.82rem;">
+          📋 Engine Logs
+        </button>
+      </div>
+    </div>
+
+    <!-- Metrics Row -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; margin-bottom: 14px;">
+      <div style="background: rgba(15, 23, 42, 0.7); padding: 10px 14px; border-radius: 6px; border: 1px solid var(--border);">
+        <div style="font-size: 0.72rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 700;">Process ID (PID)</div>
+        <div id="trader-pid" style="font-size: 1.15rem; font-weight: 800; color: #fff; margin-top: 2px;">--</div>
+      </div>
+      <div style="background: rgba(15, 23, 42, 0.7); padding: 10px 14px; border-radius: 6px; border: 1px solid var(--border);">
+        <div style="font-size: 0.72rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 700;">Engine Uptime</div>
+        <div id="trader-uptime" style="font-size: 1.15rem; font-weight: 800; color: #38bdf8; margin-top: 2px;">00:00:00</div>
+      </div>
+      <div style="background: rgba(15, 23, 42, 0.7); padding: 10px 14px; border-radius: 6px; border: 1px solid var(--border);">
+        <div style="font-size: 0.72rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 700;">Capital Protection</div>
+        <div style="font-size: 1.15rem; font-weight: 800; color: #f87171; margin-top: 2px;">₹2,000 Daily Cap</div>
+      </div>
+      <div style="background: rgba(15, 23, 42, 0.7); padding: 10px 14px; border-radius: 6px; border: 1px solid var(--border);">
+        <div style="font-size: 0.72rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 700;">Contract Rule</div>
+        <div style="font-size: 1.15rem; font-weight: 800; color: #34d399; margin-top: 2px;">1 Lot ITM Next Expiry</div>
+      </div>
+    </div>
+
+    <!-- 3-Pillar Architecture Badges Strip -->
+    <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center; padding: 10px 14px; background: rgba(0, 0, 0, 0.35); border-radius: 6px; border: 1px dashed rgba(148, 163, 184, 0.3);">
+      <span style="font-size: 0.72rem; font-weight: 800; color: #94a3b8; text-transform: uppercase;">Institutional Rules:</span>
+      <span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); font-size: 0.72rem;">✓ Pillar 1: 1H/15M EMA + PCR Direction</span>
+      <span class="badge" style="background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.4); font-size: 0.72rem;">✓ Pillar 2: Pivots CPR + POC Wholesale Value</span>
+      <span class="badge" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4); font-size: 0.72rem;">✓ Pillar 3: 5M Volume Confirmation Trigger</span>
+      <span class="badge" style="background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.4); font-size: 0.72rem;">✓ Setup A: 1:3 R:R Trend</span>
+      <span class="badge" style="background: rgba(236, 72, 153, 0.15); color: #f472b6; border: 1px solid rgba(236, 72, 153, 0.4); font-size: 0.72rem;">✓ Setup B: 1:7 R:R Wall Fade</span>
+    </div>
+
+    <!-- Collapsible Log Terminal Box -->
+    <div id="trader-logs-container" style="display: none; margin-top: 14px; background: #030712; border: 1px solid #1e293b; border-radius: 6px; padding: 12px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <span style="font-size: 0.75rem; font-weight: 700; color: #38bdf8;">📜 Real-Time Autonomous Engine Logs (data/paper_trading/AUTONOMOUS_PA_VOLUME.log)</span>
+        <button onclick="toggleTraderLogs()" style="background: transparent; border: none; color: #94a3b8; cursor: pointer; font-size: 0.8rem;">✕ Close</button>
+      </div>
+      <pre id="trader-logs-pre" style="font-family: monospace; font-size: 0.72rem; color: #cbd5e1; max-height: 220px; overflow-y: auto; margin: 0; white-space: pre-wrap; line-height: 1.4; background: rgba(0,0,0,0.5); padding: 8px; border-radius: 4px;">Loading logs...</pre>
+    </div>
+  </div>
+
   <!-- Live 5-Minute NSE & Global Spot Telemetry Board (NIFTY 50, BANKNIFTY, GIFT NIFTY) -->
   <div class="card" style="margin-bottom: 20px; background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(19, 27, 46, 0.95) 100%); border-left: 4px solid var(--green);">
     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 14px;">
@@ -5075,6 +5149,137 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       await fetchTelegramStatus();
     } catch (e) {
       console.debug("Telegram status error:", e);
+    }
+
+    try {
+      await loadTraderStatus();
+    } catch (e) {
+      console.debug("Trader status error:", e);
+    }
+  }
+
+  let _traderStatusCache = { is_running: false };
+
+  async function loadTraderStatus() {
+    try {
+      const res = await fetch('/api/trader/status');
+      if (!res.ok) return;
+      const data = await res.json();
+      _traderStatusCache = data;
+
+      const isRunning = data.is_running === true;
+      const pidStr = isRunning ? (data.pid || '--') : '--';
+      const uptimeStr = isRunning ? (data.uptime_formatted || '00:00:00') : '00:00:00';
+      const mode = (data.trading_mode || 'PAPER').toUpperCase();
+
+      // Header controls
+      const headerStatus = document.getElementById('header-trader-status');
+      const headerBtn = document.getElementById('btn-toggle-trader');
+      if (headerStatus) {
+        headerStatus.innerHTML = isRunning 
+          ? `<span style="color: #34d399;">🟢 SCANNING (PID ${pidStr} • ${uptimeStr})</span>`
+          : `<span style="color: #94a3b8;">⚡ TRADER: IDLE</span>`;
+      }
+      if (headerBtn) {
+        if (isRunning) {
+          headerBtn.innerText = '⏹ STOP TRADER';
+          headerBtn.style.background = '#ef4444';
+          headerBtn.style.boxShadow = '0 0 10px rgba(239, 68, 68, 0.5)';
+        } else {
+          headerBtn.innerText = '▶ START TRADING';
+          headerBtn.style.background = '#10b981';
+          headerBtn.style.boxShadow = '0 0 10px rgba(16, 185, 129, 0.4)';
+        }
+      }
+
+      // Card controls
+      const cardBadge = document.getElementById('trader-card-status-badge');
+      const cardBtn = document.getElementById('btn-card-toggle-trader');
+      const pidEl = document.getElementById('trader-pid');
+      const uptimeEl = document.getElementById('trader-uptime');
+      const modePill = document.getElementById('trader-mode-pill');
+
+      if (cardBadge) {
+        cardBadge.className = isRunning ? 'badge badge-green' : 'badge';
+        cardBadge.style.background = isRunning ? 'rgba(16, 185, 129, 0.2)' : 'rgba(148, 163, 184, 0.2)';
+        cardBadge.style.color = isRunning ? '#34d399' : '#94a3b8';
+        cardBadge.style.border = isRunning ? '1px solid rgba(16, 185, 129, 0.5)' : '1px solid #475569';
+        cardBadge.innerText = isRunning ? '🟢 LIVE SCANNING' : '⚪ IDLE (STOPPED)';
+      }
+      if (cardBtn) {
+        if (isRunning) {
+          cardBtn.innerText = '⏹ STOP TRADING';
+          cardBtn.style.background = '#ef4444';
+          cardBtn.style.boxShadow = '0 0 12px rgba(239, 68, 68, 0.5)';
+        } else {
+          cardBtn.innerText = '▶ START TRADING';
+          cardBtn.style.background = '#10b981';
+          cardBtn.style.boxShadow = '0 0 12px rgba(16, 185, 129, 0.4)';
+        }
+      }
+      if (pidEl) pidEl.innerText = String(pidStr);
+      if (uptimeEl) uptimeEl.innerText = uptimeStr;
+      if (modePill) {
+        modePill.className = mode === 'LIVE' ? 'badge badge-red' : 'badge badge-yellow';
+        modePill.innerText = mode === 'LIVE' ? '🔴 REAL LIVE BROKER' : '📄 PAPER SIMULATOR';
+      }
+
+      // Log pre if visible
+      const logsPre = document.getElementById('trader-logs-pre');
+      const logsContainer = document.getElementById('trader-logs-container');
+      if (logsPre && logsContainer && logsContainer.style.display !== 'none' && data.recent_logs) {
+        logsPre.innerText = data.recent_logs.length > 0 ? data.recent_logs.join('\n') : 'Waiting for logs...';
+      }
+    } catch (e) {
+      console.debug("loadTraderStatus error:", e);
+    }
+  }
+
+  async function toggleAutonomousTrader() {
+    const isRunning = _traderStatusCache.is_running === true;
+    if (isRunning) {
+      if (!confirm("⚠️ Confirm Stop Autonomous Trader:\n\nAre you sure you want to gracefully stop the live price action trading engine?")) {
+        return;
+      }
+      try {
+        const res = await fetch('/api/trader/stop', { method: 'POST' });
+        const data = await res.json();
+        showGotoToast(data.message || "Autonomous Trader Stopped.");
+        await loadTraderStatus();
+      } catch (e) {
+        alert("Failed to stop trader: " + e);
+      }
+    } else {
+      const mode = (_traderStatusCache.trading_mode || 'PAPER').toUpperCase();
+      const promptMsg = mode === 'LIVE'
+        ? "⚠️ MASTER EXECUTION CONFIRMATION:\n\nYou are starting Autonomous Trader in REAL LIVE MODE with Dhan HQ.\n• 3-Pillar Institutional Architecture Active\n• Setup A (1:3 R:R) & Setup B (1:7 R:R)\n• Strictly 1 Lot ITM on Next Weekly Expiry\n• ₹2,000 Daily Loss Cap & 15-pt Trailing SL\n\nClick OK to launch."
+        : "🚀 Launch Autonomous Price Action Trader in PAPER MODE (100% Risk Free)?\n\n• 3-Pillar Institutional Architecture Active\n• Setup A (1:3 R:R) & Setup B (1:7 R:R)\n• Strictly 1 Lot ITM on Next Weekly Expiry\n• ₹2,000 Simulated Loss Cap & 15-pt Trailing SL\n\nClick OK to launch.";
+      if (!confirm(promptMsg)) {
+        return;
+      }
+      try {
+        const res = await fetch('/api/trader/start', { method: 'POST' });
+        const data = await res.json();
+        if (data.status === 'ok' || data.status === 'already_running') {
+          showGotoToast("⚡ " + data.message);
+        } else {
+          alert("Error starting trader: " + data.message);
+        }
+        await loadTraderStatus();
+      } catch (e) {
+        alert("Failed to start trader: " + e);
+      }
+    }
+  }
+
+  function toggleTraderLogs() {
+    const container = document.getElementById('trader-logs-container');
+    if (!container) return;
+    if (container.style.display === 'none') {
+      container.style.display = 'block';
+      loadTraderStatus();
+    } else {
+      container.style.display = 'none';
     }
   }
 
@@ -14139,6 +14344,22 @@ class DashboardHTTPRequestHandler(BaseHTTPRequestHandler):
                 self.end_headers()
                 self.wfile.write(json.dumps({"status": "error", "message": str(ex)}).encode("utf-8"))
             return
+        elif self.path == "/api/trader/status":
+            try:
+                from nifty_trader.execution.trader_manager import get_trader_manager
+                tm = get_trader_manager(self.aggregator.root_dir)
+                status = tm.get_status()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Cache-Control", "no-cache")
+                self.end_headers()
+                self.wfile.write(json.dumps(status).encode("utf-8"))
+            except Exception as ex:
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": "error", "message": str(ex)}).encode("utf-8"))
+            return
         elif self.path == "/api/broker/positions":
             try:
                 from nifty_trader.execution.broker_service import get_broker_service
@@ -15509,6 +15730,34 @@ class DashboardHTTPRequestHandler(BaseHTTPRequestHandler):
                 self.send_header("Content-Type", "application/json")
                 self.end_headers()
                 self.wfile.write(json.dumps({"status": "error", "message": str(ex)}).encode("utf-8"))
+        elif self.path == "/api/trader/start":
+            try:
+                from nifty_trader.execution.trader_manager import get_trader_manager
+                tm = get_trader_manager(self.aggregator.root_dir)
+                res = tm.start_trader()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps(res).encode("utf-8"))
+            except Exception as ex:
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": "error", "message": str(ex)}).encode("utf-8"))
+        elif self.path == "/api/trader/stop":
+            try:
+                from nifty_trader.execution.trader_manager import get_trader_manager
+                tm = get_trader_manager(self.aggregator.root_dir)
+                res = tm.stop_trader()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps(res).encode("utf-8"))
+            except Exception as ex:
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": "error", "message": str(ex)}).encode("utf-8"))
         elif self.path == "/api/broker/test":
             try:
                 from nifty_trader.execution.broker_service import get_broker_service
@@ -15812,6 +16061,18 @@ def run_dashboard_server(
         print("🌊 Autonomous Swing Trade Agent Online (Folder: reports/<YYYY-MM-DD>/swing_trade_reports).")
     except Exception as swing_err:
         logger.warning("Could not auto-start swing agent: %s", swing_err)
+
+    # AUTO-ACTIVATE Telegram Remote Command Listener (Option B: !trade, !stop, !status)
+    try:
+        from nifty_trader.notifications.telegram_service import get_telegram_service
+        tele_service = get_telegram_service()
+        if tele_service.is_configured:
+            tele_service.start_command_listener()
+            print("📱 Telegram Remote Command Listener Online (!trade, !stop, !status active).")
+        else:
+            print("📱 Telegram not configured — command listener inactive.")
+    except Exception as tele_err:
+        logger.warning("Could not auto-start Telegram command listener: %s", tele_err)
 
     server = ThreadingHTTPServer((host, port), DashboardHTTPRequestHandler)
     url = f"http://{host}:{port}"

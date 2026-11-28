@@ -74,6 +74,11 @@ class TelegramNotificationService:
         # News alerts to Telegram disabled by default (only trade alerts sent)
         self.enable_news_alerts = os.environ.get("TELEGRAM_ENABLE_NEWS_ALERTS", "false").lower() in ("true", "1", "yes")
 
+        # Telegram Remote Command Listener (Option B: !trade, !stop, !status)
+        self._listener_running = False
+        self._listener_thread: Optional[threading.Thread] = None
+        self._last_update_id = 0
+
     @property
     def is_configured(self) -> bool:
         """Checks if Telegram bot token and chat ID are both present."""
@@ -529,6 +534,180 @@ class TelegramNotificationService:
             "━━━━━━━━━━━━━━━━━━━━━━━━━━"
         )
         return self.send_message(msg)
+
+    # ─────────────────────────────────────────────────────────────
+    # Option B: Telegram Remote Control Listener (!trade, !stop, !status)
+    # ─────────────────────────────────────────────────────────────
+
+    def start_command_listener(self) -> bool:
+        """Starts the background polling listener for Telegram commands."""
+        if not self.is_configured:
+            logger.info("Telegram not configured; command listener not started.")
+            return False
+
+        if self._listener_running:
+            return True
+
+        self._listener_running = True
+        self._listener_thread = threading.Thread(
+            target=self._poll_telegram_updates,
+            daemon=True,
+            name="telegram_cmd_listener",
+        )
+        self._listener_thread.start()
+        logger.info("📱 Telegram command listener started successfully.")
+        return True
+
+    def stop_command_listener(self) -> None:
+        """Stops the Telegram command polling loop."""
+        self._listener_running = False
+        if self._listener_thread and self._listener_thread.is_alive():
+            self._listener_thread.join(timeout=2.0)
+        logger.info("📱 Telegram command listener stopped.")
+
+    def _poll_telegram_updates(self) -> None:
+        """Long-polls Telegram getUpdates and processes remote commands."""
+        url = f"https://api.telegram.org/bot{self.bot_token}/getUpdates"
+
+        while self._listener_running:
+            try:
+                params = {"offset": self._last_update_id + 1, "timeout": 10}
+                with httpx.Client(timeout=15.0) as client:
+                    resp = client.get(url, params=params)
+                    if resp.status_code == 200:
+                        data = resp.json()
+                        updates = data.get("result", [])
+                        for update in updates:
+                            update_id = update.get("update_id", 0)
+                            if update_id > self._last_update_id:
+                                self._last_update_id = update_id
+
+                            msg = update.get("message") or update.get("channel_post")
+                            if not msg:
+                                continue
+
+                            sender_chat_id = str(msg.get("chat", {}).get("id", ""))
+                            # Security check: only respond to configured chat_id if specified
+                            if self.chat_id and sender_chat_id != self.chat_id:
+                                logger.warning(
+                                    "Ignoring command from unauthorized chat_id: %s (expected %s)",
+                                    sender_chat_id, self.chat_id
+                                )
+                                continue
+
+                            text = msg.get("text", "").strip()
+                            if text:
+                                self._handle_command(text, sender_chat_id)
+                    elif resp.status_code == 409:
+                        # Another instance polling or webhook active; backoff
+                        time.sleep(5.0)
+                    else:
+                        time.sleep(2.0)
+            except Exception as ex:
+                logger.debug("Telegram polling exception (normal if sleeping): %s", ex)
+                time.sleep(3.0)
+
+    def _handle_command(self, cmd_text: str, chat_id: str) -> None:
+        """Executes trading actions based on Telegram chat command."""
+        cmd = cmd_text.strip().lower()
+        now_ist = datetime.now(IST).strftime("%Y-%m-%d %H:%M:%S IST")
+
+        try:
+            from nifty_trader.execution.trader_manager import get_trader_manager
+            tm = get_trader_manager(self.root_dir)
+        except Exception as e:
+            logger.error("Could not get trader manager in Telegram listener: %e", e)
+            return
+
+        if cmd in ("!trade", "/trade", "trade", "!start", "/start", "start"):
+            res = tm.start_trader()
+            trading_mode = os.environ.get("TRADING_MODE", "PAPER").upper()
+            mode_badge = "🔴 <b>REAL LIVE BROKER (Dhan HQ)</b>" if trading_mode == "LIVE" else "📄 <b>PAPER SIMULATOR (Risk-Free)</b>"
+
+            card = (
+                "⚡ <b>[AUTONOMOUS TRADER LAUNCHED VIA TELEGRAM]</b> ⚡\n"
+                "━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+                f"📡 <b>Status:</b> <b>ACTIVE (Live Scanning PID {res.get('pid', 'N/A')})</b>\n"
+                f"⚙️ <b>Execution Mode:</b> {mode_badge}\n"
+                "🏛 <b>Decision Engine:</b> 3-Pillar Institutional Architecture Active\n"
+                "🎯 <b>Setups Active:</b>\n"
+                "   • Setup A: Trend Continuation (1:3 R:R)\n"
+                "   • Setup B: Wall Reversal Fade (1:7 R:R)\n"
+                "📦 <b>Contract Moneyness:</b> STRICTLY 1 Lot ITM on Next Weekly Expiry\n"
+                "🛡️ <b>Capital Protection:</b> ₹2,000 Daily Loss Cap, 15-pt Trailing SL\n"
+                "📊 <b>Reporting:</b> Archiving into <code>reports/YYYY-MM-DD/</code>\n"
+                "💻 <b>Web Dashboard:</b> http://127.0.0.1:8080\n"
+                f"⏰ <b>Trigger Time:</b> {now_ist}\n"
+                "━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+                "<i>Reply with <code>!status</code> to check progress or <code>!stop</code> to halt.</i>"
+            )
+            self.send_message(card)
+
+        elif cmd in ("!stop", "/stop", "stop"):
+            res = tm.stop_trader()
+            card = (
+                "🛑 <b>[AUTONOMOUS TRADER STOPPED VIA TELEGRAM]</b> 🛑\n"
+                "━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+                f"📡 <b>Status:</b> {res.get('message', 'Stopped successfully.')}\n"
+                "🛡️ <b>Safety State:</b> All processes terminated safely.\n"
+                "📊 <b>Open Positions:</b> Protected by trailing stops and broker loss cap.\n"
+                f"⏰ <b>Time:</b> {now_ist}\n"
+                "━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+                "<i>To resume scanning, send <code>!trade</code> anytime.</i>"
+            )
+            self.send_message(card)
+
+        elif cmd in ("!status", "/status", "status"):
+            st = tm.get_status()
+            is_running = st.get("is_running", False)
+            running_badge = "🟢 <b>ACTIVE & SCANNING</b>" if is_running else "⚪ <b>IDLE (STOPPED)</b>"
+            trading_mode = st.get("trading_mode", "PAPER").upper()
+            mode_badge = "🔴 REAL LIVE" if trading_mode == "LIVE" else "📄 PAPER MODE"
+            uptime_str = st.get("uptime_formatted", "00:00:00")
+            pid_str = str(st.get("pid", "None"))
+
+            logs = st.get("recent_logs", [])
+            last_3_logs = "\n".join([f"• <code>{l[:65]}</code>" for l in logs[-3:]]) if logs else "• <i>No recent log entries</i>"
+
+            card = (
+                "📊 <b>[AUTONOMOUS TRADER LIVE STATUS]</b> 📊\n"
+                "━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+                f"📡 <b>Engine State:</b> {running_badge}\n"
+                f"⚙️ <b>Trading Mode:</b> <b>{mode_badge}</b>\n"
+                f"🆔 <b>Process ID (PID):</b> <code>{pid_str}</code>\n"
+                f"⏱️ <b>Uptime:</b> <code>{uptime_str}</code>\n"
+                f"🛡️ <b>Max Daily Loss Cap:</b> ₹2,000 (Strict ceiling)\n"
+                f"⏰ <b>Server Time:</b> {now_ist}\n\n"
+                f"📝 <b>Recent Engine Activity:</b>\n{last_3_logs}\n"
+                "━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+                "<i>Commands: <code>!trade</code> | <code>!stop</code> | <code>!status</code> | <code>!mode</code></i>"
+            )
+            self.send_message(card)
+
+        elif cmd in ("!mode", "/mode", "mode"):
+            curr_mode = os.environ.get("TRADING_MODE", "PAPER").upper()
+            badge = "🔴 REAL LIVE BROKER MODE" if curr_mode == "LIVE" else "📄 PAPER TRADING SIMULATOR MODE"
+            msg = (
+                f"⚙️ <b>[CURRENT TRADING MODE]</b>: <b>{badge}</b>\n\n"
+                "• In <b>PAPER MODE</b>: Trades execute in virtual memory with zero risk.\n"
+                "• In <b>REAL LIVE MODE</b>: Trades execute with real money via Dhan HQ.\n\n"
+                "<i>To change mode, toggle the switch at the top of the Web Dashboard (http://127.0.0.1:8080).</i>"
+            )
+            self.send_message(msg)
+
+        elif cmd in ("!help", "/help", "help"):
+            msg = (
+                "🤖 <b>[NIFTY AUTONOMOUS TRADER — BOT COMMANDS]</b> 🤖\n"
+                "━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+                "• <code>!trade</code> or <code>/trade</code> — <b>Start Autonomous Trader</b> (3-Pillar engine, 1-lot ITM next expiry)\n"
+                "• <code>!stop</code> or <code>/stop</code> — <b>Gracefully stop the trader</b>\n"
+                "• <code>!status</code> or <code>/status</code> — <b>View live scanning status, PID & uptime</b>\n"
+                "• <code>!mode</code> or <code>/mode</code> — <b>Check current execution mode (Paper vs Live)</b>\n"
+                "• <code>!help</code> or <code>/help</code> — <b>Show this command menu</b>\n"
+                "━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+                "💻 <i>Dashboard: http://127.0.0.1:8080</i>"
+            )
+            self.send_message(msg)
 
 
 class PendingTradeManager:
