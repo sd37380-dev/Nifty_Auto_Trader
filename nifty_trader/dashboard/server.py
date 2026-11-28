@@ -1943,18 +1943,27 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         <button type="button" onclick="openTradingViewAppWindow('NSE:NIFTY')" class="btn" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: white; padding: 5px 12px; font-size: 0.75rem; font-weight: 800; border: 1px solid #38bdf8; border-radius: 4px; cursor: pointer;" title="Open in separate TradingView window">
           🚀 External TV ↗
         </button>
+        <button type="button" onclick="openDhanTradingViewWindow()" class="btn" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #000; padding: 5px 12px; font-size: 0.75rem; font-weight: 800; border: 1px solid #fbbf24; border-radius: 4px; cursor: pointer;" title="Open live Dhan TradingView terminal in separate window">
+          🏦 Open Dhan TV Chart ↗
+        </button>
       </div>
     </div>
 
-    <!-- 4 Tabs Row: NIFTY 50, BANKNIFTY, GIFT NIFTY, Dropdown (Any one) -->
+    <!-- Quick Tabs Row: NIFTY 50, BANKNIFTY, NIFTY FUT, BANKNIFTY FUT, GIFT NIFTY, Dropdown -->
     <div id="single-chart-tabs-bar" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 10px; border-bottom: 2px solid rgba(255,255,255,0.08); padding-bottom: 8px;">
-      <!-- The 4 Tabs -->
+      <!-- The Tabs -->
       <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
         <button type="button" id="tab-btn-nifty" class="btn nc-main-tab-btn" onclick="selectSingleTab('NIFTY', this)" style="background: var(--accent); color: white; padding: 5px 12px; font-size: 0.78rem; font-weight: 800; border-radius: 6px; border: 1px solid var(--accent); cursor: pointer;">
           📊 NIFTY 50
         </button>
         <button type="button" id="tab-btn-banknifty" class="btn nc-main-tab-btn" onclick="selectSingleTab('BANKNIFTY', this)" style="background: #1e293b; color: var(--text-secondary); padding: 5px 12px; font-size: 0.78rem; font-weight: 700; border-radius: 6px; border: 1px solid var(--border); cursor: pointer;">
           🏦 BANKNIFTY
+        </button>
+        <button type="button" id="tab-btn-niftyfut" class="btn nc-main-tab-btn" onclick="selectSingleTab('NIFTY_FUT', this)" style="background: #1e293b; color: #f59e0b; padding: 5px 12px; font-size: 0.78rem; font-weight: 800; border-radius: 6px; border: 1px solid rgba(245, 158, 11, 0.4); cursor: pointer;" title="NIFTY Futures with live Volume Profile & Basis">
+          ⚡ NIFTY FUT
+        </button>
+        <button type="button" id="tab-btn-bankniftyfut" class="btn nc-main-tab-btn" onclick="selectSingleTab('BANKNIFTY_FUT', this)" style="background: #1e293b; color: #f59e0b; padding: 5px 12px; font-size: 0.78rem; font-weight: 800; border-radius: 6px; border: 1px solid rgba(245, 158, 11, 0.4); cursor: pointer;" title="BANKNIFTY Futures with live Volume Profile & Basis">
+          ⚡ BANKNIFTY FUT
         </button>
         <button type="button" id="tab-btn-gift" class="btn nc-main-tab-btn" onclick="selectSingleTab('GIFT NIFTY', this)" style="background: #1e293b; color: var(--text-secondary); padding: 5px 12px; font-size: 0.78rem; font-weight: 700; border-radius: 6px; border: 1px solid var(--border); cursor: pointer;">
           🌐 GIFT NIFTY
@@ -1968,6 +1977,11 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
         <span style="font-size: 0.74rem; color: var(--text-secondary); font-weight: 700;">Select:</span>
         <select id="single-chart-symbol-dropdown" onchange="onSymbolDropdownChange(this.value)" style="background: #1e293b; color: #38bdf8; border: 1px solid #38bdf8; border-radius: 4px; padding: 3px 8px; font-size: 0.76rem; font-weight: 700; cursor: pointer; max-width: 175px;">
+          <optgroup label="⚡ Dhan Live Futures (NSE F&O)" style="background: #0f172a; color: #f59e0b; font-weight: 700;">
+            <option value="NIFTY_FUT">⚡ NIFTY Current Fut</option>
+            <option value="BANKNIFTY_FUT">⚡ BANKNIFTY Current Fut</option>
+            <option value="FINNIFTY_FUT">⚡ FINNIFTY Current Fut</option>
+          </optgroup>
           <optgroup label="📊 Major Indices" style="background: #0f172a; color: #94a3b8; font-weight: 700;">
             <option value="NIFTY" selected>📊 NIFTY 50</option>
             <option value="BANKNIFTY">🏦 BANKNIFTY</option>
@@ -2757,12 +2771,31 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 
     <!-- 4-Chart Quad View Container (2x2 Grid) -->
     <div id="quad-chart-view-container" style="display: none; width: 100%;">
+      <!-- Quad Presets Bar -->
+      <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; background: rgba(0,0,0,0.3); padding: 5px 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.06);">
+        <span style="font-size: 0.74rem; color: var(--text-secondary); font-weight: 700;">⚡ Quad Layouts:</span>
+        <button type="button" onclick="setQuadPreset('spot_futures')" class="btn" style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.25) 0%, rgba(217, 119, 6, 0.4) 100%); color: #f59e0b; border: 1px solid #f59e0b; padding: 3px 10px; font-size: 0.72rem; font-weight: 800; border-radius: 4px; cursor: pointer;">
+          ⚡ Spot vs Futures Sync (Dhan)
+        </button>
+        <button type="button" onclick="setQuadPreset('indices')" class="btn" style="background: #1e293b; color: #38bdf8; border: 1px solid var(--border); padding: 3px 10px; font-size: 0.72rem; font-weight: 700; border-radius: 4px; cursor: pointer;">
+          📊 4 Major Indices
+        </button>
+        <button type="button" onclick="setQuadPreset('banks')" class="btn" style="background: #1e293b; color: #94a3b8; border: 1px solid var(--border); padding: 3px 10px; font-size: 0.72rem; font-weight: 700; border-radius: 4px; cursor: pointer;">
+          🏦 Top Banking Drivers
+        </button>
+      </div>
+
       <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; width: 100%;">
         <!-- Cell 0 (Default: NIFTY 50) -->
         <div class="card quad-cell" id="quad-cell-0" style="padding: 6px; border-radius: 8px; background: #0f172a; border: 1px solid var(--border); display: flex; flex-direction: column; height: 385px; position: relative;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; flex-wrap: wrap; gap: 4px; background: rgba(0,0,0,0.3); padding: 4px 6px; border-radius: 4px;">
             <div style="display: flex; align-items: center; gap: 6px;">
               <select id="quad-symbol-0" onchange="changeQuadSymbol(0, this.value)" style="background: #1e293b; color: #38bdf8; border: 1px solid #38bdf8; border-radius: 4px; padding: 2px 6px; font-size: 0.72rem; font-weight: 700; cursor: pointer; max-width: 145px;">
+                <optgroup label="⚡ Dhan Live Futures" style="background: #0f172a; color: #f59e0b; font-weight: 700;">
+                  <option value="NIFTY_FUT">⚡ NIFTY Current Fut</option>
+                  <option value="BANKNIFTY_FUT">⚡ BANKNIFTY Current Fut</option>
+                  <option value="FINNIFTY_FUT">⚡ FINNIFTY Current Fut</option>
+                </optgroup>
                 <optgroup label="📊 Major Indices" style="background: #0f172a; color: #94a3b8; font-weight: 700;">
                   <option value="NIFTY" selected>📊 NIFTY 50</option>
                   <option value="BANKNIFTY">🏦 BANKNIFTY</option>
@@ -2822,6 +2855,11 @@ DASHBOARD_HTML = """<!DOCTYPE html>
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; flex-wrap: wrap; gap: 4px; background: rgba(0,0,0,0.3); padding: 4px 6px; border-radius: 4px;">
             <div style="display: flex; align-items: center; gap: 6px;">
               <select id="quad-symbol-1" onchange="changeQuadSymbol(1, this.value)" style="background: #1e293b; color: #38bdf8; border: 1px solid #38bdf8; border-radius: 4px; padding: 2px 6px; font-size: 0.72rem; font-weight: 700; cursor: pointer; max-width: 145px;">
+                <optgroup label="⚡ Dhan Live Futures" style="background: #0f172a; color: #f59e0b; font-weight: 700;">
+                  <option value="NIFTY_FUT">⚡ NIFTY Current Fut</option>
+                  <option value="BANKNIFTY_FUT">⚡ BANKNIFTY Current Fut</option>
+                  <option value="FINNIFTY_FUT">⚡ FINNIFTY Current Fut</option>
+                </optgroup>
                 <optgroup label="📊 Major Indices" style="background: #0f172a; color: #94a3b8; font-weight: 700;">
                   <option value="NIFTY">📊 NIFTY 50</option>
                   <option value="BANKNIFTY" selected>🏦 BANKNIFTY</option>
@@ -2881,6 +2919,11 @@ DASHBOARD_HTML = """<!DOCTYPE html>
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; flex-wrap: wrap; gap: 4px; background: rgba(0,0,0,0.3); padding: 4px 6px; border-radius: 4px;">
             <div style="display: flex; align-items: center; gap: 6px;">
               <select id="quad-symbol-2" onchange="changeQuadSymbol(2, this.value)" style="background: #1e293b; color: #38bdf8; border: 1px solid #38bdf8; border-radius: 4px; padding: 2px 6px; font-size: 0.72rem; font-weight: 700; cursor: pointer; max-width: 145px;">
+                <optgroup label="⚡ Dhan Live Futures" style="background: #0f172a; color: #f59e0b; font-weight: 700;">
+                  <option value="NIFTY_FUT">⚡ NIFTY Current Fut</option>
+                  <option value="BANKNIFTY_FUT">⚡ BANKNIFTY Current Fut</option>
+                  <option value="FINNIFTY_FUT">⚡ FINNIFTY Current Fut</option>
+                </optgroup>
                 <optgroup label="📊 Major Indices" style="background: #0f172a; color: #94a3b8; font-weight: 700;">
                   <option value="NIFTY">📊 NIFTY 50</option>
                   <option value="BANKNIFTY">🏦 BANKNIFTY</option>
@@ -2940,6 +2983,11 @@ DASHBOARD_HTML = """<!DOCTYPE html>
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; flex-wrap: wrap; gap: 4px; background: rgba(0,0,0,0.3); padding: 4px 6px; border-radius: 4px;">
             <div style="display: flex; align-items: center; gap: 6px;">
               <select id="quad-symbol-3" onchange="changeQuadSymbol(3, this.value)" style="background: #1e293b; color: #38bdf8; border: 1px solid #38bdf8; border-radius: 4px; padding: 2px 6px; font-size: 0.72rem; font-weight: 700; cursor: pointer; max-width: 145px;">
+                <optgroup label="⚡ Dhan Live Futures" style="background: #0f172a; color: #f59e0b; font-weight: 700;">
+                  <option value="NIFTY_FUT">⚡ NIFTY Current Fut</option>
+                  <option value="BANKNIFTY_FUT">⚡ BANKNIFTY Current Fut</option>
+                  <option value="FINNIFTY_FUT">⚡ FINNIFTY Current Fut</option>
+                </optgroup>
                 <optgroup label="📊 Major Indices" style="background: #0f172a; color: #94a3b8; font-weight: 700;">
                   <option value="NIFTY">📊 NIFTY 50</option>
                   <option value="BANKNIFTY">🏦 BANKNIFTY</option>
@@ -6676,6 +6724,15 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     window.open(url, 'TradingViewWorkspace_' + symbol.replace(/[^a-zA-Z0-9]/g, '_'), `width=${w},height=${h},top=${top},left=${left},menubar=no,toolbar=no,status=no,directories=no,resizable=yes`);
   }
 
+  function openDhanTradingViewWindow() {
+    const url = 'https://tv.dhan.co';
+    const w = Math.min(1500, window.screen.availWidth || 1400);
+    const h = Math.min(950, window.screen.availHeight || 800);
+    const left = Math.max(0, (window.screen.availWidth - w) / 2);
+    const top = Math.max(0, (window.screen.availHeight - h) / 2);
+    window.open(url, 'DhanTradingViewPortal', `width=${w},height=${h},top=${top},left=${left},menubar=no,toolbar=no,status=no,directories=no,resizable=yes`);
+  }
+
   function initTradingViewChart() {
     initNativeChart();
   }
@@ -9681,13 +9738,27 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       const prev = data.previousClose || _cachedCandles[0].open;
       const diff = last.close - prev;
       const pct = prev > 0 ? ((diff / prev) * 100).toFixed(2) : '0.00';
-      const symTitle = (typeof CONTRIBUTOR_TITLES !== 'undefined' && CONTRIBUTOR_TITLES[data.symbol]) ? CONTRIBUTOR_TITLES[data.symbol] : (data.symbol === 'NIFTY' ? 'NIFTY 50 (Spot)' : (data.symbol === 'BANKNIFTY' ? 'BANKNIFTY (Spot)' : data.symbol));
+      let symTitle = (typeof CONTRIBUTOR_TITLES !== 'undefined' && CONTRIBUTOR_TITLES[data.symbol]) ? CONTRIBUTOR_TITLES[data.symbol] : (data.symbol === 'NIFTY' ? 'NIFTY 50 (Spot)' : (data.symbol === 'BANKNIFTY' ? 'BANKNIFTY (Spot)' : data.symbol));
+      if (data.symbol === 'NIFTY_FUT') symTitle = '⚡ NIFTY Current Future (NSE F&O / Dhan HQ)';
+      if (data.symbol === 'BANKNIFTY_FUT') symTitle = '⚡ BANKNIFTY Current Future (NSE F&O / Dhan HQ)';
+      if (data.symbol === 'FINNIFTY_FUT') symTitle = '⚡ FINNIFTY Current Future (NSE F&O / Dhan HQ)';
 
       const titleEl = document.getElementById('nc-symbol-title');
       const priceEl = document.getElementById('nc-current-price');
       const changeEl = document.getElementById('nc-price-change');
 
-      if (titleEl) titleEl.innerText = symTitle;
+      if (titleEl) {
+        if (data.basis && data.basis.basis_pts !== undefined) {
+          const b = data.basis;
+          const bSign = b.basis_pts >= 0 ? '+' : '';
+          const bColor = b.basis_pts >= 0 ? '#10b981' : '#f59e0b';
+          const pocStr = data.volume_profile && data.volume_profile.poc ? ` • Volume POC: ₹${data.volume_profile.poc}` : '';
+          const srcStr = data.dhan_connected ? '🟢 Dhan HQ Live' : '🟡 Dhan Modeled (Add API Token)';
+          titleEl.innerHTML = `${symTitle} <span style="font-size:0.75rem; padding: 2px 7px; border-radius: 4px; background: rgba(0,0,0,0.5); border: 1px solid ${bColor}; color: ${bColor}; font-weight:800; margin-left:8px;">Basis: ${bSign}${b.basis_pts} pts (${b.status})${pocStr} | ${srcStr}</span>`;
+        } else {
+          titleEl.innerText = symTitle;
+        }
+      }
       if (priceEl) priceEl.innerText = '₹' + last.close.toLocaleString('en-IN', { minimumFractionDigits: 2 });
       if (changeEl) {
         changeEl.innerText = (diff >= 0 ? '+' : '') + diff.toFixed(2) + ' (' + (diff >= 0 ? '+' : '') + pct + '%)';
@@ -11207,6 +11278,24 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       if (chart && cont && cont.clientHeight > 0) {
         chart.applyOptions({ width: cont.clientWidth, height: cont.clientHeight });
       }
+    }
+  }
+
+  function setQuadPreset(type) {
+    if (type === 'spot_futures') {
+      _quadSymbols = ['NIFTY', 'NIFTY_FUT', 'BANKNIFTY', 'BANKNIFTY_FUT'];
+    } else if (type === 'indices') {
+      _quadSymbols = ['NIFTY', 'BANKNIFTY', 'GIFT NIFTY', 'SENSEX'];
+    } else if (type === 'banks') {
+      _quadSymbols = ['HDFCBANK', 'ICICIBANK', 'SBIN', 'AXISBANK'];
+    }
+    for (let i = 0; i < 4; i++) {
+      const selectEl = document.getElementById(`quad-symbol-${i}`);
+      if (selectEl) selectEl.value = _quadSymbols[i];
+      fetchQuadCandles(i);
+    }
+    if (typeof showGotoToast === 'function') {
+      showGotoToast(`⚡ Quad Layout: ${type.toUpperCase().replace('_', ' ')}`);
     }
   }
 
@@ -13554,6 +13643,55 @@ class DashboardHTTPRequestHandler(BaseHTTPRequestHandler):
                         rng = "2y"
                     elif intv in {"1w", "1wk"}:
                         rng = "5y"
+
+                # Check if requested symbol is a Future (Dhan Futures Sync)
+                from nifty_trader.market_data.dhan_futures_service import get_dhan_futures_service
+                dhan_fut_svc = get_dhan_futures_service()
+                fut_check = dhan_fut_svc.resolve_future_symbol(sym)
+                if fut_check:
+                    fut_key, spot_sym = fut_check
+                    spot_ticker = "^NSEI" if "BANK" not in fut_key else "^NSEBANK"
+                    spot_url = f"https://query1.finance.yahoo.com/v8/finance/chart/{spot_ticker}?interval={yahoo_intv}&range={rng}"
+                    spot_candles = []
+                    try:
+                        s_req = urllib.request.Request(spot_url, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"})
+                        with urllib.request.urlopen(s_req, timeout=8) as s_resp:
+                            s_data = json.loads(s_resp.read().decode("utf-8"))
+                            s_res = s_data["chart"]["result"][0]
+                            s_ts = s_res.get("timestamp", [])
+                            s_quotes = s_res.get("indicators", {}).get("quote", [{}])[0]
+                            s_o = s_quotes.get("open", [])
+                            s_h = s_quotes.get("high", [])
+                            s_l = s_quotes.get("low", [])
+                            s_c = s_quotes.get("close", [])
+                            s_v = s_quotes.get("volume", [])
+                            for si in range(len(s_ts)):
+                                if si < len(s_o) and s_o[si] is not None and s_c[si] is not None:
+                                    spot_candles.append({
+                                        "time": s_ts[si],
+                                        "open": round(s_o[si], 2),
+                                        "high": round(s_h[si], 2),
+                                        "low": round(s_l[si], 2),
+                                        "close": round(s_c[si], 2),
+                                        "volume": s_v[si] if si < len(s_v) and s_v[si] else 10000,
+                                    })
+                    except Exception as s_ex:
+                        logger.warning("Could not fetch spot candles for futures basis: %s", s_ex)
+
+                    fut_payload = dhan_fut_svc.get_futures_candles(sym, interval=intv, range_str=rng, spot_candles=spot_candles)
+                    fut_payload["interval"] = intv
+                    fut_payload["range"] = rng
+                    fut_payload["currency"] = "INR"
+                    if fut_payload.get("candles"):
+                        fut_payload["regularMarketPrice"] = fut_payload["candles"][-1]["close"]
+                        fut_payload["previousClose"] = fut_payload["candles"][0]["open"]
+
+                    self.send_response(200)
+                    self.send_header("Content-Type", "application/json")
+                    self.send_header("Cache-Control", "no-cache")
+                    self.end_headers()
+                    self.wfile.write(json.dumps(fut_payload).encode("utf-8"))
+                    return
 
                 is_gift = sym in ("GIFT", "GIFTNIFTY", "GIFT NIFTY", "GIFT_NIFTY", "NSEIX:NIFTY1!")
                 ticker_map = {
