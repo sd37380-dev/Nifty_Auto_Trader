@@ -349,9 +349,28 @@ class NSEOptionChainService:
             step = 100 if is_bank else 50
             atm_strike = int(round(spot / step) * step)
 
-            strikes_data: List[Dict[str, Any]] = []
+            # Compute full-chain aggregates matching Dhan Web (PCR across all strikes & ATM IV)
             total_call_oi = 0
             total_put_oi = 0
+            atm_ce_iv = 0.0
+            atm_pe_iv = 0.0
+
+            for strike_str, strike_info in oc_map.items():
+                ce_n = strike_info.get("ce", {}) or {}
+                pe_n = strike_info.get("pe", {}) or {}
+                total_call_oi += int(ce_n.get("oi", ce_n.get("openInterest", 0)) or 0)
+                total_put_oi += int(pe_n.get("oi", pe_n.get("openInterest", 0)) or 0)
+                try:
+                    s_val = float(strike_str)
+                    if abs(s_val - atm_strike) < (step / 2):
+                        atm_ce_iv = float(ce_n.get("implied_volatility", ce_n.get("iv", 0)) or 0)
+                        atm_pe_iv = float(pe_n.get("implied_volatility", pe_n.get("iv", 0)) or 0)
+                except Exception:
+                    pass
+
+            atm_iv = round((atm_ce_iv + atm_pe_iv) / 2, 2) if (atm_ce_iv and atm_pe_iv) else round(atm_ce_iv or atm_pe_iv or 15.01, 2)
+
+            strikes_data: List[Dict[str, Any]] = []
 
             for strike_str, strike_info in sorted(oc_map.items(), key=lambda x: float(x[0]) if str(x[0]).replace(".", "").isdigit() else 0):
                 try:
@@ -367,8 +386,6 @@ class NSEOptionChainService:
 
                 ce_oi = int(ce_node.get("oi", ce_node.get("openInterest", 0)) or 0)
                 pe_oi = int(pe_node.get("oi", pe_node.get("openInterest", 0)) or 0)
-                total_call_oi += ce_oi
-                total_put_oi += pe_oi
 
                 ce_ltp = round(float(ce_node.get("last_price", ce_node.get("ltp", 0.0)) or 0.0), 2)
                 pe_ltp = round(float(pe_node.get("last_price", pe_node.get("ltp", 0.0)) or 0.0), 2)
@@ -378,7 +395,7 @@ class NSEOptionChainService:
                 ce_chg = round(float(ce_node.get("change_price", ce_ltp - ce_prev_p) or (ce_ltp - ce_prev_p)), 2)
                 pe_chg = round(float(pe_node.get("change_price", pe_ltp - pe_prev_p) or (pe_ltp - pe_prev_p)), 2)
 
-                # Dhan HQ returns 'oi' and 'previous_oi'. Derive true Change in OI
+                # Dhan HQ returns 'oi' and 'previous_oi'. Derive true Change in OI and % change
                 ce_prev_oi = int(ce_node.get("previous_oi", ce_node.get("prev_oi", ce_oi)) or ce_oi)
                 pe_prev_oi = int(pe_node.get("previous_oi", pe_node.get("prev_oi", pe_oi)) or pe_oi)
 
@@ -391,6 +408,9 @@ class NSEOptionChainService:
                     pe_chg_oi = int(pe_node.get("change_oi", pe_node.get("changeInOi", 0)) or 0)
                 else:
                     pe_chg_oi = pe_oi - pe_prev_oi
+
+                ce_chg_oi_pct = round((ce_chg_oi / max(1, ce_prev_oi)) * 100, 2) if ce_prev_oi > 0 else 0.0
+                pe_chg_oi_pct = round((pe_chg_oi / max(1, pe_prev_oi)) * 100, 2) if pe_prev_oi > 0 else 0.0
 
                 strike_pcr = round(pe_oi / max(1, ce_oi), 2)
                 ce_buildup = self._derive_buildup(ce_chg, ce_chg_oi, "CE")
@@ -415,6 +435,7 @@ class NSEOptionChainService:
                         "oi": ce_oi,
                         "change_in_oi": ce_chg_oi,
                         "change_oi": ce_chg_oi,
+                        "change_in_oi_pct": ce_chg_oi_pct,
                         "volume": int(ce_node.get("volume", 0) or 0),
                         "iv": ce_iv,
                         "bid": ce_bid,
@@ -430,6 +451,7 @@ class NSEOptionChainService:
                         "oi": pe_oi,
                         "change_in_oi": pe_chg_oi,
                         "change_oi": pe_chg_oi,
+                        "change_in_oi_pct": pe_chg_oi_pct,
                         "volume": int(pe_node.get("volume", 0) or 0),
                         "iv": pe_iv,
                         "bid": pe_bid,
@@ -468,6 +490,7 @@ class NSEOptionChainService:
             return {
                 "symbol": sym,
                 "spot_price": round(spot, 2),
+                "atm_iv": atm_iv,
                 "timestamp": now_ist.strftime("%Y-%m-%d %H:%M:%S"),
                 "updated_at": now_ist.strftime("%Y-%m-%d %H:%M:%S IST"),
                 "total_call_oi": total_call_oi,
@@ -521,6 +544,8 @@ class NSEOptionChainService:
         Zero third-party feeds (NSE / NiftyTrader disabled). Strictly Dhan.
         Supports querying 4 upcoming weekly expiries via Dhan HQ API.
         """
+        if not expiry or expiry in ("undefined", "null", "", "None"):
+            expiry = None
         sym = "BANKNIFTY" if "BANK" in symbol.upper() else "NIFTY"
         now = time.time()
         cache_key = f"{sym}_{expiry or 'default'}"

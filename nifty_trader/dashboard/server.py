@@ -1767,23 +1767,24 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     <table class="oc-table" id="option-chain-table">
       <thead>
         <tr style="background: #111827; border-bottom: 2px solid var(--border);">
-          <th colspan="8" style="color: var(--green); font-size: 0.85rem; border-right: 2px solid #374151; padding: 8px;">
+          <th colspan="9" style="color: var(--green); font-size: 0.85rem; border-right: 2px solid #374151; padding: 8px;">
             CALLS (CE) &bull; BULLISH OPTIONS
           </th>
           <th style="background: #1e293b; color: #fbbf24; font-size: 0.85rem; padding: 8px; min-width: 90px;">
             STRIKE
           </th>
-          <th colspan="8" style="color: var(--red); font-size: 0.85rem; border-left: 2px solid #374151; padding: 8px;">
+          <th colspan="9" style="color: var(--red); font-size: 0.85rem; border-left: 2px solid #374151; padding: 8px;">
             PUTS (PE) &bull; BEARISH OPTIONS
           </th>
         </tr>
         <tr style="background: #182238; font-size: 0.72rem; color: var(--text-secondary);">
           <!-- Calls headers -->
-          <th style="padding: 6px; min-width: 105px;">TRADE</th>
-          <th title="OI Buildup Signal" style="min-width: 105px; white-space: nowrap;">OI BUILDUP</th>
-          <th title="15-Minute OI Change Velocity (Smart Money Pressure)" style="color: #38bdf8; min-width: 95px; white-space: nowrap;">15M VELOCITY</th>
-          <th title="Open Interest">OI</th>
-          <th title="Change in Open Interest">CHANGE OI</th>
+          <th style="padding: 6px; min-width: 95px;">TRADE</th>
+          <th title="OI Buildup Signal" style="min-width: 95px; white-space: nowrap;">OI BUILDUP</th>
+          <th title="15-Minute OI Change Velocity (Smart Money Pressure)" style="color: #38bdf8; min-width: 85px; white-space: nowrap;">15M VELOCITY</th>
+          <th title="Open Interest (Dhan Format: L / Cr)">OI</th>
+          <th title="Open Interest Change with % (Dhan Format)">OI CHANGE %</th>
+          <th title="Traded Volume">VOLUME</th>
           <th title="Implied Volatility">IV</th>
           <th title="Put-Call Ratio for Strike">PCR</th>
           <th title="Last Traded Price" style="color: var(--text-primary); font-weight: 800;">LTP (₹)</th>
@@ -1793,15 +1794,16 @@ DASHBOARD_HTML = """<!DOCTYPE html>
           <th title="Last Traded Price" style="color: var(--text-primary); font-weight: 800;">LTP (₹)</th>
           <th title="Put-Call Ratio for Strike">PCR</th>
           <th title="Implied Volatility">IV</th>
-          <th title="Change in Open Interest">CHANGE OI</th>
-          <th title="Open Interest">OI</th>
-          <th title="15-Minute OI Change Velocity (Smart Money Pressure)" style="color: #38bdf8; min-width: 95px; white-space: nowrap;">15M VELOCITY</th>
-          <th title="OI Buildup Signal" style="min-width: 105px; white-space: nowrap;">OI BUILDUP</th>
-          <th style="padding: 6px; min-width: 105px;">TRADE</th>
+          <th title="Traded Volume">VOLUME</th>
+          <th title="Open Interest Change with % (Dhan Format)">OI CHANGE %</th>
+          <th title="Open Interest (Dhan Format: L / Cr)">OI</th>
+          <th title="15-Minute OI Change Velocity (Smart Money Pressure)" style="color: #38bdf8; min-width: 85px; white-space: nowrap;">15M VELOCITY</th>
+          <th title="OI Buildup Signal" style="min-width: 95px; white-space: nowrap;">OI BUILDUP</th>
+          <th style="padding: 6px; min-width: 95px;">TRADE</th>
         </tr>
       </thead>
       <tbody id="oc-table-body">
-        <tr><td colspan="15" style="text-align: center; color: var(--text-secondary); padding: 40px;">Loading Live Option Chain via Dhan HQ API...</td></tr>
+        <tr><td colspan="19" style="text-align: center; color: var(--text-secondary); padding: 40px;">Loading Live Option Chain via Dhan HQ API...</td></tr>
       </tbody>
     </table>
   </div>
@@ -6278,7 +6280,8 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     if (badge) badge.innerText = 'FETCHING...';
 
     try {
-      const url = `/api/option_chain?symbol=${encodeURIComponent(sym)}&expiry=${encodeURIComponent(expiry)}${force ? '&refresh=1' : ''}`;
+      const expParam = (expiry && expiry !== 'undefined' && expiry !== 'null' && expiry !== '') ? `&expiry=${encodeURIComponent(expiry)}` : '';
+      const url = `/api/option_chain?symbol=${encodeURIComponent(sym)}${expParam}${force ? '&refresh=1' : ''}`;
       const res = await fetch(url);
       const data = await res.json();
       if (data.status === 'ok' && data.chain) {
@@ -6295,17 +6298,67 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 
 
 
+  function formatDhanOi(num) {
+    if (num == null || isNaN(num) || num === 0) return '0';
+    const abs = Math.abs(num);
+    if (abs >= 10000000) {
+      return (num / 10000000).toFixed(2) + ' Cr';
+    } else if (abs >= 100000) {
+      return (num / 100000).toFixed(2) + ' L';
+    } else if (abs >= 1000) {
+      return (num / 1000).toFixed(2) + ' K';
+    }
+    return num.toLocaleString('en-IN');
+  }
+
+  function formatDhanOiChange(chg, oi, pctFromBackend) {
+    if (chg == null || isNaN(chg) || chg === 0) {
+      return '<div style="color: #64748b; font-weight: 600;">0 (0.00%)</div><div style="font-size: 0.68rem; color: #64748b; font-weight: 400;">0</div>';
+    }
+    const formattedVal = formatDhanOi(Math.abs(chg));
+    const prefix = chg < 0 ? '-' : '';
+    let pct = pctFromBackend;
+    if (pct == null || isNaN(pct)) {
+      const prevOi = (oi || 0) - chg;
+      pct = prevOi > 0 ? (chg / prevOi) * 100 : 0.0;
+    }
+    const pctPrefix = pct < 0 ? '-' : '';
+    const pctStr = ` (${pctPrefix}${Math.abs(pct).toFixed(2)}%)`;
+    const color = chg >= 0 ? '#10b981' : '#ef4444';
+    const exactFormatted = (chg > 0 ? '+' : '') + Number(chg).toLocaleString('en-IN');
+    return `<div style="color: ${color}; font-weight: 700; white-space: nowrap;" title="Contracts Change: ${exactFormatted}">${prefix}${formattedVal}${pctStr}</div>
+            <div style="font-size: 0.68rem; color: #94a3b8; font-weight: 400;">${exactFormatted}</div>`;
+  }
+
+  function formatDhanOiCol(oi) {
+    if (!oi) return '<span style="color: #64748b;">0</span>';
+    const formattedLakh = formatDhanOi(oi);
+    const exactFormatted = Number(oi).toLocaleString('en-IN');
+    return `<div style="font-weight: 700; color: #f1f5f9; white-space: nowrap;" title="Total Contracts: ${exactFormatted}">${formattedLakh}</div>
+            <div style="font-size: 0.68rem; color: #94a3b8; font-weight: 400;">${exactFormatted}</div>`;
+  }
+
+  function formatDhanVol(vol) {
+    if (!vol) return '<span style="color: #64748b;">--</span>';
+    const formatted = formatDhanOi(vol);
+    const exactFormatted = Number(vol).toLocaleString('en-IN');
+    return `<div style="font-weight: 600; color: #cbd5e1; white-space: nowrap;" title="Traded Volume: ${exactFormatted}">${formatted}</div>`;
+  }
+
   function renderOptionChain(chain) {
     // 1. Analytics Bar
     const spotEl = document.getElementById('oc-stat-spot');
     if (spotEl) spotEl.innerText = `₹${(chain.spot_price || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}`;
 
     const atmEl = document.getElementById('oc-stat-atm');
-    if (atmEl) atmEl.innerText = `⚡ ATM Strike: ${chain.atm_strike || '--'}`;
+    if (atmEl) {
+      const ivStr = chain.atm_iv ? ` | ATM IV: ${chain.atm_iv}%` : '';
+      atmEl.innerText = `⚡ ATM Strike: ${chain.atm_strike || '--'}${ivStr}`;
+    }
 
     const pcrEl = document.getElementById('oc-stat-pcr');
     if (pcrEl) {
-      pcrEl.innerText = chain.pcr || '1.0';
+      pcrEl.innerText = chain.pcr != null ? Number(chain.pcr).toFixed(2) : '1.0';
       pcrEl.style.color = chain.pcr >= 1.15 ? 'var(--green)' : (chain.pcr <= 0.85 ? 'var(--red)' : 'var(--yellow)');
     }
 
@@ -6319,10 +6372,15 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     if (maxPainEl) maxPainEl.innerText = `₹${chain.max_pain || '--'}`;
 
     const totalOiEl = document.getElementById('oc-stat-total-oi');
-    if (totalOiEl) totalOiEl.innerText = `${((chain.total_call_oi || 0) + (chain.total_put_oi || 0)).toLocaleString('en-IN')}`;
+    if (totalOiEl) {
+      const tot = (chain.total_call_oi || 0) + (chain.total_put_oi || 0);
+      totalOiEl.innerText = `${formatDhanOi(tot)} (${tot.toLocaleString('en-IN')})`;
+    }
 
     const oiRatioEl = document.getElementById('oc-stat-oi-ratio');
-    if (oiRatioEl) oiRatioEl.innerText = `CE: ${(chain.total_call_oi || 0).toLocaleString('en-IN')} | PE: ${(chain.total_put_oi || 0).toLocaleString('en-IN')}`;
+    if (oiRatioEl) {
+      oiRatioEl.innerText = `CE: ${formatDhanOi(chain.total_call_oi || 0)} | PE: ${formatDhanOi(chain.total_put_oi || 0)}`;
+    }
 
     const lotEl = document.getElementById('oc-stat-lotsize');
     if (lotEl) lotEl.innerText = `${chain.lot_size || (chain.symbol === 'BANKNIFTY' ? 30 : 65)} Qty / Lot`;
@@ -6514,7 +6572,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       const msg = chain.error || 'No strikes returned by Dhan HQ API for this expiry.';
       tbody.innerHTML = `
         <tr>
-          <td colspan="17" style="text-align: center; padding: 40px 16px; color: #94a3b8; font-size: 0.95rem;">
+          <td colspan="19" style="text-align: center; padding: 40px 16px; color: #94a3b8; font-size: 0.95rem;">
             <div style="margin-bottom: 8px; font-size: 1.35rem;">🏦 Dhan HQ Option Chain (Exclusive Feed)</div>
             <div style="color: #facc15; font-weight: 700; margin-bottom: 8px;">${msg}</div>
             <div style="font-size: 0.8rem; color: #64748b;">
@@ -6549,15 +6607,15 @@ DASHBOARD_HTML = """<!DOCTYPE html>
             </div>
           </td>
           <!-- CE OI Buildup -->
-          <td class="${ceItmClass}" style="min-width: 105px; white-space: nowrap;">${getBuildupBadge(ce, 'CE')}</td>
+          <td class="${ceItmClass}" style="min-width: 95px; white-space: nowrap;">${getBuildupBadge(ce, 'CE')}</td>
           <!-- CE 15M Velocity -->
           <td class="${ceItmClass}" style="white-space: nowrap;">${getOiVelocityBadge(strike, 'CE', ce.oi, ce.change_in_oi)}</td>
-          <!-- CE OI -->
-          <td class="${ceItmClass}">${(ce.oi || 0).toLocaleString('en-IN')}</td>
-          <!-- CE Change OI -->
-          <td class="${ceItmClass}" style="color: ${ce.change_in_oi >= 0 ? 'var(--green)' : 'var(--red)'}; font-weight: 600;">
-            ${ce.change_in_oi >= 0 ? '+' : ''}${(ce.change_in_oi || 0).toLocaleString('en-IN')}
-          </td>
+          <!-- CE OI (Dhan Format: L / Cr) -->
+          <td class="${ceItmClass}">${formatDhanOiCol(ce.oi)}</td>
+          <!-- CE Change OI % (Dhan Format: L / Cr + %) -->
+          <td class="${ceItmClass}">${formatDhanOiChange(ce.change_in_oi, ce.oi, ce.change_in_oi_pct)}</td>
+          <!-- CE Traded Volume -->
+          <td class="${ceItmClass}">${formatDhanVol(ce.volume)}</td>
           <!-- CE IV -->
           <td class="${ceItmClass}" style="color: #60a5fa;">${(ce.iv || 0).toFixed(1)}%</td>
           <!-- CE PCR -->
@@ -6580,16 +6638,16 @@ DASHBOARD_HTML = """<!DOCTYPE html>
           <td class="${peItmClass}" style="color: ${pcrColor}; font-weight: 700;">${pcrVal}</td>
           <!-- PE IV -->
           <td class="${peItmClass}" style="color: #60a5fa;">${(pe.iv || 0).toFixed(1)}%</td>
-          <!-- PE Change OI -->
-          <td class="${peItmClass}" style="color: ${pe.change_in_oi >= 0 ? 'var(--green)' : 'var(--red)'}; font-weight: 600;">
-            ${pe.change_in_oi >= 0 ? '+' : ''}${(pe.change_in_oi || 0).toLocaleString('en-IN')}
-          </td>
-          <!-- PE OI -->
-          <td class="${peItmClass}">${(pe.oi || 0).toLocaleString('en-IN')}</td>
+          <!-- PE Traded Volume -->
+          <td class="${peItmClass}">${formatDhanVol(pe.volume)}</td>
+          <!-- PE Change OI % (Dhan Format: L / Cr + %) -->
+          <td class="${peItmClass}">${formatDhanOiChange(pe.change_in_oi, pe.oi, pe.change_in_oi_pct)}</td>
+          <!-- PE OI (Dhan Format: L / Cr) -->
+          <td class="${peItmClass}">${formatDhanOiCol(pe.oi)}</td>
           <!-- PE 15M Velocity -->
           <td class="${peItmClass}" style="white-space: nowrap;">${getOiVelocityBadge(strike, 'PE', pe.oi, pe.change_in_oi)}</td>
           <!-- PE OI Buildup -->
-          <td class="${peItmClass}" style="min-width: 105px; white-space: nowrap;">${getBuildupBadge(pe, 'PE')}</td>
+          <td class="${peItmClass}" style="min-width: 95px; white-space: nowrap;">${getBuildupBadge(pe, 'PE')}</td>
           <!-- PE Direct Buy / Sell Actions -->
           <td class="${peItmClass}" style="border-left: 1px solid var(--border); white-space: nowrap;">
             <div style="display: flex; gap: 4px; justify-content: center;">
@@ -14863,6 +14921,8 @@ class DashboardHTTPRequestHandler(BaseHTTPRequestHandler):
                 q = parse_qs(urlparse(self.path).query)
                 symbol = q.get("symbol", ["NIFTY"])[0]
                 expiry = q.get("expiry", [None])[0]
+                if not expiry or expiry in ("undefined", "null", "", "None"):
+                    expiry = None
                 limit = int(q.get("limit", [20])[0])
                 from nifty_trader.market_data.option_chain_store import get_option_chain_store
                 store = get_option_chain_store()
@@ -14949,6 +15009,8 @@ class DashboardHTTPRequestHandler(BaseHTTPRequestHandler):
                 q = parse_qs(urlparse(self.path).query)
                 symbol = q.get("symbol", ["NIFTY"])[0]
                 expiry = q.get("expiry", [None])[0]
+                if not expiry or expiry in ("undefined", "null", "", "None"):
+                    expiry = None
                 force = q.get("refresh", ["0"])[0] in ("1", "true", "True")
                 from nifty_trader.market_data.option_chain_service import get_option_chain_service
                 ocs = get_option_chain_service()
