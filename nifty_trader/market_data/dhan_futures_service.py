@@ -215,6 +215,73 @@ class DhanFuturesService:
 
         return None
 
+    def fetch_dhan_index_candles(
+        self,
+        symbol: str,
+        interval_min: str = "5",
+        days: int = 5,
+    ) -> Optional[List[Dict[str, Any]]]:
+        """Fetches authentic Spot Index candles directly from Dhan HQ API."""
+        if not self.is_configured:
+            return None
+
+        import httpx
+
+        sym_upper = symbol.upper().replace(" ", "_")
+        sec_id = "13"
+        if "BANK" in sym_upper:
+            sec_id = "25"
+        elif "FIN" in sym_upper:
+            sec_id = "27"
+
+        now = datetime.now()
+        from_dt = now - timedelta(days=days)
+
+        headers = {
+            "client-id": self.client_id,
+            "access-token": self.access_token,
+            "Content-Type": "application/json",
+        }
+        payload = {
+            "securityId": sec_id,
+            "exchangeSegment": "IDX_I",
+            "instrument": "INDEX",
+            "interval": interval_min,
+            "fromDate": from_dt.strftime("%Y-%m-%d %H:%M:%S"),
+            "toDate": now.strftime("%Y-%m-%d %H:%M:%S"),
+        }
+
+        try:
+            resp = httpx.post(f"{self.base_url}/v2/charts/intraday", headers=headers, json=payload, timeout=12.0)
+            if resp.status_code == 200:
+                data = resp.json()
+                if "open" in data and len(data["open"]) > 0:
+                    candles = []
+                    for o, h, l, c, v, t in zip(
+                        data["open"],
+                        data["high"],
+                        data["low"],
+                        data["close"],
+                        data.get("volume", [0] * len(data["open"])),
+                        data.get("timestamp", [0] * len(data["open"])),
+                    ):
+                        candles.append({
+                            "time": int(t),
+                            "open": round(float(o), 2),
+                            "high": round(float(h), 2),
+                            "low": round(float(l), 2),
+                            "close": round(float(c), 2),
+                            "volume": int(v),
+                        })
+                    logger.info("Successfully fetched %d live Dhan spot bars for %s", len(candles), symbol)
+                    return candles
+            else:
+                logger.debug("Dhan spot endpoint returned HTTP %s: %s", resp.status_code, resp.text[:120])
+        except Exception as e:
+            logger.debug("Dhan spot index connection fallback: %s", e)
+
+        return None
+
     def get_futures_candles(
         self,
         raw_symbol: str,

@@ -213,6 +213,147 @@ class NSEOptionChainService:
                     logger.debug("Error loading cached file %s: %s", p, e)
         return None
 
+    def fetch_live_chain_from_dhan(self, symbol: str = "NIFTY") -> Optional[Dict[str, Any]]:
+        """
+        Fetches live option chain directly from Dhan HQ API (/v2/optionchain).
+        When credentials are configured, this is Priority #0 with zero rate-limit blocks.
+        """
+        client_id = os.environ.get("DHAN_CLIENT_ID", "").strip()
+        access_token = os.environ.get("DHAN_ACCESS_TOKEN", "").strip()
+        if not (client_id and access_token and len(access_token) > 15):
+            return None
+
+        sym = symbol.upper()
+        underlying_scrip = 13 if "BANK" not in sym else 25
+
+        headers = {
+            "client-id": client_id,
+            "access-token": access_token,
+            "Content-Type": "application/json",
+        }
+        try:
+            url = "https://api.dhan.co/v2/optionchain"
+            payload = {
+                "UnderlyingScrip": underlying_scrip,
+                "UnderlyingSeg": "IDX_I",
+            }
+            resp = self.client.post(url, headers=headers, json=payload, timeout=8.0)
+            if resp.status_code == 200:
+                data = resp.json()
+                if data and ("data" in data or "oc" in data or isinstance(data, dict)):
+                    logger.info("Successfully fetched live Dhan Option Chain for %s", sym)
+                    return data
+        except Exception as ex:
+            logger.debug("Dhan Option Chain API query failed (falling back): %s", ex)
+        return None
+
+    def _process_dhan_raw_data(self, raw_data: Dict[str, Any], symbol: str, expiry: Optional[str] = None) -> Optional[Dict[str, Any]]:
+        """Parses Dhan HQ option chain API response into normalized dictionary."""
+        try:
+            d_data = raw_data.get("data", raw_data)
+            spot = float(d_data.get("last_price", d_data.get("spotPrice", self.get_current_spot(symbol))))
+            oc_map = d_data.get("oc", {})
+            if not oc_map and isinstance(d_data, dict):
+                for k, v in d_data.items():
+                    if isinstance(v, dict) and ("ce" in v or "pe" in v):
+                        oc_map = d_data
+                        break
+
+            if not oc_map:
+                return None
+
+            is_bank = "BANK" in symbol.upper()
+            sym = "BANKNIFTY" if is_bank else "NIFTY"
+            step = 100 if is_bank else 50
+            atm_strike = int(round(spot / step) * step)
+
+            strikes_data: List[Dict[str, Any]] = []
+            total_call_oi = 0
+            total_put_oi = 0
+
+            for strike_str, strike_info in sorted(oc_map.items(), key=lambda x: float(x[0]) if x[0].replace(".", "").isdigit() else 0):
+                try:
+                    strike = float(strike_str)
+                except ValueError:
+                    continue
+
+                if abs(strike - atm_strike) > (step * 20):
+                    continue
+
+                ce_node = strike_info.get("ce", {}) or {}
+                pe_node = strike_info.get("pe", {}) or {}
+
+                ce_oi = int(ce_node.get("oi", ce_node.get("openInterest", 0)))
+                pe_oi = int(pe_node.get("oi", pe_node.get("openInterest", 0)))
+                total_call_oi += ce_oi
+                total_put_oi += pe_oi
+
+                ce_ltp = round(float(ce_node.get("last_price", ce_node.get("ltp", 0.0))), 2)
+                pe_ltp = round(float(pe_node.get("last_price", pe_node.get("ltp", 0.0))), 2)
+
+                ce_chg = round(float(ce_node.get("change_price", ce_node.get("priceChange", 0.0))), 2)
+                pe_chg = round(float(pe_node.get("change_price", pe_node.get("priceChange", 0.0))), 2)
+
+                ce_chg_oi = int(ce_node.get("change_oi", ce_node.get("changeInOi", 0)))
+                pe_chg_oi = int(pe_node.get("change_oi", pe_node.get("changeInOi", 0)))
+
+                strike_pcr = round(pe_oi / max(1, ce_oi), 2)
+                ce_buildup = self._derive_buildup(ce_chg, ce_chg_oi, "CE")
+                pe_buildup = self._derive_buildup(pe_chg, pe_chg_oi, "PE")
+
+                strikes_data.append({
+                    "strike": strike,
+                    "is_atm": (abs(strike - atm_strike) < (step / 2)),
+                    "pcr": strike_pcr,
+                    "ce": {
+                        "ltp": ce_ltp,
+                        "change": ce_chg,
+                        "oi": ce_oi,
+                        "change_in_oi": ce_chg_oi,
+                        "volume": int(ce_node.get("volume", 0)),
+                        "iv": round(float(ce_node.get("iv", ce_node.get("impliedVolatility", 14.0))), 1),
+                        "bid": round(float(ce_node.get("bid", ce_node.get("bidPrice", max(0.05, ce_ltp - 0.5)))), 2),
+                        "ask": round(float(ce_node.get("ask", ce_node.get("askPrice", ce_ltp + 0.5))), 2),
+                        "buildup": ce_buildup,
+                    },
+                    "pe": {
+                        "ltp": pe_ltp,
+                        "change": pe_chg,
+                        "oi": pe_oi,
+                        "change_in_oi": pe_chg_oi,
+                        "volume": int(pe_node.get("volume", 0)),
+                        "iv": round(float(pe_node.get("iv", pe_node.get("impliedVolatility", 14.0))), 1),
+                        "bid": round(float(pe_node.get("bid", pe_node.get("bidPrice", max(0.05, pe_ltp - 0.5)))), 2),
+                        "ask": round(float(pe_node.get("ask", pe_node.get("askPrice", pe_ltp + 0.5))), 2),
+                        "buildup": pe_buildup,
+                    },
+                })
+
+            if not strikes_data:
+                return None
+
+            overall_pcr = round(total_put_oi / max(1, total_call_oi), 2)
+            max_call = max(strikes_data, key=lambda s: s["ce"]["oi"])
+            max_put = max(strikes_data, key=lambda s: s["pe"]["oi"])
+
+            return {
+                "symbol": sym,
+                "spot_price": spot,
+                "timestamp": datetime.now(IST).strftime("%Y-%m-%d %H:%M:%S"),
+                "total_call_oi": total_call_oi,
+                "total_put_oi": total_put_oi,
+                "pcr": overall_pcr,
+                "pcr_bias": "BULLISH" if overall_pcr >= 1.05 else ("BEARISH" if overall_pcr <= 0.90 else "NEUTRAL"),
+                "max_call_oi_strike": max_call["strike"],
+                "max_put_oi_strike": max_put["strike"],
+                "atm_strike": atm_strike,
+                "strikes": strikes_data,
+                "source": "Dhan HQ API (Live Authenticated)",
+            }
+        except Exception as e:
+            logger.warning("Error processing Dhan option chain data: %s", e)
+            return None
+
     def fetch_live_chain_from_niftytrader(self, symbol: str = "NIFTY") -> Optional[Dict[str, Any]]:
         """
         Fetches live option chain from NiftyTrader Web API using Bearer Token & dynamic x-api-key.
@@ -488,6 +629,19 @@ class NSEOptionChainService:
 
         if not force_refresh and sym in self._cache and (now - self._cache_time.get(sym, 0) < 15.0):
             return self._cache[sym]
+
+        # 0. Priority #0: Live Dhan HQ API Fetch (Direct Authenticated Broker Feed)
+        dhan_raw = self.fetch_live_chain_from_dhan(sym)
+        if dhan_raw:
+            try:
+                processed = self._process_dhan_raw_data(dhan_raw, sym, expiry)
+                if processed and len(processed.get("strikes", [])) > 0:
+                    self._persist_to_dedicated_db(processed)
+                    self._cache[sym] = processed
+                    self._cache_time[sym] = now
+                    return processed
+            except Exception as e:
+                logger.warning("Failed processing Dhan live option chain: %s", e)
 
         # 1. Try Live NiftyTrader Web API Fetch (Real Live Option Matrix with Greeks & Full Depth)
         nt_raw = self.fetch_live_chain_from_niftytrader(sym)

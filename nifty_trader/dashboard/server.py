@@ -14303,6 +14303,33 @@ class DashboardHTTPRequestHandler(BaseHTTPRequestHandler):
                     return
 
                 is_gift = sym in ("GIFT", "GIFTNIFTY", "GIFT NIFTY", "GIFT_NIFTY", "NSEIX:NIFTY1!")
+
+                # Priority 1: If Dhan API credentials are configured, fetch Spot Index candles directly from Dhan HQ
+                if dhan_fut_svc.is_configured and not is_gift and sym in ("NIFTY", "NIFTY50", "NIFTY 50", "NSE:NIFTY", "BANKNIFTY", "BANK NIFTY", "NSE:BANKNIFTY", "FINNIFTY"):
+                    intv_map = {"1m": "1", "5m": "5", "15m": "15", "30m": "30", "60m": "60", "1h": "60"}
+                    dhan_intv = intv_map.get(intv.lower(), "5")
+                    days_map = {"1d": 1, "5d": 5, "1mo": 30, "3mo": 90}
+                    dhan_days = days_map.get(rng.lower(), 5)
+                    dhan_spot_bars = dhan_fut_svc.fetch_dhan_index_candles(sym, interval_min=dhan_intv, days=dhan_days)
+                    if dhan_spot_bars and len(dhan_spot_bars) > 0:
+                        payload = {
+                            "symbol": sym,
+                            "interval": intv,
+                            "range": rng,
+                            "currency": "INR",
+                            "status": "ok",
+                            "source": "Dhan HQ API (Live Authenticated)",
+                            "regularMarketPrice": dhan_spot_bars[-1]["close"],
+                            "previousClose": dhan_spot_bars[0]["open"],
+                            "candles": dhan_spot_bars,
+                        }
+                        self.send_response(200)
+                        self.send_header("Content-Type", "application/json")
+                        self.send_header("Cache-Control", "no-cache")
+                        self.end_headers()
+                        self.wfile.write(json.dumps(payload).encode("utf-8"))
+                        return
+
                 ticker_map = {
                     "NIFTY": "^NSEI",
                     "NIFTY50": "^NSEI",
