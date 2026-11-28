@@ -158,6 +158,106 @@ class BrokerService:
         except Exception as ex:
             return {"status": "error", "message": f"Connection error: {ex}"}
 
+    def get_broker_positions(self) -> Dict[str, Any]:
+        """Fetches live real-time positions from Dhan HQ API."""
+        if not self.is_broker_connected:
+            return {
+                "status": "paper",
+                "message": "Broker not connected (Running in Paper Mode)",
+                "positions": [],
+                "count": 0,
+            }
+
+        headers = {
+            "access-token": self.dhan_access_token,
+            "client-id": self.dhan_client_id,
+            "Content-Type": "application/json",
+        }
+        try:
+            with httpx.Client(timeout=10.0) as client:
+                resp = client.get(f"{self.base_url}/positions", headers=headers)
+                if resp.status_code == 200:
+                    data = resp.json()
+                    positions_list = data if isinstance(data, list) else data.get("data", [])
+                    return {
+                        "status": "ok",
+                        "broker": "Dhan HQ",
+                        "positions": positions_list,
+                        "count": len(positions_list),
+                    }
+                else:
+                    logger.warning("Dhan positions query failed HTTP %d: %s", resp.status_code, resp.text)
+                    return {
+                        "status": "error",
+                        "message": f"Dhan error ({resp.status_code}): {resp.text}",
+                        "positions": [],
+                        "count": 0,
+                    }
+        except Exception as ex:
+            logger.warning("Dhan positions network error: %s", ex)
+            return {"status": "error", "message": f"Connection error: {ex}", "positions": [], "count": 0}
+
+    def get_broker_orders(self) -> Dict[str, Any]:
+        """Fetches live real-time order book from Dhan HQ API."""
+        if not self.is_broker_connected:
+            return {
+                "status": "paper",
+                "message": "Broker not connected (Running in Paper Mode)",
+                "orders": [],
+                "count": 0,
+            }
+
+        headers = {
+            "access-token": self.dhan_access_token,
+            "client-id": self.dhan_client_id,
+            "Content-Type": "application/json",
+        }
+        try:
+            with httpx.Client(timeout=10.0) as client:
+                resp = client.get(f"{self.base_url}/orders", headers=headers)
+                if resp.status_code == 200:
+                    data = resp.json()
+                    orders_list = data if isinstance(data, list) else data.get("data", [])
+                    return {
+                        "status": "ok",
+                        "broker": "Dhan HQ",
+                        "orders": orders_list,
+                        "count": len(orders_list),
+                    }
+                else:
+                    logger.warning("Dhan orders query failed HTTP %d: %s", resp.status_code, resp.text)
+                    return {
+                        "status": "error",
+                        "message": f"Dhan error ({resp.status_code}): {resp.text}",
+                        "orders": [],
+                        "count": 0,
+                    }
+        except Exception as ex:
+            logger.warning("Dhan orders network error: %s", ex)
+            return {"status": "error", "message": f"Connection error: {ex}", "orders": [], "count": 0}
+
+    def get_broker_funds(self) -> Dict[str, Any]:
+        """Fetches live account funds & margin limits from Dhan HQ API."""
+        if not self.is_broker_connected:
+            return {"status": "paper", "availMargin": 0.0, "message": "Paper Mode"}
+
+        headers = {
+            "access-token": self.dhan_access_token,
+            "client-id": self.dhan_client_id,
+            "Content-Type": "application/json",
+        }
+        try:
+            with httpx.Client(timeout=10.0) as client:
+                resp = client.get(f"{self.base_url}/fundlimit", headers=headers)
+                if resp.status_code == 200:
+                    data = resp.json()
+                    avail = data.get("availMargin", data.get("availableBalance", 0.0))
+                    return {"status": "ok", "availMargin": float(avail), "details": data}
+                else:
+                    return {"status": "error", "message": f"Dhan error ({resp.status_code})"}
+        except Exception as ex:
+            return {"status": "error", "message": f"Connection error: {ex}"}
+
     def place_broker_order(
         self,
         symbol: str,

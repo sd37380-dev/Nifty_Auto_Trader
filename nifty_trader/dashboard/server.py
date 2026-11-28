@@ -4314,6 +4314,85 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       </div>
     </div>
   </div>
+
+  <!-- Real-Time Open Positions (Dhan HQ Real Account) -->
+  <div class="card" style="margin-bottom: 20px; background: #0f172a; border: 1px solid #10b981; border-radius: 10px; padding: 20px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 10px;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="font-size: 1.05rem; font-weight: 800; color: #34d399;">💼 Real-Time Open Positions (Dhan HQ Real Account)</span>
+        <span id="dhan-positions-count-badge" class="badge badge-green">0 OPEN</span>
+        <span id="dhan-positions-mtm-badge" class="badge badge-blue">MTM: ₹0.00</span>
+      </div>
+      <div style="display: flex; gap: 8px; align-items: center;">
+        <span id="dhan-positions-sync-time" style="font-size: 0.75rem; color: var(--text-secondary);">Last synced: --</span>
+        <button type="button" onclick="loadLiveBrokerData()" class="btn" style="background: #1e293b; color: #34d399; border: 1px solid #10b981; padding: 5px 12px; font-size: 0.75rem; font-weight: 700; border-radius: 5px; cursor: pointer;">
+          🔄 Refresh Real Positions
+        </button>
+      </div>
+    </div>
+    <div style="overflow-x: auto;">
+      <table class="table" style="width: 100%; border-collapse: collapse; font-size: 0.82rem;">
+        <thead>
+          <tr style="border-bottom: 1px solid var(--border); color: #cbd5e1; text-align: left;">
+            <th style="padding: 8px;">Trading Symbol</th>
+            <th style="padding: 8px;">Product</th>
+            <th style="padding: 8px;">Net Qty</th>
+            <th style="padding: 8px;">Buy Avg</th>
+            <th style="padding: 8px;">Sell Avg</th>
+            <th style="padding: 8px;">Current LTP</th>
+            <th style="padding: 8px;">Realized P&amp;L</th>
+            <th style="padding: 8px;">Unrealized MTM</th>
+          </tr>
+        </thead>
+        <tbody id="dhan-positions-tbody">
+          <tr>
+            <td colspan="8" style="text-align: center; color: var(--text-secondary); padding: 20px;">
+              Connect your Dhan credentials above to view real live open positions and active MTM.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Real-Time Order Book (Dhan HQ Real Account) -->
+  <div class="card" style="margin-bottom: 20px; background: #0f172a; border: 1px solid #6366f1; border-radius: 10px; padding: 20px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 10px;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="font-size: 1.05rem; font-weight: 800; color: #a5b4fc;">📑 Real-Time Order Book (Dhan HQ Real Account)</span>
+        <span id="dhan-orders-count-badge" class="badge badge-purple">0 ORDERS</span>
+      </div>
+      <div style="display: flex; gap: 8px; align-items: center;">
+        <span id="dhan-orders-sync-time" style="font-size: 0.75rem; color: var(--text-secondary);">Last synced: --</span>
+        <button type="button" onclick="loadLiveBrokerData()" class="btn" style="background: #1e293b; color: #a5b4fc; border: 1px solid #6366f1; padding: 5px 12px; font-size: 0.75rem; font-weight: 700; border-radius: 5px; cursor: pointer;">
+          🔄 Refresh Real Orders
+        </button>
+      </div>
+    </div>
+    <div style="overflow-x: auto;">
+      <table class="table" style="width: 100%; border-collapse: collapse; font-size: 0.82rem;">
+        <thead>
+          <tr style="border-bottom: 1px solid var(--border); color: #cbd5e1; text-align: left;">
+            <th style="padding: 8px;">Order ID</th>
+            <th style="padding: 8px;">Time</th>
+            <th style="padding: 8px;">Trading Symbol</th>
+            <th style="padding: 8px;">Side</th>
+            <th style="padding: 8px;">Order Type</th>
+            <th style="padding: 8px;">Price / Trigger</th>
+            <th style="padding: 8px;">Traded / Total Qty</th>
+            <th style="padding: 8px;">Status</th>
+          </tr>
+        </thead>
+        <tbody id="dhan-orders-tbody">
+          <tr>
+            <td colspan="8" style="text-align: center; color: var(--text-secondary); padding: 20px;">
+              Connect your Dhan credentials above to view real live orders placed on Dhan.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
 </div>
 
 <!-- Global Broker Configuration Modal (Accessible Everywhere) -->
@@ -4418,6 +4497,9 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       if (tabId === 'tab-swing') {
         if (typeof fetchSwingTradeData === 'function') fetchSwingTradeData();
         if (typeof fetchSwingReports === 'function') fetchSwingReports();
+      }
+      if (tabId === 'tab-broker') {
+        if (typeof loadLiveBrokerData === 'function') loadLiveBrokerData();
       }
       if (tabId === 'tab-backtest' && typeof initBacktestTab === 'function') {
         initBacktestTab();
@@ -10956,6 +11038,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
           if (tabStatus) {
             tabStatus.innerHTML = `<span style="color:#10b981;">🟢 Dhan HQ Broker Connected (Client ID: <b>${data.client_id_masked}</b>). Live order routing &amp; live Futures sync active!</span>`;
           }
+          loadLiveBrokerData();
         } else {
           if (badgeBtn) {
             badgeBtn.innerHTML = '🏦 Broker: 📄 Paper Mode';
@@ -11117,6 +11200,136 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       if (tabStatus) tabStatus.innerHTML = `<span style="color:#ef4444;">❌ Network error: ${err.message}</span>`;
     }
   }
+
+  async function loadLiveBrokerData() {
+    const posTbody = document.getElementById('dhan-positions-tbody');
+    const ordTbody = document.getElementById('dhan-orders-tbody');
+    const posCountBadge = document.getElementById('dhan-positions-count-badge');
+    const posMtmBadge = document.getElementById('dhan-positions-mtm-badge');
+    const ordCountBadge = document.getElementById('dhan-orders-count-badge');
+    const posSyncEl = document.getElementById('dhan-positions-sync-time');
+    const ordSyncEl = document.getElementById('dhan-orders-sync-time');
+    const teleMargin = document.getElementById('tab-broker-telemetry-margin');
+
+    const nowStr = new Date().toLocaleTimeString('en-IN', { hour12: false });
+    if (posSyncEl) posSyncEl.innerText = `Last synced: ${nowStr}`;
+    if (ordSyncEl) ordSyncEl.innerText = `Last synced: ${nowStr}`;
+
+    try {
+      // 1. Fetch live margin / funds
+      fetch('/api/broker/funds').then(r => r.json()).then(fData => {
+        if (fData && fData.status === 'ok' && teleMargin) {
+          teleMargin.innerText = `₹${Number(fData.availMargin || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+        }
+      }).catch(() => {});
+
+      // 2. Fetch live positions
+      const pResp = await fetch('/api/broker/positions');
+      if (pResp.ok) {
+        const pData = await pResp.json();
+        const positions = pData.positions || [];
+        if (posCountBadge) posCountBadge.innerText = `${positions.length} OPEN`;
+
+        if (!positions || positions.length === 0) {
+          if (posTbody) {
+            posTbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--text-secondary); padding: 20px;">
+              ${pData.status === 'ok' ? '🟢 Portfolio Flat • No open positions currently in your Dhan account.' : 'Connect your Dhan credentials to view real live open positions.'}
+            </td></tr>`;
+          }
+          if (posMtmBadge) posMtmBadge.innerText = 'MTM: ₹0.00';
+        } else {
+          let totalUnrealized = 0;
+          let html = '';
+          positions.forEach(p => {
+            const sym = p.tradingSymbol || p.securityId || '--';
+            const prod = p.productType || 'INTRADAY';
+            const netQty = Number(p.netQty ?? (Number(p.buyQty || 0) - Number(p.sellQty || 0)));
+            const buyAvg = Number(p.buyAvg || p.costPrice || 0).toFixed(2);
+            const sellAvg = Number(p.sellAvg || 0).toFixed(2);
+            const ltp = Number(p.ltp || p.lastPrice || 0).toFixed(2);
+            const realized = Number(p.realizedProfit || 0).toFixed(2);
+            const unrealized = Number(p.unrealizedProfit || 0);
+            totalUnrealized += unrealized;
+
+            const mtmColor = unrealized >= 0 ? '#10b981' : '#ef4444';
+            const mtmPrefix = unrealized >= 0 ? '+₹' : '-₹';
+            const absMtm = Math.abs(unrealized).toFixed(2);
+
+            html += `<tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+              <td style="padding: 9px; font-weight: 700; color: #f8fafc;">${sym}</td>
+              <td style="padding: 9px;"><span class="badge badge-blue" style="font-size: 0.70rem;">${prod}</span></td>
+              <td style="padding: 9px; font-weight: 700; color: ${netQty >= 0 ? '#10b981' : '#ef4444'};">${netQty}</td>
+              <td style="padding: 9px;">₹${buyAvg}</td>
+              <td style="padding: 9px;">₹${sellAvg}</td>
+              <td style="padding: 9px; font-weight: 700; color: #38bdf8;">₹${ltp}</td>
+              <td style="padding: 9px; color: ${Number(realized) >= 0 ? '#10b981' : '#ef4444'};">₹${realized}</td>
+              <td style="padding: 9px; font-weight: 800; color: ${mtmColor};">${mtmPrefix}${absMtm}</td>
+            </tr>`;
+          });
+          if (posTbody) posTbody.innerHTML = html;
+          if (posMtmBadge) {
+            const totColor = totalUnrealized >= 0 ? '#10b981' : '#ef4444';
+            posMtmBadge.style.color = totColor;
+            posMtmBadge.innerText = `MTM: ${totalUnrealized >= 0 ? '+' : '-'}₹${Math.abs(totalUnrealized).toFixed(2)}`;
+          }
+        }
+      }
+
+      // 3. Fetch live orders
+      const oResp = await fetch('/api/broker/orders');
+      if (oResp.ok) {
+        const oData = await oResp.json();
+        const orders = oData.orders || [];
+        if (ordCountBadge) ordCountBadge.innerText = `${orders.length} ORDERS`;
+
+        if (!orders || orders.length === 0) {
+          if (ordTbody) {
+            ordTbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--text-secondary); padding: 20px;">
+              ${oData.status === 'ok' ? 'No orders placed today in your Dhan account.' : 'Connect your Dhan credentials to view real live orders.'}
+            </td></tr>`;
+          }
+        } else {
+          let html = '';
+          orders.forEach(o => {
+            const oid = o.orderId || '--';
+            const oTime = o.createTime ? (o.createTime.split(' ')[1] || o.createTime) : '--';
+            const sym = o.tradingSymbol || o.securityId || '--';
+            const side = (o.transactionType || 'BUY').toUpperCase();
+            const sideBadge = side === 'BUY' ? 'badge-green' : 'badge-red';
+            const type = o.orderType || 'MARKET';
+            const price = Number(o.price || 0).toFixed(2);
+            const trigger = Number(o.triggerPrice || 0).toFixed(2);
+            const qty = `${o.filledQty || o.tradedQuantity || 0} / ${o.quantity || 0}`;
+            const status = (o.orderStatus || 'PENDING').toUpperCase();
+            let stBadge = 'badge-yellow';
+            if (status === 'TRADED' || status === 'CONFIRMED') stBadge = 'badge-green';
+            else if (status === 'REJECTED' || status === 'CANCELLED') stBadge = 'badge-red';
+
+            html += `<tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+              <td style="padding: 9px; font-family: monospace; color: #a5b4fc;">${oid}</td>
+              <td style="padding: 9px; color: var(--text-secondary);">${oTime}</td>
+              <td style="padding: 9px; font-weight: 700; color: #f8fafc;">${sym}</td>
+              <td style="padding: 9px;"><span class="badge ${sideBadge}" style="font-size: 0.70rem;">${side}</span></td>
+              <td style="padding: 9px;">${type}</td>
+              <td style="padding: 9px;">₹${price} ${Number(trigger) > 0 ? `(SL: ₹${trigger})` : ''}</td>
+              <td style="padding: 9px; font-weight: 700;">${qty}</td>
+              <td style="padding: 9px;"><span class="badge ${stBadge}" style="font-size: 0.72rem;">${status}</span></td>
+            </tr>`;
+          });
+          if (ordTbody) ordTbody.innerHTML = html;
+        }
+      }
+    } catch (e) {
+      console.warn('Error loading live broker data:', e);
+    }
+  }
+
+  setInterval(() => {
+    const tabEl = document.getElementById('tab-broker');
+    if (tabEl && tabEl.style.display !== 'none' && _brokerStatusCache && _brokerStatusCache.connected) {
+      loadLiveBrokerData();
+    }
+  }, 8000);
 
   setTimeout(loadBrokerStatus, 1500);
 
@@ -13788,6 +14001,54 @@ class DashboardHTTPRequestHandler(BaseHTTPRequestHandler):
                 self.send_header("Content-Type", "application/json")
                 self.end_headers()
                 self.wfile.write(json.dumps({"connected": False, "error": str(ex)}).encode("utf-8"))
+            return
+        elif self.path == "/api/broker/positions":
+            try:
+                from nifty_trader.execution.broker_service import get_broker_service
+                bs = get_broker_service()
+                positions = bs.get_broker_positions()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Cache-Control", "no-cache")
+                self.end_headers()
+                self.wfile.write(json.dumps(positions).encode("utf-8"))
+            except Exception as ex:
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": "error", "message": str(ex), "positions": []}).encode("utf-8"))
+            return
+        elif self.path == "/api/broker/orders":
+            try:
+                from nifty_trader.execution.broker_service import get_broker_service
+                bs = get_broker_service()
+                orders = bs.get_broker_orders()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Cache-Control", "no-cache")
+                self.end_headers()
+                self.wfile.write(json.dumps(orders).encode("utf-8"))
+            except Exception as ex:
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": "error", "message": str(ex), "orders": []}).encode("utf-8"))
+            return
+        elif self.path == "/api/broker/funds":
+            try:
+                from nifty_trader.execution.broker_service import get_broker_service
+                bs = get_broker_service()
+                funds = bs.get_broker_funds()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Cache-Control", "no-cache")
+                self.end_headers()
+                self.wfile.write(json.dumps(funds).encode("utf-8"))
+            except Exception as ex:
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": "error", "message": str(ex), "availMargin": 0.0}).encode("utf-8"))
             return
         elif self.path == "/api/chart/trades":
             try:
