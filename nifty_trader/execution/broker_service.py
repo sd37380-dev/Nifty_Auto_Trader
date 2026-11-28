@@ -42,39 +42,8 @@ class BrokerService:
 
     def __init__(self, root_dir: Optional[Path] = None):
         self.root_dir = root_dir or Path(__file__).resolve().parent.parent.parent
-        # Try loading .env if environment variables are not already present
-        if not os.environ.get("DHAN_CLIENT_ID") or not os.environ.get("DHAN_ACCESS_TOKEN"):
-            env_file = self.root_dir / ".env"
-            if env_file.exists():
-                try:
-                    from dotenv import load_dotenv
-                    load_dotenv(env_file)
-                except Exception:
-                    pass
-    def _reload_env(self):
-        env_file = self.root_dir / ".env"
-        if env_file.exists():
-            try:
-                from dotenv import load_dotenv
-                load_dotenv(env_file, override=True)
-            except Exception:
-                pass
-
-    @property
-    def dhan_client_id(self) -> str:
-        cid = os.environ.get("DHAN_CLIENT_ID", "").strip()
-        if not cid:
-            self._reload_env()
-            cid = os.environ.get("DHAN_CLIENT_ID", "").strip()
-        return cid
-
-    @property
-    def dhan_access_token(self) -> str:
-        tok = os.environ.get("DHAN_ACCESS_TOKEN", "").strip()
-        if not tok or len(tok) <= 15:
-            self._reload_env()
-            tok = os.environ.get("DHAN_ACCESS_TOKEN", "").strip()
-        return tok
+        self._custom_client_id: Optional[str] = None
+        self._custom_access_token: Optional[str] = None
         self.trading_mode = os.environ.get("TRADING_MODE", "PAPER").strip().upper()
         if self.trading_mode not in ("PAPER", "LIVE"):
             self.trading_mode = "PAPER"
@@ -83,6 +52,51 @@ class BrokerService:
         self._auth_message: str = ""
         self._last_auth_check: float = 0.0
         self._init_db()
+
+    def _reload_env(self):
+        for candidate in [
+            self.root_dir / ".env",
+            Path(__file__).resolve().parent.parent.parent / ".env",
+            Path("d:/AI_Trading/nifty-autonomous-trader/.env"),
+            Path("d:/AI_Trading/.env"),
+        ]:
+            if candidate.exists():
+                try:
+                    from dotenv import load_dotenv
+                    load_dotenv(candidate, override=True)
+                    break
+                except Exception:
+                    pass
+
+    @property
+    def dhan_client_id(self) -> str:
+        if self._custom_client_id:
+            return self._custom_client_id
+        cid = os.environ.get("DHAN_CLIENT_ID", "").strip()
+        if not cid:
+            self._reload_env()
+            cid = os.environ.get("DHAN_CLIENT_ID", "").strip()
+        return cid
+
+    @dhan_client_id.setter
+    def dhan_client_id(self, val: str):
+        self._custom_client_id = val.strip() if val else ""
+        os.environ["DHAN_CLIENT_ID"] = self._custom_client_id
+
+    @property
+    def dhan_access_token(self) -> str:
+        if self._custom_access_token:
+            return self._custom_access_token
+        tok = os.environ.get("DHAN_ACCESS_TOKEN", "").strip()
+        if not tok or len(tok) <= 15:
+            self._reload_env()
+            tok = os.environ.get("DHAN_ACCESS_TOKEN", "").strip()
+        return tok
+
+    @dhan_access_token.setter
+    def dhan_access_token(self, val: str):
+        self._custom_access_token = val.strip() if val else ""
+        os.environ["DHAN_ACCESS_TOKEN"] = self._custom_access_token
 
     def _init_db(self):
         """Initializes SQLite table for chart trade audit logs."""
@@ -239,31 +253,32 @@ class BrokerService:
         os.environ["DHAN_CLIENT_ID"] = self.dhan_client_id
         os.environ["DHAN_ACCESS_TOKEN"] = self.dhan_access_token
 
-        env_file = self.root_dir / ".env"
-        try:
-            if env_file.exists():
-                lines = env_file.read_text(encoding="utf-8").splitlines()
-                updated_id = False
-                updated_token = False
-                new_lines = []
-                for line in lines:
-                    if line.startswith("DHAN_CLIENT_ID="):
+        # Persist to candidate .env locations
+        for env_file in [self.root_dir / ".env", Path("d:/AI_Trading/nifty-autonomous-trader/.env"), Path("d:/AI_Trading/.env")]:
+            try:
+                if env_file.exists():
+                    lines = env_file.read_text(encoding="utf-8").splitlines()
+                    updated_id = False
+                    updated_token = False
+                    new_lines = []
+                    for line in lines:
+                        if line.startswith("DHAN_CLIENT_ID="):
+                            new_lines.append(f"DHAN_CLIENT_ID={self.dhan_client_id}")
+                            updated_id = True
+                        elif line.startswith("DHAN_ACCESS_TOKEN="):
+                            new_lines.append(f"DHAN_ACCESS_TOKEN={self.dhan_access_token}")
+                            updated_token = True
+                        else:
+                            new_lines.append(line)
+                    if not updated_id:
                         new_lines.append(f"DHAN_CLIENT_ID={self.dhan_client_id}")
-                        updated_id = True
-                    elif line.startswith("DHAN_ACCESS_TOKEN="):
+                    if not updated_token:
                         new_lines.append(f"DHAN_ACCESS_TOKEN={self.dhan_access_token}")
-                        updated_token = True
-                    else:
-                        new_lines.append(line)
-                if not updated_id:
-                    new_lines.append(f"DHAN_CLIENT_ID={self.dhan_client_id}")
-                if not updated_token:
-                    new_lines.append(f"DHAN_ACCESS_TOKEN={self.dhan_access_token}")
-                env_file.write_text("\n".join(new_lines) + "\n", encoding="utf-8")
-            else:
-                env_file.write_text(f"DHAN_CLIENT_ID={self.dhan_client_id}\nDHAN_ACCESS_TOKEN={self.dhan_access_token}\n", encoding="utf-8")
-        except Exception as e:
-            logger.warning("Could not persist Dhan credentials to .env: %s", e)
+                    env_file.write_text("\n".join(new_lines) + "\n", encoding="utf-8")
+                else:
+                    env_file.write_text(f"DHAN_CLIENT_ID={self.dhan_client_id}\nDHAN_ACCESS_TOKEN={self.dhan_access_token}\n", encoding="utf-8")
+            except Exception as e:
+                logger.warning("Could not persist Dhan credentials to %s: %s", env_file, e)
 
         # Invalidate authentication cache and verify
         self._auth_verified = None
