@@ -3,7 +3,7 @@ Dhan HQ API Exclusive Option Chain Data Fetcher and Paper Trading Service.
 
 Features:
 1. Fetches real-time Option Chain for NIFTY 50 and BANKNIFTY exclusively via Dhan HQ API:
-   - Strike prices (around ATM ± 20 strikes)
+   - Strike prices (focused around ATM: 5 strikes below, ATM, 5 strikes above = 11 strikes total)
    - CE (Call) & PE (Put) LTP, Bid/Ask, OI, Change in OI, IV, Volume
    - Calculates PCR (Put-Call Ratio), Max Pain, and Total OI distribution
    - Full support for 4 upcoming weekly option expiries via Dhan HQ API (/v2/optionchain/expirylist)
@@ -359,7 +359,7 @@ class NSEOptionChainService:
                 except ValueError:
                     continue
 
-                if abs(strike - atm_strike) > (step * 20):
+                if abs(strike - atm_strike) > (step * 5):
                     continue
 
                 ce_node = strike_info.get("ce", {}) or {}
