@@ -47,6 +47,27 @@ class TelegramNotificationService:
         self.bot_token = os.environ.get("TELEGRAM_BOT_TOKEN", "").strip()
         self.chat_id = os.environ.get("TELEGRAM_CHAT_ID", "").strip()
 
+        # Fallback: Parse .env directly if environment variables are not set in the process
+        if not (self.bot_token and self.chat_id):
+            env_paths = [
+                self.root_dir / ".env",
+                self.root_dir.parent / ".env",
+                Path("d:/AI_Trading/nifty-autonomous-trader/.env"),
+                Path("d:/AI_Trading/.env"),
+            ]
+            for ep in env_paths:
+                if ep.exists():
+                    for line in ep.read_text(encoding="utf-8", errors="ignore").splitlines():
+                        line = line.strip()
+                        if line.startswith("TELEGRAM_BOT_TOKEN=") and not self.bot_token:
+                            self.bot_token = line.split("=", 1)[1].strip().strip('"').strip("'")
+                            os.environ["TELEGRAM_BOT_TOKEN"] = self.bot_token
+                        elif line.startswith("TELEGRAM_CHAT_ID=") and not self.chat_id:
+                            self.chat_id = line.split("=", 1)[1].strip().strip('"').strip("'")
+                            os.environ["TELEGRAM_CHAT_ID"] = self.chat_id
+                if self.bot_token and self.chat_id:
+                    break
+
         self._executor = ThreadPoolExecutor(max_workers=3, thread_name_prefix="telegram_alert")
         self._sent_news_ids = set()
         self._load_sent_news_ids()
@@ -142,9 +163,15 @@ class TelegramNotificationService:
                     if resp.status_code == 200:
                         logger.info("Telegram notification sent successfully.")
                         return True
-                    else:
-                        logger.warning("Telegram send failed (HTTP %d): %s", resp.status_code, resp.text)
-                        return False
+                    elif resp.status_code == 400 and parse_mode:
+                        # Fallback to plain text if HTML markup parsing failed
+                        payload.pop("parse_mode", None)
+                        fallback_resp = client.post(url, json=payload)
+                        if fallback_resp.status_code == 200:
+                            logger.info("Telegram notification sent as plain text fallback.")
+                            return True
+                    logger.warning("Telegram send failed (HTTP %d): %s", resp.status_code, resp.text)
+                    return False
             except Exception as ex:
                 logger.warning("Telegram network error: %s", ex)
                 return False

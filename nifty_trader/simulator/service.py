@@ -154,6 +154,8 @@ class SimulatorBackgroundService:
             if tv_shots:
                 self.last_screenshot_path = str(tv_shots[0])
 
+        self.active_bias_1h: str = "NEUTRAL"
+        self.active_entry_timeframe: str = "15M"
         self._init_db()
         self._load_state()
         self.update_report_files()
@@ -374,31 +376,32 @@ class SimulatorBackgroundService:
         self.is_running = False
         self.update_report_files()
 
-    def _compute_indicators(self, latest_candle: Dict[str, Any]) -> Dict[str, Any]:
+    def _compute_indicators(self, latest_candle: Dict[str, Any], timeframe: str = "15M") -> Dict[str, Any]:
         """Calculates indicators combining historical baseline with the newly observed candle."""
         sim = NiftyOptionSimulator(lot_size=self.lot_size, default_lots=self.lots)
-        try:
-            df = sim.load_dataset(timeframe="15M", days_back=10)
-            if not df.empty:
-                last_row = df.iloc[-1]
-                return {
-                    "ema_9": float(last_row.get("ema_9", latest_candle["spot_close"])),
-                    "ema_14": float(last_row.get("ema_14", latest_candle["spot_close"])),
-                    "ema_21": float(last_row.get("ema_21", latest_candle["spot_close"])),
-                    "ema_50": float(last_row.get("ema_50", latest_candle["spot_close"])),
-                    "ema_200": float(last_row.get("ema_200", latest_candle["spot_close"])),
-                    "rsi": float(last_row.get("rsi", 50.0)),
-                    "vwap": float(last_row.get("vwap", latest_candle["spot_close"])),
-                    "supertrend": float(last_row.get("supertrend", latest_candle["spot_close"])),
-                    "supertrend_dir": int(last_row.get("supertrend_dir", 0)),
-                    "pivot": float(last_row.get("pivot", latest_candle["spot_close"])),
-                    "r1": float(last_row.get("r1", latest_candle["spot_close"] + 50)),
-                    "s1": float(last_row.get("s1", latest_candle["spot_close"] - 50)),
-                    "cpr_top": float(last_row.get("cpr_top", latest_candle["spot_close"] + 20)),
-                    "cpr_bot": float(last_row.get("cpr_bot", latest_candle["spot_close"] - 20)),
-                }
-        except Exception as e:
-            logger.debug("Could not compute full historical indicators: %s", e)
+        for tf in ([timeframe, "15M"] if timeframe != "15M" else ["15M"]):
+            try:
+                df = sim.load_dataset(timeframe=tf, days_back=10)
+                if not df.empty:
+                    last_row = df.iloc[-1]
+                    return {
+                        "ema_9": float(last_row.get("ema_9", latest_candle["spot_close"])),
+                        "ema_14": float(last_row.get("ema_14", latest_candle["spot_close"])),
+                        "ema_21": float(last_row.get("ema_21", latest_candle["spot_close"])),
+                        "ema_50": float(last_row.get("ema_50", latest_candle["spot_close"])),
+                        "ema_200": float(last_row.get("ema_200", latest_candle["spot_close"])),
+                        "rsi": float(last_row.get("rsi", 50.0)),
+                        "vwap": float(last_row.get("vwap", latest_candle["spot_close"])),
+                        "supertrend": float(last_row.get("supertrend", latest_candle["spot_close"])),
+                        "supertrend_dir": int(last_row.get("supertrend_dir", 0)),
+                        "pivot": float(last_row.get("pivot", latest_candle["spot_close"])),
+                        "r1": float(last_row.get("r1", latest_candle["spot_close"] + 50)),
+                        "s1": float(last_row.get("s1", latest_candle["spot_close"] - 50)),
+                        "cpr_top": float(last_row.get("cpr_top", latest_candle["spot_close"] + 20)),
+                        "cpr_bot": float(last_row.get("cpr_bot", latest_candle["spot_close"] - 20)),
+                    }
+            except Exception as e:
+                logger.debug("Could not compute full historical indicators (%s): %s", tf, e)
 
         sc = float(latest_candle["spot_close"])
         return {
@@ -406,6 +409,69 @@ class SimulatorBackgroundService:
             "rsi": 50.0, "vwap": sc, "supertrend": sc, "supertrend_dir": 1,
             "pivot": sc, "r1": sc + 50, "s1": sc - 50, "cpr_top": sc + 20, "cpr_bot": sc - 20
         }
+
+    def _determine_1h_bias(self, unified_obs: Any = None) -> str:
+        """Determines primary directional bias (BULLISH / BEARISH / NEUTRAL) from 1H candles."""
+        candles_1h = []
+        if unified_obs and hasattr(unified_obs, "numerical"):
+            candles_1h = getattr(unified_obs.numerical, "candles_1h", []) or []
+
+        if len(candles_1h) >= 2:
+            recent = candles_1h[-3:] if len(candles_1h) >= 3 else candles_1h[-2:]
+            first_open = float(recent[0].open)
+            last_close = float(recent[-1].close)
+            prev_close = float(candles_1h[-2].close)
+            if first_open > 0:
+                pct_move = ((last_close - first_open) / first_open) * 100.0
+                if last_close > prev_close and pct_move >= 0.08:
+                    return "BULLISH"
+                if last_close < prev_close and pct_move <= -0.08:
+                    return "BEARISH"
+        elif len(candles_1h) == 1:
+            c = candles_1h[0]
+            if float(c.close) > float(c.open):
+                return "BULLISH"
+            if float(c.close) < float(c.open):
+                return "BEARISH"
+        return "NEUTRAL"
+
+    def _select_adaptive_entry_timeframe(
+        self,
+        unified_obs: Any = None,
+        bias_1h: str = "NEUTRAL",
+    ) -> tuple[str, str]:
+        """
+        Selects 5M or 15M entry timeframe based on live market conditions:
+        - 5M: When 5M candles show strong directional momentum/range expansion aligned with 1H bias.
+        - 15M: Default for normal, choppy, or neutral-bias conditions requiring 15M confirmation.
+        """
+        candles_5m = []
+        if unified_obs and hasattr(unified_obs, "numerical"):
+            candles_5m = getattr(unified_obs.numerical, "candles_5m", []) or []
+
+        if not candles_5m or bias_1h == "NEUTRAL":
+            return "15M", "Standard 15M confirmation"
+
+        latest_5m = candles_5m[-1]
+        o = float(latest_5m.open)
+        h = float(latest_5m.high)
+        l = float(latest_5m.low)
+        c = float(latest_5m.close)
+        body_pct = ((c - o) / o) * 100.0 if o > 0 else 0.0
+        latest_range = h - l
+
+        avg_range = latest_range
+        if len(candles_5m) >= 4:
+            prev_ranges = [float(x.high) - float(x.low) for x in candles_5m[-4:-1]]
+            avg_range = sum(prev_ranges) / len(prev_ranges) if prev_ranges else latest_range
+
+        range_expansion = avg_range > 0 and latest_range >= (1.25 * avg_range)
+        aligned_bull = bias_1h == "BULLISH" and c > o and (body_pct >= 0.08 or range_expansion)
+        aligned_bear = bias_1h == "BEARISH" and c < o and (body_pct <= -0.08 or range_expansion)
+
+        if aligned_bull or aligned_bear:
+            return "5M", f"Fast 5M momentum aligned with 1H {bias_1h} bias"
+        return "15M", f"15M confirmation preferred under current 1H {bias_1h} condition"
 
     def get_latest_screenshot_path(self) -> Optional[str]:
         """Returns the most recent TradingView chart screenshot path."""
@@ -615,7 +681,13 @@ class SimulatorBackgroundService:
         self.last_analysis_time = now_str
         self.total_observations_analyzed += 1
 
-        # 1. Extract newly observed 15M candle and screenshot reference
+        # 1. Determine 1H Primary Trend Bias & Adaptive Entry Timeframe (5M or 15M)
+        bias_1h = self._determine_1h_bias(unified_obs)
+        entry_tf, tf_reason = self._select_adaptive_entry_timeframe(unified_obs, bias_1h=bias_1h)
+        self.active_bias_1h = bias_1h
+        self.active_entry_timeframe = entry_tf
+
+        # Extract newly observed 5M/15M candle and screenshot reference
         candle_data = None
         screenshot_ref = None
 
@@ -624,17 +696,28 @@ class SimulatorBackgroundService:
                 screenshot_ref = unified_obs.visual.screenshot_path
                 self.last_screenshot_path = screenshot_ref
 
-            if hasattr(unified_obs, "numerical") and getattr(unified_obs.numerical, "latest_15m", None):
-                c15 = unified_obs.numerical.latest_15m
-                candle_data = {
-                    "spot_open": float(c15.open),
-                    "spot_high": float(c15.high),
-                    "spot_low": float(c15.low),
-                    "spot_close": float(c15.close),
-                    "spot_vol": int(getattr(c15, "volume", 10000) or 10000),
-                    "time_str": unified_obs.observed_at_ist.strftime("%H:%M") if hasattr(unified_obs, "observed_at_ist") else "12:00",
-                    "date": str(unified_obs.observed_at_ist.date()) if hasattr(unified_obs, "observed_at_ist") else str(datetime.now().date()),
-                }
+            if hasattr(unified_obs, "numerical"):
+                target_candle = None
+                if entry_tf == "5M" and getattr(unified_obs.numerical, "latest_5m", None):
+                    target_candle = unified_obs.numerical.latest_5m
+                elif getattr(unified_obs.numerical, "latest_15m", None):
+                    target_candle = unified_obs.numerical.latest_15m
+                    entry_tf = "15M"
+                elif getattr(unified_obs.numerical, "latest_5m", None):
+                    target_candle = unified_obs.numerical.latest_5m
+                    entry_tf = "5M"
+
+                if target_candle is not None:
+                    self.active_entry_timeframe = entry_tf
+                    candle_data = {
+                        "spot_open": float(target_candle.open),
+                        "spot_high": float(target_candle.high),
+                        "spot_low": float(target_candle.low),
+                        "spot_close": float(target_candle.close),
+                        "spot_vol": int(getattr(target_candle, "volume", 10000) or 10000),
+                        "time_str": unified_obs.observed_at_ist.strftime("%H:%M") if hasattr(unified_obs, "observed_at_ist") else "12:00",
+                        "date": str(unified_obs.observed_at_ist.date()) if hasattr(unified_obs, "observed_at_ist") else str(datetime.now().date()),
+                    }
 
         if not candle_data and custom_candle:
             candle_data = custom_candle
@@ -720,12 +803,23 @@ class SimulatorBackgroundService:
                 self.update_report_files()
                 return
 
-        # 3. If flat, evaluate the rule locally!
+        # 3. If flat, evaluate the rule locally with 1H Bias + Adaptive 5M/15M Entry!
         if self.active_position is None:
-            indicators = self._compute_indicators(candle_data)
+            indicators = self._compute_indicators(candle_data, timeframe=entry_tf)
             signal: TradeSignal = self.active_rule.on_candle(candle_series, indicators, self.active_position)
 
-            if signal.signal_type in [SignalType.BUY_CE, SignalType.BUY_PE]:
+            counter_trend = (
+                (bias_1h == "BULLISH" and signal.signal_type == SignalType.BUY_PE)
+                or (bias_1h == "BEARISH" and signal.signal_type == SignalType.BUY_CE)
+            )
+            if counter_trend:
+                self.last_chart_verdict = (
+                    f"WAIT (1H={bias_1h} | {entry_tf}): Counter-trend {signal.signal_type.value} filtered by 1H bias"
+                )
+                self._append_log(
+                    f"[{now_str}] 🛡️ [1H BIAS FILTER] NIFTY Spot: {spot_close:.1f} | 1H Bias: {bias_1h} | Entry TF: {entry_tf} ({tf_reason}) | Filtered {signal.signal_type.value}."
+                )
+            elif signal.signal_type in [SignalType.BUY_CE, SignalType.BUY_PE]:
                 # Apply User Configured Risk & Exit Settings (Points or %)
                 signal.sl_points = self.sl_val
                 signal.sl_mode = self.sl_mode
@@ -746,14 +840,14 @@ class SimulatorBackgroundService:
                 sl_desc = f"{self.sl_val}%" if self.sl_mode == "PERCENT" else f"{self.sl_val} pts"
                 tgt_desc = f"{self.target_val}%" if self.target_mode == "PERCENT" else f"{self.target_val} pts"
 
-                self.last_chart_verdict = f"RULE PASSED: BUY {pos.option_type} {pos.strike} ({signal.reason})"
+                self.last_chart_verdict = f"RULE PASSED (1H={bias_1h} | {entry_tf}): BUY {pos.option_type} {pos.strike} ({signal.reason})"
                 self._append_log(
-                    f"[{now_str}] ⚡ [15M CHART RULE PASSED] Entry {pos.option_type} | Strike: {pos.strike} | Lots: {pos.lots} ({pos.qty} qty) | Buy: Rs. {pos.entry_premium:.2f} | SL: Rs. {pos.sl_price:.2f} ({sl_desc}) | Target: Rs. {pos.target_price:.2f} ({tgt_desc}) | Reason: {signal.reason}"
+                    f"[{now_str}] ⚡ [{entry_tf} CHART RULE PASSED | 1H={bias_1h}] Entry {pos.option_type} | Strike: {pos.strike} | Lots: {pos.lots} ({pos.qty} qty) | Buy: Rs. {pos.entry_premium:.2f} | SL: Rs. {pos.sl_price:.2f} ({sl_desc}) | Target: Rs. {pos.target_price:.2f} ({tgt_desc}) | Reason: {signal.reason} ({tf_reason})"
                 )
             else:
-                self.last_chart_verdict = f"CHART ANALYZED (15M): {signal.reason} (Setup not triggered)"
+                self.last_chart_verdict = f"CHART ANALYZED (1H={bias_1h} | {entry_tf}): {signal.reason} (Setup not triggered)"
                 self._append_log(
-                    f"[{now_str}] 🔍 [15M CHART ANALYZED] NIFTY Spot: {spot_close:.1f} | Rule: {self.active_rule.name} -> {signal.reason} | No trade taken."
+                    f"[{now_str}] 🔍 [{entry_tf} CHART ANALYZED | 1H={bias_1h}] NIFTY Spot: {spot_close:.1f} | Rule: {self.active_rule.name} -> {signal.reason} ({tf_reason}) | No trade taken."
                 )
 
         self.update_report_files()
@@ -798,6 +892,8 @@ class SimulatorBackgroundService:
                     self.active_position.sl_price,
                     round(current_prem - self.active_position.trail_step, 2)
                 )
+
+        self._save_active_pos(self.active_position)
 
         # Evaluate Exit: Check SL and Target
         exit_reason = None
@@ -1044,6 +1140,60 @@ class SimulatorBackgroundService:
 
     def get_dashboard_summary(self) -> Dict[str, Any]:
         """Provides full telemetry dictionary for the web dashboard."""
+        if self.db_path and self.db_path.exists():
+            try:
+                conn = sqlite3.connect(str(self.db_path), timeout=3.0)
+                conn.row_factory = sqlite3.Row
+                pos_row = conn.execute("SELECT data FROM sim_active_position WHERE id = 1").fetchone()
+                if pos_row and pos_row["data"]:
+                    pos_data = json.loads(pos_row["data"])
+                    self.active_position = OptionPosition(**pos_data)
+                else:
+                    self.active_position = None
+
+                # Deduplicate and sync recent trades from SQLite
+                rows = conn.execute("SELECT * FROM sim_trades ORDER BY exit_time DESC LIMIT 50").fetchall()
+                if rows:
+                    seen = set()
+                    loaded = []
+                    for r in rows:
+                        tid = r["trade_id"]
+                        if tid in seen:
+                            continue
+                        seen.add(tid)
+                        try:
+                            reason_val = ExitReason(r["exit_reason"])
+                        except Exception:
+                            reason_val = ExitReason.STOP_LOSS
+                        loaded.append(TradeResult(
+                            trade_id=r["trade_id"],
+                            symbol=r["symbol"],
+                            option_type=r["option_type"],
+                            strike=r["strike"],
+                            lots=r["lots"],
+                            qty=r["qty"],
+                            entry_time=r["entry_time"],
+                            exit_time=r["exit_time"],
+                            entry_spot=r["entry_spot"],
+                            exit_spot=r["exit_spot"],
+                            entry_premium=r["entry_premium"],
+                            exit_premium=r["exit_premium"],
+                            exit_reason=reason_val,
+                            gross_pnl=r["gross_pnl"],
+                            brokerage=r["brokerage"],
+                            taxes=r["taxes"],
+                            total_charges=r["total_charges"],
+                            net_pnl=r["net_pnl"],
+                            pnl_pct=r["pnl_pct"],
+                            duration_minutes=r["duration_minutes"],
+                            rule_name=r["rule_name"],
+                        ))
+                    self.recent_trades = loaded
+
+                conn.close()
+            except Exception as _ex:
+                logger.debug("Sync active pos error: %s", _ex)
+
         wins = [t for t in self.recent_trades if t.net_pnl > 0]
         losses = [t for t in self.recent_trades if t.net_pnl < 0]
 
@@ -1077,7 +1227,9 @@ class SimulatorBackgroundService:
         report_preview = report_md_path.read_text(encoding="utf-8") if report_md_path.exists() else ""
 
         return {
-            "status": "WAITING_15M_CHART" if self.is_running else "PAUSED",
+            "status": f"WAITING_{getattr(self, 'active_entry_timeframe', '15M')}_CHART" if self.is_running else "PAUSED",
+            "active_bias_1h": getattr(self, "active_bias_1h", "NEUTRAL"),
+            "active_entry_timeframe": getattr(self, "active_entry_timeframe", "15M"),
             "rule_name": self.active_rule.name,
             "rule_description": self.active_rule.description,
             "lot_size": self.lot_size,

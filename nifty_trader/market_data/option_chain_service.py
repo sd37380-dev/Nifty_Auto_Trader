@@ -1119,9 +1119,12 @@ class NSEOptionChainService:
         trailing_sl: bool = True,
         trail_step: float = 15.0,
         action: str = "BUY",
+        expiry: Optional[str] = None,
+        moneyness: str = "ITM",
     ) -> Dict[str, Any]:
         """
         Executes a direct paper trade from the Option Chain into SimulatorBackgroundService.
+        Enforces ITM contracts and next-expiry tracking.
         """
         from nifty_trader.simulator.service import get_simulator_service
         from nifty_trader.simulator.contracts import OptionPosition
@@ -1133,6 +1136,20 @@ class NSEOptionChainService:
         qty = lots * lot_size
         opt_type = option_type.upper()
         act = action.upper()
+
+        # If expiry not specified, resolve to next upcoming expiry
+        if not expiry:
+            try:
+                exp_data = self.get_next_expiries_from_nse(symbol, count=2)
+                expiries = exp_data.get("expiries", [])
+                if expiries:
+                    expiry = expiries[0]
+            except Exception:
+                pass
+        if not expiry:
+            chain = self.get_option_chain(symbol)
+            expiry_dates = chain.get("expiry_dates", [])
+            expiry = expiry_dates[1] if len(expiry_dates) > 1 else chain.get("expiry", "")
 
         # If premium is not provided, look it up in chain
         if not premium or premium <= 0:
@@ -1176,14 +1193,26 @@ class NSEOptionChainService:
             target_mode="POINTS",
             mtm_pnl=0.0,
             status="OPEN",
+            expiry=str(expiry or ""),
+            moneyness=str(moneyness or "ITM"),
         )
 
         # Place into simulator
         sim_service.active_position = pos
         sim_service._save_active_pos(pos)
 
+        # Audible execution beep alert
+        try:
+            import winsound
+            winsound.Beep(1000, 150)
+            winsound.Beep(1500, 150)
+            winsound.Beep(2000, 300)
+        except Exception:
+            pass
+
+        exp_tag = f" | Expiry: {expiry}" if expiry else ""
         log_msg = (
-            f"[{now_str}] ⚡ [OPTION CHAIN PAPER TRADE] Placed: {inst_name} {strike} {opt_type} | "
+            f"[{now_str}] ⚡ [OPTION CHAIN PAPER TRADE] Placed: {inst_name} {strike} {opt_type} ({moneyness}{exp_tag}) | "
             f"Lots: {lots} ({qty} Qty) | Entry: ₹{premium:.2f} | SL: ₹{sl_price:.2f} | Tgt: ₹{target_price:.2f} | Spot: ₹{spot_price:.2f}"
         )
         sim_service._append_log(log_msg)

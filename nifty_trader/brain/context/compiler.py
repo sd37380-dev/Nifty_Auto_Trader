@@ -43,15 +43,17 @@ class BrainContextCompiler:
             requested_focus = requested_focus or getattr(brain_input, "requested_focus", None)
             memory_context = memory_context or getattr(brain_input, "memory_context", None)
 
-        # 1. Numerical 1H & 15M Context
+        # 1. Numerical 1H (Bias) & 15M / 5M (Adaptive Entry) Context
         c1h = obs.numerical.candles_1h
         c15m = obs.numerical.candles_15m
+        c5m = getattr(obs.numerical, "candles_5m", [])
 
         h1_recent = c1h[-5:] if c1h else []
         m15_recent = c15m[-10:] if c15m else []
+        m5_recent = c5m[-12:] if c5m else []
 
         h1_text = (
-            f"Total 1H Candles: {len(c1h)}\n"
+            f"Total 1H Candles (Primary Trend Bias): {len(c1h)}\n"
             + "\n".join(
                 f"  * {c.timestamp_ist.strftime('%Y-%m-%d %H:%M')}: Open={c.open:.2f}, High={c.high:.2f}, Low={c.low:.2f}, Close={c.close:.2f}, Volume={c.volume or 0}"
                 for c in h1_recent
@@ -61,13 +63,23 @@ class BrainContextCompiler:
         )
 
         m15_text = (
-            f"Total 15M Candles: {len(c15m)}\n"
+            f"Total 15M Candles (Standard Entry / Structure): {len(c15m)}\n"
             + "\n".join(
                 f"  * {c.timestamp_ist.strftime('%Y-%m-%d %H:%M')}: Open={c.open:.2f}, High={c.high:.2f}, Low={c.low:.2f}, Close={c.close:.2f}, Volume={c.volume or 0}"
                 for c in m15_recent
             )
             if m15_recent
             else "No 15M candles available."
+        )
+
+        m5_text = (
+            f"Total 5M Candles (Fast Momentum Entry): {len(c5m)}\n"
+            + "\n".join(
+                f"  * {c.timestamp_ist.strftime('%Y-%m-%d %H:%M')}: Open={c.open:.2f}, High={c.high:.2f}, Low={c.low:.2f}, Close={c.close:.2f}, Volume={c.volume or 0}"
+                for c in m5_recent
+            )
+            if m5_recent
+            else "No 5M candles available."
         )
 
         # 2. Visual Context (TradingView)
@@ -183,6 +195,12 @@ class BrainContextCompiler:
             "observed_at_ist": obs.observed_at_ist.strftime("%Y-%m-%d %H:%M:%S IST"),
             "h1_context": h1_text,
             "m15_tactical": m15_text,
+            "m5_fast_entry": m5_text,
+            "multi_timeframe_rule": (
+                "Use 1H candles for primary directional bias (BULLISH / BEARISH / NEUTRAL), "
+                "and select 5M (fast momentum/breakout) or 15M (structure confirmation/choppy market) "
+                "for entry timing according to live market conditions."
+            ),
             "tradingview_visual": tv_text,
             "sensibull_derivatives": sensi_text,
             "cross_source_validation": cross_text,

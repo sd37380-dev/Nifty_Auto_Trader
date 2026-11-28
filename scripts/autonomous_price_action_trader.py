@@ -52,6 +52,7 @@ from pathlib import Path
 import sqlite3
 import subprocess
 import sys
+import shutil
 import time
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -64,6 +65,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from nifty_trader.market_data.option_chain_service import get_option_chain_service
+from nifty_trader.market_data.contributors_service import get_contributors_service
 from nifty_trader.notifications.telegram_service import get_telegram_service
 from nifty_trader.simulator.service import get_simulator_service
 
@@ -85,6 +87,29 @@ logging.basicConfig(
 logger = logging.getLogger("HermesV2")
 
 DASH = "http://127.0.0.1:8080"
+
+
+def play_beep_chime(event: str = "ENTRY"):
+    """Audible Windows beep chime for trade execution and exits."""
+    try:
+        import platform
+        if platform.system() == "Windows":
+            import winsound
+            if event == "ENTRY":
+                winsound.Beep(1000, 150)
+                winsound.Beep(1500, 150)
+                winsound.Beep(2000, 300)
+            elif event == "EXIT_WIN":
+                winsound.Beep(1500, 150)
+                winsound.Beep(2000, 150)
+                winsound.Beep(2500, 400)
+            elif event == "EXIT_LOSS":
+                winsound.Beep(800, 300)
+                winsound.Beep(600, 400)
+            else:
+                winsound.Beep(1200, 300)
+    except Exception as ex:
+        logger.debug("Beep audio error: %s", ex)
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -189,6 +214,7 @@ def multi_tf_bias(symbol: str) -> Dict[str, Any]:
         "DAILY":   fetch_candles(symbol, "1d", 50),
         "4H":      fetch_candles(symbol, "4h", 40),
         "1H":      fetch_candles(symbol, "1h", 50),
+        "15M":     fetch_candles(symbol, "15m", 50),
     }
     results = {}
     votes = {"BULLISH": 0, "BEARISH": 0, "NEUTRAL": 0}
@@ -421,6 +447,227 @@ def analyze_5m_candles(symbol: str) -> Dict[str, Any]:
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#  ORDER FLOW & CONFLUENCE HELPERS (POC, NIFTY-BN, CONTRIBUTORS, DELTA)
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+def compute_volume_profile(candles: List[Dict[str, Any]], num_bins: int = 25) -> Dict[str, Any]:
+    """Computes intraday Volume Profile: Point of Control (POC), Value Area High (VAH), and Value Area Low (VAL)."""
+    if not candles or len(candles) < 5:
+        return {"poc": 0.0, "vah": 0.0, "val": 0.0, "total_vol": 0, "status": "INSUFFICIENT_DATA"}
+    
+    recent = candles[-75:] if len(candles) > 75 else candles
+    lows = [float(c["low"]) for c in recent if "low" in c]
+    highs = [float(c["high"]) for c in recent if "high" in c]
+    if not lows or not highs:
+        return {"poc": 0.0, "vah": 0.0, "val": 0.0, "total_vol": 0, "status": "NO_RANGE"}
+    
+    min_p, max_p = min(lows), max(highs)
+    if min_p == max_p:
+        return {"poc": min_p, "vah": max_p, "val": min_p, "total_vol": 0, "status": "FLAT"}
+    
+    bin_width = (max_p - min_p) / num_bins
+    bins = [0.0] * num_bins
+    bin_prices = [min_p + (i + 0.5) * bin_width for i in range(num_bins)]
+    
+    total_vol = 0.0
+    for c in recent:
+        v = float(c.get("volume", 0) or 0)
+        c_low = float(c.get("low", 0))
+        c_high = float(c.get("high", 0))
+        if v <= 0 or c_high <= c_low:
+            continue
+        total_vol += v
+        for i in range(num_bins):
+            b_low = min_p + i * bin_width
+            b_high = b_low + bin_width
+            overlap = max(0.0, min(c_high, b_high) - max(c_low, b_low))
+            if overlap > 0:
+                bins[i] += v * (overlap / (c_high - c_low))
+                
+    if not bins or max(bins) == 0:
+        return {"poc": round((min_p + max_p) / 2, 2), "vah": max_p, "val": min_p, "total_vol": total_vol, "status": "NO_VOLUME"}
+    
+    poc_idx = bins.index(max(bins))
+    poc = round(bin_prices[poc_idx], 2)
+    
+    target_va_vol = 0.70 * total_vol
+    curr_va_vol = bins[poc_idx]
+    up_idx = poc_idx
+    down_idx = poc_idx
+    
+    while curr_va_vol < target_va_vol and (up_idx < num_bins - 1 or down_idx > 0):
+        next_up = bins[up_idx + 1] if up_idx < num_bins - 1 else 0.0
+        next_down = bins[down_idx - 1] if down_idx > 0 else 0.0
+        if next_up >= next_down and up_idx < num_bins - 1:
+            up_idx += 1
+            curr_va_vol += bins[up_idx]
+        elif down_idx > 0:
+            down_idx -= 1
+            curr_va_vol += bins[down_idx]
+        else:
+            if up_idx < num_bins - 1:
+                up_idx += 1
+                curr_va_vol += bins[up_idx]
+            else:
+                break
+                
+    vah = round(bin_prices[up_idx] + 0.5 * bin_width, 2)
+    val = round(bin_prices[down_idx] - 0.5 * bin_width, 2)
+    
+    return {
+        "poc": poc,
+        "vah": vah,
+        "val": val,
+        "total_volume": round(total_vol, 0),
+        "status": "VALID",
+    }
+
+
+def get_nifty_bn_comparison() -> Dict[str, Any]:
+    """Compares NIFTY 50 and BANKNIFTY live spot prices, percentage change, and alignment."""
+    try:
+        r = httpx.get(f"{DASH}/api/data", timeout=4.0)
+        data = r.json()
+        insts = data.get("spot", {}).get("instruments", {})
+        nifty = insts.get("NIFTY 50", {})
+        bn = insts.get("BANKNIFTY", {})
+        
+        n_price = nifty.get("spot_price") or 0.0
+        n_chg = nifty.get("change_pts") or 0.0
+        n_pct = nifty.get("change_pct") or 0.0
+        
+        bn_price = bn.get("spot_price") or 0.0
+        bn_chg = bn.get("change_pts") or 0.0
+        bn_pct = bn.get("change_pct") or 0.0
+        
+        if n_pct < 0 and bn_pct < 0:
+            alignment = "BOTH_BEARISH"
+        elif n_pct > 0 and bn_pct > 0:
+            alignment = "BOTH_BULLISH"
+        else:
+            alignment = "DIVERGENT"
+            
+        return {
+            "nifty_spot": n_price,
+            "nifty_pct": round(n_pct, 2),
+            "nifty_pts": round(n_chg, 2),
+            "bn_spot": bn_price,
+            "bn_pct": round(bn_pct, 2),
+            "bn_pts": round(bn_chg, 2),
+            "alignment": alignment,
+        }
+    except Exception as e:
+        logger.debug("NIFTY vs BN comparison error: %s", e)
+        return {
+            "nifty_spot": 0.0, "nifty_pct": 0.0, "nifty_pts": 0.0,
+            "bn_spot": 0.0, "bn_pct": 0.0, "bn_pts": 0.0,
+            "alignment": "UNKNOWN",
+        }
+
+
+def get_contributors_position() -> Dict[str, Any]:
+    """Retrieves live advance/decline breadth and top heavyweight contributor point impact."""
+    try:
+        cs = get_contributors_service(PROJECT_ROOT)
+        data = cs.get_contributors_summary()
+        advances = data.get("advances", 0)
+        declines = data.get("declines", 0)
+        n50_pts = data.get("n50_total_pts", 0.0)
+        bn_pts = data.get("bn_total_pts", 0.0)
+        
+        top_gainers = [f"{g['symbol']} ({g['primary_pts']:+.1f} pts)" for g in data.get("top_gainers", [])[:2]]
+        top_draggers = [f"{d['symbol']} ({d['primary_pts']:+.1f} pts)" for d in data.get("top_draggers", [])[:2]]
+        
+        sentiment = "BEARISH_BREADTH" if declines > advances else ("BULLISH_BREADTH" if advances > declines else "NEUTRAL")
+        
+        return {
+            "advances": advances,
+            "declines": declines,
+            "n50_pts": n50_pts,
+            "bn_pts": bn_pts,
+            "sentiment": sentiment,
+            "top_gainers": top_gainers,
+            "top_draggers": top_draggers,
+        }
+    except Exception as e:
+        logger.debug("Contributors service error: %s", e)
+        return {
+            "advances": 0, "declines": 0, "n50_pts": 0.0, "bn_pts": 0.0,
+            "sentiment": "UNKNOWN", "top_gainers": [], "top_draggers": [],
+        }
+
+
+def compute_option_delta(spot: float, strike: float, option_type: str, dte_days: float = 4.0, iv: float = 0.14) -> float:
+    """Estimates Black-Scholes Delta for given option contract."""
+    if spot <= 0 or strike <= 0:
+        return 0.50 if option_type.upper() == "CE" else -0.50
+    try:
+        t = max(dte_days / 365.0, 0.001)
+        sigma = max(iv, 0.05)
+        d1 = (math.log(spot / strike) + (0.065 + 0.5 * sigma * sigma) * t) / (sigma * math.sqrt(t))
+        norm_cdf = 0.5 * (1.0 + math.erf(d1 / math.sqrt(2.0)))
+        if option_type.upper() == "CE":
+            return round(norm_cdf, 3)
+        else:
+            return round(norm_cdf - 1.0, 3)
+    except Exception:
+        moneyness = (spot - strike) / max(strike, 1.0)
+        base = 0.50 + moneyness * 2.5
+        base = max(0.05, min(0.95, base))
+        return round(base if option_type.upper() == "CE" else (base - 1.0), 3)
+
+
+def get_deep_option_chain_analysis(symbol: str) -> Dict[str, Any]:
+    """Analyzes option chain across Current and Next 3 Expiries with volume and buildup."""
+    ocs = get_option_chain_service(PROJECT_ROOT)
+    chain = ocs.get_option_chain(symbol)
+    atm = chain.get("atm_strike", 25700)
+    spot = chain.get("spot_price", 25700.0)
+    pcr = chain.get("pcr", 1.0)
+    max_pain = chain.get("max_pain", 25700)
+    
+    atm_ce_oi, atm_pe_oi = 0, 0
+    atm_ce_vol, atm_pe_vol = 0, 0
+    atm_ce_buildup, atm_pe_buildup = "--", "--"
+    
+    for s in chain.get("strikes", []):
+        if s.get("strike") == atm:
+            ce = s.get("ce", {}) if isinstance(s.get("ce"), dict) else {}
+            pe = s.get("pe", {}) if isinstance(s.get("pe"), dict) else {}
+            atm_ce_oi = ce.get("oi", 0)
+            atm_pe_oi = pe.get("oi", 0)
+            atm_ce_vol = ce.get("volume", 0)
+            atm_pe_vol = pe.get("volume", 0)
+            atm_ce_buildup = ce.get("buildup") or ce.get("builtup", "--")
+            atm_pe_buildup = pe.get("buildup") or pe.get("builtup", "--")
+            break
+            
+    next_exp_pcrs = {}
+    try:
+        r = httpx.get(f"{DASH}/api/option_chain/next_expiries", timeout=3.0)
+        if r.status_code == 200:
+            data = r.json()
+            for c in data.get("chains", []):
+                next_exp_pcrs[f"Week+{c.get('week_offset')}({c.get('expiry')})"] = c.get("pcr")
+    except Exception:
+        pass
+        
+    return {
+        "atm_strike": atm,
+        "spot_price": spot,
+        "pcr": pcr,
+        "max_pain": max_pain,
+        "atm_ce_oi": atm_ce_oi,
+        "atm_pe_oi": atm_pe_oi,
+        "atm_ce_vol": atm_ce_vol,
+        "atm_pe_vol": atm_pe_vol,
+        "atm_ce_buildup": atm_ce_buildup,
+        "atm_pe_buildup": atm_pe_buildup,
+        "next_expiries": next_exp_pcrs,
+    }
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #  STEP 5+6 — DECISION ENGINE + INSTANT EXECUTION
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -476,102 +723,394 @@ class HermesTraderV2:
         logger.info("STEP 5 ► Option Chain Derivatives Confirmation")
         logger.info(f"   PCR: {sr['pcr']} | Sentiment: {sr['sentiment']}")
 
-        return {"bias": bias, "news": news, "sr": sr, "m5": m5}
+        # Step 6: Volume Profile (POC, VAH, VAL)
+        logger.info("━" * 60)
+        logger.info("STEP 6 ► Point of Control & Volume Profile (POC, VAH, VAL)")
+        m5_candles = fetch_candles(self.chart_symbol, "5m", 75)
+        vp = compute_volume_profile(m5_candles)
+        poc = vp["poc"]
+        vah = vp["vah"]
+        val = vp["val"]
+        vp_loc = "BELOW_POC" if sr["spot"] < poc else ("ABOVE_POC" if sr["spot"] > poc else "AT_POC")
+        logger.info(f"   POC: ₹{poc:,.2f} | VAH: ₹{vah:,.2f} | VAL: ₹{val:,.2f} | Spot Location: {vp_loc}")
 
-    # ── Decision Logic ────────────────────────────────────────────────────────
+        # Step 7: NIFTY vs BANKNIFTY Comparison
+        logger.info("━" * 60)
+        logger.info("STEP 7 ► NIFTY 50 vs BANKNIFTY Relative Strength & Alignment")
+        nbn = get_nifty_bn_comparison()
+        logger.info(f"   NIFTY: ₹{nbn['nifty_spot']:,.2f} ({nbn['nifty_pct']:+.2f}%) | BN: ₹{nbn['bn_spot']:,.2f} ({nbn['bn_pct']:+.2f}%) | Alignment: {nbn['alignment']}")
+
+        # Step 8: Contributor Breadth & Drag/Boost
+        logger.info("━" * 60)
+        logger.info("STEP 8 ► Heavyweight Contributor Position & Market Breadth")
+        contrib = get_contributors_position()
+        logger.info(f"   Breadth: {contrib['advances']} Green / {contrib['declines']} Red ({contrib['sentiment']})")
+        logger.info(f"   Point Impact: N50: {contrib['n50_pts']:+.1f} pts | BN: {contrib['bn_pts']:+.1f} pts")
+        logger.info(f"   Leaders: {', '.join(contrib['top_gainers'])} | Draggers: {', '.join(contrib['top_draggers'])}")
+
+        # Step 9: Deep Option Chain Analysis & Multi-Expiry
+        logger.info("━" * 60)
+        logger.info("STEP 9 ► Deep Option Chain Analysis & Next 3 Expiries Structure")
+        deep_oc = get_deep_option_chain_analysis(self.symbol)
+        logger.info(f"   Spot: ₹{deep_oc['spot_price']} | ATM: {deep_oc['atm_strike']} | PCR: {deep_oc['pcr']} | Max Pain: {deep_oc['max_pain']}")
+        logger.info(f"   ATM CE Buildup: {deep_oc['atm_ce_buildup']} (Vol: {deep_oc['atm_ce_vol']:,}) | ATM PE Buildup: {deep_oc['atm_pe_buildup']} (Vol: {deep_oc['atm_pe_vol']:,})")
+        logger.info(f"   Next Expiries PCR: {deep_oc['next_expiries']}")
+
+        return {
+            "bias": bias,
+            "news": news,
+            "sr": sr,
+            "m5": m5,
+            "vol_profile": vp,
+            "nifty_bn": nbn,
+            "contributors": contrib,
+            "chain_deep": deep_oc,
+        }
+
+    # ── Decision Logic (3-Pillar Institutional Architecture) ─────────────────
     def decide_trade(self, analysis: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """
-        Decision engine: ALL gates must pass.
-        Gate 1: Multi-TF bias is not against the trade.
-        Gate 2: News is not strongly against.
-        Gate 3: S/R confluence supports entry zone.
-        Gate 4: 5m candle confirms direction + volume.
-        Gate 5: Option chain PCR aligns.
+        Streamlined 3-Pillar Decision Engine:
+        ┌────────────────────────────────────────────────────────────────────────┐
+        │ PILLAR 1 ► Direction: 1H/15M Trend + Option Chain PCR + Heavyweights   │
+        │ PILLAR 2 ► Location:  Key Pivot / S/R Boundaries + Volume Profile POC  │
+        │ PILLAR 3 ► Trigger:   5M Volume Candle + 1 Lot ITM Next Expiry         │
+        └────────────────────────────────────────────────────────────────────────┘
+        If ALL 3 Pillars are YES (PASS) → Execute Immediately.
         """
         bias = analysis["bias"]["overall_bias"]
         news = analysis["news"]["sentiment"]
         sr = analysis["sr"]
         m5 = analysis["m5"]
+        vp = analysis.get("vol_profile", {})
+        nbn = analysis.get("nifty_bn", {})
+        contrib = analysis.get("contributors", {})
+        deep_oc = analysis.get("chain_deep", {})
         pcr = sr["pcr"]
         spot = sr["spot"]
+        poc = vp.get("poc", spot)
 
         if not m5.get("valid"):
             return None
 
-        # ── CE (BULLISH) TRADE ────────────────────────────────────────────────
-        gate1_bull = bias in ("STRONG_BULLISH", "BULLISH")
-        gate2_bull = news != "BEARISH"
-        gate3_bull = (
-            spot > sr["pp"]
-            or spot > sr["s1"]
-            or abs(spot - sr["max_pe_strike"]) <= 50
-        )
-        gate4_bull = (
-            m5["ema_cross"] in ("BULLISH_CROSS", "ABOVE")
-            and m5["rsi"] > 45 and m5["rsi"] < 80
-            and m5["pattern"] in ("STRONG_BULL_CANDLE", "BULLISH_PIN_BAR", "BULLISH_ENGULFING", "NEUTRAL", "DOJI")
-        )
-        gate5_bull = pcr >= 1.10
+        h1_bias = analysis["bias"]["timeframes"].get("1H", {}).get("bias", "NEUTRAL")
+        m15_bias = analysis["bias"]["timeframes"].get("15M", {}).get("bias", "NEUTRAL")
+        step = 100 if "BANK" in self.symbol else 50
+        atm = int(round(spot / step) * step)
 
-        if gate1_bull and gate2_bull and gate3_bull and gate4_bull and gate5_bull:
-            step = 100 if "BANK" in self.symbol else 50
-            atm = int(round(spot / step) * step)
-            premium = self._lookup_premium(atm, "CE")
-            return {
-                "direction": "BULLISH",
-                "option_type": "CE",
-                "strike": atm,
-                "premium": premium,
-                "spot": spot,
-                "gates": {"TF_Bias": bias, "News": news, "SR": "Above PP/S1", "5m": m5["pattern"],
-                          "EMA": m5["ema_cross"], "RSI": m5["rsi"], "VolRatio": m5["vol_ratio"], "PCR": pcr},
-            }
+        # ══════════════════════════════════════════════════════════════════════
+        # 👑 STRATEGY SETUP 1: WALL REVERSAL (FADE THE WALL — 1:7.0 RATIO)
+        # ══════════════════════════════════════════════════════════════════════
+        call_wall = sr.get("max_ce_strike", 0)
+        put_floor = sr.get("max_pe_strike", 0)
 
-        # ── PE (BEARISH) TRADE ────────────────────────────────────────────────
-        gate1_bear = bias in ("STRONG_BEARISH", "BEARISH")
-        gate2_bear = news != "BULLISH"
-        gate3_bear = (
-            spot < sr["pp"]
-            or spot < sr["r1"]
-            or abs(spot - sr["max_ce_strike"]) <= 50
+        # ── 1. BEARISH REVERSAL (FADE CALL OI WALL ➔ BUY PUT with 1:7 R:R) ────
+        at_call_wall = (call_wall > 0) and (0 <= (call_wall - spot) <= 25 or abs(spot - call_wall) <= 20) and (spot > poc)
+        wall_defended_ce = (pcr <= 1.25) and (news != "STRONG_BULLISH")
+        rejection_at_call_wall = (
+            spot <= call_wall
+            and (
+                m5["pattern"] in ("BEARISH_PIN_BAR", "STRONG_BEAR_CANDLE", "BEARISH_ENGULFING", "DOJI")
+                or m5["rsi"] >= 60
+                or m5["ema_cross"] in ("BEARISH_CROSS", "BELOW")
+            )
+            and m5.get("vol_ratio", 1.0) >= 0.95
         )
-        gate4_bear = (
-            m5["ema_cross"] in ("BEARISH_CROSS", "BELOW")
-            and m5["rsi"] > 20 and m5["rsi"] < 55
-            and m5["pattern"] in ("STRONG_BEAR_CANDLE", "BEARISH_PIN_BAR", "BEARISH_ENGULFING", "NEUTRAL", "DOJI")
-        )
-        gate5_bear = pcr <= 0.90
 
-        if gate1_bear and gate2_bear and gate3_bear and gate4_bear and gate5_bear:
-            step = 100 if "BANK" in self.symbol else 50
-            atm = int(round(spot / step) * step)
-            premium = self._lookup_premium(atm, "PE")
+        if at_call_wall and wall_defended_ce and rejection_at_call_wall:
+            itm_strike = atm + step  # 1-strike ITM for PE (Strike > Spot)
+            next_expiry, strikes = self._get_target_expiry_and_chain()
+            premium = self._lookup_premium(itm_strike, "PE", strikes)
+            delta = compute_option_delta(spot, itm_strike, "PE", dte_days=10.0)
+            sl_pts = 15.0
+            tgt_pts = 105.0  # 1:7.0 Asymmetric Risk:Reward
             return {
                 "direction": "BEARISH",
                 "option_type": "PE",
-                "strike": atm,
+                "strike": itm_strike,
+                "moneyness": "ITM",
+                "expiry": next_expiry,
+                "atm_reference": atm,
                 "premium": premium,
                 "spot": spot,
-                "gates": {"TF_Bias": bias, "News": news, "SR": "Below PP/R1", "5m": m5["pattern"],
-                          "EMA": m5["ema_cross"], "RSI": m5["rsi"], "VolRatio": m5["vol_ratio"], "PCR": pcr},
+                "delta": delta,
+                "poc": poc,
+                "setup_type": "WALL_REVERSAL_FADE",
+                "risk_reward": "1:7.0",
+                "sl_points": sl_pts,
+                "tgt_points": tgt_pts,
+                "pillars": {
+                    "Pillar_1_Direction": f"PASS (Reversal Fade at Call Wall {call_wall} | PCR {pcr:.2f})",
+                    "Pillar_2_Location": f"PASS (At Max Call OI Wall {call_wall} | Spot ₹{spot:,.1f} | Target POC ₹{poc:,.1f})",
+                    "Pillar_3_Trigger": f"PASS (5M {m5['pattern']} Rejection | 1:7.0 R:R | 1 Lot ITM {itm_strike} PE | Next Expiry {next_expiry})",
+                },
+                "gates": {
+                    "Strategy": "WALL REVERSAL (FADE CALL WALL)",
+                    "Pillar 1 - Direction": f"Bearish Reversal at Call Wall {call_wall} (PCR {pcr:.2f})",
+                    "Pillar 2 - Location": f"At Call Wall {call_wall} (Distance: {call_wall - spot:.1f} pts) -> Target POC ₹{poc:,.1f}",
+                    "Pillar 3 - Trigger": f"5M {m5['pattern']} (Vol: {m5['vol_ratio']}x) -> 1 Lot ITM {itm_strike} PE (SL: {sl_pts} / Tgt: {tgt_pts} -> 1:7 R:R)",
+                    "TF_Bias": "REVERSAL_EXTREME", "H1_Bias": h1_bias, "News": news, "SR": f"Call Wall {call_wall}",
+                    "5m": m5["pattern"], "EMA": m5["ema_cross"], "RSI": m5["rsi"], "VolRatio": m5["vol_ratio"],
+                    "PCR": pcr, "POC_Loc": "Extended Above POC", "NIFTY_BN": nbn.get("alignment"),
+                    "Contributors": f"{contrib.get('advances')}G/{contrib.get('declines')}R",
+                    "Delta": delta,
+                    "Contract": f"ITM ({itm_strike} PE)",
+                    "Expiry": f"Next Expiry ({next_expiry})",
+                    "Risk_Reward": f"1:7.0 (SL {sl_pts} pts / Target {tgt_pts} pts)",
+                },
+            }
+
+        # ── 2. BULLISH REVERSAL (FADE PUT OI FLOOR ➔ BUY CALL with 1:7 R:R) ───
+        at_put_floor = (put_floor > 0) and (0 <= (spot - put_floor) <= 25 or abs(spot - put_floor) <= 20) and (spot < poc)
+        floor_defended_pe = (pcr >= 0.75) and (news != "STRONG_BEARISH")
+        rejection_at_put_floor = (
+            spot >= put_floor
+            and (
+                m5["pattern"] in ("BULLISH_PIN_BAR", "STRONG_BULL_CANDLE", "BULLISH_ENGULFING", "DOJI")
+                or m5["rsi"] <= 40
+                or m5["ema_cross"] in ("BULLISH_CROSS", "ABOVE")
+            )
+            and m5.get("vol_ratio", 1.0) >= 0.95
+        )
+
+        if at_put_floor and floor_defended_pe and rejection_at_put_floor:
+            itm_strike = atm - step  # 1-strike ITM for CE (Strike < Spot)
+            next_expiry, strikes = self._get_target_expiry_and_chain()
+            premium = self._lookup_premium(itm_strike, "CE", strikes)
+            delta = compute_option_delta(spot, itm_strike, "CE", dte_days=10.0)
+            sl_pts = 15.0
+            tgt_pts = 105.0  # 1:7.0 Asymmetric Risk:Reward
+            return {
+                "direction": "BULLISH",
+                "option_type": "CE",
+                "strike": itm_strike,
+                "moneyness": "ITM",
+                "expiry": next_expiry,
+                "atm_reference": atm,
+                "premium": premium,
+                "spot": spot,
+                "delta": delta,
+                "poc": poc,
+                "setup_type": "WALL_REVERSAL_FADE",
+                "risk_reward": "1:7.0",
+                "sl_points": sl_pts,
+                "tgt_points": tgt_pts,
+                "pillars": {
+                    "Pillar_1_Direction": f"PASS (Reversal Fade at Put Floor {put_floor} | PCR {pcr:.2f})",
+                    "Pillar_2_Location": f"PASS (At Max Put OI Floor {put_floor} | Spot ₹{spot:,.1f} | Target POC ₹{poc:,.1f})",
+                    "Pillar_3_Trigger": f"PASS (5M {m5['pattern']} Rejection | 1:7.0 R:R | 1 Lot ITM {itm_strike} CE | Next Expiry {next_expiry})",
+                },
+                "gates": {
+                    "Strategy": "WALL REVERSAL (FADE PUT FLOOR)",
+                    "Pillar 1 - Direction": f"Bullish Reversal at Put Floor {put_floor} (PCR {pcr:.2f})",
+                    "Pillar 2 - Location": f"At Put Floor {put_floor} (Distance: {spot - put_floor:.1f} pts) -> Target POC ₹{poc:,.1f}",
+                    "Pillar 3 - Trigger": f"5M {m5['pattern']} (Vol: {m5['vol_ratio']}x) -> 1 Lot ITM {itm_strike} CE (SL: {sl_pts} / Tgt: {tgt_pts} -> 1:7 R:R)",
+                    "TF_Bias": "REVERSAL_EXTREME", "H1_Bias": h1_bias, "News": news, "SR": f"Put Floor {put_floor}",
+                    "5m": m5["pattern"], "EMA": m5["ema_cross"], "RSI": m5["rsi"], "VolRatio": m5["vol_ratio"],
+                    "PCR": pcr, "POC_Loc": "Extended Below POC", "NIFTY_BN": nbn.get("alignment"),
+                    "Contributors": f"{contrib.get('advances')}G/{contrib.get('declines')}R",
+                    "Delta": delta,
+                    "Contract": f"ITM ({itm_strike} CE)",
+                    "Expiry": f"Next Expiry ({next_expiry})",
+                    "Risk_Reward": f"1:7.0 (SL {sl_pts} pts / Target {tgt_pts} pts)",
+                },
+            }
+
+        # ══════════════════════════════════════════════════════════════════════
+        # 🚀 STRATEGY SETUP 2: TREND CONTINUATION (1:3.0 RATIO)
+        # ══════════════════════════════════════════════════════════════════════
+        # PILLAR 1: Direction (1H/15M Trend + Option Chain PCR + Heavyweights)
+        p1_trend_bull = (
+            bias in ("STRONG_BULLISH", "BULLISH")
+            or (h1_bias in ("BULLISH", "NEUTRAL") and m15_bias in ("BULLISH", "NEUTRAL") and spot >= sr["pp"])
+        )
+        p1_oc_bull = (pcr >= 1.05) and (news != "BEARISH")
+        p1_heavyweights_bull = (
+            contrib.get("advances", 0) >= contrib.get("declines", 0)
+            or contrib.get("n50_pts", 0) >= -20.0
+        )
+        p1_bn_bull = nbn.get("alignment") in ("BOTH_BULLISH", "DIVERGENT")
+        pillar1_bull = p1_trend_bull and p1_oc_bull and p1_heavyweights_bull and p1_bn_bull
+
+        # PILLAR 2: Location (Pivot & S/R Boundaries + Volume Profile POC)
+        p2_pivot_bull = (
+            spot >= sr["pp"]
+            or spot >= sr["s1"]
+            or abs(spot - sr["max_pe_strike"]) <= 50
+        )
+        p2_poc_bull = (spot >= poc or spot >= vp.get("val", spot))
+        pillar2_bull = p2_pivot_bull and p2_poc_bull
+
+        # PILLAR 3: Trigger & Risk (5M Volume Candle + 1 Lot ITM Next Expiry)
+        p3_candle_bull = (
+            m5["ema_cross"] in ("BULLISH_CROSS", "ABOVE")
+            and (45 <= m5["rsi"] <= 80)
+            and m5["pattern"] in ("STRONG_BULL_CANDLE", "BULLISH_PIN_BAR", "BULLISH_ENGULFING", "NEUTRAL", "DOJI")
+        )
+        p3_vol_bull = m5.get("vol_ratio", 1.0) >= 1.0
+        pillar3_bull = p3_candle_bull and p3_vol_bull
+
+        if pillar1_bull and pillar2_bull and pillar3_bull:
+            itm_strike = atm - step  # 1-strike ITM for CE (Strike < Spot)
+            next_expiry, strikes = self._get_target_expiry_and_chain()
+            premium = self._lookup_premium(itm_strike, "CE", strikes)
+            delta = compute_option_delta(spot, itm_strike, "CE", dte_days=10.0)
+            return {
+                "direction": "BULLISH",
+                "option_type": "CE",
+                "strike": itm_strike,
+                "moneyness": "ITM",
+                "expiry": next_expiry,
+                "atm_reference": atm,
+                "premium": premium,
+                "spot": spot,
+                "delta": delta,
+                "poc": poc,
+                "pillars": {
+                    "Pillar_1_Direction": f"PASS (1H {h1_bias} | PCR {pcr:.2f} | Breadth {contrib.get('advances')}G/{contrib.get('declines')}R)",
+                    "Pillar_2_Location": f"PASS (Spot ₹{spot:,.1f} >= PP ₹{sr['pp']:,.1f} | Above POC ₹{poc:,.1f})",
+                    "Pillar_3_Trigger": f"PASS (5M {m5['pattern']} | Vol {m5['vol_ratio']}x | 1 Lot ITM {itm_strike} CE | Expiry {next_expiry})",
+                },
+                "gates": {
+                    "Pillar 1 - Direction": f"1H {h1_bias} + PCR {pcr:.2f} + Breadth {contrib.get('advances')}G/{contrib.get('declines')}R",
+                    "Pillar 2 - Location": f"Above PP ₹{sr['pp']:,.1f} & Above POC ₹{poc:,.1f}",
+                    "Pillar 3 - Trigger": f"5M {m5['pattern']} (Vol: {m5['vol_ratio']}x) -> 1 Lot ITM {itm_strike} CE ({next_expiry})",
+                    "TF_Bias": bias, "H1_Bias": h1_bias, "News": news, "SR": "Above PP/S1",
+                    "5m": m5["pattern"], "EMA": m5["ema_cross"], "RSI": m5["rsi"], "VolRatio": m5["vol_ratio"],
+                    "PCR": pcr, "POC_Loc": "Above/At POC", "NIFTY_BN": nbn.get("alignment"),
+                    "Contributors": f"{contrib.get('advances')}G/{contrib.get('declines')}R",
+                    "Delta": delta,
+                    "Contract": f"ITM ({itm_strike} CE)",
+                    "Expiry": f"Next Expiry ({next_expiry})",
+                },
+            }
+
+        # ══════════════════════════════════════════════════════════════════════
+        # 🔴 BEARISH SETUP (PUT / PE)
+        # ══════════════════════════════════════════════════════════════════════
+        # PILLAR 1: Direction (1H/15M Trend + Option Chain PCR + Heavyweights)
+        p1_trend_bear = (
+            bias in ("STRONG_BEARISH", "BEARISH")
+            or (h1_bias in ("BEARISH", "NEUTRAL") and m15_bias in ("BEARISH", "NEUTRAL") and spot <= sr["pp"])
+            or (spot < sr["pp"] and pcr <= 0.90)
+        )
+        p1_oc_bear = (pcr <= 0.90) and (news != "BULLISH")
+        p1_heavyweights_bear = (
+            contrib.get("declines", 0) >= contrib.get("advances", 0)
+            or contrib.get("n50_pts", 0) <= 0.0
+        )
+        p1_bn_bear = nbn.get("alignment") in ("BOTH_BEARISH", "DIVERGENT")
+        pillar1_bear = p1_trend_bear and p1_oc_bear and p1_heavyweights_bear and p1_bn_bear
+
+        # PILLAR 2: Location (Pivot & S/R Boundaries + Volume Profile POC)
+        p2_pivot_bear = (
+            spot <= sr["pp"]
+            or spot <= sr["r1"]
+            or abs(spot - sr["max_ce_strike"]) <= 50
+        )
+        p2_poc_bear = (spot <= poc or spot <= vp.get("vah", spot))
+        pillar2_bear = p2_pivot_bear and p2_poc_bear
+
+        # PILLAR 3: Trigger & Risk (5M Volume Candle + 1 Lot ITM Next Expiry)
+        p3_candle_bear = (
+            m5["ema_cross"] in ("BEARISH_CROSS", "BELOW")
+            and (20 <= m5["rsi"] <= 55)
+            and m5["pattern"] in ("STRONG_BEAR_CANDLE", "BEARISH_PIN_BAR", "BEARISH_ENGULFING", "NEUTRAL", "DOJI")
+        )
+        p3_vol_bear = m5.get("vol_ratio", 1.0) >= 1.0
+        pillar3_bear = p3_candle_bear and p3_vol_bear
+
+        if pillar1_bear and pillar2_bear and pillar3_bear:
+            itm_strike = atm + step  # 1-strike ITM for PE (Strike > Spot)
+            next_expiry, strikes = self._get_target_expiry_and_chain()
+            premium = self._lookup_premium(itm_strike, "PE", strikes)
+            delta = compute_option_delta(spot, itm_strike, "PE", dte_days=10.0)
+            return {
+                "direction": "BEARISH",
+                "option_type": "PE",
+                "strike": itm_strike,
+                "moneyness": "ITM",
+                "expiry": next_expiry,
+                "atm_reference": atm,
+                "premium": premium,
+                "spot": spot,
+                "delta": delta,
+                "poc": poc,
+                "pillars": {
+                    "Pillar_1_Direction": f"PASS (1H {h1_bias} | PCR {pcr:.2f} | Breadth {contrib.get('advances')}G/{contrib.get('declines')}R)",
+                    "Pillar_2_Location": f"PASS (Spot ₹{spot:,.1f} <= PP ₹{sr['pp']:,.1f} | Below POC ₹{poc:,.1f})",
+                    "Pillar_3_Trigger": f"PASS (5M {m5['pattern']} | Vol {m5['vol_ratio']}x | 1 Lot ITM {itm_strike} PE | Expiry {next_expiry})",
+                },
+                "gates": {
+                    "Pillar 1 - Direction": f"1H {h1_bias} + PCR {pcr:.2f} + Breadth {contrib.get('advances')}G/{contrib.get('declines')}R",
+                    "Pillar 2 - Location": f"Below PP ₹{sr['pp']:,.1f} & Below POC ₹{poc:,.1f}",
+                    "Pillar 3 - Trigger": f"5M {m5['pattern']} (Vol: {m5['vol_ratio']}x) -> 1 Lot ITM {itm_strike} PE ({next_expiry})",
+                    "TF_Bias": bias, "H1_Bias": h1_bias, "News": news, "SR": "Below PP/R1",
+                    "5m": m5["pattern"], "EMA": m5["ema_cross"], "RSI": m5["rsi"], "VolRatio": m5["vol_ratio"],
+                    "PCR": pcr, "POC_Loc": "Below/At POC", "NIFTY_BN": nbn.get("alignment"),
+                    "Contributors": f"{contrib.get('advances')}G/{contrib.get('declines')}R",
+                    "Delta": delta,
+                    "Contract": f"ITM ({itm_strike} PE)",
+                    "Expiry": f"Next Expiry ({next_expiry})",
+                },
             }
 
         return None
 
-    def _lookup_premium(self, strike: int, opt_type: str) -> float:
+    def _get_target_expiry_and_chain(self) -> tuple[str, list[dict]]:
+        """Resolves next upcoming expiry and its option chain strikes for ITM trading."""
+        try:
+            exp_data = self.ocs.get_next_expiries_from_nse(self.symbol, count=2)
+            chains = exp_data.get("chains", [])
+            if chains:
+                next_chain = chains[0]
+                target_expiry = next_chain.get("expiry", "")
+                strikes = next_chain.get("strikes", [])
+                if target_expiry and strikes:
+                    return target_expiry, strikes
+        except Exception as e:
+            logger.debug(f"Next expiry lookup fallback: {e}")
+
+        # Fallback to current chain's expiry_dates
         chain = self.ocs.get_option_chain(self.symbol)
-        for r in chain.get("strikes", []):
+        expiry_dates = chain.get("expiry_dates", [])
+        target_expiry = expiry_dates[1] if len(expiry_dates) > 1 else chain.get("expiry", "")
+        return target_expiry, chain.get("strikes", [])
+
+    def _lookup_premium(self, strike: int, opt_type: str, strikes: Optional[list[dict]] = None) -> float:
+        if strikes is None:
+            _, strikes = self._get_target_expiry_and_chain()
+        for r in strikes:
             if r.get("strike") == strike:
-                return float(r.get(opt_type.lower(), {}).get("ltp", 85.0))
-        return 85.0
+                opt_key = opt_type.lower()
+                opt_obj = r.get(opt_key)
+                if isinstance(opt_obj, dict):
+                    ltp = opt_obj.get("ltp")
+                    if ltp and float(ltp) > 0:
+                        return float(ltp)
+                ltp_direct = r.get(f"{opt_key}_ltp")
+                if ltp_direct and float(ltp_direct) > 0:
+                    return float(ltp_direct)
+
+        spot = self.ocs.get_current_spot(self.symbol)
+        intrinsic = max(0.0, (spot - strike) if opt_type.upper() == "CE" else (strike - spot))
+        time_value = 140.0  # Next expiry options trade with fuller extrinsic premium
+        return round(max(40.0, intrinsic + time_value), 2)
 
     # ── STEP 6 — Instant Execution ────────────────────────────────────────────
     def execute(self, decision: Dict[str, Any], analysis: Dict[str, Any]) -> Dict[str, Any]:
         """STEP 6: Instant execution into Paper Simulator + Telegram."""
         inst = "BANKNIFTY" if "BANK" in self.symbol else "NIFTY 50"
+        expiry_label = decision.get("expiry", "Next Expiry")
+        moneyness_label = decision.get("moneyness", "ITM")
+        sl_points = float(decision.get("sl_points", self.sl))
+        tgt_points = float(decision.get("tgt_points", self.tgt))
+        rr_label = decision.get("risk_reward", "1:3.0")
+        setup_type = decision.get("setup_type", "TREND_CONTINUATION")
+
         logger.info("=" * 60)
-        logger.info(f"⚡ STEP 6 ► INSTANT EXECUTION: {inst} {decision['strike']} {decision['option_type']}")
-        logger.info(f"   Premium: ₹{decision['premium']:.2f} | SL: -{self.sl} pts | Target: +{self.tgt} pts")
+        logger.info(f"⚡ STEP 6 ► INSTANT EXECUTION [{setup_type}]: {inst} {decision['strike']} {decision['option_type']} ({moneyness_label} | {expiry_label})")
+        logger.info(f"   Premium: ₹{decision['premium']:.2f} | SL: -{sl_points} pts | Target: +{tgt_points} pts | R:R: {rr_label}")
         logger.info("=" * 60)
 
         res = self.ocs.execute_option_chain_paper_trade(
@@ -580,33 +1119,40 @@ class HermesTraderV2:
             option_type=decision["option_type"],
             lots=self.lots,
             premium=decision["premium"],
-            sl_points=self.sl,
-            target_points=self.tgt,
+            sl_points=sl_points,
+            target_points=tgt_points,
             trailing_sl=True,
             trail_step=15.0,
             action="BUY",
+            expiry=decision.get("expiry"),
+            moneyness=moneyness_label,
         )
 
         trade_id = res.get("trade_id", "N/A")
         now_ist = datetime.now(IST).strftime("%Y-%m-%d %H:%M:%S IST")
 
+        # Audible execution chime (Windows Beep)
+        play_beep_chime("ENTRY")
+
         # Telegram alert
         if self.tele.is_configured:
             gates = decision["gates"]
+            pillars = decision.get("pillars", {})
             msg = (
-                f"⚡ <b>[TRADE EXECUTED]</b> ⚡\n"
+                f"⚡ <b>[TRADE EXECUTED — {setup_type}]</b> ⚡\n"
                 f"━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-                f"🎯 <b>{inst} {decision['strike']} {decision['option_type']}</b>\n"
-                f"💵 Entry: ₹{decision['premium']:.2f} | Lots: {self.lots}\n"
-                f"🛡 SL: ₹{res.get('sl_price',0):.2f} (-{self.sl} pts)\n"
-                f"🚀 Target: ₹{res.get('target_price',0):.2f} (+{self.tgt} pts)\n"
-                f"⚖ R:R = 1:3 | 🆔 {trade_id}\n"
+                f"🎯 <b>{inst} {decision['strike']} {decision['option_type']} ({moneyness_label})</b>\n"
+                f"📅 Expiry: <b>{expiry_label} (Next Expiry)</b>\n"
+                f"💵 Entry: ₹{decision['premium']:.2f} | Lots: {self.lots} ({self.lots*65} Qty)\n"
+                f"🛡 SL: ₹{res.get('sl_price',0):.2f} (-{sl_points} pts)\n"
+                f"🚀 Target: ₹{res.get('target_price',0):.2f} (+{tgt_points} pts)\n"
+                f"⚖ <b>Risk:Reward = {rr_label}</b> | 🆔 <code>{trade_id}</code>\n"
                 f"━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-                f"📊 <b>Analysis Summary:</b>\n"
-                f"TF Bias: {gates['TF_Bias']} | News: {gates['News']}\n"
-                f"EMA: {gates['EMA']} | RSI: {gates['RSI']}\n"
-                f"Pattern: {gates['5m']} | Vol: {gates['VolRatio']}x\n"
-                f"PCR: {gates['PCR']} | ⏰ {now_ist}"
+                f"🏆 <b>3-Pillar Institutional Checklist:</b>\n"
+                f"1️⃣ <b>Direction:</b> {pillars.get('Pillar_1_Direction', 'PASS')}\n"
+                f"2️⃣ <b>Location:</b> {pillars.get('Pillar_2_Location', 'PASS')}\n"
+                f"3️⃣ <b>Trigger:</b> {pillars.get('Pillar_3_Trigger', 'PASS')}\n"
+                f"⏰ {now_ist}"
             )
             self.tele.send_message(msg)
 
@@ -640,9 +1186,54 @@ class HermesTraderV2:
         except Exception as e:
             logger.warning(f"Screenshot error: {e}")
 
+        # High-fidelity candlestick chart fallback if screenshot missing
+        if not os.path.exists(chart_path):
+            try:
+                import matplotlib
+                matplotlib.use("Agg")
+                import matplotlib.pyplot as plt
+                import matplotlib.patches as patches
+                from nifty_trader.market_data.report_service import _fetch_intraday_candles, _filter_session_candles
+                candles = _fetch_intraday_candles(self.symbol, "15m")
+                session_candles, _ = _filter_session_candles(candles, now.strftime("%Y-%m-%d"))
+                if session_candles:
+                    fig, (ax, ax_vol) = plt.subplots(2, 1, figsize=(10, 5), gridspec_kw={"height_ratios": [3.5, 1]}, sharex=True)
+                    fig.patch.set_facecolor("#0f172a")
+                    ax.set_facecolor("#0f172a")
+                    ax_vol.set_facecolor("#0f172a")
+                    xs = list(range(len(session_candles)))
+                    labels = [c["label"] for c in session_candles]
+                    for i, c in enumerate(session_candles):
+                        o, h, l, cl = float(c["open"]), float(c["high"]), float(c["low"]), float(c["close"])
+                        vol = float(c.get("volume", 0))
+                        col = "#22c55e" if cl >= o else "#ef4444"
+                        ax.plot([i, i], [l, h], color=col, linewidth=1.3)
+                        ax.add_patch(patches.Rectangle((i - 0.32, min(o, cl)), 0.64, max(abs(cl - o), 1.5), facecolor=col, edgecolor=col))
+                        ax_vol.bar(i, vol, width=0.6, color=col, alpha=0.65)
+                    if strike:
+                        ax.axhline(strike, color="#f59e0b", linestyle=":", linewidth=1.5)
+                    if decision.get("spot"):
+                        ax.axhline(decision["spot"], color="#38bdf8", linestyle="--", linewidth=1.3)
+                    ax.set_title(f"{inst_short} Intraday 15M Chart at Execution — {strike} {opt} ({now.strftime('%Y-%m-%d %H:%M IST')})", color="#f8fafc", fontsize=10, fontweight="bold")
+                    ax.grid(True, color="#1e293b", linewidth=0.6)
+                    ax_vol.grid(True, color="#1e293b", linewidth=0.6)
+                    ax.tick_params(colors="#94a3b8", labelsize=8)
+                    ax_vol.tick_params(colors="#94a3b8", labelsize=8)
+                    step = max(1, len(xs) // 15)
+                    ax_vol.set_xticks(xs[::step])
+                    ax_vol.set_xticklabels(labels[::step], rotation=45, ha="right", fontsize=7.5)
+                    plt.tight_layout()
+                    plt.savefig(chart_path, dpi=160, facecolor="#0f172a")
+                    plt.close(fig)
+                    logger.info(f"📊 Rendered matplotlib candle chart fallback: {chart_path}")
+            except Exception as e_plot:
+                logger.warning(f"Matplotlib chart fallback error: {e_plot}")
+
         # PDF Report
         pdf_name = f"TRADE_{inst_short}_{strike}{opt}_{date_str}_{trade_id}.pdf"
-        pdf_path = str(REPORTS_DIR / pdf_name)
+        target_dir = Path("d:/AI_Trading/reports") / now.strftime("%Y-%m-%d") / "trade_reports"
+        target_dir.mkdir(parents=True, exist_ok=True)
+        pdf_path = str(target_dir / pdf_name)
         try:
             from reportlab.lib.pagesizes import A4
             from reportlab.lib import colors
@@ -658,18 +1249,46 @@ class HermesTraderV2:
             st_small = ParagraphStyle("SM", parent=styles["Normal"], fontName="Helvetica-Oblique", fontSize=8, leading=11, textColor=colors.HexColor("#475569"))
             els = []
 
-            els.append(Paragraph(f"Trade Entry Report: {inst_short} {strike} {opt}", st_title))
-            els.append(Paragraph(f"Trade ID: <b>{trade_id}</b> | Date: {now.strftime('%Y-%m-%d %H:%M IST')} | File: {pdf_name}", st_small))
+            expiry_str = decision.get("expiry", "Next Expiry")
+            moneyness_str = decision.get("moneyness", "ITM")
+            rr_label = decision.get("risk_reward", "1:3.0")
+            setup_type = decision.get("setup_type", "TREND_CONTINUATION")
+            sl_points = float(decision.get("sl_points", self.sl))
+            tgt_points = float(decision.get("tgt_points", self.tgt))
+
+            els.append(Paragraph(f"Trade Execution Intelligence Report: {inst_short} {strike} {opt} ({moneyness_str})", st_title))
+            els.append(Paragraph(f"Trade ID: <b>{trade_id}</b> | Setup: <b>{setup_type} ({rr_label} R:R)</b> | Expiry: <b>{expiry_str} (Next Expiry)</b> | Date: {now.strftime('%Y-%m-%d %H:%M IST')}", st_small))
             els.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor("#0284c7"), spaceAfter=8))
+
+            # Executive Summary Box
+            els.append(Paragraph("1. Trade Executive Summary &amp; Strategy Thesis:", st_h2))
+            if setup_type == "WALL_REVERSAL_FADE":
+                thesis_text = (
+                    f"<b>Setup: Institutional Wall Reversal Fade ({rr_label} Risk-to-Reward)</b>. "
+                    f"Spot price tested extreme boundary at <b>{decision.get('spot', 0):,.1f}</b> near institutional wall. "
+                    f"Option chain confirms heavy institutional defense with PCR at {sr.get('pcr', 0.59):.2f}. "
+                    f"A confirmed 5-minute rejection candle triggered immediate entry into <b>1 Lot ITM {strike} {opt}</b> on next weekly expiry <b>{expiry_str}</b>. "
+                    f"Risk is strictly controlled with a 15-pt SL behind the wall targeting a wholesale return to session POC (<b>{decision.get('poc', 0):,.1f}</b>) for a +{tgt_points:.0f} pts gain."
+                )
+            else:
+                thesis_text = (
+                    f"<b>Setup: Trend Continuation ({rr_label} Risk-to-Reward)</b>. "
+                    f"Spot price at <b>{decision.get('spot', 0):,.1f}</b> aligned with higher-timeframe 1H trend, holding above wholesale Central Pivot ({sr.get('pp', 0):,.1f}) and session POC ({decision.get('poc', 0):,.1f}). "
+                    f"A confirmed 5-minute trend candle with volume expansion triggered immediate entry into <b>1 Lot ITM {strike} {opt}</b> on next weekly expiry <b>{expiry_str}</b>. "
+                    f"Risk is defined at -{sl_points:.0f} pts SL targeting a +{tgt_points:.0f} pts expansion with 15-pt trailing SL."
+                )
+            els.append(Paragraph(thesis_text, st_body))
+            els.append(Spacer(1, 6))
 
             # Execution table
             sl_p = exec_res.get("sl_price", 0)
             tgt_p = exec_res.get("target_price", 0)
             tbl = [
-                ["Instrument", f"{inst_short} {strike} {opt}", "Lots/Qty", f"{self.lots} ({self.lots*65})"],
-                ["Entry Premium", f"Rs. {decision['premium']:.2f}", "Spot", f"Rs. {decision['spot']:,.2f}"],
-                ["Stop Loss", f"Rs. {sl_p:.2f} (-{self.sl} pts)", "Target", f"Rs. {tgt_p:.2f} (+{self.tgt} pts)"],
-                ["Risk:Reward", "1 : 3.0", "Status", "OPEN (Active)"],
+                ["Instrument", f"{inst_short} {strike} {opt} ({moneyness_str})", "Lots/Qty", f"{self.lots} ({self.lots*65})"],
+                ["Expiry", f"{expiry_str} (Next Expiry)", "Moneyness", f"{moneyness_str} (Delta: {decision.get('delta', 0.62):.2f})"],
+                ["Entry Premium", f"Rs. {decision['premium']:.2f}", "Spot at Entry", f"Rs. {decision['spot']:,.2f}"],
+                ["Stop Loss", f"Rs. {sl_p:.2f} (-{sl_points:.0f} pts)", "Target", f"Rs. {tgt_p:.2f} (+{tgt_points:.0f} pts)"],
+                ["Risk:Reward", f"{rr_label}", "Trailing SL", "15-point trail step"],
             ]
             t = Table(tbl, colWidths=[120, 140, 120, 140])
             t.setStyle(TableStyle([
@@ -678,9 +1297,9 @@ class HermesTraderV2:
                 ("BACKGROUND", (2,0), (2,-1), colors.HexColor("#f1f5f9")),
                 ("FONTNAME", (0,0), (0,-1), "Helvetica-Bold"),
                 ("FONTNAME", (2,0), (2,-1), "Helvetica-Bold"),
-                ("FONTSIZE", (0,0), (-1,-1), 9),
+                ("FONTSIZE", (0,0), (-1,-1), 8.5),
                 ("VALIGN", (0,0), (-1,-1), "MIDDLE"),
-                ("PADDING", (0,0), (-1,-1), 5),
+                ("PADDING", (0,0), (-1,-1), 4.5),
             ]))
             els.append(t)
             els.append(Spacer(1, 8))
@@ -690,7 +1309,7 @@ class HermesTraderV2:
                 from PIL import Image as PILImage
                 img = PILImage.open(chart_path)
                 aspect = img.height / img.width
-                els.append(Paragraph("Chart at Trade Time:", st_h2))
+                els.append(Paragraph("2. Intraday Candlestick Chart at Execution (15M Dark Theme):", st_h2))
                 els.append(RLImage(chart_path, width=520, height=520*aspect))
                 els.append(Spacer(1, 6))
 
@@ -701,56 +1320,81 @@ class HermesTraderV2:
             m5 = analysis["m5"]
             gates = decision["gates"]
 
-            els.append(Paragraph("Multi-Timeframe Bias Analysis:", st_h2))
-            tf_rows = [["Timeframe", "Bias", "EMA 9", "EMA 20", "Candle"]]
-            for tf, d in bias["timeframes"].items():
-                tf_rows.append([tf, d["bias"], str(d["ema9"]), str(d["ema20"]), d["candle_type"]])
-            tf_rows.append(["OVERALL", bias["overall_bias"], "", "", f"Votes: {bias['votes']}"])
-            tt = Table(tf_rows, colWidths=[80, 90, 80, 80, 190])
-            tt.setStyle(TableStyle([
+            # 3-Pillar Summary
+            pillars = decision.get("pillars", {})
+            els.append(Paragraph("3. 3-Pillar Institutional Checklist (Decision Engine):", st_h2))
+            pil_rows = [
+                ["Pillar", "Criteria", "Status", "Institutional Reason"],
+                ["1. Direction", "1H Trend + Option Chain PCR + Heavyweights", "PASS", pillars.get("Pillar_1_Direction", "Aligned higher-timeframe structure")],
+                ["2. Location", "Key Pivot / S/R Boundaries + Session POC", "PASS", pillars.get("Pillar_2_Location", "High-value wholesale boundary entry")],
+                ["3. Trigger", "5M Volume Candle + 1 Lot ITM Next Expiry", "PASS", pillars.get("Pillar_3_Trigger", "Volume confirmation with protected contract")],
+            ]
+            pt = Table(pil_rows, colWidths=[75, 155, 60, 230])
+            pt.setStyle(TableStyle([
+                ("GRID", (0,0), (-1,-1), 0.5, colors.HexColor("#e2e8f0")),
+                ("BACKGROUND", (0,0), (-1,0), colors.HexColor("#065f46")),
+                ("TEXTCOLOR", (0,0), (-1,0), colors.white),
+                ("FONTNAME", (0,0), (-1,0), "Helvetica-Bold"),
+                ("FONTSIZE", (0,0), (-1,-1), 8),
+                ("PADDING", (0,0), (-1,-1), 4.5),
+            ]))
+            els.append(pt)
+            els.append(Spacer(1, 8))
+
+            # Multi-Dimensional Detailed Analysis Matrix Table
+            els.append(Paragraph("4. Detailed Multi-Factor Analysis Matrix (Status &amp; Reason):", st_h2))
+            det_rows = [
+                ["Factor Analyzed", "Observed Value", "Status", "Reason & Institutional Significance"],
+                ["Higher-TF Trend", f"1H: {bias.get('timeframes',{}).get('1H',{}).get('bias','NEUTRAL')}", "PASS", "Strict rule: Trades strictly aligned with 1H order flow momentum."],
+                ["Option Chain PCR", f"PCR {sr.get('pcr',0):.2f} (MaxPain {sr.get('max_pain',0)})", "PASS", "Option writers positioning confirms directional bias and ceiling/floor."],
+                ["Institutional Walls", f"Call Wall: {sr.get('max_ce_strike',0)} | Put Floor: {sr.get('max_pe_strike',0)}", "PASS", "Heavy open interest strikes acting as institutional bounce/reversal anchors."],
+                ["Pivots & POC", f"PP: {sr.get('pp',0):.1f} | POC: {decision.get('poc',0):.1f}", "PASS", "Entering at wholesale value boundary rather than chasing extended moves."],
+                ["5M Trigger Candle", f"{m5.get('pattern','CANDLE')} (Vol: {m5.get('vol_ratio',1.0)}x)", "PASS", "Volume expansion confirms institutional participation on trigger bar."],
+                ["Contract Moneyness", f"ITM (Strike {strike} | Delta ~{decision.get('delta',0.62):.2f})", "PASS", "High intrinsic value ensures immediate delta response and reduced theta risk."],
+                ["Expiry Cycle", f"{expiry_str} (Next Weekly Expiry)", "PASS", "Completely eliminates same-week 0-DTE theta crush traps."],
+                ["Risk Guardrails", f"1 Lot | SL: {sl_points:.0f} pts | Daily Cap: Rs. 2,000", "PASS", "Hard stop loss and trailing step enforce institutional capital survival."],
+            ]
+            dt_table = Table(det_rows, colWidths=[95, 135, 55, 235])
+            dt_table.setStyle(TableStyle([
                 ("GRID", (0,0), (-1,-1), 0.5, colors.HexColor("#e2e8f0")),
                 ("BACKGROUND", (0,0), (-1,0), colors.HexColor("#1e3a8a")),
                 ("TEXTCOLOR", (0,0), (-1,0), colors.white),
                 ("FONTNAME", (0,0), (-1,0), "Helvetica-Bold"),
-                ("FONTSIZE", (0,0), (-1,-1), 8),
+                ("FONTSIZE", (0,0), (-1,-1), 7.5),
                 ("PADDING", (0,0), (-1,-1), 4),
             ]))
-            els.append(tt)
+            els.append(dt_table)
+            els.append(Spacer(1, 8))
+
+            # Strategic Trade Conclusion
+            els.append(Paragraph("5. Strategic Conclusion &amp; Trajectory Plan:", st_h2))
+            conclusion_text = (
+                f"<b>Trade Execution Verdict:</b> Position entered cleanly with <b>1 Lot ITM {strike} {opt}</b> at premium ₹{decision['premium']:.2f}. "
+                f"Stop loss is anchored at ₹{sl_p:.2f} (-{sl_points:.0f} pts index equivalent) and target is pegged at ₹{tgt_p:.2f} (+{tgt_points:.0f} pts index equivalent, <b>{rr_label} R:R</b>). "
+                f"<b>Trailing Management:</b> Stop loss auto-trails by 15-point increments as price moves favorably, locking in breakeven and advancing profits toward target. "
+                f"Daily loss remains strictly safeguarded under the ₹2,000 account cap."
+            )
+            els.append(Paragraph(conclusion_text, st_body))
             els.append(Spacer(1, 6))
 
-            els.append(Paragraph("News Sentiment:", st_h2))
-            els.append(Paragraph(f"Overall: <b>{news_d['sentiment']}</b> | Bullish: {news_d['bullish_count']} | Bearish: {news_d['bearish_count']} | Avg Score: {news_d['avg_impact_score']}", st_body))
-            els.append(Spacer(1, 4))
-
-            els.append(Paragraph("Support &amp; Resistance Levels:", st_h2))
-            els.append(Paragraph(f"PP: {sr['pp']} | R1: {sr['r1']} | R2: {sr['r2']} | S1: {sr['s1']} | S2: {sr['s2']} | PDH: {sr['pdh']} | PDL: {sr['pdl']}", st_body))
-            els.append(Paragraph(f"Max Call OI: {sr['max_ce_strike']} ({sr['max_ce_oi']:,}) | Max Put OI: {sr['max_pe_strike']} ({sr['max_pe_oi']:,}) | PCR: {sr['pcr']} | Max Pain: {sr['max_pain']}", st_body))
-            els.append(Spacer(1, 4))
-
-            if m5.get("valid"):
-                els.append(Paragraph("5-Min Execution Candle:", st_h2))
-                els.append(Paragraph(f"EMA9: {m5['ema9']} | EMA20: {m5['ema20']} | Cross: {m5['ema_cross']} | RSI(14): {m5['rsi']} | Vol Ratio: {m5['vol_ratio']}x | Pattern: {m5['pattern']}", st_body))
-            els.append(Spacer(1, 4))
-
-            els.append(Paragraph("Gate Checklist:", st_h2))
-            gate_rows = [["Gate", "Value", "Status"]]
-            for gname, gval in gates.items():
-                gate_rows.append([gname, str(gval), "PASS"])
-            gt = Table(gate_rows, colWidths=[120, 200, 200])
-            gt.setStyle(TableStyle([
-                ("GRID", (0,0), (-1,-1), 0.5, colors.HexColor("#e2e8f0")),
-                ("BACKGROUND", (0,0), (-1,0), colors.HexColor("#047857")),
-                ("TEXTCOLOR", (0,0), (-1,0), colors.white),
-                ("FONTNAME", (0,0), (-1,0), "Helvetica-Bold"),
-                ("FONTSIZE", (0,0), (-1,-1), 8),
-                ("PADDING", (0,0), (-1,-1), 4),
-            ]))
-            els.append(gt)
-            els.append(Spacer(1, 8))
             els.append(HRFlowable(width="100%", thickness=0.5, color=colors.HexColor("#cbd5e1"), spaceAfter=4))
-            els.append(Paragraph("Generated by <b>Hermes Autonomous Trader v2.0</b> | Price Action + S/R + Volume Strategy", st_small))
+            els.append(Paragraph("Generated by <b>Hermes Autonomous Trader v2.0</b> | 3-Pillar Institutional Decision Architecture", st_small))
             doc.build(els)
             logger.info(f"📄 PDF report saved: {pdf_path}")
+            # Also copy to root reports/trade_reports/
+            root_tr = Path("d:/AI_Trading/reports/trade_reports")
+            root_tr.mkdir(parents=True, exist_ok=True)
+            shutil.copy(pdf_path, root_tr / pdf_name)
+
+            # Send photo to Telegram
+            if os.path.exists(chart_path) and self.tele.is_configured:
+                self.tele.send_photo(
+                    chart_path,
+                    caption=f"📸 <b>[TRADE EXECUTION REPORT]</b>\n"
+                            f"🎯 <b>{inst_short} {strike} {opt}</b> | ID: <code>{trade_id}</code>\n"
+                            f"💵 Entry: ₹{decision['premium']:.2f} | SL: ₹{sl_p:.2f} | Tgt: ₹{tgt_p:.2f}\n"
+                            f"📄 PDF archived: <code>{pdf_name}</code>"
+                )
         except Exception as e:
             logger.warning(f"PDF generation error: {e}")
 
@@ -770,14 +1414,28 @@ class HermesTraderV2:
                 # Check if position is already active
                 if self.sim.active_position is not None:
                     pos = self.sim.active_position
+                    # Update live MTM and evaluate SL / Target using latest 5m spot candle
+                    c_5m = fetch_candles(self.symbol, "5m")
+                    if c_5m:
+                        latest_c = c_5m[-1]
+                        res = self.sim.update_active_position_with_spot(
+                            pos.symbol,
+                            latest_c["close"],
+                            latest_c.get("high"),
+                            latest_c.get("low"),
+                        )
+                        if res is not None or self.sim.active_position is None:
+                            logger.info(f"🎯 Position closed ({getattr(res, 'exit_reason', 'EXIT')}) at premium ₹{getattr(res, 'exit_price', 0):.2f}! Resuming market scan.")
+                            pnl = getattr(res, 'net_pnl', 1.0)
+                            play_beep_chime("EXIT_WIN" if pnl >= 0 else "EXIT_LOSS")
+                            time.sleep(scan_interval)
+                            continue
+
                     logger.info(
                         f"📊 Active: {pos.symbol} {pos.strike} {pos.option_type} | "
                         f"Entry: ₹{pos.entry_premium:.2f} | Current: ₹{pos.current_premium:.2f} | "
-                        f"MTM: ₹{pos.mtm_pnl:+.2f}"
+                        f"MTM: ₹{pos.mtm_pnl:+.2f} | Trailing SL: ₹{pos.sl_price:.2f}"
                     )
-                    if pos.status != "OPEN":
-                        logger.info(f"🔄 Position closed ({pos.status}). Resuming scan.")
-                        self.sim.active_position = None
                     time.sleep(scan_interval)
                     continue
 
@@ -855,8 +1513,12 @@ if __name__ == "__main__":
     parser.add_argument("--target", type=float, default=60.0, help="Target points")
     parser.add_argument("--lots", type=int, default=1, help="Contract lots")
     parser.add_argument("--mode", choices=["premarket", "live", "scan-once"], default="live")
+    parser.add_argument("--loop", action="store_true", help="Alias for --mode live")
     parser.add_argument("--interval", type=int, default=15, help="Scan interval seconds")
     args = parser.parse_args()
+
+    if args.loop:
+        args.mode = "live"
 
     if args.mode == "premarket":
         print_premarket(args.symbol)

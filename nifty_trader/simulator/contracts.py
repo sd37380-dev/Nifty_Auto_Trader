@@ -61,6 +61,8 @@ class OptionPosition:
     target_mode: str = "POINTS"
     mtm_pnl: float = 0.0
     status: str = "OPEN"
+    expiry: str = ""             # Expiry date string (e.g. "08-Dec-2026")
+    moneyness: str = "ITM"       # Moneyness tier (e.g. "ITM")
 
 
 @dataclass

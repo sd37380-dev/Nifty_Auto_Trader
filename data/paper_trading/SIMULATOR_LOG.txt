@@ -168,3 +168,30 @@
 [2026-11-25 06:21] 🏁 EXIT TARGET | NIFTY 25900 CE | Buy: Rs. 296.60 | Exit: Rs. 356.10 | Gross: Rs. +3,867.50 | Charges: Rs. 96.25 | Net: Rs. +3,771.25 (+20.1%) | Rule: Level_Strategy
 [2026-11-25 07:19:05 UTC] ⚡ [OPTION CHAIN PAPER TRADE] Placed: NIFTY 50 25800 PE | Lots: 1 (65 Qty) | Entry: ₹239.70 | SL: ₹219.70 | Tgt: ₹299.70 | Spot: ₹25867.80
 [2026-11-25 07:26] 🏁 EXIT STOP_LOSS | NIFTY 25800 PE | Buy: Rs. 239.70 | Exit: Rs. 273.27 | Gross: Rs. +2,182.05 | Charges: Rs. 85.34 | Net: Rs. +2,096.71 (+14.0%) | Rule: Level_Strategy
+[2026-11-26 05:17:52 UTC] ⚡ [OPTION CHAIN PAPER TRADE] Placed: NIFTY 50 25900 CE | Lots: 1 (65 Qty) | Entry: ₹234.10 | SL: ₹214.10 | Tgt: ₹294.10 | Spot: ₹25904.80
+[2026-11-26 05:21] 🏁 EXIT TARGET | NIFTY 25900 CE | Buy: Rs. 234.10 | Exit: Rs. 293.60 | Gross: Rs. +3,867.50 | Charges: Rs. 87.21 | Net: Rs. +3,780.29 (+25.4%) | Rule: Level_Strategy
+[2026-09-15 10:15] 🏁 EXIT TARGET | NIFTY 24000 CE | Buy: Rs. 100.00 | Exit: Rs. 120.00 | Gross: Rs. +1,300.00 | Charges: Rs. 60.00 | Net: Rs. +1,240.00 (+20.0%) | Rule: TestRule
+[2026-11-26 16:36:50 UTC] 🗑️ [MANUAL DELETE] Deleted trade log record: test_dummy_del_99
+[2026-11-26 16:36:50 UTC] ⚙️ [PRESET] Applied risk preset: Percentage (15% SL, 30% Profit Target, 1 Lot)
+[2026-11-26 16:36:50 UTC] ⚙️ [SETTINGS UPDATED] Lots=3 (195 qty) | SL=18.5 pts | Target=45.0 pts | TrailingSL=True (12.0 pts step)
+[2026-11-26 16:36:50 UTC] 🔍 [MANUAL CHART ANALYSIS] Spot: 22716.2 | Rule: My_Custom_Strategy -> Waiting for setup
+[2026-11-27 07:13:22 UTC] ⚡ [OPTION CHAIN PAPER TRADE] Placed: NIFTY 50 25700 PE | Lots: 1 (65 Qty) | Entry: ₹162.65 | SL: ₹142.65 | Tgt: ₹222.65 | Spot: ₹25689.45
+[2026-11-27 09:10] 🏁 EXIT STOP_LOSS | NIFTY 25700 PE | Buy: Rs. 162.65 | Exit: Rs. 142.15 | Gross: Rs. -1,332.50 | Charges: Rs. 68.60 | Net: Rs. -1,401.10 (-12.6%) | Rule: Level_Strategy
+[2026-11-27 09:10] 🏁 EXIT STOP_LOSS | NIFTY 25700 PE | Buy: Rs. 162.65 | Exit: Rs. 162.33 | Gross: Rs. -20.80 | Charges: Rs. 70.68 | Net: Rs. -91.48 (-0.2%) | Rule: Level_Strategy
+[2026-11-27 09:15] 🏁 EXIT STOP_LOSS | NIFTY 25700 PE | Buy: Rs. 162.65 | Exit: Rs. 177.63 | Gross: Rs. +973.70 | Charges: Rs. 72.27 | Net: Rs. +901.43 (+9.2%) | Rule: Level_Strategy
+[2026-11-27 09:15:57 UTC] ⚡ [OPTION CHAIN PAPER TRADE] Placed: NIFTY 50 25650 PE | Lots: 1 (65 Qty) | Entry: ₹159.75 | SL: ₹139.75 | Tgt: ₹219.75 | Spot: ₹25671.65
+[2026-11-27 09:20] 🏁 EXIT STOP_LOSS | NIFTY 25650 PE | Buy: Rs. 159.75 | Exit: Rs. 165.73 | Gross: Rs. +388.70 | Charges: Rs. 70.91 | Net: Rs. +317.79 (+3.7%) | Rule: Level_Strategy
+[2026-11-27 09:25] 🏁 EXIT STOP_LOSS | NIFTY 25650 PE | Buy: Rs. 159.75 | Exit: Rs. 165.73 | Gross: Rs. +388.70 | Charges: Rs. 70.91 | Net: Rs. +317.79 (+3.7%) | Rule: Level_Strategy
+[2026-11-27 09:25] 🏁 EXIT STOP_LOSS | NIFTY 25650 PE | Buy: Rs. 159.75 | Exit: Rs. 165.73 | Gross: Rs. +388.70 | Charges: Rs. 70.91 | Net: Rs. +317.79 (+3.7%) | Rule: Level_Strategy
+[2026-11-27 09:30] 🏁 EXIT STOP_LOSS | NIFTY 25650 PE | Buy: Rs. 159.75 | Exit: Rs. 165.73 | Gross: Rs. +388.70 | Charges: Rs. 70.91 | Net: Rs. +317.79 (+3.7%) | Rule: Level_Strategy
+[2026-11-27 09:30] 🏁 EXIT STOP_LOSS | NIFTY 25650 PE | Buy: Rs. 159.75 | Exit: Rs. 165.73 | Gross: Rs. +388.70 | Charges: Rs. 70.91 | Net: Rs. +317.79 (+3.7%) | Rule: Level_Strategy
+[2026-11-27 09:35] 🏁 EXIT STOP_LOSS | NIFTY 25650 PE | Buy: Rs. 159.75 | Exit: Rs. 183.10 | Gross: Rs. +1,517.75 | Charges: Rs. 72.71 | Net: Rs. +1,445.04 (+14.6%) | Rule: Level_Strategy
+[2026-11-27 09:36] 🏁 EXIT STOP_LOSS | NIFTY 25650 PE | Buy: Rs. 159.75 | Exit: Rs. 165.73 | Gross: Rs. +388.70 | Charges: Rs. 70.91 | Net: Rs. +317.79 (+3.7%) | Rule: Level_Strategy
+[2026-11-27 09:40] 🏁 EXIT STOP_LOSS | NIFTY 25650 PE | Buy: Rs. 159.75 | Exit: Rs. 183.10 | Gross: Rs. +1,517.75 | Charges: Rs. 72.71 | Net: Rs. +1,445.04 (+14.6%) | Rule: Level_Strategy
+[2026-11-27 09:41] 🏁 EXIT STOP_LOSS | NIFTY 25650 PE | Buy: Rs. 159.75 | Exit: Rs. 183.10 | Gross: Rs. +1,517.75 | Charges: Rs. 72.71 | Net: Rs. +1,445.04 (+14.6%) | Rule: Level_Strategy
+[2026-11-27 09:45] 🏁 EXIT STOP_LOSS | NIFTY 25650 PE | Buy: Rs. 159.75 | Exit: Rs. 183.10 | Gross: Rs. +1,517.75 | Charges: Rs. 72.71 | Net: Rs. +1,445.04 (+14.6%) | Rule: Level_Strategy
+[2026-11-27 09:46] 🏁 EXIT STOP_LOSS | NIFTY 25650 PE | Buy: Rs. 159.75 | Exit: Rs. 183.10 | Gross: Rs. +1,517.75 | Charges: Rs. 72.71 | Net: Rs. +1,445.04 (+14.6%) | Rule: Level_Strategy
+[2026-11-27 09:50] 🏁 EXIT STOP_LOSS | NIFTY 25650 PE | Buy: Rs. 159.75 | Exit: Rs. 183.10 | Gross: Rs. +1,517.75 | Charges: Rs. 72.71 | Net: Rs. +1,445.04 (+14.6%) | Rule: Level_Strategy
+[2026-11-27 09:51] 🏁 EXIT STOP_LOSS | NIFTY 25650 PE | Buy: Rs. 159.75 | Exit: Rs. 183.10 | Gross: Rs. +1,517.75 | Charges: Rs. 72.71 | Net: Rs. +1,445.04 (+14.6%) | Rule: Level_Strategy
+[2026-11-27 09:55] 🏁 EXIT STOP_LOSS | NIFTY 25650 PE | Buy: Rs. 159.75 | Exit: Rs. 183.10 | Gross: Rs. +1,517.75 | Charges: Rs. 72.71 | Net: Rs. +1,445.04 (+14.6%) | Rule: Level_Strategy
+[2026-11-27 09:56] 🏁 EXIT STOP_LOSS | NIFTY 25650 PE | Buy: Rs. 159.75 | Exit: Rs. 183.10 | Gross: Rs. +1,517.75 | Charges: Rs. 72.71 | Net: Rs. +1,445.04 (+14.6%) | Rule: Level_Strategy

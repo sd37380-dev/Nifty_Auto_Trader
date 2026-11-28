@@ -131,11 +131,12 @@ class CandleObservation(BaseModel):
 
 
 class NumericalObservation(BaseModel):
-    """Aggregated numerical candlestick feeds across canonical 1H and 15M timeframes."""
+    """Aggregated numerical candlestick feeds across canonical 1H, 15M, and 5M timeframes."""
     schema_version: str = "1.0"
     instrument: str = "NIFTY"
     candles_1h: List[CandleObservation] = Field(default_factory=list)
     candles_15m: List[CandleObservation] = Field(default_factory=list)
+    candles_5m: List[CandleObservation] = Field(default_factory=list)
 
     @property
     def latest_1h(self) -> Optional[CandleObservation]:
@@ -144,6 +145,10 @@ class NumericalObservation(BaseModel):
     @property
     def latest_15m(self) -> Optional[CandleObservation]:
         return self.candles_15m[-1] if self.candles_15m else None
+
+    @property
+    def latest_5m(self) -> Optional[CandleObservation]:
+        return self.candles_5m[-1] if self.candles_5m else None
 
 
 # ==============================================================================

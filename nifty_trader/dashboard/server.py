@@ -862,6 +862,29 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   }
 
   /* Multi-Function Tab & Sub-Nav Styling */
+  .swing-subtab {
+    background: rgba(19, 27, 46, 0.85);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    padding: 7px 15px;
+    border-radius: 6px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .swing-subtab:hover {
+    background: var(--bg-card-hover);
+    color: var(--text-primary);
+  }
+  .swing-subtab.active {
+    background: linear-gradient(135deg, #0284c7, #0369a1);
+    color: #ffffff;
+    border-color: #38bdf8;
+    box-shadow: 0 0 12px rgba(56, 189, 248, 0.35);
+  }
+  
   .mf-subtab {
     background: rgba(19, 27, 46, 0.85);
     border: 1px solid var(--border);
@@ -1106,6 +1129,9 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   <button class="nav-tab" onclick="switchTab('tab-next-expiries', this)" id="nav-btn-next-expiries">📅 Next 3 Expiries (NSE)</button>
   <button class="nav-tab" onclick="switchTab('tab-charts', this)" id="nav-btn-charts">📈 Live Charts</button>
   <button class="nav-tab" onclick="switchTab('tab-news', this)" id="nav-btn-news">📰 Market News &amp; Impact <span id="nav-news-count-badge" class="badge badge-green" style="font-size: 0.65rem; padding: 1px 6px; margin-left: 4px;">--</span></button>
+    <button class="nav-tab" onclick="switchTab('tab-swing', this)" id="nav-btn-swing" style="background: rgba(14, 165, 233, 0.12); color: #38bdf8; border: 1px solid rgba(14, 165, 233, 0.4); font-weight: 700;">
+    🌊 Swing Trade <span id="nav-swing-badge" class="badge badge-blue" style="font-size: 0.65rem; padding: 1px 6px; margin-left: 4px;">ACTIVE</span>
+  </button>
   <button class="nav-tab" onclick="switchTab('tab-multi-function', this)" id="nav-btn-multi-function" style="background: rgba(139, 92, 246, 0.12); color: #c084fc; border: 1px solid rgba(139, 92, 246, 0.4); font-weight: 700;">
     🧩 Multi-Function <span id="nav-pending-badge" class="badge badge-yellow" style="font-size: 0.65rem; padding: 1px 6px; margin-left: 4px; display: none;">0</span>
   </button>
@@ -3888,6 +3914,306 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   <div id="tab-experience" style="display:none;"></div>
   <div id="tab-research" style="display:none;"></div>
 </div>
+<!-- Tab: Swing Trade -->
+<div id="tab-swing" class="tab-content" style="display: none;">
+  <!-- Header Card -->
+  <div class="card" style="margin-bottom: 18px; background: linear-gradient(135deg, rgba(14, 165, 233, 0.12) 0%, rgba(19, 27, 46, 0.95) 100%); border-left: 4px solid #38bdf8;">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+      <div>
+        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+          <h2 style="font-size: 1.25rem; font-weight: 800; color: var(--text-primary); margin: 0;">🌊 Autonomous Swing Trade Cockpit</h2>
+          <span class="badge badge-blue">MULTI-DAY HORIZON (3–10 DAYS)</span>
+          <span class="badge badge-green" id="swing-agent-badge">AGENT: INITIALIZING</span>
+          <span class="badge badge-purple">1:6.0 R:R ASYMMETRY</span>
+        </div>
+        <p style="font-size: 0.82rem; color: var(--text-secondary); margin-top: 4px; margin-bottom: 0;">
+          Strict 4-Tier Institutional Architecture: <strong>Macro Radar</strong> (FII/DII Futures, Global Indices, Brent, Gold, DXY) + 
+          <strong>Multi-Timeframe Structure</strong> (W1/D1/4H/1H) + <strong>Reaction Zones</strong> (30–40 pt Confluence Boxes) + 
+          <strong>Monthly Options Spreads (30–45 DTE)</strong>. Archived into <code>reports/&lt;YYYY-MM-DD&gt;/swing_trade_reports/</code>.
+        </p>
+      </div>
+      <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+        <button class="btn btn-primary" onclick="fetchSwingTradeData()" style="padding: 6px 14px; font-size: 0.8rem; background: #0284c7;">🔄 Refresh Telemetry</button>
+      </div>
+    </div>
+
+    <!-- Swing Subtabs Navigation -->
+    <div style="display: flex; gap: 8px; margin-top: 14px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 12px; overflow-x: auto;">
+      <button type="button" class="swing-subtab active" onclick="switchSwingSubtab('swing-subtab-macro', this)" id="swing-subbtn-macro">🌍 Macro &amp; Global Radar</button>
+      <button type="button" class="swing-subtab" onclick="switchSwingSubtab('swing-subtab-mtfa', this)" id="swing-subbtn-mtfa">📐 Multi-Timeframe Structure (MTFA)</button>
+      <button type="button" class="swing-subtab" onclick="switchSwingSubtab('swing-subtab-zones', this)" id="swing-subbtn-zones">🎯 Reaction Zone Scanner</button>
+      <button type="button" class="swing-subtab" onclick="switchSwingSubtab('swing-subtab-setups', this)" id="swing-subbtn-setups">⚡ Active Setups &amp; Positions</button>
+      <button type="button" class="swing-subtab" onclick="switchSwingSubtab('swing-subtab-reports', this)" id="swing-subbtn-reports">📑 Swing Reports Archive (PDF)</button>
+    </div>
+  </div>
+
+  <!-- Sub-Panel 1: Macro & Global Radar -->
+  <div id="swing-subtab-macro" class="swing-subcontent" style="display: block;">
+    <!-- Macro Summary Cards Grid -->
+    <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); margin-bottom: 16px;">
+      <!-- FII / DII Stance -->
+      <div class="card" style="border-top: 3px solid #38bdf8;">
+        <div style="font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">Institutional Positioning</div>
+        <div style="font-size: 1.35rem; font-weight: 800; color: var(--text-primary); margin-top: 4px;" id="swing-fii-stance">BULLISH ACCUMULATION</div>
+        <div style="display: flex; justify-content: space-between; font-size: 0.82rem; margin-top: 8px; color: var(--text-secondary);">
+          <span>FII Long %: <strong id="swing-fii-pct" style="color: #4ade80;">58.4%</strong></span>
+          <span>Net Futures: <strong id="swing-fii-net" style="color: #4ade80;">+24,500 cntr</strong></span>
+        </div>
+      </div>
+
+      <!-- Global Risk-On Verdict -->
+      <div class="card" style="border-top: 3px solid #10b981;">
+        <div style="font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">Composite Global Sentiment</div>
+        <div style="font-size: 1.35rem; font-weight: 800; color: #4ade80; margin-top: 4px;" id="swing-global-verdict">GLOBAL RISK-ON</div>
+        <div style="display: flex; justify-content: space-between; font-size: 0.82rem; margin-top: 8px; color: var(--text-secondary);">
+          <span>Risk Score: <strong id="swing-global-score" style="color: #38bdf8;">+3.2 / 5.0</strong></span>
+          <span>India VIX: <strong id="swing-india-vix" style="color: #4ade80;">13.82</strong></span>
+        </div>
+      </div>
+
+      <!-- Commodity Pressure -->
+      <div class="card" style="border-top: 3px solid #f59e0b;">
+        <div style="font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">Commodity Pressures</div>
+        <div style="font-size: 1.35rem; font-weight: 800; color: var(--text-primary); margin-top: 4px;" id="swing-commodity-status">NEUTRAL / FAVORABLE</div>
+        <div style="display: flex; justify-content: space-between; font-size: 0.82rem; margin-top: 8px; color: var(--text-secondary);">
+          <span>Brent Crude: <strong id="swing-brent" style="color: var(--text-primary);">$73.40</strong></span>
+          <span>Gold (XAU): <strong id="swing-gold" style="color: var(--text-primary);">$2,645</strong></span>
+        </div>
+      </div>
+
+      <!-- Currency & Yields -->
+      <div class="card" style="border-top: 3px solid #8b5cf6;">
+        <div style="font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">Currency &amp; Yield Pressures</div>
+        <div style="font-size: 1.35rem; font-weight: 800; color: var(--text-primary); margin-top: 4px;" id="swing-fx-status">DXY STABLE (&lt;106)</div>
+        <div style="display: flex; justify-content: space-between; font-size: 0.82rem; margin-top: 8px; color: var(--text-secondary);">
+          <span>DXY Index: <strong id="swing-dxy" style="color: var(--text-primary);">105.40</strong></span>
+          <span>US 10Y Yield: <strong id="swing-us10y" style="color: var(--text-primary);">4.24%</strong></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Global Indices Matrix -->
+    <div class="card" style="margin-bottom: 16px;">
+      <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <span>🌐 Foreign Country Indices &amp; Inter-Market Correlation</span>
+        <span style="font-size: 0.75rem; color: var(--text-secondary);">US (Wall St) • Asia-Pacific • Europe</span>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Region</th>
+            <th>Market Index</th>
+            <th>Last Spot</th>
+            <th>Change</th>
+            <th>% Change</th>
+            <th>Swing Market Impact</th>
+            <th>Signal</th>
+          </tr>
+        </thead>
+        <tbody id="swing-indices-table-body">
+          <tr><td colspan="7" style="text-align: center; color: var(--text-secondary);">Loading Global Radar Telemetry...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Sub-Panel 2: Multi-Timeframe Structure (MTFA) -->
+  <div id="swing-subtab-mtfa" class="swing-subcontent" style="display: none;">
+    <div class="card" style="margin-bottom: 16px; background: rgba(30, 41, 59, 0.4);">
+      <div style="font-size: 0.88rem; font-weight: 700; color: #38bdf8; margin-bottom: 4px;">📐 The 4-Tier Multi-Timeframe Alignment Protocol</div>
+      <div style="font-size: 0.8rem; color: var(--text-secondary);">
+        A swing trade is ONLY initiated when the higher timeframe Compass (Weekly) and Roadmap (Daily) establish clear directional dominance,
+        the 4H Battleground forms an actionable base, and the 1H Trigger delivers confirmation.
+      </div>
+    </div>
+
+    <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); margin-bottom: 16px;" id="swing-mtfa-cards">
+      <!-- W1 Compass -->
+      <div class="card" style="border-left: 4px solid #3b82f6;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <strong style="color: #38bdf8; font-size: 1rem;">WEEKLY (W1)</strong>
+          <span class="badge badge-blue">COMPASS</span>
+        </div>
+        <div style="margin-top: 10px; font-size: 1.15rem; font-weight: 800; color: #4ade80;">BULLISH TREND</div>
+        <div style="margin-top: 8px; font-size: 0.8rem; color: var(--text-secondary); line-height: 1.5;">
+          • Structure: <strong>Higher Highs &amp; Higher Lows</strong><br>
+          • 20 EMA: <strong>Holding Above (Bullish)</strong><br>
+          • Bias: <strong>Only Long Swing Setups Authorized</strong>
+        </div>
+      </div>
+
+      <!-- D1 Roadmap -->
+      <div class="card" style="border-left: 4px solid #10b981;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <strong style="color: #4ade80; font-size: 1rem;">DAILY (D1)</strong>
+          <span class="badge badge-green">ROADMAP</span>
+        </div>
+        <div style="margin-top: 10px; font-size: 1.15rem; font-weight: 800; color: #4ade80;">BULLISH CONTINUATION</div>
+        <div style="margin-top: 8px; font-size: 0.8rem; color: var(--text-secondary); line-height: 1.5;">
+          • Structure: <strong>Consolidation above 20 EMA</strong><br>
+          • 20 EMA: <strong>25,520 (Dynamic Rising Floor)</strong><br>
+          • Bias: <strong>Pullback Buy in Progress</strong>
+        </div>
+      </div>
+
+      <!-- 4H Battleground -->
+      <div class="card" style="border-left: 4px solid #f59e0b;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <strong style="color: #fbbf24; font-size: 1rem;">4-HOUR (4H)</strong>
+          <span class="badge badge-yellow">BATTLEGROUND</span>
+        </div>
+        <div style="margin-top: 10px; font-size: 1.15rem; font-weight: 800; color: #fbbf24;">REACTION ZONE TEST</div>
+        <div style="margin-top: 8px; font-size: 0.8rem; color: var(--text-secondary); line-height: 1.5;">
+          • Structure: <strong>Testing Institutional Floor Box</strong><br>
+          • Volume: <strong>Volume Profile Node Defended</strong><br>
+          • Bias: <strong>Base Formation Active</strong>
+        </div>
+      </div>
+
+      <!-- 1H Trigger -->
+      <div class="card" style="border-left: 4px solid #8b5cf6;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <strong style="color: #c084fc; font-size: 1rem;">1-HOUR (1H)</strong>
+          <span class="badge badge-purple">TRIGGER</span>
+        </div>
+        <div style="margin-top: 10px; font-size: 1.15rem; font-weight: 800; color: #4ade80;">TRIGGER READY</div>
+        <div style="margin-top: 8px; font-size: 0.8rem; color: var(--text-secondary); line-height: 1.5;">
+          • Structure: <strong>Bullish Pin / Engulfing Candle</strong><br>
+          • Momentum: <strong>RSI Bullish Divergence (&gt;48)</strong><br>
+          • Bias: <strong>Order Execution Validated</strong>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sub-Panel 3: Reaction Zone Scanner -->
+  <div id="swing-subtab-zones" class="swing-subcontent" style="display: none;">
+    <div class="card" style="margin-bottom: 16px;">
+      <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <span>🎯 Institutional Reaction Zones (Strictly 30–40 Point Confluence Boxes)</span>
+        <span class="badge badge-blue">HIGH-PROBABILITY PIVOT REVERSALS</span>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Zone Name</th>
+            <th>Type</th>
+            <th>Price Band</th>
+            <th>Width</th>
+            <th>Distance to Spot</th>
+            <th>Confluence Pillars</th>
+            <th>Reaction Status</th>
+          </tr>
+        </thead>
+        <tbody id="swing-zones-table-body">
+          <tr><td colspan="7" style="text-align: center; color: var(--text-secondary);">Scanning Institutional Reaction Zones...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Sub-Panel 4: Active Setups & Positions -->
+  <div id="swing-subtab-setups" class="swing-subcontent" style="display: none;">
+    <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); margin-bottom: 16px;">
+      <!-- Setup 1 -->
+      <div class="card" style="border-left: 4px solid #10b981;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span style="font-weight: 800; color: #4ade80; font-size: 1rem;">Setup 1: Liquidity Sweep &amp; FII Squeeze</span>
+          <span class="badge badge-green">1:6.0 R:R</span>
+        </div>
+        <div style="font-size: 0.82rem; color: var(--text-secondary); margin-top: 8px;">
+          • <strong>Mechanism:</strong> Retail stops swept below previous swing low, immediately absorbed by institutional passive bids.<br>
+          • <strong>Stop Loss:</strong> 50 index points (Tight SL under reaction zone wick).<br>
+          • <strong>Target:</strong> 300 index points (Major liquidity pool / Weekly high).<br>
+          • <strong>Contract:</strong> Monthly Bull Call Spread (30–45 DTE).
+        </div>
+      </div>
+
+      <!-- Setup 2 -->
+      <div class="card" style="border-left: 4px solid #3b82f6;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span style="font-weight: 800; color: #38bdf8; font-size: 1rem;">Setup 2: Daily 20 EMA Super-Highway Continuation</span>
+          <span class="badge badge-blue">1:6.0 R:R</span>
+        </div>
+        <div style="font-size: 0.82rem; color: var(--text-secondary); margin-top: 8px;">
+          • <strong>Mechanism:</strong> Trend pullback into the rising Daily 20 EMA value zone with 1H bullish momentum shift.<br>
+          • <strong>Stop Loss:</strong> 50 index points.<br>
+          • <strong>Target:</strong> 300 index points (Trend expansion).<br>
+          • <strong>Contract:</strong> Monthly Bull Call Spread / Bear Put Spread (30–45 DTE).
+        </div>
+      </div>
+    </div>
+
+    <!-- Active Swing Positions Table -->
+    <div class="card" style="margin-bottom: 16px;">
+      <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <span>💼 Active / Monitored Swing Trade Positions</span>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <span class="badge badge-purple">DECOUPLED SWING PORTFOLIO</span>
+          <button class="btn btn-secondary" onclick="clearSwingTradesNow()" style="padding: 3px 10px; font-size: 0.75rem; border-color: #f87171; color: #f87171;">🗑️ Clear Positions</button>
+        </div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Trade ID</th>
+            <th>Symbol &amp; Contract</th>
+            <th>Setup Type</th>
+            <th>Entry Spot</th>
+            <th>Target</th>
+            <th>Stop Loss</th>
+            <th>R:R</th>
+            <th>Unrealized P&amp;L</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="swing-positions-table-body">
+          <tr><td colspan="9" style="text-align: center; color: var(--text-secondary);">No active swing trade positions currently open.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Sub-Panel 5: Swing Reports Archive -->
+  <div id="swing-subtab-reports" class="swing-subcontent" style="display: none;">
+    <div class="card" style="margin-bottom: 16px; background: rgba(30, 41, 59, 0.4);">
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <div>
+          <div style="font-size: 0.88rem; font-weight: 700; color: #38bdf8;">📑 Dedicated Archival: reports/&lt;YYYY-MM-DD&gt;/swing_trade_reports/</div>
+          <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 2px;">
+            Daily &amp; Weekly Swing Bulletins and Executed Trade Reports generated strictly in <strong>PDF format only</strong>.
+          </div>
+        </div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <button class="btn btn-secondary" onclick="generateSwingReport('daily')" style="padding: 6px 12px; font-size: 0.8rem;">📄 Generate Daily PDF</button>
+          <button class="btn btn-secondary" onclick="generateSwingReport('weekly')" style="padding: 6px 12px; font-size: 0.8rem;">📆 Generate Weekly PDF</button>
+          <button class="btn btn-primary" onclick="fetchSwingReports()" style="padding: 6px 12px; font-size: 0.8rem; background: #0284c7;">🔄 Refresh List</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reports Table -->
+    <div class="card">
+      <div class="card-header">All Swing Trade PDF Reports</div>
+      <table>
+        <thead>
+          <tr>
+            <th>Report Category</th>
+            <th>Report Title / Filename</th>
+            <th>Date / Timestamp</th>
+            <th>File Size</th>
+            <th>Format</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="swing-reports-table-body">
+          <tr><td colspan="6" style="text-align: center; color: var(--text-secondary);">Loading Swing Reports Archive...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
 
 
 <script>
@@ -3944,6 +4270,10 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         setTimeout(resizeCharts, 50);
         setTimeout(renderCustomZones, 80);
       }
+      if (tabId === 'tab-swing') {
+        if (typeof fetchSwingTradeData === 'function') fetchSwingTradeData();
+        if (typeof fetchSwingReports === 'function') fetchSwingReports();
+      }
       if (tabId === 'tab-backtest' && typeof initBacktestTab === 'function') {
         initBacktestTab();
       }
@@ -3953,6 +4283,264 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   // -------------------------------------------------------------
   // TELEGRAM & 15-MINUTE ARMED TRADE FUNCTIONS
   // -------------------------------------------------------------
+  // -------------------------------------------------------------
+  // SWING TRADE COCKPIT FUNCTIONS
+  // -------------------------------------------------------------
+  function switchSwingSubtab(subId, btn) {
+    document.querySelectorAll('.swing-subcontent').forEach(el => el.style.display = 'none');
+    document.querySelectorAll('.swing-subtab').forEach(b => b.classList.remove('active'));
+
+    const target = document.getElementById(subId);
+    if (target) target.style.display = 'block';
+
+    if (btn && btn.classList) {
+      btn.classList.add('active');
+    } else {
+      document.querySelectorAll('.swing-subtab').forEach(b => {
+        const oc = b.getAttribute('onclick') || '';
+        if (oc.includes(subId)) b.classList.add('active');
+      });
+    }
+  }
+
+  async function fetchSwingTradeData() {
+    try {
+      const res = await fetch('/api/swing/data');
+      if (!res.ok) return;
+      const data = await res.json();
+
+      // Render Macro Radar
+      if (data.macro) {
+        const m = data.macro;
+        const fii = m.fii_dii || {};
+        const crude = m.crude_oil || {};
+        const gold = m.gold || {};
+        const dxy = m.dxy_dollar_index || {};
+        const us10y = m.us_10y_yield || {};
+        const vix = m.india_vix || {};
+
+        const fiiStanceEl = document.getElementById('swing-fii-stance');
+        if (fiiStanceEl) fiiStanceEl.textContent = fii.fii_status || m.fii_futures_stance || '--';
+
+        const fiiPctEl = document.getElementById('swing-fii-pct');
+        if (fiiPctEl) fiiPctEl.textContent = (fii.fii_futures_long_pct !== undefined ? fii.fii_futures_long_pct : (m.fii_long_percentage || 0)).toFixed(1) + '%';
+
+        const fiiNetEl = document.getElementById('swing-fii-net');
+        const netCntr = fii.fii_net_contracts !== undefined ? fii.fii_net_contracts : (m.fii_net_index_contracts || 0);
+        if (fiiNetEl) fiiNetEl.textContent = (netCntr >= 0 ? '+' : '') + netCntr.toLocaleString() + ' cntr';
+
+        const verdictEl = document.getElementById('swing-global-verdict');
+        const verdictStr = m.global_verdict || m.composite_risk_verdict || '--';
+        if (verdictEl) {
+          verdictEl.textContent = verdictStr;
+          verdictEl.style.color = verdictStr.includes('ON') ? '#4ade80' : (verdictStr.includes('OFF') ? '#f87171' : '#fbbf24');
+        }
+
+        const scoreEl = document.getElementById('swing-global-score');
+        if (scoreEl) scoreEl.textContent = ((m.global_risk_score || 3.2) >= 0 ? '+' : '') + (m.global_risk_score || 3.2).toFixed(1) + ' / 5.0';
+
+        const vixEl = document.getElementById('swing-india-vix');
+        const vixVal = typeof vix === 'object' ? (vix.value || 0) : (m.india_vix || 0);
+        if (vixEl) vixEl.textContent = Number(vixVal).toFixed(2);
+
+        const brentEl = document.getElementById('swing-brent');
+        const brentVal = crude.price !== undefined ? crude.price : (m.brent_crude_usd || 0);
+        if (brentEl) brentEl.textContent = '$' + Number(brentVal).toFixed(2);
+
+        const goldEl = document.getElementById('swing-gold');
+        const goldVal = gold.price !== undefined ? gold.price : (m.gold_usd || 0);
+        if (goldEl) goldEl.textContent = '$' + Number(goldVal).toLocaleString();
+
+        const dxyEl = document.getElementById('swing-dxy');
+        const dxyVal = dxy.price !== undefined ? dxy.price : (m.dxy_index || 0);
+        if (dxyEl) dxyEl.textContent = Number(dxyVal).toFixed(2);
+
+        const us10yEl = document.getElementById('swing-us10y');
+        const us10yVal = us10y.price !== undefined ? us10y.price : (m.us_10y_yield_pct || 0);
+        if (us10yEl) us10yEl.textContent = Number(us10yVal).toFixed(2) + '%';
+
+        // Render Indices Table
+        const tbody = document.getElementById('swing-indices-table-body');
+        if (tbody && m.global_indices) {
+          tbody.innerHTML = '';
+          const regionMap = {
+            '^GSPC': 'US (Wall St)', '^IXIC': 'US (Wall St)', '^DJI': 'US (Wall St)',
+            '^N225': 'Asia (Japan)', '^HSI': 'Asia (Hong Kong)', '000001.SS': 'Asia (China)',
+            '^GDAXI': 'Europe (Germany)', '^FTSE': 'Europe (UK)'
+          };
+          const indicesList = Array.isArray(m.global_indices) ? m.global_indices : Object.entries(m.global_indices).map(([k, v]) => ({ symbol: k, ...v }));
+          indicesList.forEach(item => {
+            const sym = item.symbol || item.ticker || '';
+            const chgPct = item.change_pct || 0;
+            const isPos = chgPct >= 0;
+            const badgeClass = isPos ? 'badge-green' : 'badge-red';
+            const impact = isPos ? 'SUPPORTIVE (BULLISH)' : 'DRAG (HEADWIND)';
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td><span class="badge badge-blue">${regionMap[sym] || item.region || 'Global'}</span></td>
+              <td><strong>${item.name || sym}</strong> <code style="font-size: 0.72rem; color: var(--text-secondary);">${sym}</code></td>
+              <td>${(item.price || 0).toLocaleString()}</td>
+              <td style="color: ${isPos ? '#4ade80' : '#f87171'}; font-weight: 700;">${isPos ? '+' : ''}${(item.change || 0).toFixed(2)}</td>
+              <td style="color: ${isPos ? '#4ade80' : '#f87171'}; font-weight: 700;">${isPos ? '+' : ''}${chgPct.toFixed(2)}%</td>
+              <td><span style="font-size: 0.8rem; color: ${isPos ? '#4ade80' : '#f87171'};">${impact}</span></td>
+              <td><span class="badge ${badgeClass}">${item.status || (isPos ? 'BULLISH' : 'BEARISH')}</span></td>
+            `;
+            tbody.appendChild(tr);
+          });
+        }
+      }
+
+      // Render Reaction Zones
+      if (data.zones) {
+        const tbody = document.getElementById('swing-zones-table-body');
+        if (tbody) {
+          tbody.innerHTML = '';
+          const zonesList = Array.isArray(data.zones) ? data.zones : Object.values(data.zones);
+          zonesList.forEach(z => {
+            if (!z || typeof z !== 'object' || !z.name) return;
+            const isFloor = (z.zone_type || '').includes('FLOOR');
+            const distPts = z.distance_pts !== undefined ? z.distance_pts : (z.distance_points || 0);
+            const widthPts = z.width_pts || z.width_points || 40;
+            const rangeStr = z.range_box || ((z.lower_bound || '') + ' – ' + (z.upper_bound || ''));
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td><strong>${z.name || '--'}</strong></td>
+              <td><span class="badge ${isFloor ? 'badge-green' : 'badge-red'}">${z.zone_type}</span></td>
+              <td style="font-weight: 700;">${rangeStr}</td>
+              <td><span class="badge badge-purple">${widthPts} pts</span></td>
+              <td>${distPts.toFixed(1)} pts (${z.distance_pct || 0}%)</td>
+              <td style="font-size: 0.78rem; color: var(--text-secondary);">${(z.confluence_factors || []).join(' + ')}</td>
+              <td><span class="badge ${z.status === 'ACTIVE_HOLDING' ? 'badge-green' : 'badge-yellow'}">${z.status}</span></td>
+            `;
+            tbody.appendChild(tr);
+          });
+        }
+      }
+
+      // Render Setups / Positions
+      if (data.agent_status) {
+        const agent = data.agent_status;
+        const badge = document.getElementById('swing-agent-badge');
+        if (badge) {
+          badge.textContent = `AGENT: ${agent.is_running ? 'SCANNING ACTIVE' : 'STANDBY'}`;
+          badge.className = `badge ${agent.is_running ? 'badge-green' : 'badge-yellow'}`;
+        }
+        const posTbody = document.getElementById('swing-positions-table-body');
+        if (posTbody) {
+          if (!agent.active_trades || agent.active_trades.length === 0) {
+            posTbody.innerHTML = '<tr><td colspan="9" style="text-align: center; color: var(--text-secondary);">No active swing trade positions currently open.</td></tr>';
+          } else {
+            posTbody.innerHTML = '';
+            agent.active_trades.forEach(t => {
+              const tr = document.createElement('tr');
+              tr.innerHTML = `
+                <td><code>${t.trade_id || '--'}</code></td>
+                <td><strong>${t.symbol}</strong> ${t.contract || ''}</td>
+                <td><span class="badge badge-blue">${t.setup_name}</span></td>
+                <td>₹${(t.entry_spot || 0).toLocaleString()}</td>
+                <td style="color: #4ade80; font-weight: 700;">₹${(t.tgt_price || t.target || 0).toLocaleString()} <span style="font-size: 0.72rem; color: #4ade80;">(+${t.tgt_pts || 300} pts)</span></td>
+                <td style="color: #f87171; font-weight: 700;">₹${(t.sl_price || t.stop_loss || 0).toLocaleString()} <span style="font-size: 0.72rem; color: #f87171;">(-${t.sl_pts || 50} pts)</span></td>
+                <td><span class="badge badge-green">1:6.0</span></td>
+                <td style="color: ${(t.unrealized_pnl || 0) >= 0 ? '#4ade80' : '#f87171'}; font-weight: 700;">₹${(t.unrealized_pnl || 0).toLocaleString()}</td>
+                <td><span class="badge badge-green">${t.status}</span></td>
+              `;
+              posTbody.appendChild(tr);
+            });
+          }
+        }
+      }
+    } catch (e) {
+      console.error('Error fetching swing trade data:', e);
+    }
+  }
+
+  async function fetchSwingReports() {
+    try {
+      const res = await fetch('/api/swing/reports');
+      if (!res.ok) return;
+      const data = await res.json();
+      const tbody = document.getElementById('swing-reports-table-body');
+      if (!tbody) return;
+
+      const reports = data.reports || [];
+      if (reports.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-secondary);">No PDF reports found in swing_trade_reports/ yet. Click above to generate one.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = '';
+      reports.forEach(r => {
+        const isTrade = (r.category || '').includes('TRADE');
+        const badgeClass = isTrade ? 'badge-purple' : ((r.category || '').includes('DAILY') ? 'badge-blue' : 'badge-green');
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><span class="badge ${badgeClass}">${r.category || 'SWING REPORT'}</span></td>
+          <td><strong>${r.filename}</strong></td>
+          <td style="font-size: 0.8rem; color: var(--text-secondary);">${r.modified || '--'}</td>
+          <td><code style="font-size: 0.75rem;">${r.size_kb} KB</code></td>
+          <td><span class="badge badge-red" style="font-weight: 700;">PDF ONLY</span></td>
+          <td>
+            <a href="${r.url}" target="_blank" class="btn btn-secondary" style="padding: 3px 10px; font-size: 0.75rem; text-decoration: none; display: inline-block;">
+              🔍 Open PDF
+            </a>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    } catch (e) {
+      console.error('Error fetching swing reports:', e);
+    }
+  }
+
+  async function generateSwingReport(type) {
+    try {
+      showToast && showToast(`Generating ${type} Swing Summary Report PDF...`, 'info');
+      const res = await fetch(`/api/swing/generate_report?type=${type}`, { method: 'POST' });
+      const data = await res.json();
+      if (data.status === 'ok') {
+        showToast && showToast(`Generated: ${data.filename}`, 'success');
+        fetchSwingReports();
+      } else {
+        showToast && showToast(`Failed: ${data.error || 'Unknown error'}`, 'error');
+      }
+    } catch (e) {
+      console.error('Error generating swing report:', e);
+    }
+  }
+
+  async function executeSwingTradeNow() {
+    try {
+      showToast && showToast('Executing Test Swing Paper Trade & Generating PDF Report...', 'info');
+      const res = await fetch('/api/swing/execute_trade', { method: 'POST' });
+      const data = await res.json();
+      if (data.status === 'ok') {
+        showToast && showToast('Swing Trade executed & PDF Report created!', 'success');
+        fetchSwingTradeData();
+        fetchSwingReports();
+      } else {
+        showToast && showToast(`Execution failed: ${data.error}`, 'error');
+      }
+    } catch (e) {
+      console.error('Error executing swing trade:', e);
+    }
+  }
+
+  async function clearSwingTradesNow() {
+    try {
+      showToast && showToast('Clearing active swing positions...', 'info');
+      const res = await fetch('/api/swing/clear_trades', { method: 'POST' });
+      const data = await res.json();
+      if (data.status === 'ok') {
+        showToast && showToast('Swing trade positions cleared!', 'success');
+        fetchSwingTradeData();
+      } else {
+        showToast && showToast(`Error: ${data.error}`, 'error');
+      }
+    } catch (e) {
+      console.error('Error clearing swing trades:', e);
+    }
+  }
+
   async function fetchTelegramStatus() {
     try {
       const res = await fetch('/api/telegram/status');
@@ -12692,6 +13280,167 @@ class DashboardHTTPRequestHandler(BaseHTTPRequestHandler):
                 self.end_headers()
                 self.wfile.write(f"Error serving report: {e}".encode("utf-8"))
                 return
+        elif self.path == "/api/swing/data":
+            try:
+                from nifty_trader.swing import (
+                    get_macro_radar_service,
+                    get_reaction_zone_service,
+                    get_swing_agent,
+                )
+                macro_srv = get_macro_radar_service()
+                zone_srv = get_reaction_zone_service()
+                agent = get_swing_agent()
+
+                m_data = macro_srv.get_macro_radar_telemetry()
+                macro_dict = m_data.to_dict() if hasattr(m_data, "to_dict") else m_data
+                mtfa_raw = zone_srv.get_multi_timeframe_state()
+                mtfa_data = mtfa_raw.to_dict() if hasattr(mtfa_raw, "to_dict") else mtfa_raw
+                zones_raw = zone_srv.scan_reaction_zones()
+                zones_data = zones_raw.to_dict() if hasattr(zones_raw, "to_dict") else zones_raw
+                setups_raw = zone_srv.get_active_swing_setups()
+                setups_data = [s.to_dict() if hasattr(s, "to_dict") else s for s in setups_raw] if isinstance(setups_raw, list) else setups_raw
+
+                payload = {
+                    "macro": macro_dict,
+                    "mtfa": mtfa_data,
+                    "zones": zones_data,
+                    "setups": setups_data,
+                    "agent_status": agent.get_status()
+                }
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Cache-Control", "no-cache")
+                self.end_headers()
+                self.wfile.write(json.dumps(payload).encode("utf-8"))
+            except Exception as ex:
+                logger.exception("Error in /api/swing/data")
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"error": str(ex)}).encode("utf-8"))
+            return
+        elif self.path == "/api/swing/reports":
+            try:
+                from nifty_trader.swing import get_swing_report_service
+                srv = get_swing_report_service()
+                reports = srv.list_swing_reports()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Cache-Control", "no-cache")
+                self.end_headers()
+                self.wfile.write(json.dumps({"reports": reports}).encode("utf-8"))
+            except Exception as ex:
+                logger.exception("Error in /api/swing/reports")
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"error": str(ex)}).encode("utf-8"))
+            return
+        elif self.path.startswith("/api/swing/generate_report"):
+            try:
+                from urllib.parse import parse_qs, urlparse
+                from nifty_trader.swing import get_swing_report_service
+                q = parse_qs(urlparse(self.path).query)
+                rep_type = q.get("type", ["daily"])[0].lower()
+                srv = get_swing_report_service()
+                if rep_type == "weekly":
+                    pdf_res = srv.generate_weekly_swing_summary_pdf()
+                else:
+                    pdf_res = srv.generate_daily_swing_summary_pdf()
+                
+                pdf_name = pdf_res.get("pdf_name") if isinstance(pdf_res, dict) else getattr(pdf_res, "name", str(pdf_res))
+                file_path = pdf_res.get("pdf_path") if isinstance(pdf_res, dict) else str(pdf_res)
+
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({
+                    "status": "ok",
+                    "filename": pdf_name,
+                    "path": file_path
+                }).encode("utf-8"))
+            except Exception as ex:
+                logger.exception("Error in /api/swing/generate_report")
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": "error", "error": str(ex)}).encode("utf-8"))
+            return
+        elif self.path.startswith("/api/swing/execute_trade"):
+            try:
+                from nifty_trader.swing import get_swing_agent
+                agent = get_swing_agent()
+                trade = agent.execute_swing_paper_trade()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({
+                    "status": "ok",
+                    "trade": trade.to_dict() if hasattr(trade, 'to_dict') else trade
+                }).encode("utf-8"))
+            except Exception as ex:
+                logger.exception("Error in /api/swing/execute_trade")
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": "error", "error": str(ex)}).encode("utf-8"))
+            return
+        elif self.path == "/api/swing/clear_trades":
+            try:
+                from nifty_trader.swing import get_swing_agent
+                agent = get_swing_agent()
+                agent.clear_active_trades()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": "ok", "message": "All swing trade positions cleared"}).encode("utf-8"))
+            except Exception as ex:
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": "error", "error": str(ex)}).encode("utf-8"))
+            return
+        elif self.path.startswith("/reports/"):
+            try:
+                from urllib.parse import unquote, urlparse
+                clean_path = unquote(urlparse(self.path).path.lstrip("/"))
+                target_file = None
+                for base in (
+                    self.aggregator.root_dir / "nifty-autonomous-trader",
+                    self.aggregator.root_dir,
+                    self.aggregator.root_dir.parent / "nifty-autonomous-trader",
+                    self.aggregator.root_dir.parent,
+                    Path(__file__).resolve().parent.parent.parent,
+                    Path("d:/AI_Trading/nifty-autonomous-trader"),
+                    Path("d:/AI_Trading"),
+                ):
+                    candidate = (base / clean_path).resolve()
+                    if candidate.exists() and candidate.is_file():
+                        target_file = candidate
+                        break
+                if target_file:
+                    content_type = "application/pdf" if target_file.suffix.lower() == ".pdf" else "application/octet-stream"
+                    with open(target_file, "rb") as f:
+                        data = f.read()
+                    self.send_response(200)
+                    self.send_header("Content-Type", content_type)
+                    self.send_header("Content-Length", str(len(data)))
+                    self.send_header("Cache-Control", "no-cache")
+                    self.end_headers()
+                    self.wfile.write(data)
+                    return
+                else:
+                    self.send_response(404)
+                    self.send_header("Content-Type", "text/plain")
+                    self.end_headers()
+                    self.wfile.write(b"Report not found")
+                    return
+            except Exception as e:
+                self.send_response(500)
+                self.send_header("Content-Type", "text/plain")
+                self.end_headers()
+                self.wfile.write(f"Error serving report: {e}".encode("utf-8"))
+                return
         elif self.path == "/api/supabase/status":
             try:
                 from nifty_trader.core.supabase_adapter import get_supabase_adapter
@@ -12786,18 +13535,21 @@ class DashboardHTTPRequestHandler(BaseHTTPRequestHandler):
                 if intv not in valid_intervals:
                     intv = "5m"
 
-                # Map 1w to 1wk for Yahoo Finance chart endpoint
-                yahoo_intv = "1wk" if intv in ("1w", "1wk") else intv
+                # Map 1w to 1wk and 4h to 1h for Yahoo Finance chart endpoint
+                if intv in ("1w", "1wk"):
+                    yahoo_intv = "1wk"
+                elif intv == "4h":
+                    yahoo_intv = "1h"
+                else:
+                    yahoo_intv = intv
 
                 if not rng:
                     if intv in {"1m", "2m"}:
                         rng = "1d"
                     elif intv in {"5m", "15m", "30m"}:
                         rng = "5d"
-                    elif intv in {"60m", "1h"}:
+                    elif intv in {"60m", "1h", "4h"}:
                         rng = "1mo"
-                    elif intv == "4h":
-                        rng = "1y"
                     elif intv == "1d":
                         rng = "2y"
                     elif intv in {"1w", "1wk"}:
@@ -13648,6 +14400,60 @@ class DashboardHTTPRequestHandler(BaseHTTPRequestHandler):
             self.end_headers()
 
     def do_POST(self):
+        if self.path == "/api/swing/generate_report":
+            try:
+                from urllib.parse import parse_qs, urlparse
+                from nifty_trader.swing import get_swing_report_service
+                q = parse_qs(urlparse(self.path).query)
+                rep_type = q.get("type", ["daily"])[0].lower()
+                srv = get_swing_report_service()
+                if rep_type == "weekly":
+                    pdf_res = srv.generate_weekly_swing_summary_pdf()
+                else:
+                    pdf_res = srv.generate_daily_swing_summary_pdf()
+                
+                pdf_name = pdf_res.get("pdf_name") if isinstance(pdf_res, dict) else getattr(pdf_res, "name", str(pdf_res))
+                file_path = pdf_res.get("pdf_path") if isinstance(pdf_res, dict) else str(pdf_res)
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": "ok", "filename": pdf_name, "path": file_path}).encode("utf-8"))
+            except Exception as ex:
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": "error", "error": str(ex)}).encode("utf-8"))
+            return
+        elif self.path == "/api/swing/execute_trade":
+            try:
+                from nifty_trader.swing import get_swing_agent
+                agent = get_swing_agent()
+                trade = agent.execute_swing_paper_trade()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": "ok", "trade": trade.to_dict() if hasattr(trade, 'to_dict') else trade}).encode("utf-8"))
+            except Exception as ex:
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": "error", "error": str(ex)}).encode("utf-8"))
+            return
+        elif self.path == "/api/swing/clear_trades":
+            try:
+                from nifty_trader.swing import get_swing_agent
+                agent = get_swing_agent()
+                agent.clear_active_trades()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": "ok", "message": "All swing trade positions cleared"}).encode("utf-8"))
+            except Exception as ex:
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": "error", "error": str(ex)}).encode("utf-8"))
+            return
         if self.path == "/api/option_chain/trade":
             try:
                 content_length = int(self.headers.get("Content-Length", 0))
@@ -14205,6 +15011,15 @@ def run_dashboard_server(
         print("📅 NSE Next-3-Expiries Option Chain Auto-Fetcher Online (Always-Active 300s Refresh).")
     except Exception as oc_err:
         logger.warning("Could not auto-start NSE next-expiries fetcher: %s", oc_err)
+
+    # AUTO-ACTIVATE Decoupled Autonomous Swing Trade Agent
+    try:
+        from nifty_trader.swing import get_swing_agent
+        swing_agent = get_swing_agent()
+        swing_agent.start(interval_minutes=15)
+        print("🌊 Autonomous Swing Trade Agent Online (Folder: reports/<YYYY-MM-DD>/swing_trade_reports).")
+    except Exception as swing_err:
+        logger.warning("Could not auto-start swing agent: %s", swing_err)
 
     server = ThreadingHTTPServer((host, port), DashboardHTTPRequestHandler)
     url = f"http://{host}:{port}"

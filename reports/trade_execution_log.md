@@ -79,3 +79,37 @@
 - **Today's Net P&L:** **`+₹9,643.00`** (`oc_882403` `+₹3,775.04` + `oc_436201` `+₹3,771.25` + `oc_145671` `+₹2,096.71`)
 - **Simulator Capital:** **`₹1,08,245.91`**
 
+---
+
+# Autonomous Paper Trade Execution Log — 2026-11-27
+
+**Mode:** Autonomous Paper Simulator (Live Broker DISABLED)  
+**Risk Guards:** 1 Lot Max (65 NIFTY / 30 BANKNIFTY) | Min 1:3 R:R (SL 20 pts / Target 60 pts) | Max ₹2,000 Daily Loss | 09:25–15:15 IST Execution Window  
+**Monitoring Window:** 09:15 to 15:30 IST  
+**Engine Policy:** 5-minute and 15-minute multi-timeframe candle evaluation + Option Chain PCR and OI analysis. Auto-executes confirmed signals into Paper Simulator, locks trailing SL, captures chart screenshots, and generates 5M/15M PDF/HTML trade bulletins.
+
+## Active Market Context (09:05–09:15 IST)
+- **NIFTY 50 Spot:** ₹25,892.55 | PDC: ₹25,819.25 | Indicative Open: ₹25,943.75 (+124.5 pts Gap-Up)
+- **Support & Resistance Matrix:** PP: ₹25,867.00 | R1: ₹26,000.50 | S1: ₹25,759.05 | Call OI Wall: 26,000 | Put OI Floor: 25,600
+- **PCR:** 1.03 (Neutral/Rangebound)
+- **Active Playbook:** Gap-Up Exhaustion & Gap-Fill Trap (Monitoring OR-15 rejection for potential PE entry or sustained breakout above 25,950 for CE).
+
+## Executed Trades (2026-11-27)
+
+### Trade #1 — `oc_602117` (ACTIVE — OPEN)
+- **Entry Timestamp:** `2026-11-27 12:43:22 IST` (`07:13:22 UTC`)
+- **Contract:** `NIFTY 50 25700 PE` — **BUY 1 Lot (65 Qty)**
+- **Screenshots:** [`research_reports_pdf/CHART_NIFTY50_25700PE_20261127_1243_oc_602117.png`](file:///d:/AI_Trading/nifty-autonomous-trader/research_reports_pdf/CHART_NIFTY50_25700PE_20261127_1243_oc_602117.png)
+- **Mode:** Paper Simulator (`Live Broker: DISABLED`)
+- **Entry Premium:** `₹162.65` (Spot at entry: `₹25,689.45`)
+- **Initial Stop Loss:** `₹142.65` (-20.0 pts)
+- **Target:** `₹222.65` (+60.0 pts | `1:3 R:R`)
+- **Trailing SL:** Enabled (auto-trail step: 15.0 pts)
+- **Confluence / Reason:**
+  - NIFTY broken cleanly below Central Pivot (`₹25,755`) and S1 (`₹25,601` test), extending intraday breakdown to `₹25,689`.
+  - Option Chain PCR collapsed to `0.70` with massive Call accumulation at 26,000 (2.26 Cr OI) and Put unwinding at 25,800.
+  - 15M trend confirmed Bearish with 5M EMA9 < EMA20 (`Cross: BELOW`) and RSI at `47.6`.
+- **Status:** `OPEN (Monitoring Live MTM)`
+
+
+
