@@ -1135,7 +1135,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   <button class="nav-tab" onclick="switchTab('tab-multi-function', this)" id="nav-btn-multi-function" style="background: rgba(139, 92, 246, 0.12); color: #c084fc; border: 1px solid rgba(139, 92, 246, 0.4); font-weight: 700;">
     🧩 Multi-Function <span id="nav-pending-badge" class="badge badge-yellow" style="font-size: 0.65rem; padding: 1px 6px; margin-left: 4px; display: none;">0</span>
   </button>
-  <button class="nav-tab" onclick="openBrokerModal()" id="nav-btn-broker" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.25) 0%, rgba(79, 70, 229, 0.35) 100%); color: #a5b4fc; border: 1px solid #6366f1; font-weight: 800; cursor: pointer; margin-left: auto;" title="Click to open Dhan HQ Broker API Credentials & Live Sync Modal">
+  <button class="nav-tab" onclick="switchTab('tab-broker', this)" id="nav-btn-broker" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.25) 0%, rgba(79, 70, 229, 0.35) 100%); color: #a5b4fc; border: 1px solid #6366f1; font-weight: 800; cursor: pointer; margin-left: auto;" title="Click to open Dhan HQ Broker API Credentials & Live Sync">
     🏦 Broker Connection (Dhan)
   </button>
 </div>
@@ -2725,51 +2725,6 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       </div>
     </div>
 
-    <!-- Broker Live / Paper Trading Configuration Modal -->
-    <div id="broker-config-modal" onclick="onBrokerModalBackdropClick(event)" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); z-index: 10000; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
-      <div class="card" style="width: 92%; max-width: 480px; background: #0f172a; border: 1px solid #6366f1; box-shadow: 0 10px 35px rgba(99, 102, 241, 0.25); border-radius: 10px; padding: 20px; position: relative;">
-        <!-- Modal Header -->
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 8px;">
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <span style="font-size: 1.15rem; font-weight: 800; color: #a5b4fc;">🏦 Broker Connection (Dhan HQ API)</span>
-          </div>
-          <button type="button" onclick="closeBrokerModal()" class="btn" style="background: transparent; color: var(--text-secondary); border: none; font-size: 1.1rem; cursor: pointer; padding: 2px 6px;">✕</button>
-        </div>
-
-        <div style="font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 14px; line-height: 1.4;">
-          When broker credentials are connected, chart trades and autonomous executions route directly to <b>Dhan HQ REST API</b> for real market execution. Otherwise, the system defaults to the <b>Option Paper Trading Simulator</b>.
-        </div>
-
-        <div style="margin-bottom: 12px;">
-          <label style="display: block; font-size: 0.72rem; color: #cbd5e1; font-weight: 700; margin-bottom: 4px;">Dhan Client ID:</label>
-          <input type="text" id="broker-client-id-input" placeholder="e.g. 1000012345" style="width: 100%; background: #1e293b; color: #f8fafc; border: 1px solid var(--border); border-radius: 6px; padding: 7px 10px; font-size: 0.85rem; font-family: monospace;">
-        </div>
-
-        <div style="margin-bottom: 14px;">
-          <label style="display: block; font-size: 0.72rem; color: #cbd5e1; font-weight: 700; margin-bottom: 4px;">Dhan Access Token (JWT):</label>
-          <input type="password" id="broker-access-token-input" placeholder="eyJ0eXAiOiJKV1QiLCJhbGciOi..." style="width: 100%; background: #1e293b; color: #f8fafc; border: 1px solid var(--border); border-radius: 6px; padding: 7px 10px; font-size: 0.85rem; font-family: monospace;">
-        </div>
-
-        <div id="broker-modal-status" style="font-size: 0.74rem; color: #38bdf8; margin-bottom: 14px; min-height: 18px; line-height: 1.3;">
-          Checking broker status...
-        </div>
-
-        <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
-          <button type="button" onclick="testBrokerConnection()" class="btn" style="background: #1e293b; color: #38bdf8; border: 1px solid #38bdf8; padding: 7px 14px; border-radius: 6px; font-size: 0.78rem; font-weight: 700; cursor: pointer;">
-            🔌 Test Connection
-          </button>
-          <div style="display: flex; gap: 8px;">
-            <button type="button" onclick="closeBrokerModal()" class="btn" style="background: #334155; color: white; padding: 7px 14px; border: none; border-radius: 6px; font-size: 0.78rem; font-weight: 600; cursor: pointer;">
-              Cancel
-            </button>
-            <button type="button" onclick="saveBrokerCredentials()" class="btn" style="background: #6366f1; color: white; padding: 7px 16px; border: none; border-radius: 6px; font-size: 0.78rem; font-weight: 800; cursor: pointer;">
-              💾 Save Credentials
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-
     </div> <!-- Close #single-chart-view-container -->
 
     <!-- 4-Chart Quad View Container (2x2 Grid) -->
@@ -4265,7 +4220,146 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   </div>
 </div>
 
+<!-- Tab: Dedicated Broker Connection (Dhan HQ API) -->
+<div id="tab-broker" class="tab-content" style="display: none;">
+  <!-- Header Card -->
+  <div class="card" style="margin-bottom: 18px; border-left: 4px solid #6366f1; background: linear-gradient(135deg, rgba(99, 102, 241, 0.12) 0%, rgba(19, 27, 46, 0.95) 100%);">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+      <div>
+        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+          <h2 style="font-size: 1.28rem; font-weight: 800; color: #a5b4fc; margin: 0;">🏦 Dhan HQ Broker Connection & Live Trading Suite</h2>
+          <span class="badge badge-green" id="broker-suite-badge">STATUS: CHECKING...</span>
+          <span class="badge badge-purple">OFFICIAL REST API v2</span>
+        </div>
+        <div style="font-size: 0.82rem; color: var(--text-secondary); margin-top: 4px;">
+          Connect your Dhan HQ credentials to unlock live real-money order routing, zero-latency 1M/5M candlestick feeds, live Futures volume sync (NIFTY &amp; BANKNIFTY FUT), and account margin tracking.
+        </div>
+      </div>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <button type="button" onclick="openDhanTradingViewWindow()" class="btn" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #000; padding: 6px 14px; font-size: 0.78rem; font-weight: 800; border: 1px solid #fbbf24; border-radius: 6px; cursor: pointer;">
+          🏦 Open Dhan TV Console (tv.dhan.co) ↗
+        </button>
+      </div>
+    </div>
+  </div>
 
+  <div class="grid" style="grid-template-columns: 1.1fr 0.9fr; gap: 18px; margin-bottom: 20px;">
+    <!-- Credentials Configuration Card -->
+    <div class="card" style="background: #0f172a; border: 1px solid #6366f1; border-radius: 10px; padding: 20px;">
+      <div style="font-size: 0.92rem; font-weight: 800; color: #a5b4fc; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+        <span>🔑 API Credentials Setup</span>
+      </div>
+      <div style="font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 16px; line-height: 1.45;">
+        Generate your <b>Access Token</b> from your Dhan App or web portal (<a href="https://web.dhan.co" target="_blank" style="color: #38bdf8;">web.dhan.co</a> &gt; Profile &gt; DhanHQ APIs &amp; Access). Tokens are valid for 24 hours.
+      </div>
+
+      <div style="margin-bottom: 14px;">
+        <label style="display: block; font-size: 0.75rem; color: #cbd5e1; font-weight: 700; margin-bottom: 5px;">Dhan Client ID (10 digits):</label>
+        <input type="text" id="tab-broker-client-id" placeholder="e.g. 1000012345" style="width: 100%; background: #1e293b; color: #f8fafc; border: 1px solid var(--border); border-radius: 6px; padding: 9px 12px; font-size: 0.88rem; font-family: monospace;">
+      </div>
+
+      <div style="margin-bottom: 16px;">
+        <label style="display: block; font-size: 0.75rem; color: #cbd5e1; font-weight: 700; margin-bottom: 5px;">Dhan Access Token (JWT):</label>
+        <textarea id="tab-broker-access-token" rows="3" placeholder="Paste your 24-hour Dhan Access Token (JWT) here..." style="width: 100%; background: #1e293b; color: #f8fafc; border: 1px solid var(--border); border-radius: 6px; padding: 9px 12px; font-size: 0.80rem; font-family: monospace; resize: vertical;"></textarea>
+      </div>
+
+      <div id="tab-broker-status-msg" style="font-size: 0.78rem; color: #38bdf8; margin-bottom: 16px; min-height: 20px; line-height: 1.4; padding: 6px 10px; background: rgba(0,0,0,0.3); border-radius: 6px;">
+        Ready for credentials.
+      </div>
+
+      <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <button type="button" onclick="testBrokerConnectionFromTab()" class="btn" style="background: #1e293b; color: #38bdf8; border: 1px solid #38bdf8; padding: 8px 18px; border-radius: 6px; font-size: 0.82rem; font-weight: 700; cursor: pointer;">
+          🔌 Test API Connection
+        </button>
+        <button type="button" onclick="saveBrokerCredentialsFromTab()" class="btn" style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: white; padding: 8px 22px; border: none; border-radius: 6px; font-size: 0.82rem; font-weight: 800; cursor: pointer; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.35);">
+          💾 Save &amp; Activate Live Sync
+        </button>
+      </div>
+    </div>
+
+    <!-- Live Broker Account & Telemetry Status Card -->
+    <div class="card" style="background: #0f172a; border: 1px solid var(--border); border-radius: 10px; padding: 20px; display: flex; flex-direction: column; justify-content: space-between;">
+      <div>
+        <div style="font-size: 0.92rem; font-weight: 800; color: #34d399; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between;">
+          <span>⚡ Live Account Telemetry</span>
+          <span id="tab-broker-mode-pill" class="badge badge-yellow">PAPER MODE</span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+          <div style="background: #1e293b; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06);">
+            <div style="font-size: 0.70rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 700;">Client ID</div>
+            <div id="tab-broker-telemetry-client" style="font-size: 1.1rem; font-weight: 800; color: #f8fafc; margin-top: 2px;">--</div>
+          </div>
+          <div style="background: #1e293b; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06);">
+            <div style="font-size: 0.70rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 700;">Available Cash / Margin</div>
+            <div id="tab-broker-telemetry-margin" style="font-size: 1.1rem; font-weight: 800; color: #10b981; margin-top: 2px;">₹0.00</div>
+          </div>
+        </div>
+
+        <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 12px; margin-bottom: 14px;">
+          <div style="font-size: 0.76rem; font-weight: 700; color: #f59e0b; margin-bottom: 6px;">⚡ Active Dhan Synchronizations:</div>
+          <ul style="font-size: 0.74rem; color: var(--text-secondary); padding-left: 18px; line-height: 1.6;">
+            <li><b>Futures Candlesticks &amp; Volume</b>: NIFTY FUT, BANKNIFTY FUT, FINNIFTY FUT</li>
+            <li><b>Volume Profile (POC / VAH / VAL)</b>: Calculated dynamically from F&amp;O traded volume</li>
+            <li><b>Institutional Basis Tracking</b>: Live Premium / Discount vs Spot Cash</li>
+            <li><b>Capital Guard</b>: Daily ₹2,000 Loss Ceasefire Enforced</li>
+          </ul>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 8px;">
+        <button type="button" onclick="switchTab('tab-charts')" class="btn" style="flex: 1; background: #1e293b; color: #38bdf8; border: 1px solid #38bdf8; padding: 7px; font-size: 0.75rem; font-weight: 700; border-radius: 6px; cursor: pointer; text-align: center;">
+          📈 View Live Futures Charts
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Global Broker Configuration Modal (Accessible Everywhere) -->
+<div id="broker-config-modal" onclick="onBrokerModalBackdropClick(event)" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); z-index: 10000; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
+  <div class="card" style="width: 92%; max-width: 480px; background: #0f172a; border: 1px solid #6366f1; box-shadow: 0 10px 35px rgba(99, 102, 241, 0.25); border-radius: 10px; padding: 20px; position: relative;">
+    <!-- Modal Header -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 8px;">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span style="font-size: 1.15rem; font-weight: 800; color: #a5b4fc;">🏦 Broker Connection (Dhan HQ API)</span>
+      </div>
+      <button type="button" onclick="closeBrokerModal()" class="btn" style="background: transparent; color: var(--text-secondary); border: none; font-size: 1.1rem; cursor: pointer; padding: 2px 6px;">✕</button>
+    </div>
+
+    <div style="font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 14px; line-height: 1.4;">
+      When broker credentials are connected, chart trades and autonomous executions route directly to <b>Dhan HQ REST API</b> for real market execution. Otherwise, the system defaults to the <b>Option Paper Trading Simulator</b>.
+    </div>
+
+    <div style="margin-bottom: 12px;">
+      <label style="display: block; font-size: 0.72rem; color: #cbd5e1; font-weight: 700; margin-bottom: 4px;">Dhan Client ID:</label>
+      <input type="text" id="broker-client-id-input" placeholder="e.g. 1000012345" style="width: 100%; background: #1e293b; color: #f8fafc; border: 1px solid var(--border); border-radius: 6px; padding: 7px 10px; font-size: 0.85rem; font-family: monospace;">
+    </div>
+
+    <div style="margin-bottom: 14px;">
+      <label style="display: block; font-size: 0.72rem; color: #cbd5e1; font-weight: 700; margin-bottom: 4px;">Dhan Access Token (JWT):</label>
+      <input type="password" id="broker-access-token-input" placeholder="eyJ0eXAiOiJKV1QiLCJhbGciOi..." style="width: 100%; background: #1e293b; color: #f8fafc; border: 1px solid var(--border); border-radius: 6px; padding: 7px 10px; font-size: 0.85rem; font-family: monospace;">
+    </div>
+
+    <div id="broker-modal-status" style="font-size: 0.74rem; color: #38bdf8; margin-bottom: 14px; min-height: 18px; line-height: 1.3;">
+      Checking broker status...
+    </div>
+
+    <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+      <button type="button" onclick="testBrokerConnection()" class="btn" style="background: #1e293b; color: #38bdf8; border: 1px solid #38bdf8; padding: 7px 14px; border-radius: 6px; font-size: 0.78rem; font-weight: 700; cursor: pointer;">
+        🔌 Test Connection
+      </button>
+      <div style="display: flex; gap: 8px;">
+        <button type="button" onclick="closeBrokerModal()" class="btn" style="background: #334155; color: white; padding: 7px 14px; border: none; border-radius: 6px; font-size: 0.78rem; font-weight: 600; cursor: pointer;">
+          Cancel
+        </button>
+        <button type="button" onclick="saveBrokerCredentials()" class="btn" style="background: #6366f1; color: white; padding: 7px 16px; border: none; border-radius: 6px; font-size: 0.78rem; font-weight: 800; cursor: pointer;">
+          💾 Save Credentials
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <script>
   function switchTab(tabId, btn) {
@@ -4327,6 +4421,9 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       }
       if (tabId === 'tab-backtest' && typeof initBacktestTab === 'function') {
         initBacktestTab();
+      }
+      if (tabId === 'tab-broker' && typeof loadBrokerStatus === 'function') {
+        loadBrokerStatus();
       }
     } catch (e) {}
   }
@@ -10823,6 +10920,12 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         const headerBadge = document.getElementById('header-broker-badge');
         const navBrokerBtn = document.getElementById('nav-btn-broker');
 
+        const suiteBadge = document.getElementById('broker-suite-badge');
+        const teleClient = document.getElementById('tab-broker-telemetry-client');
+        const teleMargin = document.getElementById('tab-broker-telemetry-margin');
+        const modePill = document.getElementById('tab-broker-mode-pill');
+        const tabStatus = document.getElementById('tab-broker-status-msg');
+
         if (data.connected) {
           if (badgeBtn) {
             badgeBtn.innerHTML = '🏦 Broker: 🟢 Connected (Dhan)';
@@ -10841,6 +10944,18 @@ DASHBOARD_HTML = """<!DOCTYPE html>
             navBrokerBtn.style.color = '#34d399';
             navBrokerBtn.style.borderColor = '#10b981';
           }
+          if (suiteBadge) {
+            suiteBadge.className = 'badge badge-green';
+            suiteBadge.innerHTML = `🟢 CONNECTED (DHAN HQ: ${data.client_id_masked || 'ACTIVE'})`;
+          }
+          if (teleClient) teleClient.innerText = data.client_id_masked || 'CONNECTED';
+          if (modePill) {
+            modePill.className = 'badge badge-green';
+            modePill.innerText = '🟢 LIVE BROKER ROUTING';
+          }
+          if (tabStatus) {
+            tabStatus.innerHTML = `<span style="color:#10b981;">🟢 Dhan HQ Broker Connected (Client ID: <b>${data.client_id_masked}</b>). Live order routing &amp; live Futures sync active!</span>`;
+          }
         } else {
           if (badgeBtn) {
             badgeBtn.innerHTML = '🏦 Broker: 📄 Paper Mode';
@@ -10858,6 +10973,15 @@ DASHBOARD_HTML = """<!DOCTYPE html>
             navBrokerBtn.innerHTML = '🏦 Broker Connection (Dhan)';
             navBrokerBtn.style.color = '#a5b4fc';
             navBrokerBtn.style.borderColor = '#6366f1';
+          }
+          if (suiteBadge) {
+            suiteBadge.className = 'badge badge-yellow';
+            suiteBadge.innerHTML = '🟡 READY FOR CREDENTIALS';
+          }
+          if (teleClient) teleClient.innerText = 'NOT CONNECTED';
+          if (modePill) {
+            modePill.className = 'badge badge-yellow';
+            modePill.innerText = '📄 PAPER MODE';
           }
         }
         onTradeRouteSelectChange();
@@ -10936,6 +11060,61 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       }
     } catch (err) {
       if (statusEl) statusEl.innerHTML = `<span style="color:#ef4444;">❌ Connection failed: ${err.message}</span>`;
+    }
+  }
+
+  async function testBrokerConnectionFromTab() {
+    const cidInput = document.getElementById('tab-broker-client-id');
+    const tokInput = document.getElementById('tab-broker-access-token');
+    const modalCid = document.getElementById('broker-client-id-input');
+    const modalTok = document.getElementById('broker-access-token-input');
+    if (modalCid && cidInput && cidInput.value.trim()) modalCid.value = cidInput.value.trim();
+    if (modalTok && tokInput && tokInput.value.trim()) modalTok.value = tokInput.value.trim();
+    const tabStatus = document.getElementById('tab-broker-status-msg');
+    if (tabStatus) tabStatus.innerHTML = '<span>Testing broker connection...</span>';
+    try {
+      const resp = await fetch('/api/broker/test', { method: 'POST' });
+      const data = await resp.json();
+      if (resp.ok && data.status === 'ok') {
+        if (tabStatus) tabStatus.innerHTML = `<span style="color:#10b981;">✅ ${data.message}</span>`;
+        await loadBrokerStatus();
+      } else {
+        if (tabStatus) tabStatus.innerHTML = `<span style="color:#ef4444;">❌ ${data.message}</span>`;
+      }
+    } catch (err) {
+      if (tabStatus) tabStatus.innerHTML = `<span style="color:#ef4444;">❌ Connection failed: ${err.message}</span>`;
+    }
+  }
+
+  async function saveBrokerCredentialsFromTab() {
+    const cidInput = document.getElementById('tab-broker-client-id');
+    const tokInput = document.getElementById('tab-broker-access-token');
+    const modalCid = document.getElementById('broker-client-id-input');
+    const modalTok = document.getElementById('broker-access-token-input');
+    const clientId = cidInput?.value.trim() || modalCid?.value.trim() || '';
+    const token = tokInput?.value.trim() || modalTok?.value.trim() || '';
+    const tabStatus = document.getElementById('tab-broker-status-msg');
+
+    if (!clientId || !token) {
+      if (tabStatus) tabStatus.innerHTML = '<span style="color:#ef4444;">Please provide both Dhan Client ID and Access Token.</span>';
+      return;
+    }
+    if (tabStatus) tabStatus.innerHTML = '<span>Saving credentials & activating live sync...</span>';
+    try {
+      const resp = await fetch('/api/broker/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ client_id: clientId, access_token: token })
+      });
+      const data = await resp.json();
+      if (resp.ok && data.status === 'ok') {
+        if (tabStatus) tabStatus.innerHTML = '<span style="color:#10b981;">✅ Credentials saved successfully! Live Dhan sync is now active.</span>';
+        await loadBrokerStatus();
+      } else {
+        if (tabStatus) tabStatus.innerHTML = `<span style="color:#ef4444;">❌ Failed to save: ${data.message}</span>`;
+      }
+    } catch (err) {
+      if (tabStatus) tabStatus.innerHTML = `<span style="color:#ef4444;">❌ Network error: ${err.message}</span>`;
     }
   }
 
