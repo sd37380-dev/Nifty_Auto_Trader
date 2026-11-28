@@ -5258,7 +5258,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       const logsPre = document.getElementById('trader-logs-pre');
       const logsContainer = document.getElementById('trader-logs-container');
       if (logsPre && logsContainer && logsContainer.style.display !== 'none' && data.recent_logs) {
-        logsPre.innerText = data.recent_logs.length > 0 ? data.recent_logs.join('\n') : 'Waiting for logs...';
+        logsPre.innerText = data.recent_logs.length > 0 ? data.recent_logs.join(String.fromCharCode(10)) : 'Waiting for logs...';
       }
     } catch (e) {
       console.debug("loadTraderStatus error:", e);
@@ -5268,7 +5268,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   async function toggleAutonomousTrader() {
     const isRunning = _traderStatusCache.is_running === true;
     if (isRunning) {
-      if (!confirm("⚠️ Confirm Stop Autonomous Trader:\n\nAre you sure you want to gracefully stop the live price action trading engine?")) {
+      if (!confirm(`⚠️ Confirm Stop Autonomous Trader:\n\nAre you sure you want to gracefully stop the live price action trading engine?`)) {
         return;
       }
       try {
@@ -5282,8 +5282,8 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     } else {
       const mode = (_traderStatusCache.trading_mode || 'PAPER').toUpperCase();
       const promptMsg = mode === 'LIVE'
-        ? "⚠️ MASTER EXECUTION CONFIRMATION:\n\nYou are starting Autonomous Trader in REAL LIVE MODE with Dhan HQ.\n• 3-Pillar Institutional Architecture Active\n• Setup A (1:3 R:R) & Setup B (1:7 R:R)\n• Strictly 1 Lot ITM on Next Weekly Expiry\n• ₹2,000 Daily Loss Cap & 15-pt Trailing SL\n\nClick OK to launch."
-        : "🚀 Launch Autonomous Price Action Trader in PAPER MODE (100% Risk Free)?\n\n• 3-Pillar Institutional Architecture Active\n• Setup A (1:3 R:R) & Setup B (1:7 R:R)\n• Strictly 1 Lot ITM on Next Weekly Expiry\n• ₹2,000 Simulated Loss Cap & 15-pt Trailing SL\n\nClick OK to launch.";
+        ? `⚠️ MASTER EXECUTION CONFIRMATION:\n\nYou are starting Autonomous Trader in REAL LIVE MODE with Dhan HQ.\n• 3-Pillar Institutional Architecture Active\n• Setup A (1:3 R:R) & Setup B (1:7 R:R)\n• Strictly 1 Lot ITM on Next Weekly Expiry\n• ₹2,000 Daily Loss Cap & 15-pt Trailing SL\n\nClick OK to launch.`
+        : `🚀 Launch Autonomous Price Action Trader in PAPER MODE (100% Risk Free)?\n\n• 3-Pillar Institutional Architecture Active\n• Setup A (1:3 R:R) & Setup B (1:7 R:R)\n• Strictly 1 Lot ITM on Next Weekly Expiry\n• ₹2,000 Simulated Loss Cap & 15-pt Trailing SL\n\nClick OK to launch.`;
       if (!confirm(promptMsg)) {
         return;
       }
