@@ -25,3 +25,10 @@ def test_broker_service_paper_defaults():
 
     funds_data = bs.get_broker_funds()
     assert "availMargin" in funds_data
+
+    # Test trading mode switching
+    res_live = bs.set_trading_mode("LIVE")
+    assert res_live["trading_mode"] == "LIVE"
+    res_paper = bs.set_trading_mode("PAPER")
+    assert res_paper["trading_mode"] == "PAPER"
+    assert bs.trading_mode == "PAPER"

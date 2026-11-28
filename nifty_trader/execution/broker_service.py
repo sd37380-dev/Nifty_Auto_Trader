@@ -44,6 +44,9 @@ class BrokerService:
         self.root_dir = root_dir or Path(__file__).resolve().parent.parent.parent
         self.dhan_client_id = os.environ.get("DHAN_CLIENT_ID", "").strip()
         self.dhan_access_token = os.environ.get("DHAN_ACCESS_TOKEN", "").strip()
+        self.trading_mode = os.environ.get("TRADING_MODE", "PAPER").strip().upper()
+        if self.trading_mode not in ("PAPER", "LIVE"):
+            self.trading_mode = "PAPER"
         self.base_url = "https://api.dhan.co"
         self._init_db()
 
@@ -89,20 +92,59 @@ class BrokerService:
         return bool(self.dhan_client_id and self.dhan_access_token and len(self.dhan_access_token) > 15)
 
     def get_status(self) -> Dict[str, Any]:
-        """Returns live broker connectivity status."""
+        """Returns live broker connectivity status and trading mode."""
         masked_id = (
             f"{self.dhan_client_id[:3]}***{self.dhan_client_id[-2:]}"
             if len(self.dhan_client_id) > 4
             else ("SET" if self.dhan_client_id else "NOT_SET")
         )
+        is_live_active = self.is_broker_connected and self.trading_mode == "LIVE"
         return {
             "broker_name": "Dhan HQ" if self.is_broker_connected else "None (Paper Mode)",
             "connected": self.is_broker_connected,
             "client_id_masked": masked_id,
             "has_token": bool(self.dhan_access_token),
-            "execution_mode": "BROKER_LIVE" if self.is_broker_connected else "PAPER_SIMULATOR",
-            "message": "Connected to Dhan HQ API for live trading" if self.is_broker_connected else "Running in Paper Simulator mode (No live broker credentials)",
+            "trading_mode": self.trading_mode,
+            "execution_mode": "BROKER_LIVE" if is_live_active else "PAPER_SIMULATOR",
+            "message": (
+                "Connected to Dhan HQ API (LIVE REAL-MONEY TRADING ACTIVE)"
+                if is_live_active
+                else (
+                    "Connected to Dhan HQ API (PAPER SIMULATOR ACTIVE • 100% Risk-Free)"
+                    if self.is_broker_connected
+                    else "Running in Paper Simulator mode (No live broker credentials)"
+                )
+            ),
         }
+
+    def set_trading_mode(self, mode: str) -> Dict[str, Any]:
+        """Sets global trading mode to 'PAPER' or 'LIVE'."""
+        mode_clean = mode.strip().upper()
+        if mode_clean not in ("PAPER", "LIVE"):
+            mode_clean = "PAPER"
+        self.trading_mode = mode_clean
+        os.environ["TRADING_MODE"] = mode_clean
+
+        env_file = self.root_dir / ".env"
+        try:
+            lines = []
+            if env_file.exists():
+                lines = env_file.read_text(encoding="utf-8").splitlines()
+            mode_set = False
+            new_lines = []
+            for line in lines:
+                if line.startswith("TRADING_MODE="):
+                    new_lines.append(f"TRADING_MODE={mode_clean}")
+                    mode_set = True
+                else:
+                    new_lines.append(line)
+            if not mode_set:
+                new_lines.append(f"TRADING_MODE={mode_clean}")
+            env_file.write_text("\n".join(new_lines) + "\n", encoding="utf-8")
+        except Exception as e:
+            logger.warning("Could not persist TRADING_MODE to .env: %s", e)
+
+        return self.get_status()
 
     def set_credentials(self, client_id: str, access_token: str) -> Dict[str, Any]:
         """Updates broker credentials and saves to local .env."""
@@ -410,7 +452,7 @@ class BrokerService:
             broker_name = "Paper Trading Simulator"
             exec_status = "FILLED"
         elif exec_mode == "AUTO":
-            route_to_broker = self.is_broker_connected
+            route_to_broker = self.is_broker_connected and self.trading_mode == "LIVE"
             broker_name = "Paper Trading Simulator"
             exec_status = "FILLED"
         else:

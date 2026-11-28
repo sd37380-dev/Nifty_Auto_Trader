@@ -925,7 +925,15 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     <span class="badge" id="supabase-badge" style="font-size: 0.8rem; background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.4); color: #60a5fa;" title="Supabase Cloud Sync Status">☁️ SUPABASE: CHECKING...</span>
     <span class="badge" id="telegram-badge" style="font-size: 0.8rem; background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.4); color: #38bdf8; cursor: pointer;" onclick="switchTab('tab-telegram')" title="Telegram Bot & 15-Minute Auto-Execution Alerts">📱 TELEGRAM: CHECKING...</span>
     <span class="badge badge-blue">Gemini 2.5 Brain: READY</span>
-    <span class="badge badge-yellow">Paper Trading: READY</span>
+    <!-- Global Master Trading Mode Toggle Switch in Header -->
+    <div id="master-mode-switch-container" style="display: inline-flex; align-items: center; background: rgba(0,0,0,0.5); border: 1px solid var(--border); border-radius: 20px; padding: 2px 4px; gap: 4px;" title="Switch Platform Execution Mode between Paper Simulator and Real Live Broker">
+      <button type="button" id="btn-mode-paper" onclick="setMasterTradingMode('PAPER')" style="border: none; border-radius: 14px; padding: 3px 10px; font-size: 0.72rem; font-weight: 800; cursor: pointer; background: #facc15; color: #000; transition: all 0.2s;">
+        📄 PAPER
+      </button>
+      <button type="button" id="btn-mode-live" onclick="setMasterTradingMode('LIVE')" style="border: none; border-radius: 14px; padding: 3px 10px; font-size: 0.72rem; font-weight: 800; cursor: pointer; background: transparent; color: #94a3b8; transition: all 0.2s;">
+        🔴 REAL LIVE
+      </button>
+    </div>
     <span class="badge badge-red" id="header-broker-badge" onclick="openBrokerModal()" style="cursor: pointer; padding: 4px 10px; font-weight: 800;" title="Click to connect Dhan HQ Broker API credentials">🏦 Live Broker: DISABLED (Click to Connect)</span>
     <button class="btn" onclick="fetchData()">🔄 Refresh</button>
     <a href="/report" target="_blank" class="btn" style="text-decoration: none; display: inline-flex; align-items: center; gap: 4px; background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.4); padding: 4px 10px; border-radius: 4px; font-weight: 700; font-size: 0.72rem;" title="Open Latest 15-Minute Trade Intelligence Report in new tab">📄 15M Report</a>
@@ -4238,6 +4246,29 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       <div style="display: flex; gap: 8px; flex-wrap: wrap;">
         <button type="button" onclick="openDhanTradingViewWindow()" class="btn" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #000; padding: 6px 14px; font-size: 0.78rem; font-weight: 800; border: 1px solid #fbbf24; border-radius: 6px; cursor: pointer;">
           🏦 Open Dhan TV Console (tv.dhan.co) ↗
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Master Execution Mode Switch Card -->
+  <div class="card" style="margin-bottom: 20px; background: linear-gradient(135deg, rgba(30, 41, 59, 0.85) 0%, rgba(15, 23, 42, 0.95) 100%); border: 1px solid #6366f1; border-radius: 10px; padding: 18px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
+      <div>
+        <div style="font-size: 1.05rem; font-weight: 800; color: #f8fafc; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+          <span>⚡ Platform Master Execution Mode</span>
+          <span id="tab-master-mode-status-badge" class="badge badge-yellow" style="font-size: 0.82rem; padding: 4px 10px;">📄 PAPER SIMULATOR (100% Risk Free)</span>
+        </div>
+        <div style="font-size: 0.80rem; color: var(--text-secondary); margin-top: 5px; line-height: 1.4;">
+          Switch between <b>Paper Simulator</b> and <b>Live Dhan HQ Broker</b>. In Paper Mode, live high-speed data streams at full fidelity while orders execute in virtual memory with zero capital risk.
+        </div>
+      </div>
+      <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+        <button type="button" id="tab-btn-switch-paper" onclick="setMasterTradingMode('PAPER')" class="btn" style="background: #facc15; color: #000; font-weight: 800; padding: 9px 20px; border-radius: 6px; border: 1px solid #eab308; cursor: pointer; box-shadow: 0 0 14px rgba(250, 204, 21, 0.35);">
+          📄 Switch to Paper Mode
+        </button>
+        <button type="button" id="tab-btn-switch-live" onclick="setMasterTradingMode('LIVE')" class="btn" style="background: #1e293b; color: #f87171; font-weight: 800; padding: 9px 20px; border-radius: 6px; border: 1px solid #ef4444; cursor: pointer;">
+          🔴 Switch to Real Live Mode
         </button>
       </div>
     </div>
@@ -11067,10 +11098,100 @@ DASHBOARD_HTML = """<!DOCTYPE html>
             modePill.innerText = '📄 PAPER MODE';
           }
         }
+
+        // Sync Global Master Trading Mode UI
+        const isLive = (data.trading_mode === 'LIVE' && data.connected);
+        const btnPaper = document.getElementById('btn-mode-paper');
+        const btnLive = document.getElementById('btn-mode-live');
+        if (btnPaper && btnLive) {
+          if (isLive) {
+            btnLive.style.background = '#ef4444';
+            btnLive.style.color = '#ffffff';
+            btnLive.style.boxShadow = '0 0 10px rgba(239, 68, 68, 0.5)';
+            btnPaper.style.background = 'transparent';
+            btnPaper.style.color = '#94a3b8';
+            btnPaper.style.boxShadow = 'none';
+          } else {
+            btnPaper.style.background = '#facc15';
+            btnPaper.style.color = '#000000';
+            btnPaper.style.boxShadow = '0 0 10px rgba(250, 204, 21, 0.4)';
+            btnLive.style.background = 'transparent';
+            btnLive.style.color = '#94a3b8';
+            btnLive.style.boxShadow = 'none';
+          }
+        }
+
+        const tabMasterBadge = document.getElementById('tab-master-mode-status-badge');
+        const tabBtnPaper = document.getElementById('tab-btn-switch-paper');
+        const tabBtnLive = document.getElementById('tab-btn-switch-live');
+        if (tabMasterBadge) {
+          if (isLive) {
+            tabMasterBadge.className = 'badge badge-red';
+            tabMasterBadge.innerHTML = '🔴 REAL LIVE BROKER MODE (Dhan HQ Real Money)';
+            if (tabBtnLive) {
+              tabBtnLive.style.background = '#ef4444';
+              tabBtnLive.style.color = '#ffffff';
+              tabBtnLive.style.boxShadow = '0 0 14px rgba(239, 68, 68, 0.5)';
+            }
+            if (tabBtnPaper) {
+              tabBtnPaper.style.background = '#1e293b';
+              tabBtnPaper.style.color = '#facc15';
+              tabBtnPaper.style.boxShadow = 'none';
+            }
+          } else {
+            tabMasterBadge.className = 'badge badge-yellow';
+            tabMasterBadge.innerHTML = '📄 PAPER SIMULATOR MODE (100% Risk Free)';
+            if (tabBtnPaper) {
+              tabBtnPaper.style.background = '#facc15';
+              tabBtnPaper.style.color = '#000000';
+              tabBtnPaper.style.boxShadow = '0 0 14px rgba(250, 204, 21, 0.4)';
+            }
+            if (tabBtnLive) {
+              tabBtnLive.style.background = '#1e293b';
+              tabBtnLive.style.color = '#f87171';
+              tabBtnLive.style.boxShadow = 'none';
+            }
+          }
+        }
+
         onTradeRouteSelectChange();
       }
     } catch (e) {
       console.warn('Could not load broker status:', e);
+    }
+  }
+
+  async function setMasterTradingMode(mode) {
+    const targetMode = (mode || 'PAPER').toUpperCase();
+    if (targetMode === 'LIVE') {
+      if (!_brokerStatusCache || !_brokerStatusCache.connected) {
+        alert("⚠️ Cannot enable Real Live Mode: Dhan credentials are not connected yet.\\n\\nPlease enter your Dhan Client ID and Access Token in the '🏦 Broker Connection (Dhan)' tab first.");
+        return;
+      }
+      const ok = confirm("⚠️ MASTER SAFETY CONFIRMATION:\\n\\nYou are switching the system to REAL LIVE BROKER TRADING MODE.\\n\\n• Orders will be executed with REAL CAPITAL via Dhan HQ.\\n• Safety Invariants: Strictly 1 Lot ITM Next Expiry, ₹2,000 Daily Loss Cap, 15-pt Trailing SL.\\n\\nAre you sure you want to activate Real Live Mode?");
+      if (!ok) return;
+    }
+
+    try {
+      const resp = await fetch('/api/broker/mode', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode: targetMode })
+      });
+      const data = await resp.json();
+      if (resp.ok && data.status === 'ok') {
+        await loadBrokerStatus();
+        const routeSelect = document.getElementById('trade-input-route');
+        if (routeSelect) {
+          routeSelect.value = (targetMode === 'LIVE') ? 'BROKER' : 'PAPER';
+          onTradeRouteSelectChange();
+        }
+        showGotoToast(targetMode === 'LIVE' ? '🔴 Real Live Broker Mode ACTIVATED!' : '📄 Paper Trading Mode ACTIVATED (100% Risk Free)!');
+      } else {
+        alert("Failed to switch mode: " + (data.message || 'Unknown error'));
+      }
+    } catch (err) {
+      alert("Network error switching mode: " + err.message);
     }
   }
 
@@ -14002,6 +14123,22 @@ class DashboardHTTPRequestHandler(BaseHTTPRequestHandler):
                 self.end_headers()
                 self.wfile.write(json.dumps({"connected": False, "error": str(ex)}).encode("utf-8"))
             return
+        elif self.path == "/api/broker/mode":
+            try:
+                from nifty_trader.execution.broker_service import get_broker_service
+                bs = get_broker_service()
+                status = bs.get_status()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Cache-Control", "no-cache")
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": "ok", "trading_mode": status.get("trading_mode", "PAPER"), "connected": status.get("connected", False)}).encode("utf-8"))
+            except Exception as ex:
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": "error", "message": str(ex)}).encode("utf-8"))
+            return
         elif self.path == "/api/broker/positions":
             try:
                 from nifty_trader.execution.broker_service import get_broker_service
@@ -15322,6 +15459,24 @@ class DashboardHTTPRequestHandler(BaseHTTPRequestHandler):
                 self.send_header("Content-Type", "application/json")
                 self.end_headers()
                 self.wfile.write(json.dumps({"status": "ok", "broker_status": res}).encode("utf-8"))
+            except Exception as ex:
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": "error", "message": str(ex)}).encode("utf-8"))
+        elif self.path == "/api/broker/mode":
+            try:
+                content_length = int(self.headers.get("Content-Length", 0))
+                body = self.rfile.read(content_length).decode("utf-8")
+                data = json.loads(body)
+                mode = data.get("mode", "PAPER").strip().upper()
+                from nifty_trader.execution.broker_service import get_broker_service
+                bs = get_broker_service()
+                res = bs.set_trading_mode(mode)
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": "ok", "trading_mode": res.get("trading_mode"), "broker_status": res}).encode("utf-8"))
             except Exception as ex:
                 self.send_response(500)
                 self.send_header("Content-Type", "application/json")
