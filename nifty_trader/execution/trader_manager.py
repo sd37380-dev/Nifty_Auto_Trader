@@ -9,7 +9,7 @@ Powers:
 - Option D: Antigravity CLI / Local execution
 """
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, time as dt_time, timedelta, timezone
 import json
 import logging
 import os
@@ -154,10 +154,101 @@ class AutonomousTraderManager:
         ret = self.process.poll()
         return ret is None
 
+    @staticmethod
+    def get_session_schedule(dt: Optional[datetime] = None) -> Dict[str, Any]:
+        """Calculates current exchange session phase relative to 09:00 AM start."""
+        ref_dt = dt or datetime.now(IST)
+        if ref_dt.tzinfo is None:
+            ref_dt = ref_dt.replace(tzinfo=IST)
+        else:
+            ref_dt = ref_dt.astimezone(IST)
+
+        if os.environ.get("IGNORE_MARKET_HOURS", "false").lower() in ("true", "1", "yes"):
+            return {
+                "is_trade_day": True,
+                "is_monitoring_active": True,
+                "phase": "OVERRIDE_TESTING",
+                "message": "Market hours override active",
+                "badge": "🟢 SCANNING (OVERRIDE)",
+                "ist_time": ref_dt.strftime("%H:%M:%S"),
+            }
+
+        try:
+            from nifty_trader.market_data.session import MarketSessionManager
+            is_wknd, wknd_name = MarketSessionManager.is_weekend(ref_dt)
+            if is_wknd:
+                return {
+                    "is_trade_day": False,
+                    "is_monitoring_active": False,
+                    "phase": "WEEKEND_CLOSED",
+                    "message": f"Weekend Closed ({wknd_name}). Standby until Monday 09:00 AM IST.",
+                    "badge": "⚪ STANDBY (WEEKEND)",
+                    "ist_time": ref_dt.strftime("%H:%M:%S"),
+                }
+
+            is_hday, hday_name = MarketSessionManager.is_holiday(ref_dt)
+            if is_hday:
+                return {
+                    "is_trade_day": False,
+                    "is_monitoring_active": False,
+                    "phase": "HOLIDAY_CLOSED",
+                    "message": f"NSE Holiday: {hday_name}. Standby until next trade day 09:00 AM IST.",
+                    "badge": "⚪ STANDBY (HOLIDAY)",
+                    "ist_time": ref_dt.strftime("%H:%M:%S"),
+                }
+        except Exception:
+            pass
+
+        curr_time = ref_dt.time()
+        t_0900 = dt_time(9, 0)
+        t_0915 = dt_time(9, 15)
+        t_1530 = dt_time(15, 30)
+
+        if curr_time < t_0900:
+            secs_until_9am = int((datetime.combine(ref_dt.date(), t_0900) - datetime.combine(ref_dt.date(), curr_time)).total_seconds())
+            mins_rem, secs_rem = divmod(secs_until_9am, 60)
+            return {
+                "is_trade_day": True,
+                "is_monitoring_active": False,
+                "phase": "STANDBY_AWAITING_OPEN",
+                "message": f"Standby: Monitoring begins at 09:00 AM IST today ({mins_rem}m {secs_rem:02d}s remaining)",
+                "badge": "🟡 ARMED (STARTS 09:00 AM IST)",
+                "seconds_until_start": secs_until_9am,
+                "ist_time": ref_dt.strftime("%H:%M:%S"),
+            }
+        elif t_0900 <= curr_time < t_0915:
+            return {
+                "is_trade_day": True,
+                "is_monitoring_active": True,
+                "phase": "PRE_MARKET_MONITORING",
+                "message": "Pre-Market Monitoring Active (09:00–09:15 IST). Orders unlock at 09:15 AM.",
+                "badge": "🟢 PRE-MARKET (09:00–09:15)",
+                "ist_time": ref_dt.strftime("%H:%M:%S"),
+            }
+        elif t_0915 <= curr_time <= t_1530:
+            return {
+                "is_trade_day": True,
+                "is_monitoring_active": True,
+                "phase": "LIVE_MARKET_MONITORING",
+                "message": "Live Trading Active (09:15–15:30 IST). Confluence scans active.",
+                "badge": "🟢 LIVE SCANNING",
+                "ist_time": ref_dt.strftime("%H:%M:%S"),
+            }
+        else:
+            return {
+                "is_trade_day": True,
+                "is_monitoring_active": False,
+                "phase": "POST_MARKET_CLOSED",
+                "message": "Market Closed at 15:30 IST. Monitoring resumes next trading day at 09:00 AM IST.",
+                "badge": "⚪ STANDBY (CLOSED)",
+                "ist_time": ref_dt.strftime("%H:%M:%S"),
+            }
+
     def get_status(self) -> Dict[str, Any]:
         """Returns complete operational status and recent log output."""
         running = self.is_running()
         uptime = int(time.time() - self.start_time) if running and self.start_time > 0 else 0
+        schedule = self.get_session_schedule()
 
         # Read last 25 lines of log file safely
         recent_logs = []
@@ -169,6 +260,10 @@ class AutonomousTraderManager:
             except Exception as e:
                 recent_logs = [f"Error reading logs: {e}"]
 
+        display_badge = "⚪ IDLE (STOPPED)"
+        if running:
+            display_badge = schedule.get("badge", "🟢 RUNNING")
+
         return {
             "status": "ok",
             "is_running": running,
@@ -176,6 +271,11 @@ class AutonomousTraderManager:
             "uptime_seconds": uptime,
             "uptime_formatted": str(timedelta(seconds=uptime)),
             "trading_mode": os.environ.get("TRADING_MODE", "PAPER"),
+            "session_phase": schedule["phase"],
+            "session_message": schedule["message"],
+            "badge": display_badge,
+            "is_monitoring_active": schedule["is_monitoring_active"],
+            "is_trade_day": schedule["is_trade_day"],
             "log_path": str(self.log_file),
             "recent_logs": recent_logs,
             "last_status": "RUNNING" if running else self.last_status,

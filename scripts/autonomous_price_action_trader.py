@@ -43,7 +43,7 @@
 """
 
 import argparse
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, time as dt_time, timedelta, timezone
 import json
 import logging
 import math
@@ -66,6 +66,7 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from nifty_trader.market_data.option_chain_service import get_option_chain_service
 from nifty_trader.market_data.contributors_service import get_contributors_service
+from nifty_trader.market_data.session import MarketSessionManager
 from nifty_trader.notifications.telegram_service import get_telegram_service
 from nifty_trader.simulator.service import get_simulator_service
 
@@ -110,6 +111,105 @@ def play_beep_chime(event: str = "ENTRY"):
                 winsound.Beep(1200, 300)
     except Exception as ex:
         logger.debug("Beep audio error: %s", ex)
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#  TRADING SCHEDULE & MARKET HOURS GATE
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+def get_trading_session_phase(dt: Optional[datetime] = None) -> Dict[str, Any]:
+    """
+    Evaluates exchange schedule:
+    - Days: Monday through Friday (Excluding official NSE holidays)
+    - Hours:
+      * Before 09:00 AM IST: STANDBY_AWAITING_OPEN (Arm and wait until 09:00 AM)
+      * 09:00 AM - 09:15 AM IST: PRE_MARKET_MONITORING (Pre-market analysis, S/R, news sentiment)
+      * 09:15 AM - 15:30 PM IST: LIVE_MARKET_MONITORING (Live confluence scans and trade execution)
+      * After 15:30 PM IST: POST_MARKET_CLOSED (Session complete, standby until next trade day 09:00 AM)
+    """
+    ref_dt = dt or datetime.now(IST)
+    if ref_dt.tzinfo is None:
+        ref_dt = ref_dt.replace(tzinfo=IST)
+    else:
+        ref_dt = ref_dt.astimezone(IST)
+
+    # Check override environment variable (for offline simulation / tests)
+    if os.environ.get("IGNORE_MARKET_HOURS", "false").lower() in ("true", "1", "yes"):
+        return {
+            "is_trade_day": True,
+            "is_monitoring_active": True,
+            "can_execute_orders": True,
+            "phase": "OVERRIDE_TESTING",
+            "message": "Market hours override active (IGNORE_MARKET_HOURS=true)",
+            "ist_time": ref_dt.strftime("%H:%M:%S"),
+        }
+
+    is_wknd, wknd_name = MarketSessionManager.is_weekend(ref_dt)
+    if is_wknd:
+        return {
+            "is_trade_day": False,
+            "is_monitoring_active": False,
+            "can_execute_orders": False,
+            "phase": "WEEKEND_CLOSED",
+            "message": f"Weekend Closed ({wknd_name}). Standby until Monday 09:00 AM IST.",
+            "ist_time": ref_dt.strftime("%H:%M:%S"),
+        }
+
+    is_hday, hday_name = MarketSessionManager.is_holiday(ref_dt)
+    if is_hday:
+        return {
+            "is_trade_day": False,
+            "is_monitoring_active": False,
+            "can_execute_orders": False,
+            "phase": "HOLIDAY_CLOSED",
+            "message": f"NSE Trading Holiday: {hday_name}. Standby until next trade day 09:00 AM IST.",
+            "ist_time": ref_dt.strftime("%H:%M:%S"),
+        }
+
+    curr_time = ref_dt.time()
+    t_0900 = dt_time(9, 0)
+    t_0915 = dt_time(9, 15)
+    t_1530 = dt_time(15, 30)
+
+    if curr_time < t_0900:
+        secs_until_9am = int((datetime.combine(ref_dt.date(), t_0900) - datetime.combine(ref_dt.date(), curr_time)).total_seconds())
+        mins_rem, secs_rem = divmod(secs_until_9am, 60)
+        return {
+            "is_trade_day": True,
+            "is_monitoring_active": False,
+            "can_execute_orders": False,
+            "phase": "STANDBY_AWAITING_OPEN",
+            "message": f"Standby: Monitoring starts at 09:00 AM IST today ({mins_rem}m {secs_rem:02d}s remaining)",
+            "seconds_until_start": secs_until_9am,
+            "ist_time": ref_dt.strftime("%H:%M:%S"),
+        }
+    elif t_0900 <= curr_time < t_0915:
+        return {
+            "is_trade_day": True,
+            "is_monitoring_active": True,
+            "can_execute_orders": False,
+            "phase": "PRE_MARKET_MONITORING",
+            "message": "Pre-Market Monitoring Active (09:00–09:15 IST). Live orders unlock at 09:15 AM.",
+            "ist_time": ref_dt.strftime("%H:%M:%S"),
+        }
+    elif t_0915 <= curr_time <= t_1530:
+        return {
+            "is_trade_day": True,
+            "is_monitoring_active": True,
+            "can_execute_orders": True,
+            "phase": "LIVE_MARKET_MONITORING",
+            "message": "Live Trading Session Active (09:15–15:30 IST). Confluence scans active.",
+            "ist_time": ref_dt.strftime("%H:%M:%S"),
+        }
+    else:
+        return {
+            "is_trade_day": True,
+            "is_monitoring_active": False,
+            "can_execute_orders": False,
+            "phase": "POST_MARKET_CLOSED",
+            "message": "Market Closed at 15:30 IST. Standby until next trading day at 09:00 AM IST.",
+            "ist_time": ref_dt.strftime("%H:%M:%S"),
+        }
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -1407,11 +1507,14 @@ class HermesTraderV2:
         logger.info(f"  Strategy: Price Action + Multi-TF S/R + Volume + Options + News")
         logger.info("🚀" * 20)
 
+        last_standby_log = 0.0
+
         try:
             while True:
                 now = datetime.now(IST)
+                schedule = get_trading_session_phase(now)
 
-                # Check if position is already active
+                # Check if position is already active (even after market close, track exit or square-off)
                 if self.sim.active_position is not None:
                     pos = self.sim.active_position
                     # Update live MTM and evaluate SL / Target using latest 5m spot candle
@@ -1439,6 +1542,25 @@ class HermesTraderV2:
                     time.sleep(scan_interval)
                     continue
 
+                # ── Market Hours & Schedule Gate ──────────────────────────────
+                # If market is NOT open for active monitoring (e.g. before 09:00 AM, weekend, holiday, after 15:30 PM):
+                if not schedule["is_monitoring_active"]:
+                    if time.time() - last_standby_log >= 30.0:
+                        logger.info(f"⏳ [STANDBY] {schedule['message']} (Current: {schedule['ist_time']} IST)")
+                        last_standby_log = time.time()
+                    time.sleep(min(scan_interval, 15))
+                    continue
+
+                # If in pre-market window (09:00 AM to 09:15 AM IST):
+                # Agent monitors order flow & news sentiment, but regular market orders unlock at 09:15 AM IST.
+                if schedule["phase"] == "PRE_MARKET_MONITORING":
+                    if time.time() - last_standby_log >= 60.0:
+                        logger.info(f"📡 [PRE-MARKET 09:00–09:15] Monitoring pre-market order flow and S/R levels. Regular confluence orders unlock at 09:15 AM IST.")
+                        last_standby_log = time.time()
+                    time.sleep(min(scan_interval, 15))
+                    continue
+
+                # ── Regular Live Trading Session (09:15 to 15:30 IST) ────────
                 # No position → Run full analysis
                 analysis = self.run_full_analysis()
 

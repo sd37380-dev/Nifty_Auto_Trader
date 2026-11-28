@@ -621,13 +621,23 @@ class TelegramNotificationService:
 
         if cmd in ("!trade", "/trade", "trade", "!start", "/start", "start"):
             res = tm.start_trader()
+            st = tm.get_status()
             trading_mode = os.environ.get("TRADING_MODE", "PAPER").upper()
             mode_badge = "🔴 <b>REAL LIVE BROKER (Dhan HQ)</b>" if trading_mode == "LIVE" else "📄 <b>PAPER SIMULATOR (Risk-Free)</b>"
+            phase = st.get("session_phase", "LIVE_MARKET_MONITORING")
+            sched_msg = st.get("session_message", "Live Trading Session Active")
+
+            if phase == "STANDBY_AWAITING_OPEN":
+                status_header = f"🟡 <b>ARMED — STANDBY (Awaiting 09:00 AM IST)</b>\n⏳ <b>Schedule:</b> <i>{sched_msg}</i>\n🚀 <i>Monitoring will start automatically at 09:00 AM IST.</i>"
+            elif phase in ("WEEKEND_CLOSED", "HOLIDAY_CLOSED", "POST_MARKET_CLOSED"):
+                status_header = f"⚪ <b>STANDBY ({phase})</b>\n⏳ <b>Schedule:</b> <i>{sched_msg}</i>"
+            else:
+                status_header = f"🟢 <b>ACTIVE — LIVE SCANNING (PID {res.get('pid', 'N/A')})</b>\n⏳ <b>Session:</b> <i>{sched_msg}</i>"
 
             card = (
                 "⚡ <b>[AUTONOMOUS TRADER LAUNCHED VIA TELEGRAM]</b> ⚡\n"
                 "━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-                f"📡 <b>Status:</b> <b>ACTIVE (Live Scanning PID {res.get('pid', 'N/A')})</b>\n"
+                f"📡 <b>Status:</b> {status_header}\n"
                 f"⚙️ <b>Execution Mode:</b> {mode_badge}\n"
                 "🏛 <b>Decision Engine:</b> 3-Pillar Institutional Architecture Active\n"
                 "🎯 <b>Setups Active:</b>\n"
@@ -660,7 +670,18 @@ class TelegramNotificationService:
         elif cmd in ("!status", "/status", "status"):
             st = tm.get_status()
             is_running = st.get("is_running", False)
-            running_badge = "🟢 <b>ACTIVE & SCANNING</b>" if is_running else "⚪ <b>IDLE (STOPPED)</b>"
+            phase = st.get("session_phase", "IDLE")
+            sched_msg = st.get("session_message", "")
+            if is_running:
+                if phase == "STANDBY_AWAITING_OPEN":
+                    running_badge = f"🟡 <b>ARMED (STANDBY: STARTS AT 09:00 AM IST)</b>\n   • <i>{sched_msg}</i>"
+                elif phase in ("WEEKEND_CLOSED", "HOLIDAY_CLOSED", "POST_MARKET_CLOSED"):
+                    running_badge = f"⚪ <b>STANDBY ({phase})</b>\n   • <i>{sched_msg}</i>"
+                else:
+                    running_badge = f"🟢 <b>ACTIVE & SCANNING (09:00–15:30 IST)</b>"
+            else:
+                running_badge = "⚪ <b>IDLE (STOPPED)</b>"
+
             trading_mode = st.get("trading_mode", "PAPER").upper()
             mode_badge = "🔴 REAL LIVE" if trading_mode == "LIVE" else "📄 PAPER MODE"
             uptime_str = st.get("uptime_formatted", "00:00:00")

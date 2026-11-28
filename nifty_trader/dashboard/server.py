@@ -5172,13 +5172,23 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       const uptimeStr = isRunning ? (data.uptime_formatted || '00:00:00') : '00:00:00';
       const mode = (data.trading_mode || 'PAPER').toUpperCase();
 
+      const isMonitoring = data.is_monitoring_active === true;
+      const phase = data.session_phase || 'LIVE_MARKET_MONITORING';
+      const schedMsg = data.session_message || '';
+
       // Header controls
       const headerStatus = document.getElementById('header-trader-status');
       const headerBtn = document.getElementById('btn-toggle-trader');
       if (headerStatus) {
-        headerStatus.innerHTML = isRunning 
-          ? `<span style="color: #34d399;">🟢 SCANNING (PID ${pidStr} • ${uptimeStr})</span>`
-          : `<span style="color: #94a3b8;">⚡ TRADER: IDLE</span>`;
+        if (!isRunning) {
+          headerStatus.innerHTML = `<span style="color: #94a3b8;">⚡ TRADER: IDLE</span>`;
+        } else if (phase === 'STANDBY_AWAITING_OPEN') {
+          headerStatus.innerHTML = `<span style="color: #facc15;">🟡 ARMED (STARTS 09:00 AM) • PID ${pidStr}</span>`;
+        } else if (!isMonitoring) {
+          headerStatus.innerHTML = `<span style="color: #94a3b8;">⚪ STANDBY (${phase}) • PID ${pidStr}</span>`;
+        } else {
+          headerStatus.innerHTML = `<span style="color: #34d399;">🟢 SCANNING (09:00–15:30 IST) • PID ${pidStr}</span>`;
+        }
       }
       if (headerBtn) {
         if (isRunning) {
@@ -5200,11 +5210,31 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       const modePill = document.getElementById('trader-mode-pill');
 
       if (cardBadge) {
-        cardBadge.className = isRunning ? 'badge badge-green' : 'badge';
-        cardBadge.style.background = isRunning ? 'rgba(16, 185, 129, 0.2)' : 'rgba(148, 163, 184, 0.2)';
-        cardBadge.style.color = isRunning ? '#34d399' : '#94a3b8';
-        cardBadge.style.border = isRunning ? '1px solid rgba(16, 185, 129, 0.5)' : '1px solid #475569';
-        cardBadge.innerText = isRunning ? '🟢 LIVE SCANNING' : '⚪ IDLE (STOPPED)';
+        if (!isRunning) {
+          cardBadge.className = 'badge';
+          cardBadge.style.background = 'rgba(148, 163, 184, 0.2)';
+          cardBadge.style.color = '#94a3b8';
+          cardBadge.style.border = '1px solid #475569';
+          cardBadge.innerText = '⚪ IDLE (STOPPED)';
+        } else if (phase === 'STANDBY_AWAITING_OPEN') {
+          cardBadge.className = 'badge badge-yellow';
+          cardBadge.style.background = 'rgba(250, 204, 21, 0.15)';
+          cardBadge.style.color = '#facc15';
+          cardBadge.style.border = '1px solid rgba(250, 204, 21, 0.5)';
+          cardBadge.innerText = '🟡 ARMED (STANDBY: STARTS AT 09:00 AM IST)';
+        } else if (!isMonitoring) {
+          cardBadge.className = 'badge';
+          cardBadge.style.background = 'rgba(148, 163, 184, 0.2)';
+          cardBadge.style.color = '#94a3b8';
+          cardBadge.style.border = '1px solid #475569';
+          cardBadge.innerText = `⚪ STANDBY (${phase})`;
+        } else {
+          cardBadge.className = 'badge badge-green';
+          cardBadge.style.background = 'rgba(16, 185, 129, 0.2)';
+          cardBadge.style.color = '#34d399';
+          cardBadge.style.border = '1px solid rgba(16, 185, 129, 0.5)';
+          cardBadge.innerText = '🟢 LIVE SCANNING (09:00–15:30 IST)';
+        }
       }
       if (cardBtn) {
         if (isRunning) {
