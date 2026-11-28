@@ -51,8 +51,30 @@ class BrokerService:
                     load_dotenv(env_file)
                 except Exception:
                     pass
-        self.dhan_client_id = os.environ.get("DHAN_CLIENT_ID", "").strip()
-        self.dhan_access_token = os.environ.get("DHAN_ACCESS_TOKEN", "").strip()
+    def _reload_env(self):
+        env_file = self.root_dir / ".env"
+        if env_file.exists():
+            try:
+                from dotenv import load_dotenv
+                load_dotenv(env_file, override=True)
+            except Exception:
+                pass
+
+    @property
+    def dhan_client_id(self) -> str:
+        cid = os.environ.get("DHAN_CLIENT_ID", "").strip()
+        if not cid:
+            self._reload_env()
+            cid = os.environ.get("DHAN_CLIENT_ID", "").strip()
+        return cid
+
+    @property
+    def dhan_access_token(self) -> str:
+        tok = os.environ.get("DHAN_ACCESS_TOKEN", "").strip()
+        if not tok or len(tok) <= 15:
+            self._reload_env()
+            tok = os.environ.get("DHAN_ACCESS_TOKEN", "").strip()
+        return tok
         self.trading_mode = os.environ.get("TRADING_MODE", "PAPER").strip().upper()
         if self.trading_mode not in ("PAPER", "LIVE"):
             self.trading_mode = "PAPER"

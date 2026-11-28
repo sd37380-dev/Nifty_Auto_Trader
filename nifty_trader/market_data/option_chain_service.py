@@ -24,7 +24,7 @@ import os
 from pathlib import Path
 import threading
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 import httpx
 
 logger = logging.getLogger(__name__)
@@ -71,6 +71,29 @@ class NSEOptionChainService:
         self._next_expiries_thread: Optional[threading.Thread] = None
         self._next_expiries_running = False
         self._next_expiries_interval = 60
+
+    def _get_credentials(self) -> Tuple[str, str]:
+        """Dynamically retrieves Dhan credentials, refreshing from .env if needed."""
+        cid = os.environ.get("DHAN_CLIENT_ID", "").strip()
+        tok = os.environ.get("DHAN_ACCESS_TOKEN", "").strip()
+        if not (cid and tok and len(tok) > 15):
+            for candidate in [
+                self.root_dir / ".env",
+                Path(__file__).resolve().parent.parent.parent / ".env",
+                Path("d:/AI_Trading/nifty-autonomous-trader/.env"),
+                Path("d:/AI_Trading/.env"),
+            ]:
+                if candidate.exists():
+                    try:
+                        from dotenv import load_dotenv
+                        load_dotenv(candidate, override=True)
+                        cid = os.environ.get("DHAN_CLIENT_ID", "").strip()
+                        tok = os.environ.get("DHAN_ACCESS_TOKEN", "").strip()
+                        if cid and tok and len(tok) > 15:
+                            break
+                    except Exception:
+                        pass
+        return cid, tok
 
     @staticmethod
     def _derive_buildup(price_chg: float, oi_chg: float, opt_type: str = "CE") -> str:
@@ -137,8 +160,7 @@ class NSEOptionChainService:
         Fetches the active option chain expiry dates list from Dhan HQ API (/v2/optionchain/expirylist).
         Caches for 120 seconds. Returns ISO dates (YYYY-MM-DD) sorted ascending.
         """
-        client_id = os.environ.get("DHAN_CLIENT_ID", "").strip()
-        access_token = os.environ.get("DHAN_ACCESS_TOKEN", "").strip()
+        client_id, access_token = self._get_credentials()
         if not (client_id and access_token and len(access_token) > 15):
             return []
 
@@ -199,8 +221,7 @@ class NSEOptionChainService:
         When credentials are configured, this queries Dhan with zero rate-limit blocks.
         Supports specific weekly expiry targets (up to 4 weeks).
         """
-        client_id = os.environ.get("DHAN_CLIENT_ID", "").strip()
-        access_token = os.environ.get("DHAN_ACCESS_TOKEN", "").strip()
+        client_id, access_token = self._get_credentials()
         if not (client_id and access_token and len(access_token) > 15):
             return None
 
@@ -506,8 +527,7 @@ class NSEOptionChainService:
                 logger.warning("Failed processing Dhan live option chain: %s", e)
 
         # Dhan is the sole data source. If credentials missing or error, return explicit Dhan status.
-        client_id = os.environ.get("DHAN_CLIENT_ID", "").strip()
-        access_token = os.environ.get("DHAN_ACCESS_TOKEN", "").strip()
+        client_id, access_token = self._get_credentials()
         is_configured = bool(client_id and access_token and len(access_token) > 15)
         err_msg = (
             "Dhan HQ API authorization rejected (HTTP 401). Your Client ID or 24-hour daily Access Token is invalid or expired. Open '🏦 Broker Connection (Dhan)' to enter your fresh 10-digit Client ID and daily Access Token."

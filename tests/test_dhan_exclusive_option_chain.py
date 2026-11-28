@@ -20,7 +20,7 @@ def test_dhan_expiry_normalization(ocs):
 
 def test_dhan_exclusive_without_credentials(ocs):
     # When credentials are missing or empty, should return Dhan Exclusive structure without fallback
-    with patch.dict(os.environ, {"DHAN_CLIENT_ID": "", "DHAN_ACCESS_TOKEN": ""}):
+    with patch.object(ocs, "_get_credentials", return_value=("", "")):
         res = ocs.get_option_chain("NIFTY", force_refresh=True)
         assert res["data_source"] == "Dhan HQ API (Exclusive • Strictly Dhan)"
         assert "Dhan credentials not configured" in res["error"]

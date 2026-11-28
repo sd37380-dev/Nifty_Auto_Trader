@@ -14218,33 +14218,14 @@ class DashboardHTTPRequestHandler(BaseHTTPRequestHandler):
                 fut_check = dhan_fut_svc.resolve_future_symbol(sym)
                 if fut_check:
                     fut_key, spot_sym = fut_check
-                    spot_ticker = "^NSEI" if "BANK" not in fut_key else "^NSEBANK"
-                    spot_url = f"https://query1.finance.yahoo.com/v8/finance/chart/{spot_ticker}?interval={yahoo_intv}&range={rng}"
                     spot_candles = []
+                    # Fetch spot candles from Dhan HQ API for futures basis calculation
                     try:
-                        s_req = urllib.request.Request(spot_url, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"})
-                        with urllib.request.urlopen(s_req, timeout=8) as s_resp:
-                            s_data = json.loads(s_resp.read().decode("utf-8"))
-                            s_res = s_data["chart"]["result"][0]
-                            s_ts = s_res.get("timestamp", [])
-                            s_quotes = s_res.get("indicators", {}).get("quote", [{}])[0]
-                            s_o = s_quotes.get("open", [])
-                            s_h = s_quotes.get("high", [])
-                            s_l = s_quotes.get("low", [])
-                            s_c = s_quotes.get("close", [])
-                            s_v = s_quotes.get("volume", [])
-                            for si in range(len(s_ts)):
-                                if si < len(s_o) and s_o[si] is not None and s_c[si] is not None:
-                                    spot_candles.append({
-                                        "time": s_ts[si],
-                                        "open": round(s_o[si], 2),
-                                        "high": round(s_h[si], 2),
-                                        "low": round(s_l[si], 2),
-                                        "close": round(s_c[si], 2),
-                                        "volume": s_v[si] if si < len(s_v) and s_v[si] else 10000,
-                                    })
+                        dhan_spot = dhan_fut_svc.fetch_dhan_candles(spot_sym, interval=intv, range_str=rng)
+                        if dhan_spot and dhan_spot.get("candles"):
+                            spot_candles = dhan_spot["candles"]
                     except Exception as s_ex:
-                        logger.warning("Could not fetch spot candles for futures basis: %s", s_ex)
+                        logger.debug("Dhan spot query for basis calculation notice: %s", s_ex)
 
                     fut_payload = dhan_fut_svc.get_futures_candles(sym, interval=intv, range_str=rng, spot_candles=spot_candles)
                     fut_payload["interval"] = intv
@@ -14263,30 +14244,15 @@ class DashboardHTTPRequestHandler(BaseHTTPRequestHandler):
 
                 is_gift = sym in ("GIFT", "GIFTNIFTY", "GIFT NIFTY", "GIFT_NIFTY", "NSEIX:NIFTY1!")
 
-                # Priority 1: If Dhan API credentials are configured, fetch Spot Index candles directly from Dhan HQ
-                if dhan_fut_svc.is_configured and not is_gift and sym in ("NIFTY", "NIFTY50", "NIFTY 50", "NSE:NIFTY", "BANKNIFTY", "BANK NIFTY", "NSE:BANKNIFTY", "FINNIFTY"):
-                    intv_map = {"1m": "1", "5m": "5", "15m": "15", "30m": "30", "60m": "60", "1h": "60"}
-                    dhan_intv = intv_map.get(intv.lower(), "5")
-                    days_map = {"1d": 1, "5d": 5, "1mo": 30, "3mo": 90}
-                    dhan_days = days_map.get(rng.lower(), 5)
-                    dhan_spot_bars = dhan_fut_svc.fetch_dhan_index_candles(sym, interval_min=dhan_intv, days=dhan_days)
-                    if dhan_spot_bars and len(dhan_spot_bars) > 0:
-                        payload = {
-                            "symbol": sym,
-                            "interval": intv,
-                            "range": rng,
-                            "currency": "INR",
-                            "status": "ok",
-                            "source": "Dhan HQ API (Live Authenticated)",
-                            "regularMarketPrice": dhan_spot_bars[-1]["close"],
-                            "previousClose": dhan_spot_bars[0]["open"],
-                            "candles": dhan_spot_bars,
-                        }
+                # Priority 1: Exclusive Dhan HQ Chart Feed for all Spot Indices & Heavyweight Equities
+                if dhan_fut_svc.is_configured and not is_gift:
+                    dhan_chart = dhan_fut_svc.fetch_dhan_candles(sym, interval=intv, range_str=rng)
+                    if dhan_chart and dhan_chart.get("candles") and len(dhan_chart["candles"]) > 0:
                         self.send_response(200)
                         self.send_header("Content-Type", "application/json")
                         self.send_header("Cache-Control", "no-cache")
                         self.end_headers()
-                        self.wfile.write(json.dumps(payload).encode("utf-8"))
+                        self.wfile.write(json.dumps(dhan_chart).encode("utf-8"))
                         return
 
                 ticker_map = {

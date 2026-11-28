@@ -239,14 +239,26 @@ class NSESpotService:
         records: Dict[str, Dict[str, Any]] = {}
         error_msg: Optional[str] = None
 
-        # 1. Primary: TradingView Scanner API (Fetches NIFTY 50, BANKNIFTY, GIFT NIFTY in 1 call)
+        # 1. Priority 1: Live Dhan HQ API for NIFTY 50 and BANKNIFTY
         try:
-            records = self._fetch_from_tradingview()
-        except Exception as tv_err:
-            logger.warning("TradingView scanner fetch error: %s. Falling back to Yahoo Finance...", tv_err)
-            error_msg = str(tv_err)
+            dhan_records = self._fetch_from_dhan()
+            if dhan_records:
+                records.update(dhan_records)
+        except Exception as dhan_err:
+            logger.debug("Dhan spot fetch error: %s", dhan_err)
 
-        # 2. Fallback for NIFTY & BANKNIFTY if TradingView failed
+        # 2. Priority 2: TradingView Scanner API (Primary for GIFT NIFTY offshore feed, and backup for domestic indices)
+        try:
+            tv_records = self._fetch_from_tradingview()
+            for k, v in tv_records.items():
+                if k not in records:  # Prioritizes Dhan for NIFTY & BANKNIFTY, loads GIFT NIFTY
+                    records[k] = v
+        except Exception as tv_err:
+            logger.warning("TradingView scanner fetch error: %s", tv_err)
+            if not error_msg:
+                error_msg = str(tv_err)
+
+        # 3. Fallback for NIFTY & BANKNIFTY if both Dhan and TradingView failed
         if not records or "NIFTY 50" not in records or "BANKNIFTY" not in records:
             try:
                 yahoo_records = self._fetch_from_yahoo()
@@ -433,6 +445,49 @@ class NSESpotService:
             "latest": self.latest_spot,
             "timestamp_ist": self.last_fetch_time,
         }
+
+    def _fetch_from_dhan(self) -> Dict[str, Dict[str, Any]]:
+        """
+        Primary: Fetches live Spot OHLCV for NIFTY 50 and BANKNIFTY directly from Dhan HQ API.
+        """
+        results: Dict[str, Dict[str, Any]] = {}
+        try:
+            from nifty_trader.market_data.dhan_futures_service import get_dhan_futures_service
+            dfs = get_dhan_futures_service()
+            if not dfs.is_configured:
+                return results
+
+            targets = [("NIFTY", "NIFTY 50"), ("BANKNIFTY", "BANKNIFTY")]
+            for d_sym, sym_name in targets:
+                c_res = dfs.fetch_dhan_candles(d_sym, interval="5m", range_str="5d")
+                if c_res and c_res.get("candles"):
+                    candles = c_res["candles"]
+                    latest = candles[-1]
+                    first = candles[0]
+                    spot_price = latest["close"]
+                    open_price = first["open"]
+                    high_price = max(c["high"] for c in candles)
+                    low_price = min(c["low"] for c in candles)
+                    prev_close = first["open"]
+                    change_pts = round(spot_price - prev_close, 2)
+                    change_pct = round((change_pts / prev_close) * 100.0, 2) if prev_close else 0.0
+
+                    results[sym_name] = {
+                        "symbol": sym_name,
+                        "spot_price": round(spot_price, 2),
+                        "open_price": round(open_price, 2),
+                        "high_price": round(high_price, 2),
+                        "low_price": round(low_price, 2),
+                        "close_price": round(spot_price, 2),
+                        "previous_close": round(prev_close, 2),
+                        "change_pts": change_pts,
+                        "change_pct": change_pct,
+                        "volume": latest.get("volume", 0),
+                        "source": "DHAN_HQ_API",
+                    }
+        except Exception as e:
+            logger.debug("Dhan spot fetch error: %s", e)
+        return results
 
     def _fetch_from_tradingview(self) -> Dict[str, Dict[str, Any]]:
         """
