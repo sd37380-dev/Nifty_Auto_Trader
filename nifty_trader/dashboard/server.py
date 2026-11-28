@@ -926,7 +926,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     <span class="badge" id="telegram-badge" style="font-size: 0.8rem; background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.4); color: #38bdf8; cursor: pointer;" onclick="switchTab('tab-telegram')" title="Telegram Bot & 15-Minute Auto-Execution Alerts">📱 TELEGRAM: CHECKING...</span>
     <span class="badge badge-blue">Gemini 2.5 Brain: READY</span>
     <span class="badge badge-yellow">Paper Trading: READY</span>
-    <span class="badge badge-red">Live Broker: DISABLED</span>
+    <span class="badge badge-red" id="header-broker-badge" onclick="openBrokerModal()" style="cursor: pointer; padding: 4px 10px; font-weight: 800;" title="Click to connect Dhan HQ Broker API credentials">🏦 Live Broker: DISABLED (Click to Connect)</span>
     <button class="btn" onclick="fetchData()">🔄 Refresh</button>
     <a href="/report" target="_blank" class="btn" style="text-decoration: none; display: inline-flex; align-items: center; gap: 4px; background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.4); padding: 4px 10px; border-radius: 4px; font-weight: 700; font-size: 0.72rem;" title="Open Latest 15-Minute Trade Intelligence Report in new tab">📄 15M Report</a>
   </div>
@@ -1134,6 +1134,9 @@ DASHBOARD_HTML = """<!DOCTYPE html>
   </button>
   <button class="nav-tab" onclick="switchTab('tab-multi-function', this)" id="nav-btn-multi-function" style="background: rgba(139, 92, 246, 0.12); color: #c084fc; border: 1px solid rgba(139, 92, 246, 0.4); font-weight: 700;">
     🧩 Multi-Function <span id="nav-pending-badge" class="badge badge-yellow" style="font-size: 0.65rem; padding: 1px 6px; margin-left: 4px; display: none;">0</span>
+  </button>
+  <button class="nav-tab" onclick="openBrokerModal()" id="nav-btn-broker" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.25) 0%, rgba(79, 70, 229, 0.35) 100%); color: #a5b4fc; border: 1px solid #6366f1; font-weight: 800; cursor: pointer; margin-left: auto;" title="Click to open Dhan HQ Broker API Credentials & Live Sync Modal">
+    🏦 Broker Connection (Dhan)
   </button>
 </div>
 
@@ -10817,15 +10820,44 @@ DASHBOARD_HTML = """<!DOCTYPE html>
         const data = await resp.json();
         _brokerStatusCache = data;
         const badgeBtn = document.getElementById('btn-broker-connect');
-        if (badgeBtn) {
-          if (data.connected) {
+        const headerBadge = document.getElementById('header-broker-badge');
+        const navBrokerBtn = document.getElementById('nav-btn-broker');
+
+        if (data.connected) {
+          if (badgeBtn) {
             badgeBtn.innerHTML = '🏦 Broker: 🟢 Connected (Dhan)';
             badgeBtn.style.color = '#34d399';
             badgeBtn.style.borderColor = '#10b981';
-          } else {
+          }
+          if (headerBadge) {
+            headerBadge.className = 'badge badge-green';
+            headerBadge.innerHTML = `🏦 Live Broker: 🟢 Connected (${data.client_id_masked || 'Dhan'})`;
+            headerBadge.style.background = 'rgba(16, 185, 129, 0.2)';
+            headerBadge.style.borderColor = '#10b981';
+            headerBadge.style.color = '#34d399';
+          }
+          if (navBrokerBtn) {
+            navBrokerBtn.innerHTML = `🏦 Broker: 🟢 Connected (${data.client_id_masked || 'Dhan'})`;
+            navBrokerBtn.style.color = '#34d399';
+            navBrokerBtn.style.borderColor = '#10b981';
+          }
+        } else {
+          if (badgeBtn) {
             badgeBtn.innerHTML = '🏦 Broker: 📄 Paper Mode';
             badgeBtn.style.color = '#a5b4fc';
             badgeBtn.style.borderColor = '#6366f1';
+          }
+          if (headerBadge) {
+            headerBadge.className = 'badge badge-red';
+            headerBadge.innerHTML = '🏦 Live Broker: DISABLED (Click to Connect)';
+            headerBadge.style.background = '';
+            headerBadge.style.borderColor = '';
+            headerBadge.style.color = '';
+          }
+          if (navBrokerBtn) {
+            navBrokerBtn.innerHTML = '🏦 Broker Connection (Dhan)';
+            navBrokerBtn.style.color = '#a5b4fc';
+            navBrokerBtn.style.borderColor = '#6366f1';
           }
         }
         onTradeRouteSelectChange();
